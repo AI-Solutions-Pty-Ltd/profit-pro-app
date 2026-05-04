@@ -1,6 +1,5 @@
 {% load heroicons %}
 {% load humanize %}
-
 <div class="activity-node" data-plan-id="{{ plan.pk }}">
     <!-- Activity Card -->
     <div class="relative group">
@@ -9,7 +8,6 @@
             <div class="absolute -left-6 top-0 bottom-0 w-px bg-gray-200"></div>
             <div class="absolute -left-6 top-6 w-6 h-px bg-gray-200"></div>
         {% endif %}
-
         <div class="mb-3 bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md hover:border-indigo-200">
             <div class="p-4">
                 <div class="flex flex-wrap gap-4 justify-between items-start">
@@ -25,9 +23,8 @@
                                 {% heroicon_solid "chevron-right" id="toggle-icon-"|add:plan.pk|slugify class="w-4 h-4 transition-transform duration-200 rotate-90" %}
                             </button>
                         {% else %}
-                             <div class="w-6 h-6 flex-shrink-0 mt-1"></div>
+                            <div class="w-6 h-6 flex-shrink-0 mt-1"></div>
                         {% endif %}
-
                         <div class="flex-shrink-0 mt-1">
                             <div class="p-2 {% if plan.node_type == 'SECTION' %}bg-purple-50 text-purple-600{% elif plan.node_type == 'BILL' %}bg-amber-50 text-amber-600{% else %}bg-indigo-50 text-indigo-600{% endif %} rounded-lg">
                                 {% if plan.node_type == 'SECTION' %}
@@ -41,7 +38,8 @@
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center space-x-2">
-                                <a href="{% url 'project:production-plan-detail' project.pk plan.pk %}" class="hover:text-indigo-600 transition-colors">
+                                <a href="{% url 'project:production-plan-detail' project.pk plan.pk %}"
+                                   class="hover:text-indigo-600 transition-colors">
                                     <h3 class="text-base font-bold text-gray-900">{{ plan.activity | title }}</h3>
                                 </a>
                                 {% if plan.node_type != 'ACTIVITY' %}
@@ -55,7 +53,8 @@
                                     </span>
                                 {% endif %}
                                 {% if plan.predecessors.exists %}
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 uppercase tracking-widest" title="Dependent on other activities">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 uppercase tracking-widest"
+                                          title="Dependent on other activities">
                                         <span class="mr-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
                                         Dependent
                                     </span>
@@ -93,38 +92,41 @@
                             </div>
                             <div class="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Scheduled Qty</div>
                         </div>
-                        
                         <!-- Info Button -->
-                        <a href="{% url 'project:production-plan-detail' project.pk plan.pk %}" 
+                        <a href="{% url 'project:production-plan-detail' project.pk plan.pk %}"
                            class="p-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors text-gray-400"
-                           title="Activity Details">
-                            {% heroicon_mini "information-circle" class="w-5 h-5" %}
-                        </a>
-
+                           title="Activity Details">{% heroicon_mini "information-circle" class="w-5 h-5" %}</a>
                         <!-- Actions Dropdown -->
                         <div class="dropdown dropdown-end">
-                            <div tabindex="0" role="button" class="p-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors text-gray-400">
+                            <div tabindex="0"
+                                 role="button"
+                                 class="p-1.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors text-gray-400">
                                 {% heroicon_mini "ellipsis-vertical" class="w-5 h-5" %}
                             </div>
-                            <ul tabindex="0" class="dropdown-content z-[30] menu p-2 shadow-xl bg-white border border-gray-100 rounded-xl w-48 mt-1">
+                            <ul tabindex="0"
+                                class="dropdown-content z-[30] menu p-2 shadow-xl bg-white border border-gray-100 rounded-xl w-48 mt-1">
                                 <li>
-                                    <a href="{% url 'project:production-cost-breakdown-detail' project.pk plan.pk %}" class="text-[11px] font-bold text-emerald-600 hover:bg-emerald-50">
+                                    <a href="{% url 'project:production-cost-breakdown-detail' project.pk plan.pk %}"
+                                       class="text-[11px] font-bold text-emerald-600 hover:bg-emerald-50">
                                         {% heroicon_mini "banknotes" class="w-4 h-4" %} View Costs
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}" class="text-[11px] font-bold text-gray-700 hover:bg-gray-50">
+                                    <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}"
+                                       class="text-[11px] font-bold text-gray-700 hover:bg-gray-50">
                                         {% heroicon_mini "pencil-square" class="w-4 h-4" %} Edit Activity
                                     </a>
                                 </li>
                                 <div class="my-1 border-t border-gray-50"></div>
                                 <li>
-                                    <button onclick="showDeleteModal('{% url 'project:production-plan-delete' project.pk plan.pk %}', '{{ plan.activity|escapejs }}')" class="text-[11px] font-bold text-red-600 hover:bg-red-50">
+                                    <button onclick="showDeleteModal('{% url 'project:production-plan-delete' project.pk plan.pk %}', '{{ plan.activity|escapejs }}')"
+                                            class="text-[11px] font-bold text-red-600 hover:bg-red-50">
                                         {% heroicon_mini "trash" class="w-4 h-4" %} Delete Activity
                                     </button>
                                 </li>
                                 <li>
-                                    <button onclick="refreshPlanResources({{ plan.pk }}, this)" class="text-[11px] font-bold text-indigo-600 hover:bg-indigo-50">
+                                    <button onclick="refreshPlanResources({{ plan.pk }}, this)"
+                                            class="text-[11px] font-bold text-indigo-600 hover:bg-indigo-50">
                                         <span class="btn-text flex items-center gap-2">
                                             {% heroicon_mini "arrow-path" class="w-4 h-4" %} Refresh Resources
                                         </span>
@@ -138,7 +140,6 @@
             </div>
         </div>
     </div>
-
     <!-- Recursive Children -->
     {% if plan.node_type != 'ACTIVITY' %}
         <div id="children-{{ plan.pk }}" class="pl-10 space-y-2">

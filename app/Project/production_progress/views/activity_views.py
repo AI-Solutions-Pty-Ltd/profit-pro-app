@@ -1,6 +1,3 @@
-from collections import OrderedDict
-from decimal import Decimal
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import (
     Case,
@@ -285,6 +282,7 @@ class LaborActivityDetailView(
 
         # Build BoQ Qty-driven plant spec rows using centralized logic
         from app.Project.production_progress.production_models import ProductionPlan
+
         plant_spec_rows = ProductionPlan.calculate_boq_driven_plant_rows(
             project, self.f_section, self.f_bill, self.f_activity
         )

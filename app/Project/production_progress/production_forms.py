@@ -1,10 +1,9 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Div, Field, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms import inlineformset_factory
-
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, Div, Submit
 
 from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Estimator.models import (
@@ -447,7 +446,9 @@ class ProductionPlanDateControlForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_tag = False  # We'll wrap it in a form manually to control ID and structure
+        self.helper.form_tag = (
+            False  # We'll wrap it in a form manually to control ID and structure
+        )
         self.helper.layout = Layout(
             Div(
                 Field("start_date", label="Manual Start Date"),
@@ -595,11 +596,11 @@ class BasePlanDependencyFormSet(forms.models.BaseInlineFormSet):
         # 1. Sections -> Sections (Top level)
         # 2. Bills -> Bills (Within same Section)
         # 3. Activities -> Activities (Project-wide / Cross-bill)
-        
+
         if "predecessor" in form.fields:
             qs = form.fields["predecessor"].queryset
             successor = self.instance
-            
+
             if successor.node_type == "SECTION":
                 # Sections only depend on other Sections
                 qs = qs.filter(node_type="SECTION")
@@ -609,7 +610,7 @@ class BasePlanDependencyFormSet(forms.models.BaseInlineFormSet):
             elif successor.node_type == "ACTIVITY":
                 # Activities can depend on ANY other Activity in the project
                 qs = qs.filter(node_type="ACTIVITY")
-            
+
             form.fields["predecessor"].queryset = qs.distinct()
 
 

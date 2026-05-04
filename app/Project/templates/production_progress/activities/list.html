@@ -21,7 +21,6 @@
                 </a>
             </div>
         </div>
-     
         <!-- Activities Table Card -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="overflow-x-auto max-h-[calc(100vh-250px)]">
@@ -39,18 +38,10 @@
                             </th>
                             <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-gray-600 uppercase">Crew</th>
                             <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-gray-600 uppercase">Plants</th>
-                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-indigo-600 uppercase">
-                                Daily Prod.
-                            </th>
-                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-purple-600 uppercase">
-                                Daily Labour
-                            </th>
-                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-emerald-600 uppercase">
-                                Daily Plant
-                            </th>
-                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-gray-900 uppercase">
-                                Daily Total
-                            </th>
+                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-indigo-600 uppercase">Daily Prod.</th>
+                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-purple-600 uppercase">Daily Labour</th>
+                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-emerald-600 uppercase">Daily Plant</th>
+                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-right text-gray-900 uppercase">Daily Total</th>
                             <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold tracking-tighter text-right text-gray-600 uppercase">
                                 Contract Amount
                             </th>
@@ -63,9 +54,7 @@
                         {% for activity in activities %}
                             <tr class="hover:bg-indigo-50/30 transition-colors group">
                                 <th class="sticky left-0 z-10 bg-white group-hover:bg-indigo-50/50 border-r border-gray-100 font-semibold text-gray-900 whitespace-nowrap">
-                                    <div class="truncate max-w-[180px]" title="{{ activity.act_name }}">
-                                        {{ activity.act_name }}
-                                    </div>
+                                    <div class="truncate max-w-[180px]" title="{{ activity.act_name }}">{{ activity.act_name }}</div>
                                 </th>
                                 <th class="sticky left-[200px] z-10 bg-white group-hover:bg-indigo-50/50 border-r border-gray-100 text-gray-500 capitalize whitespace-nowrap font-normal">
                                     {{ activity.section|default:"-" }}
@@ -125,9 +114,7 @@
                                             {% heroicon_outline "clipboard-document-list" class="w-10 h-10 text-gray-400" %}
                                         </div>
                                         <h3 class="text-base font-bold text-gray-900">No Production Activities Found</h3>
-                                        <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500">
-                                            We couldn't find any activities matching your filters.
-                                        </p>
+                                        <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500">We couldn't find any activities matching your filters.</p>
                                         <div class="flex gap-3 mt-6">
                                             <a href="{% url 'project:labor-activity-list' project_pk=project_pk %}"
                                                class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Clear filters</a>

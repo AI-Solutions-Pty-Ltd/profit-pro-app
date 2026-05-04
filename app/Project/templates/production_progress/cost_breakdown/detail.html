@@ -99,152 +99,154 @@
                         <div class="overflow-x-auto">
                             <table class="table table-zebra table-sm">
                                 <thead class="bg-gray-50/80">
-                                <tr>
-                                    <th class="text-xs font-bold text-gray-600 uppercase">Resource</th>
-                                    <th class="text-xs font-bold text-gray-600 uppercase">Qty</th>
-                                    <th class="text-xs font-bold text-gray-600 uppercase">Days</th>
-                                    <th class="text-xs font-bold text-right text-gray-600 uppercase">Rate</th>
-                                    <th class="text-xs font-bold text-right text-gray-600 uppercase">Total</th>
-                                    {% if type_code == 'LABOUR' %}
-                                        <th class="text-center text-xs font-bold text-gray-600 uppercase">Source</th>
+                                    <tr>
+                                        <th class="text-xs font-bold text-gray-600 uppercase">Resource</th>
+                                        <th class="text-xs font-bold text-gray-600 uppercase">Qty</th>
+                                        <th class="text-xs font-bold text-gray-600 uppercase">Days</th>
+                                        <th class="text-xs font-bold text-right text-gray-600 uppercase">Rate</th>
+                                        <th class="text-xs font-bold text-right text-gray-600 uppercase">Total</th>
+                                        {% if type_code == 'LABOUR' %}<th class="text-center text-xs font-bold text-gray-600 uppercase">Source</th>{% endif %}
+                                        <th class="w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white">
+                                    <!-- Spec-based Resources: Labour Crew -->
+                                    {% if type_code == 'LABOUR' and selected_plan.labour_activity.crew %}
+                                        {% with crew=selected_plan.labour_activity.crew %}
+                                            {% if crew.skilled > 0 %}
+                                                <tr class="transition-all hover:bg-indigo-50/30 group">
+                                                    <td class="text-xs font-bold text-gray-700">Skilled Labour</td>
+                                                    <td class="text-xs text-gray-600">{{ crew.skilled }}</td>
+                                                    <td class="text-xs text-gray-600">{{ selected_plan.duration }}</td>
+                                                    <td class="text-xs text-right text-gray-600">{{ crew.skilled_rate|currency }}</td>
+                                                    <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
+                                                        {{ crew.skilled|multiply:selected_plan.duration|multiply:crew.skilled_rate|currency }}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                            {% endif %}
+                                            {% if crew.semi_skilled > 0 %}
+                                                <tr class="transition-all hover:bg-indigo-50/30 group">
+                                                    <td class="text-xs font-bold text-gray-700">Semi-Skilled Labour</td>
+                                                    <td class="text-xs text-gray-600">{{ crew.semi_skilled }}</td>
+                                                    <td class="text-xs text-gray-600">{{ selected_plan.duration }}</td>
+                                                    <td class="text-xs text-right text-gray-600">{{ crew.semi_skilled_rate|currency }}</td>
+                                                    <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
+                                                        {{ crew.semi_skilled|multiply:selected_plan.duration|multiply:crew.semi_skilled_rate|currency }}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                            {% endif %}
+                                            {% if crew.general > 0 %}
+                                                <tr class="transition-all hover:bg-indigo-50/30 group">
+                                                    <td class="text-xs font-bold text-gray-700">General Labour</td>
+                                                    <td class="text-xs text-gray-600">{{ crew.general }}</td>
+                                                    <td class="text-xs text-gray-600">{{ selected_plan.duration }}</td>
+                                                    <td class="text-xs text-right text-gray-600">{{ crew.general_rate|currency }}</td>
+                                                    <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
+                                                        {{ crew.general|multiply:selected_plan.duration|multiply:crew.general_rate|currency }}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endwith %}
                                     {% endif %}
-                                    <th class="w-10"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white">
-                                <!-- Spec-based Resources: Labour Crew -->
-                                {% if type_code == 'LABOUR' and selected_plan.labour_activity.crew %}
-                                    {% with crew=selected_plan.labour_activity.crew %}
-                                        {% if crew.skilled > 0 %}
+                                    <!-- Manual Resources -->
+                                    {% for resource in selected_plan.resources.all %}
+                                        {% if resource.resource_type == type_code %}
                                             <tr class="transition-all hover:bg-indigo-50/30 group">
-                                                <td class="text-xs font-bold text-gray-700">Skilled Labour</td>
-                                                <td class="text-xs text-gray-600">{{ crew.skilled }}</td>
-                                                <td class="text-xs text-gray-600">{{ selected_plan.duration }}</td>
-                                                <td class="text-xs text-right text-gray-600">{{ crew.skilled_rate|currency }}</td>
+                                                <td class="text-xs font-bold text-gray-700">
+                                                    <div class="flex flex-col">
+                                                        <span>{{ resource.name }}</span>
+                                                        <span class="text-[9px] text-amber-600 font-normal italic">Manual</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-xs text-gray-600">{{ resource.number|qty }}</td>
+                                                <td class="text-xs text-gray-600">{{ resource.days|qty }}</td>
+                                                <td class="text-xs text-right text-gray-600">{{ resource.rate|currency }}</td>
                                                 <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
-                                                    {{ crew.skilled|multiply:selected_plan.duration|multiply:crew.skilled_rate|currency }}
+                                                    {{ resource.total_cost|currency }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
+                                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-full ring-1 ring-inset ring-amber-700/10">Manual</span>
                                                 </td>
-                                                <td></td>
+                                                <td class="text-right">
+                                                    <form method="post"
+                                                          action="{% url 'project:production-resource-delete' project.pk selected_plan.pk %}"
+                                                          onsubmit="return confirm('Are you sure you want to delete this resource?');">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="resource_id" value="{{ resource.id }}">
+                                                        <button type="submit"
+                                                                class="text-gray-400 transition-colors hover:text-rose-500">
+                                                            {% heroicon_outline "trash" class="w-3.5 h-3.5" %}
+                                                        </button>
+                                                    </form>
+                                                </td>
                                             </tr>
                                         {% endif %}
-                                        {% if crew.semi_skilled > 0 %}
-                                            <tr class="transition-all hover:bg-indigo-50/30 group">
-                                                <td class="text-xs font-bold text-gray-700">Semi-Skilled Labour</td>
-                                                <td class="text-xs text-gray-600">{{ crew.semi_skilled }}</td>
-                                                <td class="text-xs text-gray-600">{{ selected_plan.duration }}</td>
-                                                <td class="text-xs text-right text-gray-600">{{ crew.semi_skilled_rate|currency }}</td>
-                                                <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
-                                                    {{ crew.semi_skilled|multiply:selected_plan.duration|multiply:crew.semi_skilled_rate|currency }}
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
-                                                </td>
-                                                <td></td>
-                                            </tr>
-                                        {% endif %}
-                                        {% if crew.general > 0 %}
-                                            <tr class="transition-all hover:bg-indigo-50/30 group">
-                                                <td class="text-xs font-bold text-gray-700">General Labour</td>
-                                                <td class="text-xs text-gray-600">{{ crew.general }}</td>
-                                                <td class="text-xs text-gray-600">{{ selected_plan.duration }}</td>
-                                                <td class="text-xs text-right text-gray-600">{{ crew.general_rate|currency }}</td>
-                                                <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
-                                                    {{ crew.general|multiply:selected_plan.duration|multiply:crew.general_rate|currency }}
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
-                                                </td>
-                                                <td></td>
-                                            </tr>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% endif %}
-
-                                <!-- Manual Resources -->
-                                {% for resource in selected_plan.resources.all %}
-                                    {% if resource.resource_type == type_code %}
-                                        <tr class="transition-all hover:bg-indigo-50/30 group">
-                                            <td class="text-xs font-bold text-gray-700">
-                                                <div class="flex flex-col">
-                                                    <span>{{ resource.name }}</span>
-                                                    <span class="text-[9px] text-amber-600 font-normal italic">Manual</span>
-                                                </div>
-                                            </td>
-                                            <td class="text-xs text-gray-600">{{ resource.number|qty }}</td>
-                                            <td class="text-xs text-gray-600">{{ resource.days|qty }}</td>
-                                            <td class="text-xs text-right text-gray-600">{{ resource.rate|currency }}</td>
-                                            <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
-                                                {{ resource.total_cost|currency }}
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-full ring-1 ring-inset ring-amber-700/10">Manual</span>
-                                            </td>
-                                            <td class="text-right">
-                                                <form method="post" action="{% url 'project:production-resource-delete' project.pk selected_plan.pk %}"
-                                                      onsubmit="return confirm('Are you sure you want to delete this resource?');">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="action" value="delete">
-                                                    <input type="hidden" name="resource_id" value="{{ resource.id }}">
-                                                    <button type="submit"
-                                                            class="text-gray-400 transition-colors hover:text-rose-500">
-                                                        {% heroicon_outline "trash" class="w-3.5 h-3.5" %}
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-
-                                <!-- BoQ Driven Plant -->
-                                {% if type_code == 'PLANT' %}
-                                    {% for row in plant_spec_rows %}
-                                        <tr class="transition-all hover:bg-amber-50/30 group">
-                                            <td class="text-xs font-bold text-gray-700">
-                                                <div class="flex flex-col">
-                                                    <span>{{ row.plant_name }}</span>
-                                                    <span class="text-[9px] text-gray-400 font-normal italic">{{ row.source_spec }}</span>
-                                                </div>
-                                            </td>
-                                            <td class="text-xs text-gray-600">{{ row.boq_qty|qty }} <span class="text-[9px] text-gray-400">{{ row.unit|lower }}</span></td>
-                                            <td class="text-xs text-gray-600">{{ row.hours|qty }}<span class="text-[9px] text-gray-400">h</span></td>
-                                            <td class="text-xs text-right text-gray-600">{{ row.rate|currency }}</td>
-                                            <td class="font-mono text-xs font-semibold text-right text-emerald-700 whitespace-nowrap">
-                                                {{ row.total_cost|currency }}
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-full ring-1 ring-inset ring-amber-700/10">BoQ Allocation</span>
-                                            </td>
-                                            <td></td>
-                                        </tr>
                                     {% endfor %}
-                                {% endif %}
-                            </tbody>
-                            <tfoot class="bg-indigo-600/5">
-                                <tr>
-                                    <td colspan="4" class="px-6 py-3 text-[10px] font-bold text-right text-indigo-500 uppercase tracking-wider">
-                                        Total {{ type_name }} Cost
-                                    </td>
-                                    <td class="px-6 py-3 font-mono text-sm font-black text-right text-indigo-600 whitespace-nowrap">
-                                        {% if type_code == 'PLANT' %}
-                                            {{ total_plant_cost_calc|currency }}
-                                        {% elif type_code == 'LABOUR' %}
-                                            {{ total_labour_cost_calc|currency }}
-                                        {% else %}
-                                            {{ selected_plan.total_other_cost|currency }}
-                                        {% endif %}
-                                    </td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                                    <!-- BoQ Driven Plant -->
+                                    {% if type_code == 'PLANT' %}
+                                        {% for row in plant_spec_rows %}
+                                            <tr class="transition-all hover:bg-amber-50/30 group">
+                                                <td class="text-xs font-bold text-gray-700">
+                                                    <div class="flex flex-col">
+                                                        <span>{{ row.plant_name }}</span>
+                                                        <span class="text-[9px] text-gray-400 font-normal italic">{{ row.source_spec }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-xs text-gray-600">
+                                                    {{ row.boq_qty|qty }} <span class="text-[9px] text-gray-400">{{ row.unit|lower }}</span>
+                                                </td>
+                                                <td class="text-xs text-gray-600">
+                                                    {{ row.hours|qty }}<span class="text-[9px] text-gray-400">h</span>
+                                                </td>
+                                                <td class="text-xs text-right text-gray-600">{{ row.rate|currency }}</td>
+                                                <td class="font-mono text-xs font-semibold text-right text-emerald-700 whitespace-nowrap">
+                                                    {{ row.total_cost|currency }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-full ring-1 ring-inset ring-amber-700/10">BoQ Allocation</span>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endif %}
+                                </tbody>
+                                <tfoot class="bg-indigo-600/5">
+                                    <tr>
+                                        <td colspan="4"
+                                            class="px-6 py-3 text-[10px] font-bold text-right text-indigo-500 uppercase tracking-wider">
+                                            Total {{ type_name }} Cost
+                                        </td>
+                                        <td class="px-6 py-3 font-mono text-sm font-black text-right text-indigo-600 whitespace-nowrap">
+                                            {% if type_code == 'PLANT' %}
+                                                {{ total_plant_cost_calc|currency }}
+                                            {% elif type_code == 'LABOUR' %}
+                                                {{ total_labour_cost_calc|currency }}
+                                            {% else %}
+                                                {{ selected_plan.total_other_cost|currency }}
+                                            {% endif %}
+                                        </td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            {% endif %}
-        {% endfor %}
+                {% endif %}
+            {% endfor %}
         </div>
         <!-- Dashboard Footer -->
         <div class="flex justify-between items-center py-6 mt-12 border-t border-gray-100">

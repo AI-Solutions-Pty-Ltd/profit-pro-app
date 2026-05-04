@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import DetailView, TemplateView
 
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
@@ -10,14 +10,13 @@ from app.Project.models import Project
 
 from ..production_forms import PlanFilterForm
 from ..production_models import (
-    DailyProduction,
     ProductionPlan,
 )
 from ..utils.production_utils import (
     get_activity_detail_data,
-    get_dashboard_data,
     get_plan_productivity_data,
 )
+
 
 class ProductionActivityDetailView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView

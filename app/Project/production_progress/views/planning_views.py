@@ -1,5 +1,4 @@
 import json
-from collections import OrderedDict
 from datetime import timedelta
 from decimal import Decimal
 
@@ -462,7 +461,9 @@ class ProductionPlanDetailView(
                     pk=self.object.pk,
                 )
             else:
-                messages.error(request, "Please correct the errors in the dependencies form.")
+                messages.error(
+                    request, "Please correct the errors in the dependencies form."
+                )
 
         # Handle Date Control Form
         if "submit_dates" in request.POST:
@@ -476,7 +477,9 @@ class ProductionPlanDetailView(
                     pk=self.object.pk,
                 )
             else:
-                messages.error(request, "Please correct the errors in the schedule form.")
+                messages.error(
+                    request, "Please correct the errors in the schedule form."
+                )
 
         return self.render_to_response(context)
 
@@ -874,22 +877,24 @@ class ProductionCostBreakdownDetailView(
         context["plant_spec_total"] = plant_spec_total
 
         # Calculate combined total for summary metrics to ensure consistency
-        manual_labour = selected_plan.resources.filter(resource_type="LABOUR").aggregate(
-            total=Sum("total_cost")
-        )["total"] or Decimal("0")
+        manual_labour = selected_plan.resources.filter(
+            resource_type="LABOUR"
+        ).aggregate(total=Sum("total_cost"))["total"] or Decimal("0")
         spec_labour = (
             selected_plan.labour_activity.crew.crew_daily_cost * selected_plan.duration
             if selected_plan.labour_activity and selected_plan.labour_activity.crew
             else Decimal("0")
         )
-        
+
         manual_plant = selected_plan.resources.filter(resource_type="PLANT").aggregate(
             total=Sum("total_cost")
         )["total"] or Decimal("0")
-        
+
         context["total_labour_cost_calc"] = manual_labour + spec_labour
         context["total_plant_cost_calc"] = manual_plant + plant_spec_total
-        context["total_planned_cost"] = context["total_labour_cost_calc"] + context["total_plant_cost_calc"]
+        context["total_planned_cost"] = (
+            context["total_labour_cost_calc"] + context["total_plant_cost_calc"]
+        )
 
         return context
 

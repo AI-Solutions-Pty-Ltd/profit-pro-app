@@ -156,7 +156,12 @@ class ProductionPlan(BaseModel):
 
         # 5. Trigger Successor Propagation and Parent Sync
         deleted_changed = not is_new and self.deleted and not old_instance.deleted
-        if is_new or self.start_date != old_start or self.finish_date != old_finish or deleted_changed:
+        if (
+            is_new
+            or self.start_date != old_start
+            or self.finish_date != old_finish
+            or deleted_changed
+        ):
             # We delay successors slightly to ensure this instance is fully committed
             # though in a single request, update_successor_dates is fine.
             self.update_successor_dates()
@@ -250,7 +255,9 @@ class ProductionPlan(BaseModel):
 
     def get_predecessor_end_date(self):
         """Returns the latest finish_date of all predecessors."""
-        predecessors = [p.predecessor for p in self.predecessors.all() if p.predecessor.finish_date]
+        predecessors = [
+            p.predecessor for p in self.predecessors.all() if p.predecessor.finish_date
+        ]
         if not predecessors:
             return None
         return max(p.finish_date for p in predecessors)
@@ -265,12 +272,13 @@ class ProductionPlan(BaseModel):
                 # Update start date to match latest predecessor end date (Finish-to-Start)
                 successor.start_date = latest_pred_end
                 if successor.duration:
-                    successor.finish_date = successor.start_date + timedelta(days=successor.duration)
+                    successor.finish_date = successor.start_date + timedelta(
+                        days=successor.duration
+                    )
 
                 # Use update() to bypass full save signals but keep recursion
                 ProductionPlan.objects.filter(pk=successor.pk).update(
-                    start_date=successor.start_date,
-                    finish_date=successor.finish_date
+                    start_date=successor.start_date, finish_date=successor.finish_date
                 )
 
                 # Recurse to update this successor's own successors
@@ -417,8 +425,7 @@ class ProductionPlan(BaseModel):
         # For structural nodes (SECTION/BILL), aggregate from leaf children.
         if not self.is_leaf:
             return sum(
-                child.total_labour_cost
-                for child in self.children.filter(deleted=False)
+                child.total_labour_cost for child in self.children.filter(deleted=False)
             )
 
         # Manual resources cost
@@ -577,8 +584,7 @@ class ProductionPlan(BaseModel):
         # For structural nodes (SECTION/BILL), aggregate from leaf children.
         if not self.is_leaf:
             return sum(
-                child.total_plant_cost
-                for child in self.children.filter(deleted=False)
+                child.total_plant_cost for child in self.children.filter(deleted=False)
             )
 
         # Manual resources cost
