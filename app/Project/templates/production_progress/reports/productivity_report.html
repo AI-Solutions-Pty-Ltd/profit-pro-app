@@ -30,14 +30,14 @@
             <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Global PPI</span>
-                    <div class="p-2 rounded-lg {% if summary.ppi <= 1.0 %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %}">
+                    <div class="p-2 rounded-lg {% if summary.ppi >= 1.0 %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %}">
                         {% heroicon_outline "chart-bar" size="20" %}
                     </div>
                 </div>
                 <div class="flex gap-2 items-baseline">
                     <span class="text-3xl font-bold text-gray-900">{{ summary.ppi|floatformat:2 }}</span>
-                    <span class="text-xs font-bold {% if summary.ppi <= 1.0 %}text-emerald-600{% else %}text-rose-600{% endif %} uppercase">
-                        {% if summary.ppi <= 1.0 %}
+                    <span class="text-xs font-bold {% if summary.ppi >= 1.0 %}text-emerald-600{% else %}text-rose-600{% endif %} uppercase">
+                        {% if summary.ppi >= 1.0 %}
                             Good
                         {% else %}
                             Critical
