@@ -1,8 +1,11 @@
 import math
 from collections import defaultdict
+from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Sum
+from dateutil.relativedelta import relativedelta
+from django.db import models
+from django.db.models import F, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -832,8 +835,7 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
     from datetime import timedelta
 
     from dateutil.relativedelta import relativedelta
-    from django.db import models
-    from django.db.models import F, Sum
+    from django.db.models import Sum
 
     from app.Estimator.models import BOQItem
     from app.Project.models import Project
@@ -1344,18 +1346,44 @@ def get_project_productivity_report_data(
     }
 
 
-def get_premium_productivity_report_data(project_id, active_only=False):
+def get_premium_productivity_report_data(project_id, active_only=False, horizon="ptd"):
     """
     Calculates PPI, CPI, and Impact metrics based on Excel logic.
     Groups results by Section and Bill with weighted averages.
     """
     import json
     from collections import defaultdict
-    from datetime import timedelta
-
-    from django.utils import timezone
 
     today = timezone.now().date()
+
+    # S-Curve Window logic
+    if horizon == "daily":
+        start_window = today
+        end_window = today
+    elif horizon == "weekly":
+        start_window = today - timedelta(days=today.weekday())
+        end_window = start_window + timedelta(days=6)
+    elif horizon == "mtd":
+        start_window = today.replace(day=1)
+        end_window = (start_window + relativedelta(months=1)) - timedelta(days=1)
+    else:  # ptd
+        first_entry = (
+            DailyActivityEntry.objects.filter(project_id=project_id)
+            .order_by("date")
+            .first()
+        )
+        start_window = first_entry.date if first_entry else today
+        end_window = today
+
+    date_range = [
+        start_window + timedelta(days=i)
+        for i in range((end_window - start_window).days + 1)
+    ]
+
+    daily_planned_qty = defaultdict(Decimal)
+    daily_planned_cost = defaultdict(Decimal)
+    daily_actual_qty = defaultdict(Decimal)
+    daily_actual_cost = defaultdict(Decimal)
 
     # Define date filters based on horizon
     date_filter = {}
@@ -1434,12 +1462,12 @@ def get_premium_productivity_report_data(project_id, active_only=False):
         # Actual (Within Window)
         window_entries = DailyActivityEntry.objects.filter(
             production_plan=plan,
-            report__date__gte=start_window,
-            report__date__lte=end_window,
+            date__gte=start_window,
+            date__lte=end_window,
         )
         for entry in window_entries:
-            daily_actual_qty[entry.report.date] += entry.quantity
-            daily_actual_cost[entry.report.date] += entry.total_cost
+            daily_actual_qty[entry.date] += entry.quantity
+            daily_actual_cost[entry.date] += entry.total_cost
 
         # Actual Values for Table
         actual_prod_rate = (
