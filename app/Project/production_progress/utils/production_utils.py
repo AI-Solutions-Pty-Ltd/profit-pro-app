@@ -1,3 +1,4 @@
+import math
 from collections import defaultdict
 from decimal import Decimal
 
@@ -380,6 +381,11 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
             return 0
         return round(((actual - target) / target) * 100, 1)
 
+    def calc_index(actual, target):
+        if not target or target == 0:
+            return 1.0
+        return round(actual / target, 2)
+
     # Productivity Trend (Compare latest day vs previous days average)
     prod_trend_val = 0
     prod_trend_pos = True
@@ -493,6 +499,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_productivity,
                 "target": target_productivity,
                 "variance": calc_var(actual_avg_productivity, target_productivity),
+                "index": calc_index(actual_avg_productivity, target_productivity),
                 "trend": prod_trend_val,
                 "trend_pos": prod_trend_pos,
             },
@@ -500,6 +507,9 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_cost_per_item,
                 "target": target_cost_per_item,
                 "variance": calc_var(actual_avg_cost_per_item, target_cost_per_item),
+                "index": calc_index(
+                    target_cost_per_item, actual_avg_cost_per_item
+                ),  # Cost index: Target / Actual
                 "trend": cost_trend_val,
                 "trend_pos": not cost_trend_pos,  # Inverse: for cost, down is good
             },
@@ -512,6 +522,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_daily_output,
                 "target": target_daily_output,
                 "variance": calc_var(actual_avg_daily_output, target_daily_output),
+                "index": calc_index(actual_avg_daily_output, target_daily_output),
                 "trend": output_trend_val,
                 "trend_pos": output_trend_pos,
             },
@@ -532,7 +543,105 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
     }
 
 
-def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
+def get_plan_forecast_kpis(plan, project_ppi=1.0):
+    """
+    Unified calculation for plan forecasting KPIs.
+    Returns a dictionary structure compatible with dashboard and table views.
+    """
+    from datetime import date, timedelta
+
+    from django.db.models import Sum
+
+    # 1. Base Metrics
+    actual_total_qty = plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+    entries_count = plan.daily_entries.count()
+    today = date.today()
+
+    # 2. Daily Rate & Productivity (Aligned with Dashboard target_daily_output)
+    target_rate = 0
+    if plan.duration > 0:
+        target_rate = float(plan.quantity) / float(plan.duration)
+    else:
+        target_rate = float(plan.daily_rate)
+
+    # Logic Parity: If plan has data, use its own average output.
+    # If not, use project-wide PPI as a forecast proxy.
+    actual_avg_out = 0
+    ppi = project_ppi
+
+    if entries_count > 0:
+        actual_avg_out = float(actual_total_qty) / float(entries_count)
+        if target_rate > 0:
+            ppi = actual_avg_out / target_rate
+    else:
+        # Fallback to project performance for new items
+        actual_avg_out = target_rate * float(project_ppi)
+        ppi = project_ppi
+
+    # 3. Time Forecast
+    remaining_qty = max(0, float(plan.quantity) - float(actual_total_qty))
+    days_to_complete = 0
+
+    # Use actual average if available, otherwise target
+    forecast_rate = actual_avg_out if actual_avg_out > 0 else target_rate
+
+    if forecast_rate > 0:
+        days_to_complete = float(remaining_qty) / float(forecast_rate)
+
+    # Brainstorming Refinement: Round up (ceil) days to complete for finish date and duration display
+    days_to_complete_rounded = math.ceil(days_to_complete)
+    forecast_finish = today + timedelta(days=days_to_complete_rounded)
+
+    # 4. Variance Calculations
+    planned_duration = float(plan.duration)
+    # Total predicted duration = days already worked + raw days remaining (for accurate variance)
+    forecast_total_days_raw = float(entries_count) + float(days_to_complete)
+    # Visual Duration = days worked + rounded days remaining (for user display parity)
+    forecast_total_days_visual = float(entries_count) + float(days_to_complete_rounded)
+
+    time_variance = planned_duration - forecast_total_days_raw
+
+    # Status Determination
+    status = "On Track"
+    status_color = "emerald"
+    if time_variance < -2:
+        status = "Critical"
+        status_color = "red"
+    elif time_variance < 0:
+        status = "At Risk"
+        status_color = "amber"
+
+    return {
+        "daily_output": {
+            "actual": round(actual_avg_out, 1),
+            "target": round(target_rate, 1),
+            "index": round(ppi, 2),
+            "variance": round((float(ppi) - 1) * 100, 1),
+            "days_remaining": int(days_to_complete_rounded),  # Rounded up
+            "forecast_duration": int(
+                forecast_total_days_visual
+            ),  # Rounded up (e.g., 5.4 -> 6)
+            "forecast_finish": forecast_finish,
+            "time_variance": round(time_variance, 1),  # Kept raw (e.g., +2.4d)
+            "late_str": f"{'late by' if time_variance < 0 else 'ahead by'} {abs(time_variance):.1f} days",
+        },
+        "summary": {
+            "completed_units": float(actual_total_qty),
+            "remaining_units": float(remaining_qty),
+            "progress_pct": round(
+                (float(actual_total_qty) / float(plan.quantity) * 100), 1
+            )
+            if plan.quantity > 0
+            else 0,
+            "status": status,
+            "status_color": status_color,
+        },
+    }
+
+
+def get_forecasting_dashboard_data(
+    plan_id, start_date=None, end_date=None, ppi_override=None
+):
     """
     Calculates predictive forecasting metrics and scenarios for a specific plan.
     """
@@ -689,13 +798,14 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
             if (time_variance < -2 or budget_variance < -50000)
             else ("amber" if (time_variance < 0 or budget_variance < 0) else "emerald"),
             "progress_pct": round(progress_pct, 1),
-            "forecast_days": round(forecast_total_days, 1),
+            "completed_units": float(actual_total_qty),
+            "forecast_days": int(days_elapsed + math.ceil(days_to_complete)),
             "time_variance": round(time_variance, 1),
             "planned_days": int(plan.duration),
             "forecast_cost": float(forecast_total_at_completion),
             "budget_variance": float(budget_variance),
             "budget_allocation": float(budget_allocation),
-            "days_remaining": round(days_to_complete, 1),
+            "days_remaining": int(math.ceil(days_to_complete)),
             "units_remaining": float(remaining_qty),
             "budget_used_pct": round(
                 (float(actual_total_cost) / float(budget_allocation) * 100), 1
@@ -1243,31 +1353,39 @@ def get_project_productivity_report_data(
     }
 
 
-def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=False):
+def get_premium_productivity_report_data(project_id, active_only=False):
     """
     Calculates PPI, CPI, and Impact metrics based on Excel logic.
     Groups results by Section and Bill with weighted averages.
     """
+    import json
     from collections import defaultdict
     from datetime import timedelta
 
+    from dateutil.relativedelta import relativedelta
     from django.utils import timezone
 
     today = timezone.now().date()
 
-    # Define date filters based on horizon
-    date_filter = {}
-    if horizon == "daily":
-        date_filter["report__date"] = today
-    elif horizon == "weekly":
-        start_of_week = today - timedelta(days=today.weekday())
-        date_filter["report__date__gte"] = start_of_week
-    elif horizon == "mtd":
-        date_filter["report__date__gte"] = today.replace(day=1)
+    # 6-Month Window for S-Curve
+    start_window = today - relativedelta(months=3)
+    end_window = today + relativedelta(months=3)
+
+    date_range = []
+    curr = start_window
+    while curr <= end_window:
+        date_range.append(curr)
+        curr += timedelta(days=1)
+
+    daily_planned_qty = {d: Decimal("0") for d in date_range}
+    daily_planned_cost = {d: Decimal("0") for d in date_range}
+    daily_actual_qty = {d: Decimal("0") for d in date_range}
+    daily_actual_cost = {d: Decimal("0") for d in date_range}
 
     plans_query = ProductionPlan.objects.filter(
         project_id=project_id, is_archived=False, is_leaf=True
     )
+
     if active_only:
         plans_query = plans_query.filter(finish_date__gte=today, start_date__lte=today)
 
@@ -1284,23 +1402,16 @@ def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=
     p_total_cost_impact = Decimal("0")
 
     for plan in plans:
-        # Get entries for this plan
+        # 1. Table Data Calculations (PTD)
         entries_query = DailyActivityEntry.objects.filter(
-            production_plan=plan, **date_filter
-        )
-        if not entries_query.exists() and horizon != "ptd":
-            continue
-
-        # For calculation, we want history up to today
-        all_history = DailyActivityEntry.objects.filter(
             production_plan=plan, report__date__lte=today
         )
 
-        total_qty = all_history.aggregate(total=Sum("quantity"))["total"] or Decimal(
+        total_qty = entries_query.aggregate(total=Sum("quantity"))["total"] or Decimal(
             "0"
         )
-        total_cost = sum((e.total_cost for e in all_history), Decimal("0"))
-        total_days = all_history.values("report__date").distinct().count()
+        total_cost = sum((e.total_cost for e in entries_query), Decimal("0"))
+        total_days = entries_query.values("report__date").distinct().count()
 
         # Target Values
         target_prod_rate = plan.daily_rate
@@ -1308,10 +1419,37 @@ def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=
             plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
         )
         target_unit_cost = (
-            budgeted_cost / plan.quantity if plan.quantity > 0 else Decimal("0")
+            plan.budget_unit_rate
+            if hasattr(plan, "budget_unit_rate")
+            else (budgeted_cost / plan.quantity if plan.quantity > 0 else Decimal("0"))
         )
 
-        # Actual Values
+        # 2. S-Curve Data Aggregation (Within Window)
+        # Planned
+        if plan.start_date and plan.finish_date:
+            plan_days = (plan.finish_date - plan.start_date).days + 1
+            if plan_days > 0:
+                day_qty = plan.quantity / Decimal(plan_days)
+                day_cost = budgeted_cost / Decimal(plan_days)
+
+                curr_p = max(plan.start_date, start_window)
+                end_p = min(plan.finish_date, end_window)
+                while curr_p <= end_p:
+                    daily_planned_qty[curr_p] += day_qty
+                    daily_planned_cost[curr_p] += day_cost
+                    curr_p += timedelta(days=1)
+
+        # Actual (Within Window)
+        window_entries = DailyActivityEntry.objects.filter(
+            production_plan=plan,
+            report__date__gte=start_window,
+            report__date__lte=end_window,
+        )
+        for entry in window_entries:
+            daily_actual_qty[entry.report.date] += entry.quantity
+            daily_actual_cost[entry.report.date] += entry.total_cost
+
+        # Actual Values for Table
         actual_prod_rate = (
             total_qty / Decimal(total_days) if total_days > 0 else Decimal("0")
         )
@@ -1357,7 +1495,7 @@ def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=
         trend_act_prod, trend_tgt_prod = [], []
         trend_act_cost, trend_tgt_cost = [], []
 
-        last_entries = all_history.order_by("-report__date")[:10][::-1]
+        last_entries = entries_query.order_by("-report__date")[:10][::-1]
         for e in last_entries:
             trend_labels.append(e.report.date.strftime("%d %b"))
             # Indices
@@ -1471,6 +1609,80 @@ def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=
             }
         )
 
+    # 3. Finalize S-Curve Data
+    labels = []
+    planned_qty_series = []
+    actual_qty_series = []
+    planned_cost_series = []
+    actual_cost_series = []
+
+    cum_planned_qty = Decimal("0")
+    cum_planned_cost = Decimal("0")
+    cum_actual_qty = Decimal("0")
+    cum_actual_cost = Decimal("0")
+
+    for d in date_range:
+        labels.append(d.strftime("%d %b"))
+        cum_planned_qty += daily_planned_qty[d]
+        cum_planned_cost += daily_planned_cost[d]
+
+        planned_qty_series.append(float(cum_planned_qty))
+        planned_cost_series.append(float(cum_planned_cost))
+
+        if d <= today:
+            cum_actual_qty += daily_actual_qty[d]
+            cum_actual_cost += daily_actual_cost[d]
+            actual_qty_series.append(float(cum_actual_qty))
+            actual_cost_series.append(float(cum_actual_cost))
+        else:
+            actual_qty_series.append(None)
+            actual_cost_series.append(None)
+
+    charts_json = {
+        "labels": labels,
+        "datasets": [
+            {
+                "label": "Planned Qty",
+                "data": planned_qty_series,
+                "borderColor": "rgb(79, 70, 229)",  # indigo-600
+                "backgroundColor": "rgba(79, 70, 229, 0.1)",
+                "yAxisID": "y",
+                "tension": 0.4,
+                "fill": False,
+            },
+            {
+                "label": "Actual Qty",
+                "data": actual_qty_series,
+                "borderColor": "rgb(4, 120, 87)",  # emerald-700
+                "backgroundColor": "rgba(4, 120, 87, 0.1)",
+                "yAxisID": "y",
+                "tension": 0.4,
+                "fill": False,
+            },
+            {
+                "label": "Planned Cost",
+                "data": planned_cost_series,
+                "borderColor": "rgba(79, 70, 229, 0.4)",
+                "borderDash": [5, 5],
+                "yAxisID": "y1",
+                "tension": 0.4,
+                "fill": False,
+                "borderWidth": 2,
+            },
+            {
+                "label": "Actual Cost",
+                "data": actual_cost_series,
+                "borderColor": "rgba(4, 120, 87, 0.4)",
+                "borderDash": [5, 5],
+                "yAxisID": "y1",
+                "tension": 0.4,
+                "fill": False,
+                "borderWidth": 2,
+            },
+        ],
+        "today_index": date_range.index(today) if today in date_range else -1,
+    }
+
     return {
         "summary": {
             "ppi": float(p_total_weighted_ppi / p_total_weight)
@@ -1483,4 +1695,5 @@ def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=
             "cost_impact": float(p_total_cost_impact),
         },
         "sections": sections_list,
+        "charts_json": json.dumps(charts_json),
     }

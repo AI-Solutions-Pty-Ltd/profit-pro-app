@@ -1,0 +1,116 @@
+<!-- Detailed Metrics Table Partial -->
+<div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm analytics-table-section"
+     id="table-section-container">
+    <div class="px-6 py-5 border-b border-gray-50 bg-gray-50/50">
+        <h3 class="text-base font-bold tracking-tight text-gray-900">Activity Completion Forecast</h3>
+        <p class="mt-1 text-xs text-gray-500">Predicted finish dates for ongoing items based on current productivity</p>
+    </div>
+    <div class="overflow-x-auto max-w-full border-t border-gray-100 shadow-inner scrollbar-thin scrollbar-thumb-slate-300"
+         id="table-scroll-container">
+        <table class="table table-xs table-pin-rows table-pin-cols w-full min-w-[1300px]">
+            <thead>
+                <tr class="z-20 backdrop-blur-sm bg-gray-50/80">
+                    <th class="min-w-[320px] bg-gray-50/95 z-20 sticky left-0 border-r border-gray-200/50 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        Activity / Section
+                    </th>
+                    <th class="text-center px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Timeline</th>
+                    <th class="text-center px-2 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Duration</th>
+                    <th class="text-center px-2 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Days Remaining</th>
+                    <th class="text-center px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Time Forecast</th>
+                    <th class="text-center px-2 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Day Variance</th>
+                    <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500 min-w-[180px]">
+                        % Complete
+                    </th>
+                    <th class="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</th>
+                    <th class="text-center px-2 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-gray-50/95 z-20 sticky right-0 border-l border-gray-200/50">
+                        SPI (Schedule)
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for item in report_items %}
+                    <tr class="transition-colors cursor-pointer hover:bg-indigo-50/40 group/row {% if not item.plan.is_leaf %}bg-gray-50/30{% endif %}"
+                        onclick="if(window.scrollToTask) window.scrollToTask('{{ item.plan.id }}')">
+                        <td class="sticky left-0 z-10 px-6 py-4 font-bold text-gray-900 bg-white border-r border-gray-100 transition-colors group-hover/row:bg-indigo-50/20 group-hover/row:text-indigo-700"
+                            style="padding-left: calc({{ item.depth }} * 1.5rem + 1.5rem)">
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-sm font-bold tracking-tight {% if not item.plan.is_leaf %}text-indigo-900 uppercase{% endif %}">
+                                    {{ item.plan.activity }}
+                                </span>
+                                {% if item.plan.is_leaf %}
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                        {{ item.plan.section|default:"" }} | {{ item.plan.bill_no|default:"" }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {# Timeline #}
+                        <td class="text-center font-mono text-[10px] text-gray-500 tabular-nums">
+                            {{ item.plan.start_date|date:"d M" }} - {{ item.plan.finish_date|date:"d M" }}
+                        </td>
+                        {# Duration #}
+                        <td class="font-mono font-bold tabular-nums text-center text-gray-400">{{ item.plan.duration }}d</td>
+                        {# Days Remaining #}
+                        <td class="font-mono font-black tabular-nums text-center text-indigo-600">
+                            {{ item.kpis.daily_output.days_remaining }}
+                        </td>
+                        {# Time Forecast #}
+                        <td class="text-center">
+                            <div class="text-[11px] font-black text-gray-900 tabular-nums">{{ item.kpis.daily_output.forecast_duration }}d</div>
+                            <div class="text-[9px] font-bold text-gray-400 uppercase tabular-nums">
+                                {{ item.kpis.daily_output.forecast_finish|date:"d M Y" }}
+                            </div>
+                        </td>
+                        {# Day Variance #}
+                        <td class="text-center font-mono tabular-nums text-[10px] font-black">
+                            <div class="badge badge-sm font-bold ring-1 ring-inset {% if item.kpis.daily_output.time_variance < 0 %}bg-rose-50 text-rose-700 ring-rose-700/10{% elif item.kpis.daily_output.time_variance > 0 %}bg-emerald-50 text-emerald-700 ring-emerald-700/10{% else %}bg-gray-50 text-gray-600 ring-gray-200{% endif %}">
+                                {{ item.kpis.daily_output.time_variance|floatformat:1 }}d
+                            </div>
+                        </td>
+                        {# Progress #}
+                        <td class="px-4">
+                            <div class="flex z-30 flex-col gap-1 tooltip tooltip-primary"
+                                 data-tip="Target: {{ item.plan.quantity|floatformat:1 }} | Done: {{ item.kpis.summary.completed_units|floatformat:1 }} | Rem: {{ item.kpis.summary.remaining_units|floatformat:1 }} {{ item.plan.unit }}">
+                                <div class="flex justify-between items-center px-0.5">
+                                    <span class="text-[10px] font-black text-gray-700 tabular-nums">{{ item.progress_pct|floatformat:1 }}%</span>
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase">
+                                        {% if item.plan.is_leaf %}
+                                            {{ item.plan.unit_display }}
+                                        {% else %}
+                                            Overall
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <progress class="w-full h-1.5 shadow-sm progress progress-success"
+                                          value="{{ item.progress_pct }}"
+                                          max="100"></progress>
+                            </div>
+                        </td>
+                        {# Status #}
+                        <td class="text-center">
+                            <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-{{ item.status_color }}-50 text-{{ item.status_color }}-700 ring-1 ring-inset ring-{{ item.status_color }}-700/10">
+                                <span class="flex h-1.5 w-1.5 rounded-full bg-{{ item.status_color }}-500 animate-pulse"></span>
+                                {{ item.status }}
+                            </div>
+                        </td>
+                        {# SPI (Schedule) - Sticky Right #}
+                        <td class="sticky right-0 z-10 text-center bg-white border-l border-gray-100 transition-colors group-hover/row:bg-indigo-50/20">
+                            <div class="badge {% if item.spi >= 1 %}badge-success{% elif item.spi >= 0.8 %}badge-warning{% else %}badge-error{% endif %} badge-sm font-mono text-[9px] font-bold ring-1 ring-inset ring-black/5">
+                                {{ item.spi|floatformat:2 }}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="p-16 text-center">
+                            <div class="flex flex-col gap-3 items-center opacity-40">
+                                {% heroicon_outline "chart-bar" class="w-12 h-12 text-gray-300" %}
+                                <p class="text-sm italic text-gray-500">No active production data detected in the current schedule.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

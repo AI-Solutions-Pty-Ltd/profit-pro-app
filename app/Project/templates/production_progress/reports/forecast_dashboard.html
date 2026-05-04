@@ -16,7 +16,7 @@
     <!-- Filter Header -->
     <div class="flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center">
         <div>
-            <h2 class="text-2xl font-bold tracking-tight text-gray-900">Costing Forecasting</h2>
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900">Forecasting</h2>
             <p class="mt-1 text-sm text-gray-600">Predictive analytics for production budgets and timelines</p>
         </div>
         <div class="flex items-center space-x-3">
@@ -67,9 +67,18 @@
                         <div class="text-xs font-bold text-gray-500 uppercase">Complete</div>
                     </div>
                 </div>
-                <div class="mb-6 w-full h-3 bg-gray-100 rounded-full">
-                    <div class="h-3 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-1000"
-                         style="width: {{ summary.progress_pct }}%"></div>
+                <div class="mb-6">
+                    <progress class="w-full h-3 progress progress-primary"
+                              value="{{ summary.progress_pct }}"
+                              max="100"></progress>
+                    <div class="flex justify-between items-end mt-2">
+                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                            Completed: <span class="text-gray-900">{{ summary.completed_units|floatformat:1 }}</span>
+                        </div>
+                        <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+                            {{ selected_plan.quantity|floatformat:1 }} {{ selected_plan.unit_display }}
+                        </div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-8">
                     <div>
@@ -118,54 +127,54 @@
             </div>
         </div>
         <!-- KPI Grid -->
-        <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
-            <!-- Avg Daily Output -->
-            <div class="p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
-                <div class="flex items-center mb-4">
-                    <div class="flex justify-center items-center mr-3 w-10 h-10 text-blue-600 bg-blue-50 rounded-xl">
-                        {% heroicon_outline "chart-bar" class="w-5 h-5" %}
+        <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-4">
+            <!-- SPI Card -->
+            <div class="p-3 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="flex justify-center items-center w-8 h-8 text-blue-600 bg-blue-50 rounded-lg">
+                        {% heroicon_outline "clock" class="w-4 h-4" %}
                     </div>
-                    <h3 class="text-xs font-bold text-gray-500 uppercase">Avg Daily Output</h3>
+                    <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">SPI (Schedule)</h3>
                 </div>
-                <div class="flex justify-between items-end">
-                    <div class="text-2xl font-bold tabular-nums text-gray-900">
-                        {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs font-bold text-gray-600">{{ selected_plan.unit }}</span>
-                    </div>
-                    <div class="text-sm font-bold {% if kpis.daily_output.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
+                <div class="flex justify-between items-baseline">
+                    <div class="text-xl font-black tabular-nums text-gray-900">{{ kpis.daily_output.index|floatformat:2 }}</div>
+                    <div class="text-[10px] font-bold {% if kpis.daily_output.index >= 1 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.daily_output.variance|stringformat:"+0.1f" }}%
                     </div>
                 </div>
             </div>
-            <!-- Cost Per Unit -->
-            <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
-                <div class="flex items-center mb-4">
-                    <div class="flex justify-center items-center mr-3 w-10 h-10 text-emerald-600 bg-emerald-50 rounded-xl">
-                        {% heroicon_outline "tag" class="w-5 h-5" %}
+            <!-- Avg Daily Output -->
+            <div class="p-3 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="flex justify-center items-center w-8 h-8 text-blue-600 bg-blue-50 rounded-lg">
+                        {% heroicon_outline "chart-bar" class="w-4 h-4" %}
                     </div>
-                    <h3 class="text-xs font-bold text-gray-500 uppercase">Cost Per Unit</h3>
+                    <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Avg Output</h3>
                 </div>
-                <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black tabular-nums text-gray-900">R {{ kpis.cost.actual|floatformat:2 }}</div>
-                    <div class="text-sm font-bold {% if kpis.cost.variance <= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
-                        {{ kpis.cost.variance|stringformat:"+0.1f" }}%
-                    </div>
+                <div class="text-lg font-bold tabular-nums text-gray-900">
+                    {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-[10px] font-bold text-gray-400">{{ selected_plan.unit_display }}</span>
                 </div>
             </div>
-            <!-- Work Productivity -->
-            <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
-                <div class="flex items-center mb-4">
-                    <div class="flex justify-center items-center mr-3 w-10 h-10 text-purple-600 bg-purple-50 rounded-xl">
-                        {% heroicon_outline "bolt" class="w-5 h-5" %}
+            <!-- Cost Per Unit -->
+            <div class="p-3 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="flex justify-center items-center w-8 h-8 text-emerald-600 bg-emerald-50 rounded-lg">
+                        {% heroicon_outline "tag" class="w-4 h-4" %}
                     </div>
-                    <h3 class="text-xs font-bold text-gray-500 uppercase">Work Productivity</h3>
+                    <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Unit Cost</h3>
                 </div>
-                <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black tabular-nums text-gray-900">
-                        {{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs font-bold">U/MH</span>
+                <div class="text-lg font-bold tabular-nums text-gray-900">R {{ kpis.cost.actual|floatformat:0 }}</div>
+            </div>
+            <!-- Work Productivity -->
+            <div class="p-3 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex gap-2 items-center mb-2">
+                    <div class="flex justify-center items-center w-8 h-8 text-purple-600 bg-purple-50 rounded-lg">
+                        {% heroicon_outline "users" class="w-4 h-4" %}
                     </div>
-                    <div class="text-sm font-bold {% if kpis.productivity.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
-                        {{ kpis.productivity.variance|stringformat:"+0.1f" }}%
-                    </div>
+                    <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Productivity</h3>
+                </div>
+                <div class="text-lg font-bold tabular-nums text-gray-900">
+                    {{ kpis.productivity.actual|floatformat:2 }} <span class="text-[10px] font-bold text-gray-400">U/MH</span>
                 </div>
             </div>
         </div>

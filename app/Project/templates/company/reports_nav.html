@@ -1,4 +1,4 @@
-<nav class="flex overflow-hidden gap-x-2 mb-4 text-xs bg-white border-b border-gray-300"
+<nav class="flex overflow-hidden gap-x-2 mb-4 text-xs border-gray-300"
      aria-label="Dashboard tabs">
     {% if project %}
         {% url 'project:productivity-report' project.pk as url_prod %}
@@ -8,14 +8,15 @@
         {% url 'project:profitability-performance-report' project.pk as url_prof %}
         {% url 'project:production-cashflow-forecast' project.pk as url_cashflow %}
         {% url 'project:contractors-report' project.pk as url_contractors %}
+        {% url 'project:production-integrated-control' project.pk as url_integrated %}
     {% elif company %}
         {% url 'project:productivity-report' company.pk as url_prod %}
         {% url 'project:performance-report' company.pk as url_perf %}
         {% url 'project:progress-report-view' company.pk as url_prog %}
-        {% url 'project:production-schedule-report' company.pk as url_sched %}
         {% url 'project:profitability-performance-report' company.pk as url_prof %}
         {% url 'project:production-cashflow-forecast' company.pk as url_cashflow %}
         {% url 'project:contractors-report' company.pk as url_contractors %}
+        {% url 'project:production-integrated-control' company.pk as url_integrated %}
     {% endif %}
     {% if project or company %}
         <a href="{{ url_prod }}"
@@ -28,21 +29,23 @@
             {% heroicon_outline "arrow-path" class="inline mr-2 w-5 h-5" %}
             Cashflow
         </a>
-        <a href="{{ url_perf }}"
-           class="border-b-2 {% if tab == 'production_performance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% comment %} <a href="{{ url_perf }}" class="border-b-2 {% if tab == 'production_performance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "chart-pie" class="inline mr-2 w-5 h-5" %}
             Performance Report
+        </a> {% endcomment %}
+        <a href="{{ url_integrated }}"
+           class="border-b-2 {% if tab == 'integrated_control' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+            {% heroicon_outline "command-line" class="inline mr-2 w-5 h-5" %}
+            Progress Report
         </a>
-        <a href="{{ url_prog }}"
-           class="border-b-2 {% if tab == 'production_progress_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% comment %} <a href="{{ url_prog }}" class="border-b-2 {% if tab == 'production_progress_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "presentation-chart-line" class="inline mr-2 w-5 h-5" %}
             Progress Report
         </a>
-        <a href="{{ url_sched }}"
-           class="border-b-2 {% if tab == 'schedule_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        <a href="{{ url_sched }}" class="border-b-2 {% if tab == 'schedule_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "calendar-days" class="inline mr-2 w-5 h-5" %}
             Schedule Report
-        </a>
+        </a> {% endcomment %}
         <a href="{{ url_prof }}"
            class="border-b-2 {% if tab == 'profitability_performance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "presentation-chart-line" class="inline mr-2 w-5 h-5" %}
