@@ -444,15 +444,30 @@
             
             <!-- Dependency / Predecessor Management -->
             <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
-                <h3 class="mb-4 text-xs font-bold tracking-widest text-gray-500 uppercase">Scheduling Dependencies</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-bold tracking-widest text-gray-500 uppercase">Scheduling Dependencies</h3>
+                    <button type="button" 
+                            id="btn-add-predecessor"
+                            class="inline-flex items-center px-2.5 py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors uppercase tracking-widest">
+                        {% heroicon_mini "plus" class="mr-1 w-3.5 h-3.5" %}
+                        Add 
+                    </button>
+                </div>
                 
                 <form method="post" id="dependency-form">
                     {% csrf_token %}
                     {{ dependency_formset.management_form }}
                     
-                    <div class="space-y-4">
+                    <div id="dependency-list" class="space-y-4">
+                        <div id="dependency-empty-state" class="{% if plan.predecessors.exists %}hidden{% endif %} p-8 text-center rounded-lg border-2 border-gray-100 border-dashed bg-gray-50/30">
+                            <div class="flex justify-center mb-2 text-gray-300">
+                                {% heroicon_outline "link" class="w-8 h-8" %}
+                            </div>
+                            <p class="text-xs font-medium text-gray-400">No predecessors defined yet.</p>
+                            <p class="mt-1 text-[10px] text-gray-400 uppercase tracking-widest">Use the add button to link activities</p>
+                        </div>
                         {% for form in dependency_formset %}
-                            <div class="relative p-3 rounded-lg border border-gray-100 bg-gray-50/50 group">
+                            <div class="relative p-3 rounded-lg border border-gray-100 bg-gray-50/50 group {% if not form.instance.pk %}hidden extra-form-row{% endif %}">
                                 {{ form.id }}
                                 <div class="flex justify-between items-center mb-2">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase">Predecessor {{ forloop.counter }}</label>
@@ -473,6 +488,19 @@
                             </div>
                         {% endfor %}
                     </div>
+
+                    <!-- Hidden Empty Form Template -->
+                    <template id="dependency-form-template">
+                        <div class="relative p-3 rounded-lg border border-gray-100 duration-300 bg-gray-50/50 group animate-in slide-in-from-top-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">New Predecessor</label>
+                                <button type="button" class="text-gray-400 transition-colors hover:text-red-500 btn-remove-form">
+                                    {% heroicon_mini "x-mark" class="w-4 h-4" %}
+                                </button>
+                            </div>
+                            {{ dependency_formset.empty_form.predecessor|as_crispy_field }}
+                        </div>
+                    </template>
                     
                     <div class="flex gap-3 mt-6">
                         <button type="button"
@@ -634,6 +662,65 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dependencyForm) {
         captureInitialValues(dependencyForm);
 
+        const dependencyList = document.getElementById('dependency-list');
+        const emptyState = document.getElementById('dependency-empty-state');
+        const addBtn = document.getElementById('btn-add-predecessor');
+        const totalForms = document.getElementById('id_predecessors-TOTAL_FORMS');
+        const formTemplate = document.getElementById('dependency-form-template');
+
+        function updateEmptyState() {
+            if (emptyState) {
+                // Count visible forms (excluding id inputs and the empty state itself)
+                const visibleForms = dependencyList.querySelectorAll('.relative.p-3:not(#dependency-empty-state):not(.hidden)');
+                if (visibleForms.length === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+            }
+        }
+
+        if (addBtn && formTemplate && totalForms) {
+            addBtn.addEventListener('click', function() {
+                // First, check if there's a hidden extra form row (the one from Django extra=1)
+                const hiddenExtra = dependencyList.querySelector('.extra-form-row.hidden');
+                if (hiddenExtra) {
+                    hiddenExtra.classList.remove('hidden');
+                    hiddenExtra.classList.add('animate-in', 'slide-in-from-top-2');
+                    updateEmptyState();
+                    if (saveDepsBtn) saveDepsBtn.disabled = false;
+                    if (cancelDepsBtn) cancelDepsBtn.classList.remove('opacity-0');
+                    return;
+                }
+
+                // If no hidden extra form, clone the template
+                const index = parseInt(totalForms.value);
+                const clone = formTemplate.content.cloneNode(true);
+                
+                // Replace __prefix__ with index
+                const html = clone.firstElementChild.innerHTML.replace(/__prefix__/g, index);
+                clone.firstElementChild.innerHTML = html;
+                
+                // Add event listener for the remove button
+                const removeBtn = clone.querySelector('.btn-remove-form');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function() {
+                        this.closest('.relative').remove();
+                        updateEmptyState();
+                        if (saveDepsBtn) saveDepsBtn.disabled = false;
+                        if (cancelDepsBtn) cancelDepsBtn.classList.remove('opacity-0');
+                    });
+                }
+
+                dependencyList.appendChild(clone);
+                totalForms.value = index + 1;
+                
+                updateEmptyState();
+                if (saveDepsBtn) saveDepsBtn.disabled = false;
+                if (cancelDepsBtn) cancelDepsBtn.classList.remove('opacity-0');
+            });
+        }
+
         dependencyForm.addEventListener('change', function() {
             if (saveDepsBtn) saveDepsBtn.disabled = false;
             if (cancelDepsBtn) cancelDepsBtn.classList.remove('opacity-0');
@@ -646,6 +733,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (cancelDepsBtn) {
             cancelDepsBtn.addEventListener('click', function() {
+                // If we added dynamic forms, we should probably just reload or reset the whole form.
+                // For simplicity, let's just reset the values of existing forms.
+                // Dynamic forms added will stay but be empty/initial? 
+                // Actually, a reload is cleaner if dynamic forms were added, 
+                // but since the user wants a "clear form not reload" I'll try to just remove them.
+                
+                const dynamicForms = dependencyList.querySelectorAll('.btn-remove-form');
+                dynamicForms.forEach(btn => btn.closest('.relative').remove());
+                
+                // Re-hide extra rows (the ones from Django extra=1)
+                const extraRows = dependencyList.querySelectorAll('.extra-form-row');
+                extraRows.forEach(row => row.classList.add('hidden'));
+                
+                // Reset management form
+                totalForms.value = dependencyList.querySelectorAll('.relative.p-3:not(#dependency-empty-state)').length;
+
                 const inputs = dependencyForm.querySelectorAll('input, select');
                 inputs.forEach(input => {
                     if (initialValues.has(input.name)) {
@@ -661,6 +764,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 });
+                
+                updateEmptyState();
                 if (saveDepsBtn) saveDepsBtn.disabled = true;
                 cancelDepsBtn.classList.add('opacity-0');
             });
