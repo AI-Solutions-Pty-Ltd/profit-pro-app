@@ -32,7 +32,7 @@
                                     {% heroicon_mini "chevron-right" class="w-4 h-4 text-gray-300" %}
                                     <a href="{% url 'project:production-plan-detail' project.pk plan.parent.pk %}"
                                        class="ml-2 text-xs font-bold tracking-widest text-gray-400 uppercase hover:text-indigo-600">
-                                        {{ plan.parent.activity|truncatechars:20 }}
+                                        {{ plan.parent.activity|truncatechars:100 }}
                                     </a>
                                 </div>
                             </li>
@@ -60,19 +60,44 @@
                         {% endif %}
                     </div>
                     <div class="flex items-center space-x-3">
-                        <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}"
-                           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
+                        {% comment %} <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
                             {% heroicon_outline "pencil-square" class="mr-2 w-4 h-4 text-gray-400" %}
                             Edit Settings
                         </a>
                         {% if plan.node_type == 'ACTIVITY' %}
-                            <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ plan.pk }}"
-                               class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm transition-all hover:bg-indigo-500">
+                            <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ plan.pk }}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm transition-all hover:bg-indigo-500">
                                 {% heroicon_outline "banknotes" class="mr-2 w-4 h-4" %}
                                 Manage Costs
                             </a>
-                        {% endif %}
+                        {% endif %} {% endcomment %}
+                        <!-- View Toggle -->
+                        <div class="flex items-center p-1 bg-white rounded-md border border-gray-200 shadow-sm">
+                            <a href="{% url 'project:production-planning' project.pk %}"
+                               class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 rounded-lg border-r border-gray-100 transition-colors hover:bg-gray-50">
+                                {% heroicon_outline "list-bullet" class="mr-1.5 w-4 h-4" %} List
+                            </a>
+                        </div>
                     </div>
+                </div>
+            </div>
+            <!-- Activity Navigation -->
+            <div class="px-6 py-3 border-t border-gray-200 bg-gray-50/50">
+                <div class="flex gap-8 items-center">
+                    <a href="{% url 'project:production-cost-breakdown-detail' project.pk plan.pk %}"
+                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-400">
+                        {% heroicon_mini "banknotes" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                        Costing Breakdown
+                    </a>
+                    <a href="{% url 'project:production-forecast-dashboard' project.pk %}?plan_id={{ plan.pk }}"
+                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-400">
+                        {% heroicon_mini "chart-bar" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                        Forecast Dashboard
+                    </a>
+                    <a href="{% url 'project:production-daily-log-list' project.pk %}?plan_id={{ plan.pk }}"
+                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-400">
+                        {% heroicon_mini "clipboard-document-list" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                        Daily Logs
+                    </a>
                 </div>
             </div>
             <!-- Metric Cards -->
@@ -436,7 +461,7 @@
                         {{ dependency_formset.management_form }}
                         <div id="dependency-list" class="space-y-4">
                             <div id="dependency-empty-state"
-                                 class="{% if plan.predecessors.exists %}hidden{% endif %} p-8 text-center rounded-lg border-2 border-gray-100 border-dashed bg-gray-50/30">
+                                 class="{% if plan.predecessors.exists %}hidden{% endif %}  text-center">
                                 <div class="flex justify-center mb-2 text-gray-300">{% heroicon_outline "link" class="w-8 h-8" %}</div>
                                 <p class="text-xs font-medium text-gray-400">No predecessors defined yet.</p>
                                 <p class="mt-1 text-[10px] text-gray-400 uppercase tracking-widest">Use the add button to link activities</p>
