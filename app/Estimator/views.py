@@ -120,6 +120,22 @@ def _pagination_query_params(request):
     return params.urlencode()
 
 
+def _flash_sync_result(request, result, entity_label):
+    """Flash a success/error message for a project-side contractor sync."""
+    if result.get("skipped_no_contractor"):
+        messages.error(
+            request,
+            f"Cannot sync {entity_label}: this project has no contractor "
+            "assigned. Set one in project setup.",
+        )
+        return
+    messages.success(
+        request,
+        f"{entity_label} synced from contractor library — "
+        f"{result['updated']} updated, {result['created']} new.",
+    )
+
+
 class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
     template_name = "estimator/project_assumptions.html"
 
@@ -642,11 +658,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
             from .services import sync_material_specs_from_contractor
 
             result = sync_material_specs_from_contractor(project)
-            messages.success(
-                request,
-                f"Material specs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Material specs")
             return redirect(
                 reverse(
                     "estimator:material_specs",
@@ -701,11 +713,7 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
             from .services import sync_materials_from_contractor
 
             result = sync_materials_from_contractor(self.get_project())
-            messages.success(
-                request,
-                f"Material costs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Material costs")
             return redirect(
                 reverse("estimator:materials", kwargs={"project_pk": project_pk})
             )
@@ -744,11 +752,7 @@ class LabourCostListView(ProjectEstimatorMixin, ListView):
             from .services import sync_labour_costs_from_contractor
 
             result = sync_labour_costs_from_contractor(self.get_project())
-            messages.success(
-                request,
-                f"Labour costs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Labour costs")
             return redirect(
                 reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
             )
@@ -2916,11 +2920,7 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
             from .services import sync_labour_specs_from_contractor
 
             result = sync_labour_specs_from_contractor(project)
-            messages.success(
-                request,
-                f"Labour specs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Labour specs")
             return redirect(
                 reverse(
                     "estimator:labour_spec_defs",
@@ -2966,11 +2966,7 @@ class PlantCostListView(ProjectEstimatorMixin, ListView):
             from .services import sync_plant_costs_from_contractor
 
             result = sync_plant_costs_from_contractor(self.get_project())
-            messages.success(
-                request,
-                f"Plant costs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Plant costs")
             return redirect(
                 reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
             )
@@ -3075,11 +3071,7 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
             from .services import sync_plant_specs_from_contractor
 
             result = sync_plant_specs_from_contractor(project)
-            messages.success(
-                request,
-                f"Plant specs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Plant specs")
             return redirect(
                 reverse(
                     "estimator:plant_spec_defs",
@@ -3312,11 +3304,7 @@ class PreliminaryCostListView(ProjectEstimatorMixin, ListView):
             from .services import sync_preliminary_costs_from_contractor
 
             result = sync_preliminary_costs_from_contractor(self.get_project())
-            messages.success(
-                request,
-                f"Preliminary costs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Preliminary costs")
             return redirect(
                 reverse(
                     "estimator:preliminary_costs",
@@ -3412,11 +3400,7 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
             from .services import sync_preliminary_specs_from_contractor
 
             result = sync_preliminary_specs_from_contractor(project)
-            messages.success(
-                request,
-                f"Preliminary specs synced with system library — "
-                f"{result['updated']} updated, {result['created']} new.",
-            )
+            _flash_sync_result(request, result, "Preliminary specs")
             return redirect(
                 reverse(
                     "estimator:preliminary_spec_defs",

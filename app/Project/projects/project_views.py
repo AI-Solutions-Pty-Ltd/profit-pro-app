@@ -424,7 +424,13 @@ class ProjectSetupView(ProjectMixin, DetailView):
 
             try:
                 result = initialize_project_estimator(project)
-                if result.get("status") == "already_initialized":
+                if result.get("status") == "no_contractor_company":
+                    messages.error(
+                        request,
+                        "This project has no contractor assigned. Set a "
+                        "contractor on the project before cloning the library.",
+                    )
+                elif result.get("status") == "already_initialized":
                     messages.warning(
                         request,
                         "This project already has estimator data. "
@@ -433,7 +439,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
                 else:
                     messages.success(
                         request,
-                        f"System library cloned — "
+                        f"Contractor library cloned — "
                         f"{result['trade_codes']} trade codes, "
                         f"{result['materials']} materials, "
                         f"{result['labour_crews']} labour crews, "
@@ -441,7 +447,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
                         f"{result['labour_specs']} labour specs.",
                     )
             except Exception as e:
-                messages.error(request, f"Clone from system failed: {e}")
+                messages.error(request, f"Clone from contractor library failed: {e}")
 
         elif action == "clone_project":
             from django.shortcuts import get_object_or_404
