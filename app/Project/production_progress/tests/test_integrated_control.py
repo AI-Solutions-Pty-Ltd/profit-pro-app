@@ -1,10 +1,13 @@
 """Tests for Integrated Control views."""
 
-import pytest
 from decimal import Decimal
+
+import pytest
 from django.urls import reverse
-from app.Project.tests.factories import ProjectFactory
+
 from app.Project.production_progress.factories import ProductionPlanFactory
+from app.Project.tests.factories import ProjectFactory
+
 
 @pytest.mark.django_db
 class TestIntegratedControlView:
@@ -26,7 +29,7 @@ class TestIntegratedControlView:
             is_leaf=False,
             activity="Section 1",
             section="Section 1",
-            quantity=Decimal("1.0")
+            quantity=Decimal("1.0"),
         )
         bill = ProductionPlanFactory(
             project=project,
@@ -36,9 +39,9 @@ class TestIntegratedControlView:
             activity="Bill 1",
             section="Section 1",
             bill_no="1",
-            quantity=Decimal("1.0")
+            quantity=Decimal("1.0"),
         )
-        leaf = ProductionPlanFactory(
+        ProductionPlanFactory(
             project=project,
             parent=bill,
             node_type="ACTIVITY",
@@ -46,10 +49,12 @@ class TestIntegratedControlView:
             activity="Activity 1",
             section="Section 1",
             bill_no="1",
-            quantity=Decimal("100.0")
+            quantity=Decimal("100.0"),
         )
 
-        url = reverse("project:production-integrated-control", kwargs={"project_pk": project.pk})
+        url = reverse(
+            "project:production-integrated-control", kwargs={"project_pk": project.pk}
+        )
         response = client.get(url)
 
         assert response.status_code == 200

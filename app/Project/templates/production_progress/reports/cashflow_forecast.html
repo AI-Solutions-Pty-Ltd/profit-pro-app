@@ -62,17 +62,15 @@
                         </div>
                     </div>
                 </div>
-                
                 <div class="flex gap-3 items-center">
                     <button onclick="window.print()"
                             class="gap-2 text-gray-700 bg-white border border-gray-200 btn btn-sm hover:bg-gray-50">
                         {% heroicon_outline "printer" class="w-4 h-4" %}
-                        <span class="text-xs font-bold tracking-wider uppercase">Export </span>
+                        <span class="text-xs font-bold tracking-wider uppercase">Export</span>
                     </button>
                 </div>
             </div>
         </div>
-
         <div class="px-6 mx-auto">
             <!-- Control Bar -->
             <div class="flex flex-col gap-8 justify-between items-end p-5 mb-8 bg-white rounded-xl border border-gray-100 shadow-sm md:flex-row">
@@ -80,8 +78,13 @@
                 <div class="flex flex-col gap-3 w-full sm:w-72">
                     <div class="flex justify-between items-center px-0.5">
                         <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Analysis History</label>
-                        <span id="historyVal" class="px-2 py-0.5 font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 rounded border border-indigo-100">
-                            {% if current_history == 0 %}All Time{% else %}{{ current_history }} Months{% endif %}
+                        <span id="historyVal"
+                              class="px-2 py-0.5 font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 rounded border border-indigo-100">
+                            {% if current_history == 0 %}
+                                All Time
+                            {% else %}
+                                {{ current_history }} Months
+                            {% endif %}
                         </span>
                     </div>
                     <div class="relative px-1">
@@ -102,12 +105,12 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Forecast Horizon Slider -->
                 <div class="flex flex-col gap-3 w-full sm:w-72">
                     <div class="flex justify-between items-center px-0.5">
                         <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Forecast Horizon</label>
-                        <span id="horizonVal" class="px-2 py-0.5 font-mono text-[10px] font-bold text-blue-700 bg-blue-50 rounded border border-blue-100">
+                        <span id="horizonVal"
+                              class="px-2 py-0.5 font-mono text-[10px] font-bold text-blue-700 bg-blue-50 rounded border border-blue-100">
                             {{ current_horizon|capfirst }}
                         </span>
                     </div>
@@ -128,10 +131,7 @@
                         </div>
                     </div>
                 </div>
-
-              
             </div>
-
             <!-- KPI Dashboard -->
             {% comment %} <div class="grid grid-cols-1 gap-6 mb-10 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Total Project Budget -->
@@ -267,7 +267,6 @@
                         <span class="text-xl font-black tracking-tight text-gray-900">Forecast Ledger</span>
                     </div>
                 </div>
-
                 <div class="overflow-x-auto max-h-[calc(100vh-300px)] scrollbar-thin scrollbar-thumb-slate-300">
                     <table class="w-full text-sm text-left text-gray-600">
                         <thead class="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase tracking-widest">

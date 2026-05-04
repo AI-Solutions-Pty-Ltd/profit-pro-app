@@ -573,7 +573,8 @@ class ProductionControllerView(
                         float(
                             sum(
                                 [
-                                    Decimal(str(k["daily_output"]["index"])) * lc.quantity
+                                    Decimal(str(k["daily_output"]["index"]))
+                                    * lc.quantity
                                     for k, lc in zip(
                                         child_kpis, leaf_children, strict=False
                                     )
