@@ -15,11 +15,11 @@
         <div class="flex flex-col gap-6 mb-8 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex gap-4 items-center">
                 <a href="{% url 'project:production-daily-log-list' project_pk=project.pk %}"
-                   class="p-2.5 text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:text-indigo-600 hover:border-indigo-100 group">
+                   class="p-2.5 text-gray-800 bg-white rounded border border-gray-200 shadow-sm transition-all hover:text-indigo-600 hover:border-indigo-100 group">
                     {% heroicon_outline "chevron-left" class="w-5 h-5 transition-transform group-hover:-translate-x-0.5" %}
                 </a>
                 <div>
-                    <h1 class="text-3xl font-black tracking-tight text-gray-900">
+                    <h1 class="text-3xl font-bold tracking-tight text-gray-900">
                         {% if report %}
                             Edit Daily Activity
                         {% else %}
@@ -41,8 +41,8 @@
             </div>
             <div class="flex gap-3 items-center">
                 <button type="button"
-                        onclick="submitLogForm()"
-                        class="flex items-center px-6 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg transition-all hover:bg-indigo-700 shadow-indigo-200 active:scale-95">
+                        onclick="submitLogForm(event)"
+                        class="flex items-center px-6 py-3 text-sm font-bold text-white bg-indigo-600 rounded shadow-lg transition-all hover:bg-indigo-700 shadow-indigo-200 active:scale-95">
                     {% heroicon_outline "check-circle" class="mr-2 w-5 h-5" %}
                     {% if report %}
                         Update Daily Log
@@ -54,46 +54,65 @@
         </div>
         <!-- Main Content -->
         <div class="space-y-6">
-            <!-- Report Metadata -->
-            <div class="overflow-hidden relative p-8 bg-white rounded-3xl border border-gray-200 shadow-sm">
+            <!-- Bulk Apply Settings -->
+            <div class="overflow-hidden relative p-8 bg-white rounded-xl border border-gray-200 shadow-sm">
                 <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                    {% heroicon_outline "calendar" class="w-24 h-24" %}
+                    {% heroicon_outline "sparkles" class="w-24 h-24" %}
                 </div>
-                <div class="relative z-10 max-w-sm">
-                    <label class="block mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase ml-1">Report Date</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-500">
-                            {% heroicon_outline "calendar-days" class="w-5 h-5" %}
+                <div class="flex flex-col gap-6 lg:flex-row lg:items-end">
+                    <div class="relative z-10 flex-grow max-w-sm">
+                        <label class="block mb-2 ml-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Global Date</label>
+                        <div class="relative">
+                            <div class="flex absolute inset-y-0 left-0 items-center pl-4 text-indigo-500 pointer-events-none">
+                                {% heroicon_outline "calendar-days" class="w-5 h-5" %}
+                            </div>
+                            <input type="date"
+                                   id="bulk_date"
+                                   value="{% if entry %}{{ entry.date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}"
+                                   class="py-3.5 pr-4 pl-11 w-full text-sm font-bold bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all focus:ring-2 focus:ring-indigo-600">
                         </div>
-                        <input type="date"
-                               id="report_date"
-                               value="{% if report %}{{ report.date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}"
-                               class="pl-11 pr-4 py-3.5 w-full text-sm font-bold bg-gray-50 rounded-2xl border-0 ring-1 ring-inset ring-gray-200 transition-all focus:ring-2 focus:ring-indigo-600">
                     </div>
+                    <div class="relative z-10 flex-grow">
+                        <label class="block mb-2 ml-1 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                            Global Narrative (Optional)
+                        </label>
+                        <div class="relative">
+                            <input type="text"
+                                   id="bulk_notes"
+                                   placeholder="Describe work done across all activities..."
+                                   class="px-4 py-3.5 w-full text-sm bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all focus:ring-2 focus:ring-indigo-600">
+                        </div>
+                    </div>
+                    <button type="button"
+                            onclick="applyGlobalSettings()"
+                            class="flex items-center px-6 py-3.5 text-sm font-bold text-indigo-600 whitespace-nowrap bg-indigo-50 rounded-lg border border-indigo-100 transition-all hover:bg-indigo-100 active:scale-95">
+                        {% heroicon_outline "arrow-down-circle" class="mr-2 w-5 h-5" %}
+                        Apply to All Rows
+                    </button>
                 </div>
             </div>
             <!-- Activities Section -->
             <div id="activities-container" class="space-y-6">
                 <!-- Empty State -->
                 <div id="activities-empty-state"
-                     class="flex flex-col justify-center items-center py-20 px-6 text-center bg-gray-50/50 rounded-3xl border-2 border-gray-100 border-dashed animate-in fade-in zoom-in-95">
-                    <div class="p-6 mb-6 bg-white rounded-full shadow-sm ring-8 ring-gray-50">
+                     class="flex flex-col justify-center items-center px-6 py-20 text-center rounded-xl border-2 border-gray-100 border-dashed bg-gray-50/50 animate-in fade-in zoom-in-95">
+                    <div class="p-6 mb-6 bg-white rounded-full ring-8 ring-gray-50 shadow-sm">
                         {% heroicon_outline "clipboard-document-list" class="w-12 h-12 text-gray-300" %}
                     </div>
-                    <h3 class="mb-2 text-xl font-black text-gray-900">No Activities Found</h3>
+                    <h3 class="mb-2 text-xl font-bold text-gray-900">No Activities Found</h3>
                     <p class="mb-8 max-w-sm text-sm font-medium text-gray-500">
                         Your daily log is currently empty. Start capturing progress by adding activities from your project's production plan.
                     </p>
                     <div class="flex flex-col gap-4 w-full sm:flex-row sm:justify-center sm:gap-6">
                         <button type="button"
                                 onclick="openBulkAddModal()"
-                                class="inline-flex justify-center items-center px-8 py-4 text-sm font-bold text-white bg-indigo-600 rounded-2xl shadow-lg transition-all shadow-indigo-100 hover:bg-indigo-700 active:scale-95">
+                                class="inline-flex justify-center items-center px-8 py-4 text-sm font-bold text-white bg-indigo-600 rounded-lg shadow-lg transition-all shadow-indigo-100 hover:bg-indigo-700 active:scale-95">
                             {% heroicon_outline "squares-plus" class="mr-2 w-5 h-5" %}
                             Bulk Add Activities
                         </button>
                         <button type="button"
                                 onclick="openBulkAddModal()"
-                                class="inline-flex justify-center items-center px-8 py-4 text-sm font-bold text-gray-600 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:bg-gray-50 active:scale-95">
+                                class="inline-flex justify-center items-center px-8 py-4 text-sm font-bold text-gray-600 bg-white rounded-lg border border-gray-200 shadow-sm transition-all hover:bg-gray-50 active:scale-95">
                             {% heroicon_outline "plus" class="mr-2 w-5 h-5" %}
                             Pick Single Activity
                         </button>
@@ -106,8 +125,8 @@
                  class="hidden flex-col gap-4 justify-center items-center py-4 border-t border-gray-100 sm:flex-row sm:gap-6">
                 <button type="button"
                         onclick="openBulkAddModal()"
-                        class="inline-flex relative items-center px-8 py-4 text-sm font-bold text-gray-400 bg-white rounded-2xl border-2 border-gray-200 border-dashed transition-all duration-300 group hover:border-indigo-400 hover:text-indigo-600">
-                    <div class="p-2 mr-3 bg-gray-50 rounded-xl transition-colors group-hover:bg-indigo-50">
+                        class="inline-flex relative items-center px-8 py-4 text-sm font-bold text-gray-800 bg-white rounded-lg border-2 border-gray-200 border-dashed transition-all duration-300 group hover:border-indigo-400 hover:text-indigo-600">
+                    <div class="p-2 mr-3 bg-gray-50 rounded transition-colors group-hover:bg-indigo-50">
                         {% heroicon_outline "plus" class="w-5 h-5" %}
                     </div>
                     Add Another Activity
@@ -117,20 +136,20 @@
     </div>
     <!-- Bulk Add Modal -->
     <dialog id="bulk_add_modal" class="modal modal-bottom sm:modal-middle">
-        <div class="overflow-hidden p-0 max-w-2xl bg-white rounded-3xl modal-box">
+        <div class="overflow-hidden p-0 max-w-2xl bg-white rounded-xl modal-box">
             <div class="flex justify-between items-center px-8 py-6 bg-gray-50 border-b border-gray-100">
                 <div>
-                    <h3 class="text-xl font-black text-gray-900">Bulk Add Activities</h3>
+                    <h3 class="text-xl font-bold text-gray-900">Bulk Add Activities</h3>
                     <p class="mt-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Select all activities performed today</p>
                 </div>
                 <form method="dialog">
-                    <button class="text-gray-400 btn btn-sm btn-circle btn-ghost">✕</button>
+                    <button class="text-gray-800 btn btn-sm btn-circle btn-ghost">✕</button>
                 </form>
             </div>
             <div class="p-8 max-h-[60vh] overflow-y-auto">
                 <div class="grid grid-cols-1 gap-3" id="bulk-plan-list">
                     {% for plan in plans %}
-                        <label class="flex items-center p-4 rounded-2xl border border-gray-100 transition-all cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-100 group">
+                        <label class="flex items-center p-4 rounded-lg border border-gray-100 transition-all cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-100 group">
                             <input type="checkbox"
                                    class="mr-4 rounded-lg checkbox checkbox-indigo bulk-plan-check"
                                    value="{{ plan.id }}"
@@ -138,7 +157,7 @@
                                    data-unit="{{ plan.unit_display }}">
                             <div class="flex-grow">
                                 <span class="block text-sm font-bold text-gray-700 group-hover:text-indigo-700">{{ plan.activity }}</span>
-                                <span class="block mt-0.5 text-xs font-bold text-gray-400 uppercase">
+                                <span class="block mt-0.5 text-xs font-bold text-gray-800 uppercase">
                                     {{ plan.section|default:"No Section" }} / {{ plan.bill_no|default:"No Bill" }} • <span class="text-indigo-400">{{ plan.unit_display }}</span>
                                 </span>
                             </div>
@@ -154,7 +173,7 @@
                     </form>
                     <button type="button"
                             onclick="confirmBulkAdd()"
-                            class="px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg transition-all shadow-indigo-100 hover:bg-indigo-700">
+                            class="px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded shadow-lg transition-all shadow-indigo-100 hover:bg-indigo-700">
                         Add Selected
                     </button>
                 </div>
@@ -169,23 +188,23 @@
     <!-- ACTIVITY ROW TEMPLATE  -->
     <!-- ======================= -->
     <template id="activity-template">
-        <div class="overflow-hidden bg-white rounded-3xl border border-gray-200 shadow-lg duration-300 activity-row shadow-gray-100/50 group/row animate-in fade-in slide-in-from-bottom-4"
+        <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-lg duration-300 activity-row shadow-gray-100/50 group/row animate-in fade-in slide-in-from-bottom-4"
              data-index="__INDEX__">
             <!-- Row Header -->
             <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                 <div class="flex flex-grow gap-4 items-center">
-                    <div class="flex flex-shrink-0 justify-center items-center w-8 h-8 text-xs font-black text-indigo-600 bg-indigo-100 rounded-lg">
+                    <div class="flex flex-shrink-0 justify-center items-center w-8 h-8 text-xs font-bold text-indigo-600 bg-indigo-100 rounded-lg">
                         __NUM__
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-sm font-black text-gray-900 activity-title-text">__TITLE__</span>
-                        <span class="text-xs font-bold text-gray-400 uppercase activity-subtitle-text">__SUBTITLE__</span>
+                        <span class="text-sm font-bold text-gray-900 activity-title-text">__TITLE__</span>
+                        <span class="text-xs font-bold text-gray-800 uppercase activity-subtitle-text">__SUBTITLE__</span>
                         <input type="hidden" class="plan-select" value="__PLAN_ID__">
                     </div>
                 </div>
                 <button type="button"
                         onclick="removeActivity(this)"
-                        class="p-2 text-gray-400 rounded-xl transition-all hover:text-red-500 hover:bg-red-50">
+                        class="p-2 text-gray-800 rounded transition-all hover:text-red-500 hover:bg-red-50">
                     {% heroicon_outline "trash" class="w-5 h-5" %}
                 </button>
             </div>
@@ -193,35 +212,51 @@
                 <!-- Left: Production Metrics -->
                 <div class="space-y-6">
                     <div>
-                        <h4 class="flex items-center mb-4 text-xs font-black tracking-widest text-gray-400 uppercase">
-                            {% heroicon_outline "presentation-chart-line" class="mr-2 w-4 h-4" %} Progress Metrics
+                        <h4 class="flex items-center mb-4 text-xs font-bold tracking-widest text-gray-800 uppercase">
+                            {% heroicon_outline "presentation-chart-line" class="mr-2 w-4 h-4" %} Activity Detail
                         </h4>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Quantity Achieved</label>
-                                <div class="relative">
-                                    <input type="number"
-                                           step="0.01"
-                                           class="px-4 py-2.5 w-full font-mono text-sm bg-gray-50 rounded-xl border-0 ring-1 ring-inset ring-gray-200 transition-all qty-input focus:ring-2 focus:ring-indigo-600"
-                                           placeholder="0.00">
-                                    <div class="flex absolute inset-y-0 right-0 items-center pr-3 pointer-events-none">
-                                        <span class="text-xs font-bold text-gray-400 unit-display">UNIT</span>
+                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Activity Date</label>
+                                <input type="date"
+                                       class="px-4 py-2.5 w-full text-sm font-bold bg-gray-50 rounded border-0 ring-1 ring-inset ring-gray-200 transition-all entry-date focus:ring-2 focus:ring-indigo-600">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Qty Achieved</label>
+                                    <div class="relative">
+                                        <input type="number"
+                                               step="0.01"
+                                               class="px-4 py-2.5 w-full font-mono text-sm bg-gray-50 rounded border-0 ring-1 ring-inset ring-gray-200 transition-all qty-input focus:ring-2 focus:ring-indigo-600"
+                                               placeholder="0.00">
+                                        <div class="flex absolute inset-y-0 right-0 items-center pr-3 pointer-events-none">
+                                            <span class="text-xs font-bold text-gray-800 unit-display">UNIT</span>
+                                        </div>
                                     </div>
+                                </div>
+                                <div>
+                                    <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Total Hours</label>
+                                    <input type="number"
+                                           step="0.5"
+                                           class="px-4 py-2.5 w-full font-mono text-sm rounded border-0 ring-1 ring-inset ring-indigo-100 transition-all cursor-not-allowed bg-indigo-50/30 activity-hours-input focus:ring-0"
+                                           placeholder="0.0"
+                                           readonly
+                                           tabindex="-1">
                                 </div>
                             </div>
                             <div>
-                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Total Activity Hours</label>
-                                <input type="number"
-                                       step="0.5"
-                                       class="px-4 py-2.5 w-full font-mono text-sm bg-indigo-50/30 rounded-xl border-0 ring-1 ring-inset ring-indigo-100 transition-all activity-hours-input focus:ring-0 cursor-not-allowed"
-                                       placeholder="0.0"
-                                       readonly
-                                       tabindex="-1">
+                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Entry Notes / Narrative</label>
+                                <textarea rows="2"
+                                          class="px-4 py-2.5 w-full text-xs bg-gray-50 rounded border-0 ring-1 ring-inset ring-gray-200 transition-all entry-notes focus:ring-2 focus:ring-indigo-600"
+                                          placeholder="Specific details about this activity performance..."></textarea>
                             </div>
                         </div>
                     </div>
-                    <div class="pt-4 border-t border-gray-50">
-                        <h4 class="flex items-center mb-4 text-xs font-black tracking-widest text-gray-400 uppercase">
+                </div>
+                <!--Center Section-->
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="flex items-center mb-4 text-xs font-bold tracking-widest text-gray-800 uppercase">
                             {% heroicon_outline "user-group" class="mr-2 w-4 h-4" %} Labour Coverage
                         </h4>
                         <div class="space-y-4">
@@ -286,34 +321,34 @@
                     </div>
                 </div>
                 <!-- Right: Plant Usage (Span 2) -->
-                <div class="pl-8 border-l border-gray-100 lg:col-span-2">
+                <div>
                     <div class="flex justify-between items-center mb-4">
-                        <h4 class="flex items-center text-xs font-black tracking-widest text-gray-400 uppercase">
+                        <h4 class="flex items-center text-xs font-bold tracking-widest text-gray-800 uppercase">
                             {% heroicon_outline "truck" class="mr-2 w-4 h-4" %} Plant & Equipment Usage
                         </h4>
                         <div class="flex gap-4 items-center">
-                            <span class="text-xs italic font-bold text-gray-400 uppercase">Restricted to activity specs</span>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Spec-driven Options</span>
                             <button type="button"
                                     onclick="addPlantRow(this)"
                                     class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg transition-all hover:bg-indigo-100 active:scale-95">
-                                {% heroicon_outline "plus" class="w-4 h-4" %}
+                                {% heroicon_outline "plus" class="w-3.5 h-3.5" %}
                             </button>
                         </div>
                     </div>
-                    <div class="plant-table-container min-h-[100px] bg-gray-50/30 rounded-2xl border border-gray-100">
+                    <div class="plant-table-container min-h-[100px]  rounded-lg ">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="border-b border-gray-100">
-                                    <th class="px-4 py-2 text-xs font-black text-gray-400 uppercase">Plant Name / Type</th>
-                                    <th class="px-4 py-2 w-32 text-xs font-black text-center text-gray-400 uppercase">Production Hours</th>
-                                    <th class="px-4 py-2 w-10"></th>
+                                    <th class="px-4 py-2 text-xs font-bold text-gray-800 uppercase">Plant Type</th>
+                                    <th class="px-4 py-2 w-32 text-xs font-bold text-center text-gray-800 uppercase">Prod Hrs</th>
+                                    {% comment %} <th class="px-4 py-2 w-10"></th> {% endcomment %}
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50 plant-rows">
                                 <!-- Dynamic plant rows -->
                             </tbody>
                         </table>
-                        <div class="p-8 text-xs italic text-center text-gray-400 no-plants-msg">
+                        <div class="p-8 text-xs italic text-center text-gray-800 no-plants-msg">
                             No plant resources captured for this activity.
                         </div>
                     </div>
@@ -338,7 +373,7 @@
             <td class="px-3 py-2 w-10">
                 <button type="button"
                         onclick="removePlantRow(this)"
-                        class="p-1 text-gray-300 transition-all hover:text-red-500 hover:bg-red-50 rounded-md">
+                        class="p-1 text-gray-300 rounded-md transition-all hover:text-red-500 hover:bg-red-50">
                     {% heroicon_outline "trash" class="w-4 h-4" %}
                 </button>
             </td>
@@ -417,7 +452,7 @@
             
             if (data.available_plants && data.available_plants.length > 0) {
                 data.available_plants.forEach(plant => {
-                    addPlantRow(row, plant.id, plant.name);
+                    addPlantRow(row, plant.id, plant.name, plant.hours_per_day);
                 });
             }
             updatePlantEmptyState(row);
@@ -428,7 +463,7 @@
         }
     }
 
-    function addPlantRow(triggerTarget, resourceId = '', plantName = '') {
+    function addPlantRow(triggerTarget, resourceId = '', plantName = '', hours = '') {
         const row = triggerTarget.classList.contains('activity-row') ? triggerTarget : triggerTarget.closest('.activity-row');
         const availablePlants = JSON.parse(row.dataset.availablePlants || '[]');
         const tbody = row.querySelector('.plant-rows');
@@ -446,7 +481,25 @@
             select.appendChild(opt);
         });
 
-        if (resourceId) select.value = resourceId;
+        if (resourceId) {
+            // Ensure the value exists in the select, if not add it (legacy or manual)
+            let exists = false;
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value == resourceId) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists && plantName) {
+                const opt = document.createElement('option');
+                opt.value = resourceId;
+                opt.innerText = plantName;
+                select.appendChild(opt);
+            }
+            select.value = resourceId;
+        }
+        if (hours) tr.querySelector('.plant-hours-input').value = hours;
+        
         tbody.appendChild(trCloned);
         updatePlantEmptyState(row);
     }
@@ -468,15 +521,19 @@
         }
     }
 
-    async function submitLogForm() {
-        const reportDate = document.getElementById('report_date').value;
-        const reportNotes = document.getElementById('report_notes') ? document.getElementById('report_notes').value : '';
+    function applyGlobalSettings() {
+        const globalDate = document.getElementById('bulk_date').value;
+        const globalNotes = document.getElementById('bulk_notes').value;
         
-        if (!reportDate) {
-            alert('Please select a date.');
-            return;
-        }
+        document.querySelectorAll('.activity-row').forEach(row => {
+            if (globalDate) row.querySelector('.entry-date').value = globalDate;
+            if (globalNotes && !row.querySelector('.entry-notes').value) {
+                row.querySelector('.entry-notes').value = globalNotes;
+            }
+        });
+    }
 
+    async function submitLogForm(event) {
         const activityRows = document.querySelectorAll('.activity-row');
         if (activityRows.length === 0) {
             alert('Please add at least one activity.');
@@ -484,8 +541,20 @@
         }
 
         const entries = [];
+        let hasError = false;
+
         activityRows.forEach(row => {
             const planId = row.querySelector('.plan-select').value;
+            const entryDate = row.querySelector('.entry-date').value;
+            const entryNotes = row.querySelector('.entry-notes').value;
+
+            if (!entryDate) {
+                row.querySelector('.entry-date').classList.add('ring-red-500', 'ring-2');
+                hasError = true;
+            } else {
+                row.querySelector('.entry-date').classList.remove('ring-red-500', 'ring-2');
+            }
+
             const labourDetails = {};
             row.querySelectorAll('.labour-group').forEach(group => {
                 const cat = group.dataset.cat;
@@ -510,6 +579,8 @@
 
             entries.push({
                 production_plan_id: planId,
+                date: entryDate,
+                notes: entryNotes,
                 quantity: row.querySelector('.qty-input').value || 0,
                 hours_on_activity: row.querySelector('.activity-hours-input').value || 0,
                 labour_details: labourDetails,
@@ -517,11 +588,21 @@
             });
         });
 
-        const payload = { date: reportDate, notes: reportNotes, entries: entries };
-        const btn = event.target.closest('button');
+        if (hasError) {
+            alert('Please specify a date for all activities.');
+            return;
+        }
+
+        const payload = { 
+            project_id: "{{ project.id }}",
+            date: document.getElementById('bulk_date').value,
+            notes: document.getElementById('bulk_notes') ? document.getElementById('bulk_notes').value : "",
+            entries: entries 
+        };
+        const btn = event.currentTarget;
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<span class="mr-2 loading loading-spinner loading-sm"></span> Saving...`;
+        btn.innerHTML = `<span class="mr-2 loading loading-spinner loading-sm"></span> Saving Batch...`;
 
         try {
             const response = await fetch(window.location.href, {
@@ -601,7 +682,7 @@
             return;
         }
         checked.forEach(check => {
-            const subtitle = check.closest('label').querySelector('span.text-gray-400').innerText;
+            const subtitle = check.closest('label').querySelector('span.text-gray-800').innerText;
             addActivityWithPlan(check.value, check.dataset.activity, subtitle, check.dataset.unit);
         });
         document.getElementById('bulk_add_modal').close();
@@ -622,9 +703,16 @@
         const div = document.createElement('div');
         div.innerHTML = html;
         const newRow = div.firstElementChild;
+        
+        // Pre-fill date from bulk picker
+        const bulkDate = document.getElementById('bulk_date').value;
+        if (bulkDate) newRow.querySelector('.entry-date').value = bulkDate;
+        
         container.appendChild(newRow);
         
         if (entryData) {
+            newRow.querySelector('.entry-date').value = entryData.date;
+            newRow.querySelector('.entry-notes').value = entryData.notes || '';
             newRow.querySelector('.qty-input').value = entryData.quantity;
             newRow.querySelector('.activity-hours-input').value = entryData.hours_on_activity;
             newRow.querySelector('.unit-display').innerText = entryData.unit;
@@ -641,13 +729,11 @@
             if (entryData.plant_usage && entryData.plant_usage.length > 0) {
                 entryData.plant_usage.forEach(plant => {
                     const pValue = plant.plant_type_id || plant.resource_id;
-                    addPlantRow(newRow, pValue, plant.plant_name);
-                    const lastPlantRow = Array.from(newRow.querySelectorAll('.plant-row')).pop();
-                    if (lastPlantRow) lastPlantRow.querySelector('.plant-hours-input').value = plant.hours || 0;
+                    addPlantRow(newRow, pValue, plant.plant_name, plant.hours);
                 });
             } else if (entryData.available_plants && entryData.available_plants.length > 0) {
                 entryData.available_plants.forEach(plant => {
-                    addPlantRow(newRow, plant.id, plant.name);
+                    addPlantRow(newRow, plant.id, plant.name, plant.hours_per_day);
                 });
             }
             updatePlantEmptyState(newRow);

@@ -3,8 +3,8 @@ from django.db.models import (
     Case,
     Count,
     DecimalField,
-    ExpressionWrapper,
     F,
+    Max,
     Q,
     Sum,
     Value,
@@ -71,10 +71,14 @@ class LaborActivityListView(
                 "bill_no",
                 "act_name",
                 "act_unit",
-                "labour_specification",  # Still useful for crew lookup if present
-                "labour_specification__crew__crew_type",
             )
             .annotate(
+                # Pick one labour_specification id per group for spec_map lookup
+                labour_spec_id=Max("labour_specification"),
+                # Crew type: annotated (not grouped) so plant-only items don't split the group
+                labour_specification__crew__crew_type=Max(
+                    "labour_specification__crew__crew_type"
+                ),
                 num_items=Count("id"),
                 plant_count=Count(
                     "plant_specification__components__plant_type", distinct=True
@@ -93,8 +97,9 @@ class LaborActivityListView(
                     F("contract_quantity") * F("contract_rate"),
                     output_field=DecimalField(),
                 ),
-                # Confirmed Formula: (skilled * rate + semi * rate + general * rate)
-                daily_labour_cost=ExpressionWrapper(
+                # Daily labour cost: wrap in Max() (aggregate) so it stays out of GROUP BY.
+                # The crew cost is a constant per labour spec — Max picks the non-zero value.
+                daily_labour_cost=Max(
                     Coalesce(F("labour_specification__crew__skilled"), 0)
                     * Coalesce(F("labour_specification__crew__skilled_rate"), 0)
                     + Coalesce(F("labour_specification__crew__semi_skilled"), 0)
@@ -103,7 +108,7 @@ class LaborActivityListView(
                     * Coalesce(F("labour_specification__crew__general_rate"), 0),
                     output_field=DecimalField(),
                 ),
-                # Confirmed Formula: Sum(plant_rate) for all units in group (no longer * 8.0)
+                # Confirmed Formula: Sum(plant_rate) for all units in group
                 daily_plant_cost=Sum(
                     Coalesce(
                         F("plant_specification__components__plant_type__hourly_rate"), 0
@@ -170,7 +175,7 @@ class LaborActivityListView(
             )
 
         for activity in activities:
-            spec_id = activity.get("labour_specification")
+            spec_id = activity.get("labour_spec_id")
             spec = spec_map.get(spec_id) if spec_id else None
             activity["daily_production"] = spec.daily_production if spec else 0
 
@@ -270,22 +275,23 @@ class LaborActivityDetailView(
         context["total_tracker"] = metrics["total_tracker"] or 0
         context["total_amount"] = metrics["total_amount"] or 0
 
-        # Unique plant types summary
-        plant_types = sorted(
-            group_items.exclude(plant_specification__components__plant_type__name=None)
-            .values_list("plant_specification__components__plant_type__name", flat=True)
-            .distinct()
-        )
-        context["plant_types_summary"] = (
-            ", ".join(plant_types) if plant_types else "None"
-        )
-
         # Calculate daily costs for the "Budgeted Daily Cost" card
         context["daily_labour_cost"] = (
             labour_spec.crew.crew_daily_cost if labour_spec and labour_spec.crew else 0
         )
 
-        # Plant cost (Sum of hourly rates, no longer * 8.0)
+        # Build BoQ Qty-driven plant spec rows using centralized logic
+        from app.Project.production_progress.production_models import ProductionPlan
+
+        plant_spec_rows = ProductionPlan.calculate_boq_driven_plant_rows(
+            project, self.section, self.bill_no, self.act_name
+        )
+        plant_spec_total = sum(row["total_cost"] for row in plant_spec_rows)
+
+        context["plant_spec_rows"] = plant_spec_rows
+        context["plant_spec_total"] = plant_spec_total
+
+        # Daily plant cost for KPI card (sum of component hourly rates)
         plant_metrics = group_items.aggregate(
             plant_cost=Sum(
                 Coalesce(

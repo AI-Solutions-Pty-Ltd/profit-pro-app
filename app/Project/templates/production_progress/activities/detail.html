@@ -98,7 +98,6 @@
                             <th class="text-xs font-bold text-gray-600 uppercase">Bill No</th>
                             <th class="text-xs font-bold text-gray-600 uppercase">Section</th>
                             <th class="text-xs font-bold text-gray-600 uppercase">Description</th>
-                            <th class="text-xs font-bold text-gray-600 uppercase">Plant Type</th>
                             <th class="text-xs font-bold text-center text-gray-600 uppercase">Unit</th>
                             <th class="text-xs font-bold text-right text-gray-600 uppercase">Qty</th>
                             <th class="text-xs font-bold text-right text-gray-600 uppercase">Amount</th>
@@ -118,7 +117,6 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-xs text-gray-500 whitespace-nowrap">{{ item.plant_specification.plant_type.name|default:"-" }}</td>
                                 <td class="text-center whitespace-nowrap">
                                     <span class="text-xs font-bold {% if item.unit == act_unit %}text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded{% else %}text-gray-400{% endif %}">
                                         {{ item.unit }}
@@ -166,6 +164,49 @@
                 </div>
             </div>
         </div>
+        <!-- Plant Information Table -->
+        {% if plant_spec_rows %}
+            <div class="overflow-hidden mt-8 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div class="flex gap-3 items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <div class="p-2 bg-amber-100 rounded-lg">{% heroicon_outline "truck" class="w-4 h-4 text-amber-700" %}</div>
+                    <div>
+                        <h3 class="text-xs font-bold tracking-wider text-gray-500 uppercase">Plant &amp; Equipment</h3>
+                        <p class="text-[10px] text-gray-400 font-medium italic">BoQ Qty-driven plant allocation per component</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-sm table-zebra">
+                        <thead class="bg-gray-50/80">
+                            <tr class="border-b border-gray-100">
+                                <th class="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Plant Component</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Source Spec</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">BoQ Qty</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rate/hr</th>
+                                <th class="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total BoQ Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-50">
+                            {% for row in plant_spec_rows %}
+                                <tr class="hover:bg-amber-50/20">
+                                    <td class="px-6 py-3">
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-bold text-gray-700">{{ row.plant_name }}</span>
+                                            <span class="text-[9px] text-gray-400">{{ row.hours|floatformat:1 }}h per {{ row.unit }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-center text-[10px] text-gray-400 italic">{{ row.source_spec }}</td>
+                                    <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">{{ row.boq_qty|floatformat:1 }}</td>
+                                    <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">R {{ row.rate|floatformat:2|intcomma }}</td>
+                                    <td class="px-6 py-3 text-right font-mono text-xs font-black text-emerald-700">
+                                        R {{ row.total_cost|floatformat:2|intcomma }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
     </div>
 {% endblock content %}
 {% block extra_js %}

@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Div, Field, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -410,6 +412,59 @@ class ProductionPlanForm(forms.ModelForm):
         return cleaned_data
 
 
+class ProductionPlanDateControlForm(forms.ModelForm):
+    """Specialized form for updating activity dates directly from the detail view."""
+
+    class Meta:
+        model = ProductionPlan
+        fields = ["start_date", "duration", "finish_date"]
+        widgets = {
+            "start_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "id": "ui-start-date",
+                    "class": "block w-full text-xs text-gray-900 rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 transition-all",
+                }
+            ),
+            "finish_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "id": "ui-finish-date",
+                    "readonly": "readonly",
+                    "class": "block w-full text-xs text-gray-900 bg-gray-50 rounded-md border-0 ring-1 ring-inset ring-gray-300 cursor-not-allowed",
+                }
+            ),
+            "duration": forms.NumberInput(
+                attrs={
+                    "id": "ui-duration",
+                    "readonly": "readonly",
+                    "class": "block w-full text-xs text-gray-900 bg-gray-50 rounded-md border-0 ring-1 ring-inset ring-gray-300 cursor-not-allowed",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = (
+            False  # We'll wrap it in a form manually to control ID and structure
+        )
+        self.helper.layout = Layout(
+            Div(
+                Field("start_date", label="Manual Start Date"),
+                Div(
+                    Field("duration", label="Duration (Days)"),
+                    Field("finish_date", label="End Date"),
+                    css_class="grid grid-cols-2 gap-3",
+                ),
+                css_class="space-y-4",
+            )
+        )
+        # Customizing labels to match premium look
+        for field in self.fields.values():
+            field.label_suffix = ""
+
+
 class ProductionResourceForm(forms.ModelForm):
     """Form for adding resources to a production plan."""
 
@@ -537,13 +592,25 @@ class BasePlanDependencyFormSet(forms.models.BaseInlineFormSet):
 
     def add_fields(self, form, index):
         super().add_fields(form, index)
-        # Enforce "same level" rule structurally
+        # Enforce relationship rules:
+        # 1. Sections -> Sections (Top level)
+        # 2. Bills -> Bills (Within same Section)
+        # 3. Activities -> Activities (Project-wide / Cross-bill)
+
         if "predecessor" in form.fields:
             qs = form.fields["predecessor"].queryset
-            if self.parent_id:
-                qs = qs.filter(parent_id=self.parent_id)
-            else:
-                qs = qs.filter(parent__isnull=True)
+            successor = self.instance
+
+            if successor.node_type == "SECTION":
+                # Sections only depend on other Sections
+                qs = qs.filter(node_type="SECTION")
+            elif successor.node_type == "BILL":
+                # Bills only depend on other Bills within the same Section
+                qs = qs.filter(node_type="BILL", section=successor.section)
+            elif successor.node_type == "ACTIVITY":
+                # Activities can depend on ANY other Activity in the project
+                qs = qs.filter(node_type="ACTIVITY")
+
             form.fields["predecessor"].queryset = qs.distinct()
 
 

@@ -215,18 +215,7 @@
             }
         }
 
-        function toggleDetails(planId) {
-            const detailsDiv = document.getElementById(`details-${planId}`);
-            const btn = document.getElementById(`details-btn-${planId}`);
 
-            if (detailsDiv.classList.contains('hidden')) {
-                detailsDiv.classList.remove('hidden');
-                btn.classList.add('text-indigo-600', 'bg-indigo-50');
-            } else {
-                detailsDiv.classList.add('hidden');
-                btn.classList.remove('text-indigo-600', 'bg-indigo-50');
-            }
-        }
 
         function updateGlobalButtons(mode) {
             const exp = document.getElementById('global-expand-btn');

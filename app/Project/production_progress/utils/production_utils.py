@@ -1,8 +1,11 @@
 import math
 from collections import defaultdict
+from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Sum
+from dateutil.relativedelta import relativedelta
+from django.db import models
+from django.db.models import F, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -59,21 +62,19 @@ def get_dashboard_data(project_id, start_date=None, end_date=None):
     plans = ProductionPlan.objects.filter(
         project_id=project_id, labour_activity__isnull=False
     )
-    entries_qs = (
-        DailyActivityEntry.objects.filter(report__project_id=project_id)
-        .select_related("report")
-        .prefetch_related(
-            "labour_usage",
-            "plant_usage",
-            "labour_usage__resource",
-            "plant_usage__resource",
-        )
+    entries_qs = DailyActivityEntry.objects.filter(
+        project_id=project_id
+    ).prefetch_related(
+        "labour_usage",
+        "plant_usage",
+        "labour_usage__resource",
+        "plant_usage__resource",
     )
 
     if start_date:
-        entries_qs = entries_qs.filter(report__date__gte=start_date)
+        entries_qs = entries_qs.filter(date__gte=start_date)
     if end_date:
-        entries_qs = entries_qs.filter(report__date__lte=end_date)
+        entries_qs = entries_qs.filter(date__lte=end_date)
 
     all_entries = list(entries_qs)
 
@@ -105,7 +106,7 @@ def get_dashboard_data(project_id, start_date=None, end_date=None):
     status_counts = {"On_Track": 0, "In_Progress": 0, "Delayed": 0, "Not_Planned": 0}
 
     for plan in plans:
-        plan_entries = sorted(entries_by_plan[plan.id], key=lambda x: x.report.date)
+        plan_entries = sorted(entries_by_plan[plan.id], key=lambda x: x.date)
         plan_produced = sum(entry.quantity for entry in plan_entries)
 
         plan_spent = sum(entry.total_cost for entry in plan_entries)
@@ -191,14 +192,13 @@ def get_activity_detail_data(plan_id):
     plan = get_object_or_404(ProductionPlan, pk=plan_id)
     entries = (
         DailyActivityEntry.objects.filter(production_plan=plan)
-        .select_related("report")
         .prefetch_related(
             "labour_usage",
             "plant_usage",
             "labour_usage__resource",
             "plant_usage__resource",
         )
-        .order_by("report__date")
+        .order_by("date")
     )
 
     total_produced = sum(entry.quantity for entry in entries)
@@ -242,8 +242,8 @@ def get_activity_detail_data(plan_id):
     # Days Active
     days_active = 0
     if entries.exists():
-        first_date = entries[0].report.date
-        last_date = list(entries)[-1].report.date
+        first_date = entries[0].date
+        last_date = list(entries)[-1].date
         days_active = (last_date - first_date).days + 1
 
     # Daily Breakdown
@@ -253,13 +253,13 @@ def get_activity_detail_data(plan_id):
         daily_breakdown.append(
             {
                 "day_label": entry.day_number,
-                "date": entry.report.date,
+                "date": entry.date,
                 "quantity": entry.quantity,
                 "cost": entry.total_cost,
                 "hours": entry.man_hours,
                 "workers": sum(usage.number for usage in entry.labour_usage.all()),
                 "productivity": round(entry.work_productivity, 1),
-                "note": entry.report.notes or "",
+                "note": entry.notes or "",
                 "is_latest": (i == len(entry_list) - 1),
             }
         )
@@ -311,20 +311,19 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
 
     entries_qs = (
         DailyActivityEntry.objects.filter(production_plan__in=all_plans)
-        .select_related("report")
         .prefetch_related(
             "labour_usage",
             "plant_usage",
             "labour_usage__resource",
             "plant_usage__resource",
         )
-        .order_by("report__date")
+        .order_by("date")
     )
 
     if start_date:
-        entries_qs = entries_qs.filter(report__date__gte=start_date)
+        entries_qs = entries_qs.filter(date__gte=start_date)
     if end_date:
-        entries_qs = entries_qs.filter(report__date__lte=end_date)
+        entries_qs = entries_qs.filter(date__lte=end_date)
 
     entries = list(entries_qs)
 
@@ -418,7 +417,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
 
     # 4. Chart Data Preparation
     labels = [e.day_number for e in entries]
-    dates = [e.report.date.strftime("%b %d") for e in entries]
+    dates = [e.date.strftime("%b %d") for e in entries]
 
     actual_production = [float(e.quantity) for e in entries]
     target_production = [float(target_daily_output) for _ in entries]
@@ -466,7 +465,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
         daily_summaries.append(
             {
                 "day": e.day_number,
-                "date": e.report.date.strftime("%Y-%m-%d"),
+                "date": e.date.strftime("%Y-%m-%d"),
                 "actual_qty": float(e.quantity),
                 "target_qty": float(target_daily_output),
                 "progress_pct": min(
@@ -667,20 +666,19 @@ def get_forecasting_dashboard_data(
 
     entries_qs = (
         DailyActivityEntry.objects.filter(production_plan__in=all_plans)
-        .select_related("report")
         .prefetch_related(
             "labour_usage",
             "plant_usage",
             "labour_usage__resource",
             "plant_usage__resource",
         )
-        .order_by("report__date")
+        .order_by("date")
     )
 
     if start_date:
-        entries_qs = entries_qs.filter(report__date__gte=start_date)
+        entries_qs = entries_qs.filter(date__gte=start_date)
     if end_date:
-        entries_qs = entries_qs.filter(report__date__lte=end_date)
+        entries_qs = entries_qs.filter(date__lte=end_date)
 
     entries = list(entries_qs)
     days_elapsed = len(entries)
@@ -837,17 +835,14 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
     from datetime import timedelta
 
     from dateutil.relativedelta import relativedelta
-    from django.db import models
-    from django.db.models import F, Sum
+    from django.db.models import Sum
 
     from app.Estimator.models import BOQItem
     from app.Project.models import Project
 
     get_object_or_404(Project, pk=project_id)
     plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
-    entries = DailyActivityEntry.objects.filter(
-        report__project_id=project_id
-    ).select_related("report")
+    entries = DailyActivityEntry.objects.filter(project_id=project_id)
 
     today = timezone.now().date()
 
@@ -926,7 +921,7 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
 
     # 2. Map Actual Costs
     for entry in entries:
-        daily_actual_cost[entry.report.date] += entry.total_cost
+        daily_actual_cost[entry.date] += entry.total_cost
 
     # 3. Calculate Burn Rate (to date)
     cum_p_cost_today = sum(v for d, v in daily_planned_cost.items() if d <= today)
@@ -1051,7 +1046,7 @@ def get_project_performance_summary(project_id):
     Calculates high-level project-wide performance indices (PPI, CPI).
     """
     plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
-    entries = DailyActivityEntry.objects.filter(report__project_id=project_id)
+    entries = DailyActivityEntry.objects.filter(project_id=project_id)
 
     total_planned_qty = plans.aggregate(total=Sum("quantity"))["total"] or Decimal("0")
     total_produced_qty = entries.aggregate(total=Sum("quantity"))["total"] or Decimal(
@@ -1119,9 +1114,7 @@ def get_project_productivity_report_data(
 
     summary = get_project_performance_summary(project_id)
     plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
-    entries = DailyActivityEntry.objects.filter(
-        report__project_id=project_id
-    ).select_related("report")
+    entries = DailyActivityEntry.objects.filter(project_id=project_id)
 
     if not entries.exists() and not plans.exists():
         return {"summary": summary, "charts": {}, "forecasts": {}, "activities": []}
@@ -1137,9 +1130,9 @@ def get_project_productivity_report_data(
     elif history_horizon == "6m":
         start_date = today - relativedelta(months=6)
     else:  # 'all'
-        first_entry = entries.order_by("report__date").first()
+        first_entry = entries.order_by("date").first()
         if first_entry:
-            start_date = first_entry.report.date.replace(day=1)
+            start_date = first_entry.date.replace(day=1)
         else:
             start_date = today - relativedelta(months=6)
 
@@ -1196,10 +1189,10 @@ def get_project_productivity_report_data(
 
     # Fill Actuals
     for entry in entries:
-        if entry.report.date < start_date:
+        if entry.date < start_date:
             running_a_prod += entry.quantity
         else:
-            month_key = entry.report.date.strftime("%Y-%m")
+            month_key = entry.date.strftime("%Y-%m")
             if month_key in monthly_data:
                 monthly_data[month_key]["actual_qty"] += entry.quantity
                 monthly_data[month_key]["actual_cost"] += entry.total_cost
@@ -1353,34 +1346,54 @@ def get_project_productivity_report_data(
     }
 
 
-def get_premium_productivity_report_data(project_id, active_only=False):
+def get_premium_productivity_report_data(project_id, active_only=False, horizon="ptd"):
     """
     Calculates PPI, CPI, and Impact metrics based on Excel logic.
     Groups results by Section and Bill with weighted averages.
     """
     import json
     from collections import defaultdict
-    from datetime import timedelta
-
-    from dateutil.relativedelta import relativedelta
-    from django.utils import timezone
 
     today = timezone.now().date()
 
-    # 6-Month Window for S-Curve
-    start_window = today - relativedelta(months=3)
-    end_window = today + relativedelta(months=3)
+    # S-Curve Window logic
+    if horizon == "daily":
+        start_window = today
+        end_window = today
+    elif horizon == "weekly":
+        start_window = today - timedelta(days=today.weekday())
+        end_window = start_window + timedelta(days=6)
+    elif horizon == "mtd":
+        start_window = today.replace(day=1)
+        end_window = (start_window + relativedelta(months=1)) - timedelta(days=1)
+    else:  # ptd
+        first_entry = (
+            DailyActivityEntry.objects.filter(project_id=project_id)
+            .order_by("date")
+            .first()
+        )
+        start_window = first_entry.date if first_entry else today
+        end_window = today
 
-    date_range = []
-    curr = start_window
-    while curr <= end_window:
-        date_range.append(curr)
-        curr += timedelta(days=1)
+    date_range = [
+        start_window + timedelta(days=i)
+        for i in range((end_window - start_window).days + 1)
+    ]
 
-    daily_planned_qty = {d: Decimal("0") for d in date_range}
-    daily_planned_cost = {d: Decimal("0") for d in date_range}
-    daily_actual_qty = {d: Decimal("0") for d in date_range}
-    daily_actual_cost = {d: Decimal("0") for d in date_range}
+    daily_planned_qty = defaultdict(Decimal)
+    daily_planned_cost = defaultdict(Decimal)
+    daily_actual_qty = defaultdict(Decimal)
+    daily_actual_cost = defaultdict(Decimal)
+
+    # Define date filters based on horizon
+    date_filter = {}
+    if horizon == "daily":
+        date_filter["date"] = today
+    elif horizon == "weekly":
+        start_of_week = today - timedelta(days=today.weekday())
+        date_filter["date__gte"] = start_of_week
+    elif horizon == "mtd":
+        date_filter["date__gte"] = today.replace(day=1)
 
     plans_query = ProductionPlan.objects.filter(
         project_id=project_id, is_archived=False, is_leaf=True
@@ -1404,14 +1417,21 @@ def get_premium_productivity_report_data(project_id, active_only=False):
     for plan in plans:
         # 1. Table Data Calculations (PTD)
         entries_query = DailyActivityEntry.objects.filter(
-            production_plan=plan, report__date__lte=today
+            production_plan=plan, **date_filter
+        )
+        if not entries_query.exists() and horizon != "ptd":
+            continue
+
+        # For calculation, we want history up to today
+        all_history = DailyActivityEntry.objects.filter(
+            production_plan=plan, date__lte=today
         )
 
         total_qty = entries_query.aggregate(total=Sum("quantity"))["total"] or Decimal(
             "0"
         )
-        total_cost = sum((e.total_cost for e in entries_query), Decimal("0"))
-        total_days = entries_query.values("report__date").distinct().count()
+        total_cost = sum((e.total_cost for e in all_history), Decimal("0"))
+        total_days = all_history.values("date").distinct().count()
 
         # Target Values
         target_prod_rate = plan.daily_rate
@@ -1442,12 +1462,12 @@ def get_premium_productivity_report_data(project_id, active_only=False):
         # Actual (Within Window)
         window_entries = DailyActivityEntry.objects.filter(
             production_plan=plan,
-            report__date__gte=start_window,
-            report__date__lte=end_window,
+            date__gte=start_window,
+            date__lte=end_window,
         )
         for entry in window_entries:
-            daily_actual_qty[entry.report.date] += entry.quantity
-            daily_actual_cost[entry.report.date] += entry.total_cost
+            daily_actual_qty[entry.date] += entry.quantity
+            daily_actual_cost[entry.date] += entry.total_cost
 
         # Actual Values for Table
         actual_prod_rate = (
@@ -1495,9 +1515,9 @@ def get_premium_productivity_report_data(project_id, active_only=False):
         trend_act_prod, trend_tgt_prod = [], []
         trend_act_cost, trend_tgt_cost = [], []
 
-        last_entries = entries_query.order_by("-report__date")[:10][::-1]
+        last_entries = all_history.order_by("-date")[:10][::-1]
         for e in last_entries:
-            trend_labels.append(e.report.date.strftime("%d %b"))
+            trend_labels.append(e.date.strftime("%d %b"))
             # Indices
             d_ppi = target_prod_rate / e.quantity if e.quantity > 0 else 0
             d_cpi = (

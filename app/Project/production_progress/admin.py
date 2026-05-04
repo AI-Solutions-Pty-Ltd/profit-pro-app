@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from app.core.Utilities.admin import SoftDeleteAdmin
 
-from .production_models import ProductionPlan, ProductionResource
+from .production_models import DailyActivityEntry, ProductionPlan, ProductionResource
 
 
 @admin.register(ProductionPlan)
@@ -38,3 +38,19 @@ class ProductionResourceAdmin(SoftDeleteAdmin):
     list_filter = ["resource_type", "production_plan__project", "production_plan"]
     search_fields = ["name", "production_plan__activity"]
     readonly_fields = ["created_at", "updated_at", "name", "rate", "total_cost"]
+
+
+@admin.register(DailyActivityEntry)
+class DailyActivityEntryAdmin(SoftDeleteAdmin):
+    list_display = [
+        "project",
+        "date",
+        "production_plan",
+        "quantity",
+        "hours_on_activity",
+        "total_cost",
+        "created_at",
+    ]
+    list_filter = ["project", "date", "deleted"]
+    search_fields = ["production_plan__activity", "notes"]
+    readonly_fields = ["created_at", "updated_at"]
