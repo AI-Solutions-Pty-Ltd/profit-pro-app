@@ -95,7 +95,11 @@ class TestProductionPlanModel:
         finish = start + timedelta(days=2)
 
         plan = ProductionPlanFactory.create(
-            start_date=start, finish_date=finish, section="S1", bill_no="B1", activity="Fallback Spec"
+            start_date=start,
+            finish_date=finish,
+            section="S1",
+            bill_no="B1",
+            activity="Fallback Spec",
         )
         assert plan.duration == 2
 
