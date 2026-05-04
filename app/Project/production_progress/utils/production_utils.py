@@ -1353,7 +1353,6 @@ def get_premium_productivity_report_data(project_id, active_only=False):
     from collections import defaultdict
     from datetime import timedelta
 
-    from dateutil.relativedelta import relativedelta
     from django.utils import timezone
 
     today = timezone.now().date()
