@@ -6641,9 +6641,7 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get(
-            "form", ContractorPreliminarySpecificationForm()
-        )
+        context["form"] = context.get("form", ContractorPreliminarySpecificationForm())
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
