@@ -459,6 +459,64 @@ class SystemMaterialSpecComponent(models.Model):
         return f"{self.spec.name} - {self.label}"
 
 
+class SystemItemLibraryEntry(models.Model):
+    """System-level item library entry — a pre-configured BoQ template row
+    that bundles a trade code, component, and the four spec FKs."""
+
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    accounts_code = models.CharField(max_length=50, blank=True)
+    component = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500)
+    unit = models.CharField(max_length=20, blank=True)
+    material_spec = models.ForeignKey(
+        SystemMaterialSpec,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    labour_spec = models.ForeignKey(
+        SystemLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    plant_spec = models.ForeignKey(
+        SystemPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    preliminary_spec = models.ForeignKey(
+        SystemPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "System Item Library Entry"
+        verbose_name_plural = "System Item Library Entries"
+        indexes = [
+            models.Index(fields=["trade_code", "component"]),
+            models.Index(fields=["trade_code", "description"]),
+        ]
+
+    def __str__(self):
+        return self.description or f"{self.component} ({self.unit})"
+
+
 # ═══════════════════════════════════════════════════════════════════
 # Contractor-Scoped Library Models (per Company; sync-from-System,
 # sync-to-Project)
@@ -1030,6 +1088,76 @@ class ContractorMaterialSpecComponent(models.Model):
         return f"{self.spec.name} - {self.label}"
 
 
+class ContractorItemLibraryEntry(models.Model):
+    """Contractor-scoped item library entry; cloned from System."""
+
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_library_entries",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    accounts_code = models.CharField(max_length=50, blank=True)
+    component = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500)
+    unit = models.CharField(max_length=20, blank=True)
+    material_spec = models.ForeignKey(
+        ContractorMaterialSpec,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    labour_spec = models.ForeignKey(
+        ContractorLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    plant_spec = models.ForeignKey(
+        ContractorPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    preliminary_spec = models.ForeignKey(
+        ContractorPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "Contractor Item Library Entry"
+        verbose_name_plural = "Contractor Item Library Entries"
+        indexes = [
+            models.Index(fields=["company", "trade_code", "component"]),
+            models.Index(fields=["company", "trade_code", "description"]),
+        ]
+
+    def __str__(self):
+        return self.description or f"{self.component} ({self.unit})"
+
+
 # ═══════════════════════════════════════════════════════════════════
 # Project-Scoped Models (cloned from contractor library per project)
 # ═══════════════════════════════════════════════════════════════════
@@ -1513,6 +1641,85 @@ class ProjectPreliminarySpecification(models.Model):
         return total
 
 
+class ProjectItemLibraryEntry(models.Model):
+    """Project-scoped item library entry; cloned from System or Contractor."""
+
+    project = models.ForeignKey(
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_library_entries",
+    )
+    source_system = models.ForeignKey(
+        SystemItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    source_contractor = models.ForeignKey(
+        ContractorItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    accounts_code = models.CharField(max_length=50, blank=True)
+    component = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500)
+    unit = models.CharField(max_length=20, blank=True)
+    material_spec = models.ForeignKey(
+        ProjectSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    labour_spec = models.ForeignKey(
+        ProjectLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    plant_spec = models.ForeignKey(
+        ProjectPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    preliminary_spec = models.ForeignKey(
+        ProjectPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "Project Item Library Entry"
+        verbose_name_plural = "Project Item Library Entries"
+        indexes = [
+            models.Index(fields=["project", "trade_code", "component"]),
+            models.Index(fields=["project", "trade_code", "description"]),
+        ]
+
+    if TYPE_CHECKING:
+        boq_items: "Manager[BOQItem]"
+
+    def __str__(self):
+        return self.description or f"{self.component} ({self.unit})"
+
+
 # ═══════════════════════════════════════════════════════════════════
 # ProjectAssumptions — Project-level global markups & wastage
 # ═══════════════════════════════════════════════════════════════════
@@ -1594,6 +1801,14 @@ class BOQItem(models.Model):
         blank=True,
         related_name="boq_items",
     )
+    library_entry = models.ForeignKey(
+        ProjectItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
+    )
+    component = models.CharField(max_length=200, blank=True)
     item_no = models.CharField(max_length=20, blank=True)
     pay_ref = models.CharField(max_length=50, blank=True)
     description = models.CharField(max_length=500, blank=True)
