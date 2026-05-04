@@ -6,6 +6,7 @@ from .activity_views import (
 from .dashboard_views import (
     PlanProductivityDashboardView,
     ProductionActivityDetailView,
+    ProductionProgressDashboardView,
 )
 from .planning_views import (
     GetProjectBillsAjaxView,
