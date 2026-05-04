@@ -14,8 +14,66 @@ from ..production_models import (
 )
 from ..utils.production_utils import (
     get_activity_detail_data,
+    get_dashboard_data,
     get_plan_productivity_data,
 )
+
+
+class ProductionProgressDashboardView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Electronic Production Progress Dashboard.
+    Provides a high-level overview of all production activities.
+    """
+
+    template_name = "production_progress/dashboard/production_progress_dashboard.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Filters
+        start_date = self.request.GET.get("start_date")
+        end_date = self.request.GET.get("end_date")
+        status_filter = self.request.GET.get("status")
+
+        # Get data from utils
+        dashboard_data = get_dashboard_data(project_pk, start_date, end_date)
+
+        # Filter item cards by status if requested
+        if status_filter:
+            dashboard_data["item_cards"] = [
+                card
+                for card in dashboard_data["item_cards"]
+                if card["status_text"] == status_filter
+            ]
+
+        context.update(
+            {
+                "project": project,
+                **dashboard_data,
+                "start_date": start_date,
+                "end_date": end_date,
+                "status_filter": status_filter,
+            }
+        )
+        return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Progress Tracking", "url": None},
+        ]
 
 
 class ProductionActivityDetailView(
