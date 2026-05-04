@@ -59,6 +59,7 @@ from .forms import (
 )
 from .models import (
     BOQItem,
+    ContractorItemLibraryEntry,
     ContractorLabourCrew,
     ContractorLabourSpecification,
     ContractorMaterial,
@@ -71,6 +72,7 @@ from .models import (
     ContractorSpecificationComponent,
     ContractorTradeCode,
     ProjectAssumptions,
+    ProjectItemLibraryEntry,
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
@@ -82,6 +84,7 @@ from .models import (
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
+    SystemItemLibraryEntry,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
@@ -6741,4 +6744,301 @@ class DownloadContractorPreliminarySpecTemplateView(ContractorLibraryMixin, View
         return _generate_template(
             ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
             "contractor_preliminary_specs_template.xlsx",
+        )
+
+
+# ── Item Library (Project / Contractor / System) ──────────────────
+
+
+_ITEM_LIBRARY_COLUMNS = [
+    ("Trade Code", "Full trade code label (e.g. 'PRE-Preliminaries' or just the prefix)"),
+    ("Accounts Code", "Optional finance/accounts mapping code"),
+    ("Component", "Component / category prefix (e.g. 'Concrete 25MPa/19mm - ')"),
+    ("Material Specification", "Name of an existing material spec; left blank if none"),
+    (
+        "Labour & Plant Specification",
+        "Name of a labour and/or plant spec; resolved against both tables",
+    ),
+    ("Preliminaries", "Name of an existing preliminary spec; left blank if none"),
+    ("Item Description", "Required — the BoQ row description"),
+    ("Unit", "Unit of measurement (e.g. m3, m2, t, SUM)"),
+]
+_ITEM_LIBRARY_HEADERS = [c[0] for c in _ITEM_LIBRARY_COLUMNS]
+
+
+class ItemLibraryListView(ProjectEstimatorMixin, ListView):
+    model = ProjectItemLibraryEntry
+    template_name = "estimator/item_library_list.html"
+    context_object_name = "entries"
+    paginate_by = 100
+
+    def get_queryset(self):
+        project = self.get_project()
+        qs = (
+            ProjectItemLibraryEntry.objects.filter(project=project)
+            .select_related(
+                "trade_code",
+                "material_spec",
+                "labour_spec",
+                "plant_spec",
+                "preliminary_spec",
+            )
+            .order_by("display_order", "id")
+        )
+        trade_code = self.request.GET.get("trade_code")
+        if trade_code:
+            qs = qs.filter(trade_code__id=trade_code)
+        q = self.request.GET.get("q")
+        if q:
+            qs = qs.filter(description__icontains=q)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        project = self.get_project()
+        ctx["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
+        ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
+        ctx["f_q"] = self.request.GET.get("q", "")
+        ctx["query_params"] = _pagination_query_params(self.request)
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_item_library_from_system
+
+            result = sync_item_library_from_system(project)
+            messages.success(
+                request,
+                f"Item Library synced from system — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:item_library",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        if action == "sync_contractor":
+            from .services import sync_item_library_from_contractor
+
+            result = sync_item_library_from_contractor(project)
+            _flash_sync_result(request, result, "Item Library")
+            return redirect(
+                reverse(
+                    "estimator:item_library",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        return redirect(
+            reverse(
+                "estimator:item_library",
+                kwargs={"project_pk": self.kwargs["project_pk"]},
+            )
+        )
+
+
+class ItemLibraryUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:item_library", kwargs={"project_pk": self.kwargs["project_pk"]}
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base.html"
+        ctx["upload_title"] = "Upload Item Library"
+        ctx["upload_description"] = (
+            "Upload pre-configured BoQ template rows from an Excel sheet."
+        )
+        ctx["download_url_name"] = "estimator:download_item_library_template"
+        ctx["columns"] = _ITEM_LIBRARY_COLUMNS
+        ctx["notes"] = [
+            "Spec columns are matched against existing project specs by name. "
+            "Unmatched names are stored blank and reported as warnings.",
+            "Existing entries with the same component + description are updated, not duplicated.",
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import ItemLibraryImporter
+
+        return _handle_upload(
+            self.request,
+            ItemLibraryImporter,
+            self.get_success_url(),
+            "Item Library",
+            project=self.get_project(),
+        )
+
+
+class DownloadItemLibraryTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(_ITEM_LIBRARY_HEADERS, "item_library_template.xlsx")
+
+
+# Contractor scope
+
+
+class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
+    model = ContractorItemLibraryEntry
+    template_name = "estimator/contractor/item_library_list.html"
+    context_object_name = "entries"
+    paginate_by = 100
+
+    def get_queryset(self):
+        company = self.get_company()
+        if company is None:
+            return ContractorItemLibraryEntry.objects.none()
+        qs = (
+            ContractorItemLibraryEntry.objects.filter(company=company)
+            .select_related(
+                "trade_code",
+                "material_spec",
+                "labour_spec",
+                "plant_spec",
+                "preliminary_spec",
+            )
+            .order_by("display_order", "id")
+        )
+        trade_code = self.request.GET.get("trade_code")
+        if trade_code:
+            qs = qs.filter(trade_code__id=trade_code)
+        q = self.request.GET.get("q")
+        if q:
+            qs = qs.filter(description__icontains=q)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        company = self.get_company()
+        ctx["trade_codes"] = (
+            ContractorTradeCode.objects.filter(company=company)
+            if company
+            else ContractorTradeCode.objects.none()
+        )
+        ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
+        ctx["f_q"] = self.request.GET.get("q", "")
+        ctx["query_params"] = _pagination_query_params(self.request)
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") == "sync_system":
+            from .services import sync_item_library_to_contractor
+
+            result = sync_item_library_to_contractor(self.get_company())
+            messages.success(
+                request,
+                f"Item Library synced with system — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+        return redirect(reverse("estimator:ctr_item_library"))
+
+
+class ContractorItemLibraryUploadView(ContractorLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/contractor/base_contractor.html"
+        ctx["upload_title"] = "Upload Item Library"
+        ctx["upload_description"] = (
+            "Upload pre-configured BoQ template rows from an Excel sheet."
+        )
+        ctx["download_url_name"] = "estimator:ctr_download_item_library_template"
+        ctx["columns"] = _ITEM_LIBRARY_COLUMNS
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import ItemLibraryImporter
+
+        return _handle_upload(
+            self.request,
+            ItemLibraryImporter,
+            "estimator:ctr_item_library",
+            "Item Library",
+            company=self.get_company(),
+        )
+
+
+class DownloadContractorItemLibraryTemplateView(ContractorLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            _ITEM_LIBRARY_HEADERS, "contractor_item_library_template.xlsx"
+        )
+
+
+# System scope
+
+
+class SystemItemLibraryListView(SystemLibraryMixin, ListView):
+    model = SystemItemLibraryEntry
+    template_name = "estimator/system/item_library_list.html"
+    context_object_name = "entries"
+    paginate_by = 100
+
+    def get_queryset(self):
+        qs = (
+            SystemItemLibraryEntry.objects.all()
+            .select_related(
+                "trade_code",
+                "material_spec",
+                "labour_spec",
+                "plant_spec",
+                "preliminary_spec",
+            )
+            .order_by("display_order", "id")
+        )
+        trade_code = self.request.GET.get("trade_code")
+        if trade_code:
+            qs = qs.filter(trade_code__id=trade_code)
+        q = self.request.GET.get("q")
+        if q:
+            qs = qs.filter(description__icontains=q)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["trade_codes"] = SystemTradeCode.objects.all()
+        ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
+        ctx["f_q"] = self.request.GET.get("q", "")
+        ctx["query_params"] = _pagination_query_params(self.request)
+        return ctx
+
+
+class SystemItemLibraryUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/system/base_system.html"
+        ctx["upload_title"] = "Upload Item Library"
+        ctx["upload_description"] = (
+            "Upload pre-configured BoQ template rows from an Excel sheet."
+        )
+        ctx["download_url_name"] = "estimator:sys_download_item_library_template"
+        ctx["columns"] = _ITEM_LIBRARY_COLUMNS
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import ItemLibraryImporter
+
+        return _handle_upload(
+            self.request,
+            ItemLibraryImporter,
+            "estimator:sys_item_library",
+            "Item Library",
+        )
+
+
+class DownloadSystemItemLibraryTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            _ITEM_LIBRARY_HEADERS, "system_item_library_template.xlsx"
         )

@@ -1,7 +1,9 @@
 from app.Estimator.models import (
+    ContractorItemLibraryEntry,
     ContractorLabourCrew,
     ContractorLabourSpecification,
     ContractorMaterial,
+    ContractorMaterialSpec,
     ContractorPlantCost,
     ContractorPlantSpecification,
     ContractorPlantSpecificationComponent,
@@ -10,6 +12,7 @@ from app.Estimator.models import (
     ContractorSpecification,
     ContractorSpecificationComponent,
     ContractorTradeCode,
+    ProjectItemLibraryEntry,
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
@@ -21,6 +24,7 @@ from app.Estimator.models import (
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
+    SystemItemLibraryEntry,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
@@ -1421,3 +1425,274 @@ def sync_preliminary_specs_to_contractor(company):
         created += 1
 
     return {"updated": updated, "created": created}
+
+
+# ── Item Library Sync ────────────────────────────────────────────
+
+
+def sync_item_library_to_contractor(company):
+    """Mirror SystemItemLibraryEntry into ContractorItemLibraryEntry for a
+    company. Match on existing source FK; fall back to (component, description).
+    Spec FKs resolve by name into the contractor's scoped tables.
+    """
+    by_source = {
+        e.source_id: e
+        for e in ContractorItemLibraryEntry.objects.filter(
+            company=company, source__isnull=False
+        )
+    }
+    by_key = {
+        (e.component, e.description): e
+        for e in ContractorItemLibraryEntry.objects.filter(
+            company=company, source__isnull=True
+        )
+    }
+
+    created = updated = 0
+    for sysentry in SystemItemLibraryEntry.objects.select_related(
+        "trade_code",
+        "material_spec",
+        "labour_spec",
+        "plant_spec",
+        "preliminary_spec",
+    ):
+        trade_code = _resolve_contractor_trade_code(company, sysentry.trade_code)
+        material_spec = (
+            ContractorMaterialSpec.objects.filter(
+                company=company, name=sysentry.material_spec.name
+            ).first()
+            if sysentry.material_spec
+            else None
+        )
+        labour_spec = (
+            ContractorLabourSpecification.objects.filter(
+                company=company, name=sysentry.labour_spec.name
+            ).first()
+            if sysentry.labour_spec
+            else None
+        )
+        plant_spec = (
+            ContractorPlantSpecification.objects.filter(
+                company=company, name=sysentry.plant_spec.name
+            ).first()
+            if sysentry.plant_spec
+            else None
+        )
+        prelim_spec = (
+            ContractorPreliminarySpecification.objects.filter(
+                company=company, name=sysentry.preliminary_spec.name
+            ).first()
+            if sysentry.preliminary_spec
+            else None
+        )
+
+        defaults = {
+            "trade_code": trade_code,
+            "accounts_code": sysentry.accounts_code,
+            "component": sysentry.component,
+            "description": sysentry.description,
+            "unit": sysentry.unit,
+            "material_spec": material_spec,
+            "labour_spec": labour_spec,
+            "plant_spec": plant_spec,
+            "preliminary_spec": prelim_spec,
+            "display_order": sysentry.display_order,
+        }
+
+        target = by_source.get(sysentry.pk) or by_key.get(
+            (sysentry.component, sysentry.description)
+        )
+        if target is None:
+            ContractorItemLibraryEntry.objects.create(
+                company=company, source=sysentry, **defaults
+            )
+            created += 1
+        else:
+            target.source = sysentry
+            for k, v in defaults.items():
+                setattr(target, k, v)
+            target.save()
+            updated += 1
+
+    return {"created": created, "updated": updated}
+
+
+def sync_item_library_from_system(project):
+    """Clone SystemItemLibraryEntry rows into the project. Spec FKs resolve
+    against the project-scoped tables by name; missing targets stay blank."""
+    by_source = {
+        e.source_system_id: e
+        for e in ProjectItemLibraryEntry.objects.filter(
+            project=project, source_system__isnull=False
+        )
+    }
+    by_key = {
+        (e.component, e.description): e
+        for e in ProjectItemLibraryEntry.objects.filter(
+            project=project,
+            source_system__isnull=True,
+            source_contractor__isnull=True,
+        )
+    }
+
+    created = updated = 0
+    for sysentry in SystemItemLibraryEntry.objects.select_related(
+        "trade_code",
+        "material_spec",
+        "labour_spec",
+        "plant_spec",
+        "preliminary_spec",
+    ):
+        prefix = sysentry.trade_code.prefix if sysentry.trade_code else None
+        trade_code = _resolve_project_trade_code_by_prefix(project, prefix)
+        material_spec = (
+            ProjectSpecification.objects.filter(
+                project=project, name=sysentry.material_spec.name
+            ).first()
+            if sysentry.material_spec
+            else None
+        )
+        labour_spec = (
+            ProjectLabourSpecification.objects.filter(
+                project=project, name=sysentry.labour_spec.name
+            ).first()
+            if sysentry.labour_spec
+            else None
+        )
+        plant_spec = (
+            ProjectPlantSpecification.objects.filter(
+                project=project, name=sysentry.plant_spec.name
+            ).first()
+            if sysentry.plant_spec
+            else None
+        )
+        prelim_spec = (
+            ProjectPreliminarySpecification.objects.filter(
+                project=project, name=sysentry.preliminary_spec.name
+            ).first()
+            if sysentry.preliminary_spec
+            else None
+        )
+
+        defaults = {
+            "trade_code": trade_code,
+            "accounts_code": sysentry.accounts_code,
+            "component": sysentry.component,
+            "description": sysentry.description,
+            "unit": sysentry.unit,
+            "material_spec": material_spec,
+            "labour_spec": labour_spec,
+            "plant_spec": plant_spec,
+            "preliminary_spec": prelim_spec,
+            "display_order": sysentry.display_order,
+        }
+
+        target = by_source.get(sysentry.pk) or by_key.get(
+            (sysentry.component, sysentry.description)
+        )
+        if target is None:
+            ProjectItemLibraryEntry.objects.create(
+                project=project, source_system=sysentry, **defaults
+            )
+            created += 1
+        else:
+            target.source_system = sysentry
+            for k, v in defaults.items():
+                setattr(target, k, v)
+            target.save()
+            updated += 1
+
+    return {"created": created, "updated": updated}
+
+
+def sync_item_library_from_contractor(project):
+    """Clone the project's contractor ItemLibrary into the project. Falls back
+    to System if the project has no linked contractor."""
+    company = project.contractor
+    if company is None:
+        return {"updated": 0, "created": 0, "skipped_no_contractor": True}
+
+    by_source = {
+        e.source_contractor_id: e
+        for e in ProjectItemLibraryEntry.objects.filter(
+            project=project, source_contractor__isnull=False
+        )
+    }
+    by_key = {
+        (e.component, e.description): e
+        for e in ProjectItemLibraryEntry.objects.filter(
+            project=project,
+            source_contractor__isnull=True,
+        )
+    }
+
+    created = updated = 0
+    for centry in ContractorItemLibraryEntry.objects.filter(
+        company=company
+    ).select_related(
+        "trade_code",
+        "material_spec",
+        "labour_spec",
+        "plant_spec",
+        "preliminary_spec",
+    ):
+        prefix = centry.trade_code.prefix if centry.trade_code else None
+        trade_code = _resolve_project_trade_code_by_prefix(project, prefix)
+        material_spec = (
+            ProjectSpecification.objects.filter(
+                project=project, name=centry.material_spec.name
+            ).first()
+            if centry.material_spec
+            else None
+        )
+        labour_spec = (
+            ProjectLabourSpecification.objects.filter(
+                project=project, name=centry.labour_spec.name
+            ).first()
+            if centry.labour_spec
+            else None
+        )
+        plant_spec = (
+            ProjectPlantSpecification.objects.filter(
+                project=project, name=centry.plant_spec.name
+            ).first()
+            if centry.plant_spec
+            else None
+        )
+        prelim_spec = (
+            ProjectPreliminarySpecification.objects.filter(
+                project=project, name=centry.preliminary_spec.name
+            ).first()
+            if centry.preliminary_spec
+            else None
+        )
+
+        defaults = {
+            "trade_code": trade_code,
+            "accounts_code": centry.accounts_code,
+            "component": centry.component,
+            "description": centry.description,
+            "unit": centry.unit,
+            "material_spec": material_spec,
+            "labour_spec": labour_spec,
+            "plant_spec": plant_spec,
+            "preliminary_spec": prelim_spec,
+            "display_order": centry.display_order,
+        }
+
+        target = by_source.get(centry.pk) or by_key.get(
+            (centry.component, centry.description)
+        )
+        if target is None:
+            ProjectItemLibraryEntry.objects.create(
+                project=project, source_contractor=centry, **defaults
+            )
+            created += 1
+        else:
+            target.source_contractor = centry
+            for k, v in defaults.items():
+                setattr(target, k, v)
+            target.save()
+            updated += 1
+
+    return {"created": created, "updated": updated}

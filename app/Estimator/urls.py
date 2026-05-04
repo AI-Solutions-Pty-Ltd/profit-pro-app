@@ -190,6 +190,22 @@ urlpatterns = [
         views.ExcelImportView.as_view(),
         name="import_excel",
     ),
+    # Item Library
+    path(
+        "project/<int:project_pk>/item-library/",
+        views.ItemLibraryListView.as_view(),
+        name="item_library",
+    ),
+    path(
+        "project/<int:project_pk>/item-library/upload/",
+        views.ItemLibraryUploadView.as_view(),
+        name="item_library_upload",
+    ),
+    path(
+        "project/<int:project_pk>/item-library/download-template/",
+        views.DownloadItemLibraryTemplateView.as_view(),
+        name="download_item_library_template",
+    ),
     # System specs
     path(
         "project/<int:project_pk>/system-specs/",
@@ -771,6 +787,22 @@ urlpatterns = [
         views.UpdateSystemPreliminarySpecView.as_view(),
         name="sys_update_preliminary_spec",
     ),
+    # System Item Library
+    path(
+        "system/item-library/",
+        views.SystemItemLibraryListView.as_view(),
+        name="sys_item_library",
+    ),
+    path(
+        "system/item-library/upload/",
+        views.SystemItemLibraryUploadView.as_view(),
+        name="sys_item_library_upload",
+    ),
+    path(
+        "system/item-library/download-template/",
+        views.DownloadSystemItemLibraryTemplateView.as_view(),
+        name="sys_download_item_library_template",
+    ),
     # ── Contractor Library ────────────────────────────────────────
     path(
         "contractor/",
@@ -997,5 +1029,21 @@ urlpatterns = [
         "contractor/api/preliminary-spec/<int:pk>/update/",
         views.UpdateContractorPreliminarySpecView.as_view(),
         name="ctr_update_preliminary_spec",
+    ),
+    # Contractor Item Library
+    path(
+        "contractor/item-library/",
+        views.ContractorItemLibraryListView.as_view(),
+        name="ctr_item_library",
+    ),
+    path(
+        "contractor/item-library/upload/",
+        views.ContractorItemLibraryUploadView.as_view(),
+        name="ctr_item_library_upload",
+    ),
+    path(
+        "contractor/item-library/download-template/",
+        views.DownloadContractorItemLibraryTemplateView.as_view(),
+        name="ctr_download_item_library_template",
     ),
 ]
