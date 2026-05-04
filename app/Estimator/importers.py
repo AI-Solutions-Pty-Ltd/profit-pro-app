@@ -20,9 +20,11 @@ from decimal import Decimal, InvalidOperation
 import openpyxl
 
 from .models import (
+    ContractorItemLibraryEntry,
     ContractorLabourCrew,
     ContractorLabourSpecification,
     ContractorMaterial,
+    ContractorMaterialSpec,
     ContractorPlantCost,
     ContractorPlantSpecification,
     ContractorPlantSpecificationComponent,
@@ -31,6 +33,7 @@ from .models import (
     ContractorSpecification,
     ContractorSpecificationComponent,
     ContractorTradeCode,
+    ProjectItemLibraryEntry,
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
@@ -42,9 +45,11 @@ from .models import (
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
+    SystemItemLibraryEntry,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemMaterialSpec,
     SystemPlantCost,
     SystemPlantSpecification,
     SystemPlantSpecificationComponent,
@@ -1373,6 +1378,205 @@ class PreliminarySpecImporter:
         return {
             "created": created,
             "updated": updated,
+            "sheet_used": sheet_name,
+            "fell_back": fell_back,
+            "all_sheets": all_sheets,
+        }
+
+
+# ── Item Library ─────────────────────────────────────────────────
+
+
+class ItemLibraryImporter:
+    """Import Item Library entries from Excel.
+
+    Expected columns:
+        Trade Code | Accounts Code | Component | Material Spec |
+        Labour & Plant Spec | Preliminaries | Item Description | Unit
+
+    The "Labour & Plant Spec" column resolves against both labour and
+    plant specification tables — whichever names match are linked.
+    """
+
+    SHEET_KEYWORDS = [
+        "item library",
+        "items library",
+        "item lib",
+        "itemlibrary",
+        "library",
+    ]
+
+    def __init__(self, file_path, project=None, company=None):
+        self.file_path = file_path
+        self.project = project
+        self.company = company
+
+    def _get_trade_code(self, value):
+        if not value:
+            return None
+        if self.project:
+            qs = ProjectTradeCode.objects.filter(project=self.project)
+        elif self.company:
+            qs = ContractorTradeCode.objects.filter(company=self.company)
+        else:
+            qs = SystemTradeCode.objects.all()
+        # Try exact prefix match first, then full "prefix+trade_name" match
+        tc = qs.filter(prefix=value).first()
+        if tc:
+            return tc
+        for candidate in qs:
+            if candidate.trade_code == value:
+                return candidate
+        return None
+
+    def _get_material_spec(self, name):
+        if not name:
+            return None
+        if self.project:
+            return ProjectSpecification.objects.filter(
+                project=self.project, name=name
+            ).first()
+        if self.company:
+            return ContractorMaterialSpec.objects.filter(
+                company=self.company, name=name
+            ).first()
+        return SystemMaterialSpec.objects.filter(name=name).first()
+
+    def _get_labour_spec(self, name):
+        if not name:
+            return None
+        if self.project:
+            return ProjectLabourSpecification.objects.filter(
+                project=self.project, name=name
+            ).first()
+        if self.company:
+            return ContractorLabourSpecification.objects.filter(
+                company=self.company, name=name
+            ).first()
+        return SystemLabourSpecification.objects.filter(name=name).first()
+
+    def _get_plant_spec(self, name):
+        if not name:
+            return None
+        if self.project:
+            return ProjectPlantSpecification.objects.filter(
+                project=self.project, name=name
+            ).first()
+        if self.company:
+            return ContractorPlantSpecification.objects.filter(
+                company=self.company, name=name
+            ).first()
+        return SystemPlantSpecification.objects.filter(name=name).first()
+
+    def _get_prelim_spec(self, name):
+        if not name:
+            return None
+        if self.project:
+            return ProjectPreliminarySpecification.objects.filter(
+                project=self.project, name=name
+            ).first()
+        if self.company:
+            return ContractorPreliminarySpecification.objects.filter(
+                company=self.company, name=name
+            ).first()
+        return SystemPreliminarySpecification.objects.filter(name=name).first()
+
+    def run(self):
+        wb = openpyxl.load_workbook(self.file_path, data_only=True)
+        ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
+        all_sheets = list(wb.sheetnames)
+
+        created = updated = skipped = 0
+        warnings = []
+
+        for idx, row in enumerate(
+            ws.iter_rows(min_row=2, values_only=True), start=2
+        ):
+            ncols = len(row) if row else 0
+            trade_code_str = _safe_str(row[0]) if ncols > 0 else ""
+            accounts_code = _safe_str(row[1]) if ncols > 1 else ""
+            component = _safe_str(row[2]) if ncols > 2 else ""
+            material_spec_name = _safe_str(row[3]) if ncols > 3 else ""
+            labour_plant_name = _safe_str(row[4]) if ncols > 4 else ""
+            prelim_spec_name = _safe_str(row[5]) if ncols > 5 else ""
+            description = _safe_str(row[6]) if ncols > 6 else ""
+            unit = _safe_str(row[7]) if ncols > 7 else ""
+
+            if not description:
+                skipped += 1
+                continue
+
+            # Drop placeholder text from the template sheet ("Dropdown from
+            # specification") — those are header hints, not real names.
+            if material_spec_name.lower().startswith("dropdown"):
+                material_spec_name = ""
+            if labour_plant_name.lower().startswith("dropdown"):
+                labour_plant_name = ""
+            if prelim_spec_name.lower().startswith("dropdown"):
+                prelim_spec_name = ""
+
+            trade_code = self._get_trade_code(trade_code_str)
+            material_spec = self._get_material_spec(material_spec_name)
+            labour_spec = self._get_labour_spec(labour_plant_name)
+            plant_spec = self._get_plant_spec(labour_plant_name)
+            prelim_spec = self._get_prelim_spec(prelim_spec_name)
+
+            if material_spec_name and not material_spec:
+                warnings.append(
+                    f"Row {idx}: material spec \"{material_spec_name}\" not found"
+                )
+            if labour_plant_name and not (labour_spec or plant_spec):
+                warnings.append(
+                    f"Row {idx}: labour/plant spec \"{labour_plant_name}\" not found"
+                )
+            if prelim_spec_name and not prelim_spec:
+                warnings.append(
+                    f"Row {idx}: preliminary spec \"{prelim_spec_name}\" not found"
+                )
+
+            defaults = {
+                "trade_code": trade_code,
+                "accounts_code": accounts_code,
+                "component": component,
+                "unit": unit,
+                "material_spec": material_spec,
+                "labour_spec": labour_spec,
+                "plant_spec": plant_spec,
+                "preliminary_spec": prelim_spec,
+                "display_order": idx,
+            }
+
+            if self.project:
+                _, was_created = ProjectItemLibraryEntry.objects.update_or_create(
+                    project=self.project,
+                    description=description,
+                    component=component,
+                    defaults=defaults,
+                )
+            elif self.company:
+                _, was_created = ContractorItemLibraryEntry.objects.update_or_create(
+                    company=self.company,
+                    description=description,
+                    component=component,
+                    defaults=defaults,
+                )
+            else:
+                _, was_created = SystemItemLibraryEntry.objects.update_or_create(
+                    description=description,
+                    component=component,
+                    defaults=defaults,
+                )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        wb.close()
+        return {
+            "created": created,
+            "updated": updated,
+            "skipped": skipped,
+            "warnings": warnings,
             "sheet_used": sheet_name,
             "fell_back": fell_back,
             "all_sheets": all_sheets,

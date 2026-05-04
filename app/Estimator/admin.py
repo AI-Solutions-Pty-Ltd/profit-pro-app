@@ -2,6 +2,8 @@ from django.contrib import admin
 
 from .models import (
     BOQItem,
+    ContractorItemLibraryEntry,
+    ProjectItemLibraryEntry,
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
@@ -13,6 +15,7 @@ from .models import (
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
+    SystemItemLibraryEntry,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
@@ -220,6 +223,51 @@ class ProjectPreliminaryCostAdmin(admin.ModelAdmin):
 class ProjectPreliminarySpecificationAdmin(admin.ModelAdmin):
     list_display = ["project", "section", "name", "unit", "preliminary_type", "amount"]
     list_filter = ["project", "section", "preliminary_type"]
+
+
+@admin.register(SystemItemLibraryEntry)
+class SystemItemLibraryEntryAdmin(admin.ModelAdmin):
+    list_display = ["trade_code", "component", "description", "unit"]
+    list_filter = ["trade_code"]
+    search_fields = ["description", "component", "accounts_code"]
+    raw_id_fields = [
+        "trade_code",
+        "material_spec",
+        "labour_spec",
+        "plant_spec",
+        "preliminary_spec",
+    ]
+
+
+@admin.register(ContractorItemLibraryEntry)
+class ContractorItemLibraryEntryAdmin(admin.ModelAdmin):
+    list_display = ["company", "trade_code", "component", "description", "unit"]
+    list_filter = ["company", "trade_code"]
+    search_fields = ["description", "component", "accounts_code"]
+    raw_id_fields = [
+        "trade_code",
+        "material_spec",
+        "labour_spec",
+        "plant_spec",
+        "preliminary_spec",
+        "source",
+    ]
+
+
+@admin.register(ProjectItemLibraryEntry)
+class ProjectItemLibraryEntryAdmin(admin.ModelAdmin):
+    list_display = ["project", "trade_code", "component", "description", "unit"]
+    list_filter = ["project", "trade_code"]
+    search_fields = ["description", "component", "accounts_code"]
+    raw_id_fields = [
+        "trade_code",
+        "material_spec",
+        "labour_spec",
+        "plant_spec",
+        "preliminary_spec",
+        "source_system",
+        "source_contractor",
+    ]
 
 
 @admin.register(BOQItem)
