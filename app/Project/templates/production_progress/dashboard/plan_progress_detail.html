@@ -23,6 +23,11 @@
                         <div>
                             <div class="flex items-center space-x-3">
                                 <h1 class="text-2xl font-bold tracking-tight text-gray-900">{{ plan.activity|title }}</h1>
+                                <a href="{% url 'project:production-plan-detail' project.pk plan.pk %}" 
+                                   class="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors"
+                                   title="View Resource Planning">
+                                    {% heroicon_outline "cog-6-tooth" size="20" %}
+                                </a>
                                 {% if plan.section or plan.bill_no %}
                                     <div class="flex gap-1.5 items-center mt-0.5">
                                         {% if plan.section %}

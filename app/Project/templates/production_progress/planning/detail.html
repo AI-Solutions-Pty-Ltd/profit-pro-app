@@ -21,7 +21,7 @@
                     <ol role="list" class="flex items-center space-x-2">
                         <li>
                             <a href="{% url 'project:production-planning' project.pk %}"
-                               class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
+                               class="flex items-center text-gray-500 transition-colors hover:text-indigo-600">
                                 {% heroicon_mini "chevron-left" class="mr-1 w-4 h-4" %}
                                 <span class="text-xs font-bold tracking-widest uppercase">Planning</span>
                             </a>
@@ -31,7 +31,7 @@
                                 <div class="flex items-center">
                                     {% heroicon_mini "chevron-right" class="w-4 h-4 text-gray-300" %}
                                     <a href="{% url 'project:production-plan-detail' project.pk plan.parent.pk %}"
-                                       class="ml-2 text-xs font-bold tracking-widest text-gray-400 uppercase hover:text-indigo-600">
+                                       class="ml-2 text-xs font-bold tracking-widest text-gray-500 uppercase hover:text-indigo-600">
                                         {{ plan.parent.activity|truncatechars:100 }}
                                     </a>
                                 </div>
@@ -46,7 +46,7 @@
                                 {{ plan.node_type }}
                             </span>
                             {% if plan.section %}
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Section: {{ plan.section }}</span>
+                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Section: {{ plan.section }}</span>
                             {% endif %}
                         </div>
                         <h2 class="text-2xl font-black tracking-tight text-gray-900">{{ plan.activity }}</h2>
@@ -61,7 +61,7 @@
                     </div>
                     <div class="flex items-center space-x-3">
                         {% comment %} <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
-                            {% heroicon_outline "pencil-square" class="mr-2 w-4 h-4 text-gray-400" %}
+                            {% heroicon_outline "pencil-square" class="mr-2 w-4 h-4 text-gray-500" %}
                             Edit Settings
                         </a>
                         {% if plan.node_type == 'ACTIVITY' %}
@@ -81,25 +81,32 @@
                 </div>
             </div>
             <!-- Activity Navigation -->
+               {% if plan.node_type == 'ACTIVITY' %}
             <div class="px-6 py-3 border-t border-gray-100/60 bg-gray-50/50">
                 <div class="flex gap-8 items-center">
                     <a href="{% url 'project:production-cost-breakdown-detail' project.pk plan.pk %}"
-                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-400">
+                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
                         {% heroicon_mini "banknotes" class="inline-block mr-1.5 w-3.5 h-3.5" %}
                         Costing Breakdown
                     </a>
                     <a href="{% url 'project:production-forecast-dashboard' project.pk %}?plan_id={{ plan.pk }}"
-                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-400">
+                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
                         {% heroicon_mini "chart-bar" class="inline-block mr-1.5 w-3.5 h-3.5" %}
                         Forecast Dashboard
                     </a>
                     <a href="{% url 'project:production-daily-log-list' project.pk %}?plan_id={{ plan.pk }}"
-                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-400">
+                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
                         {% heroicon_mini "clipboard-document-list" class="inline-block mr-1.5 w-3.5 h-3.5" %}
                         Daily Logs
                     </a>
+                    <a href="{% url 'project:activity-detail' project.pk plan.pk %}"
+                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
+                        {% heroicon_mini "presentation-chart-line" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                        Progress Analytics
+                    </a>
                 </div>
             </div>
+              {% endif %} 
             <!-- Metric Cards -->
             <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Date Range -->
@@ -111,7 +118,7 @@
                             {% if plan.start_date %}
                                 {{ plan.start_date|date:"d M" }} — {{ plan.finish_date|date:"d M Y" }}
                             {% else %}
-                                <span class="text-gray-400">Not Scheduled</span>
+                                <span class="text-gray-500">Not Scheduled</span>
                             {% endif %}
                         </dd>
                         <div class="mt-1 text-[10px] font-bold text-indigo-600 uppercase">{{ plan.duration }} Days Planned</div>
@@ -124,7 +131,7 @@
                         <div>
                             <dt class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Planned Volume</dt>
                             <dd class="text-sm font-black leading-none text-gray-900">
-                                {{ plan.quantity|floatformat:1 }} <span class="text-[10px] font-medium text-gray-400 uppercase">{{ plan.unit_display }}</span>
+                                {{ plan.quantity|floatformat:1 }} <span class="text-[10px] font-medium text-gray-500 uppercase">{{ plan.unit_display }}</span>
                             </dd>
                             <div class="mt-1 text-[10px] font-bold text-emerald-600 uppercase">Progress: {{ plan.progress_percentage }}%</div>
                         </div>
@@ -200,7 +207,7 @@
                                             <td>
                                                 <div class="font-bold text-gray-900">{{ child.activity }}</div>
                                                 {% if child.node_type == 'BILL' %}
-                                                    <div class="text-[9px] text-gray-400 font-bold uppercase">Bill #{{ child.bill_no }}</div>
+                                                    <div class="text-[9px] text-gray-500 font-bold uppercase">Bill #{{ child.bill_no }}</div>
                                                 {% endif %}
                                             </td>
                                             <td class="text-xs text-gray-600 whitespace-nowrap">
@@ -208,7 +215,7 @@
                                             </td>
                                             <td class="text-xs text-gray-600">{{ child.duration }}d</td>
                                             <td class="font-mono text-xs text-right text-gray-700">
-                                                {{ child.quantity|floatformat:1 }} <span class="text-[9px] text-gray-400 font-bold">{{ child.unit }}</span>
+                                                {{ child.quantity|floatformat:1 }} <span class="text-[9px] text-gray-500 font-bold">{{ child.unit }}</span>
                                             </td>
                                             <td class="font-mono text-xs text-right text-gray-700">
                                                 {% if child.total_labour_cost %}
@@ -243,7 +250,7 @@
                                         </tr>
                                     {% empty %}
                                         <tr>
-                                            <td colspan="8" class="py-12 text-xs italic text-center text-gray-400">No {{ child_title|lower }} created yet.</td>
+                                            <td colspan="8" class="py-12 text-xs italic text-center text-gray-500">No {{ child_title|lower }} created yet.</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -291,7 +298,7 @@
                                                                 <span class="text-xs font-bold text-indigo-900">{{ plan.labour_activity.crew.crew_type }}</span>
                                                                 <div class="flex gap-1.5 mt-1">
                                                                     <span class="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[9px] font-bold uppercase tracking-tight">Crew Spec</span>
-                                                                    <span class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">{{ plan.labour_activity.crew.crew_size }} Workers</span>
+                                                                    <span class="text-[9px] text-gray-500 font-medium uppercase tracking-widest">{{ plan.labour_activity.crew.crew_size }} Workers</span>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -331,8 +338,8 @@
                                                         <td colspan="5" class="px-8 py-12 text-center bg-white">
                                                             <div class="flex flex-col items-center">
                                                                 <div class="p-2 mb-3 bg-gray-50 rounded-full">{% heroicon_outline "users" class="w-6 h-6 text-gray-300" %}</div>
-                                                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No labour resources defined.</p>
-                                                                <p class="mt-1 text-[9px] text-gray-400">Assign a Crew Spec via the Labour Activity or add resources manually.</p>
+                                                                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">No labour resources defined.</p>
+                                                                <p class="mt-1 text-[9px] text-gray-500">Assign a Crew Spec via the Labour Activity or add resources manually.</p>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -363,7 +370,7 @@
                                         <div class="p-1.5 text-amber-600 bg-amber-50 rounded-lg">{% heroicon_mini "truck" class="w-4 h-4" %}</div>
                                         <h3 class="text-xs font-bold text-gray-500 uppercase">Plant &amp; Equipment (BoQ Driven)</h3>
                                     </div>
-                                    <p class="text-[10px] text-gray-400 font-medium italic">Allocation per BoQ component quantity</p>
+                                    <p class="text-[10px] text-gray-500 font-medium italic">Allocation per BoQ component quantity</p>
                                 </div>
                                 <div class="overflow-x-auto">
                                     <table class="table table-sm table-zebra">
@@ -382,10 +389,10 @@
                                                     <td class="px-6 py-3">
                                                         <div class="flex flex-col">
                                                             <span class="text-xs font-bold text-gray-700">{{ row.plant_name }}</span>
-                                                            <span class="text-[9px] text-gray-400">{{ row.hours|floatformat:1 }}h per {{ row.unit }}</span>
+                                                            <span class="text-[9px] text-gray-500">{{ row.hours|floatformat:1 }}h per {{ row.unit }}</span>
                                                         </div>
                                                     </td>
-                                                    <td class="px-4 py-3 text-center text-[10px] text-gray-400 italic">{{ row.source_spec }}</td>
+                                                    <td class="px-4 py-3 text-center text-[10px] text-gray-500 italic">{{ row.source_spec }}</td>
                                                     <td class="px-4 py-3 font-mono text-xs text-center text-gray-600">{{ row.boq_qty|floatformat:1 }}</td>
                                                     <td class="px-4 py-3 font-mono text-xs text-center text-gray-600">R {{ row.rate|floatformat:2|intcomma }}</td>
                                                     <td class="px-6 py-3 font-mono text-xs font-black text-right text-emerald-700">
@@ -432,7 +439,7 @@
                                                     <td class="px-4 py-3 font-mono text-xs tabular-nums text-right text-gray-700">
                                                         {{ item.quantity|floatformat:1|intcomma }}
                                                     </td>
-                                                    <td class="px-4 py-3 text-center text-[10px] font-bold text-gray-400 uppercase">{{ item.unit }}</td>
+                                                    <td class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase">{{ item.unit }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -463,14 +470,14 @@
                             <div id="dependency-empty-state"
                                  class="{% if plan.predecessors.exists %}hidden{% endif %}  text-center">
                                 <div class="flex justify-center mb-2 text-gray-300">{% heroicon_outline "link" class="w-8 h-8" %}</div>
-                                <p class="text-xs font-medium text-gray-400">No predecessors defined yet.</p>
-                                <p class="mt-1 text-[10px] text-gray-400 uppercase tracking-widest">Use the add button to link activities</p>
+                                <p class="text-xs font-medium text-gray-500">No predecessors defined yet.</p>
+                                <p class="mt-1 text-[10px] text-gray-500 uppercase tracking-widest">Use the add button to link activities</p>
                             </div>
                             {% for form in dependency_formset %}
                                 <div class="relative p-3 rounded-lg border border-gray-100 bg-gray-50/50 group {% if not form.instance.pk %}hidden extra-form-row{% endif %}">
                                     {{ form.id }}
                                     <div class="flex justify-between items-center mb-2">
-                                        <label class="text-[10px] font-bold text-gray-400 uppercase">Predecessor {{ forloop.counter }}</label>
+                                        <label class="text-[10px] font-bold text-gray-500 uppercase">Predecessor {{ forloop.counter }}</label>
                                         {% if form.instance.pk %}
                                             <div class="flex items-center">
                                                 {{ form.DELETE }}
@@ -491,9 +498,9 @@
                         <template id="dependency-form-template">
                             <div class="relative p-3 rounded-lg border border-gray-100 duration-300 bg-gray-50/50 group animate-in slide-in-from-top-2">
                                 <div class="flex justify-between items-center mb-2">
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase">New Predecessor</label>
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase">New Predecessor</label>
                                     <button type="button"
-                                            class="text-gray-400 transition-colors hover:text-red-500 btn-remove-form">
+                                            class="text-gray-500 transition-colors hover:text-red-500 btn-remove-form">
                                         {% heroicon_mini "x-mark" class="w-4 h-4" %}
                                     </button>
                                 </div>
