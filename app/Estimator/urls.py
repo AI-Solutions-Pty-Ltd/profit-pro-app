@@ -206,6 +206,11 @@ urlpatterns = [
         views.DownloadItemLibraryTemplateView.as_view(),
         name="download_item_library_template",
     ),
+    path(
+        "project/<int:project_pk>/boq/autofill-from-library/",
+        views.AutofillBoqFromLibraryView.as_view(),
+        name="autofill_boq_from_library",
+    ),
     # System specs
     path(
         "project/<int:project_pk>/system-specs/",

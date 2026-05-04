@@ -1,4 +1,5 @@
 from app.Estimator.models import (
+    BOQItem,
     ContractorItemLibraryEntry,
     ContractorLabourCrew,
     ContractorLabourSpecification,
@@ -1696,3 +1697,97 @@ def sync_item_library_from_contractor(project):
             updated += 1
 
     return {"created": created, "updated": updated}
+
+
+def autofill_boq_from_library(project):
+    """Fill spec FKs on Output BoQ rows from matching Item Library entries.
+
+    For each non-header BoQ row in `project` that has none of the four spec
+    FKs set, find a matching ProjectItemLibraryEntry and copy its spec FKs
+    over plus the back-link.
+
+    Match ladder (case-insensitive, trimmed):
+      1. component + trade_code + description all match
+      2. component + trade_code match (must be unique)
+      3. description match (must be unique)
+
+    Rows already carrying any spec are left untouched. Ambiguous tier-2 or
+    tier-3 hits are reported, not picked at random.
+    """
+
+    def norm(s):
+        return (s or "").strip().lower()
+
+    library = list(
+        ProjectItemLibraryEntry.objects.filter(project=project).select_related(
+            "trade_code"
+        )
+    )
+
+    by_full = {}
+    by_ct = {}
+    by_desc = {}
+    for e in library:
+        by_full[(norm(e.component), e.trade_code_id, norm(e.description))] = e
+        by_ct.setdefault((norm(e.component), e.trade_code_id), []).append(e)
+        by_desc.setdefault(norm(e.description), []).append(e)
+
+    filled = skipped_already_set = no_match = ambiguous = 0
+
+    for item in BOQItem.objects.filter(
+        project=project, is_section_header=False
+    ).select_related("trade_code"):
+        if (
+            item.specification_id
+            or item.labour_specification_id
+            or item.plant_specification_id
+            or item.preliminary_specification_id
+        ):
+            skipped_already_set += 1
+            continue
+
+        comp = norm(item.component)
+        desc = norm(item.description)
+        tc_id = item.trade_code_id
+
+        match = by_full.get((comp, tc_id, desc))
+        if match is None:
+            ct_matches = by_ct.get((comp, tc_id), [])
+            if len(ct_matches) == 1:
+                match = ct_matches[0]
+            elif len(ct_matches) > 1:
+                ambiguous += 1
+                continue
+            else:
+                desc_matches = by_desc.get(desc, [])
+                if len(desc_matches) == 1:
+                    match = desc_matches[0]
+                elif len(desc_matches) > 1:
+                    ambiguous += 1
+                    continue
+                else:
+                    no_match += 1
+                    continue
+
+        item.library_entry = match
+        item.specification = match.material_spec
+        item.labour_specification = match.labour_spec
+        item.plant_specification = match.plant_spec
+        item.preliminary_specification = match.preliminary_spec
+        item.save(
+            update_fields=[
+                "library_entry",
+                "specification",
+                "labour_specification",
+                "plant_specification",
+                "preliminary_specification",
+            ]
+        )
+        filled += 1
+
+    return {
+        "filled": filled,
+        "skipped_already_set": skipped_already_set,
+        "no_match": no_match,
+        "ambiguous": ambiguous,
+    }

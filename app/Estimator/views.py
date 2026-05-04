@@ -435,6 +435,28 @@ class SyncBoqView(ProjectEstimatorMixin, View):
         )
 
 
+class AutofillBoqFromLibraryView(ProjectEstimatorMixin, View):
+    """Bulk-fill BoQ rows that have no specs from matching Item Library entries."""
+
+    def post(self, request, project_pk):
+        from .services import autofill_boq_from_library
+
+        result = autofill_boq_from_library(self.get_project())
+        parts = [f"{result['filled']} filled"]
+        if result["skipped_already_set"]:
+            parts.append(f"{result['skipped_already_set']} already had specs")
+        if result["ambiguous"]:
+            parts.append(f"{result['ambiguous']} ambiguous (skipped)")
+        if result["no_match"]:
+            parts.append(f"{result['no_match']} no match")
+        messages.success(
+            request, "Autofill from Item Library — " + ", ".join(parts) + "."
+        )
+        return redirect(
+            reverse("estimator:dashboard", kwargs={"project_pk": project_pk})
+        )
+
+
 class SpecificationListView(ProjectEstimatorMixin, TemplateView):
     """Material calculator — driven by Output BoQ.
 
