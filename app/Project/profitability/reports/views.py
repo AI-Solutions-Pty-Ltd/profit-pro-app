@@ -154,28 +154,6 @@ class FinancialBreakdownView(FinancialBaseView):
 
         # 3. Cost of Sales (COS) Breakdown
         cos_code = BaseProjectEntity.ExpenseCode.COS
-        cos_tracker_filters = {
-            "project": project,
-            "date__range": (start_date, end_date),
-        }
-
-        cos_trackers = {
-            "materials": MaterialCostTracker.objects.filter(
-                **cos_tracker_filters, material_entity__expense_code=cos_code
-            ),
-            "labour": LabourCostTracker.objects.filter(
-                **cos_tracker_filters, labour_entity__expense_code=cos_code
-            ),
-            "subcontractors": SubcontractorCostTracker.objects.filter(
-                **cos_tracker_filters, subcontractor_entity__expense_code=cos_code
-            ),
-            "plant": PlantCostTracker.objects.filter(
-                **cos_tracker_filters, plant_entity__expense_code=cos_code
-            ),
-            "overhead": OverheadCostTracker.objects.filter(
-                **cos_tracker_filters, overhead_entity__expense_code=cos_code
-            ),
-        }
 
         cos_journal_items = JournalEntry.objects.filter(
             project=project,
@@ -191,28 +169,6 @@ class FinancialBreakdownView(FinancialBaseView):
 
         # 4. Operating Expenses (OpEx) Breakdown
         opex_code = BaseProjectEntity.ExpenseCode.OPEX
-        opex_tracker_filters = {
-            "project": project,
-            "date__range": (start_date, end_date),
-        }
-
-        opex_trackers = {
-            "materials": MaterialCostTracker.objects.filter(
-                **opex_tracker_filters, material_entity__expense_code=opex_code
-            ),
-            "labour": LabourCostTracker.objects.filter(
-                **opex_tracker_filters, labour_entity__expense_code=opex_code
-            ),
-            "subcontractors": SubcontractorCostTracker.objects.filter(
-                **opex_tracker_filters, subcontractor_entity__expense_code=opex_code
-            ),
-            "plant": PlantCostTracker.objects.filter(
-                **opex_tracker_filters, plant_entity__expense_code=opex_code
-            ),
-            "overhead": OverheadCostTracker.objects.filter(
-                **opex_tracker_filters, overhead_entity__expense_code=opex_code
-            ),
-        }
 
         opex_journal_items = JournalEntry.objects.filter(
             project=project,
