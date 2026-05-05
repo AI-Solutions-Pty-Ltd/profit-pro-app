@@ -465,7 +465,7 @@
                         <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cumulative Position</span>
                     </div>
 
-                    <!-- Financial Details -->
+                    <!-- Financial Details 
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
                             <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Income</span>
@@ -475,11 +475,11 @@
                             <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Expense</span>
                             <span class="font-mono text-xs font-bold tabular-nums text-gray-700">${formatK(monthExp)}</span>
                         </div>
-                    </div>
+                    </div>-->
 
                     <!-- Footer Position -->
                     <div class="flex justify-between items-center pt-4 mt-auto">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cash Position</span>
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monthly Net</span>
                         <span class="font-mono text-xs font-black tabular-nums  ${net >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
                                 ${net >= 0 ? '+' : ''}${formatK(net)}
                         </span>
@@ -532,5 +532,5 @@
         slider.addEventListener('input', updateDashboard);
         updateDashboard();
     });
-    </script>
+</script>
 {% endblock extra_js %}
