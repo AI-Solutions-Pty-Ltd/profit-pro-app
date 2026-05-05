@@ -130,15 +130,16 @@ class FinancialBreakdownView(FinancialBaseView):
         start_date = context["start_date"]
         end_date = context["end_date"]
 
-        # 1. Certificates Detail (Certified Work)
-        certificates = PaymentCertificate.objects.filter(
-            project=project,
-            status__in=[
-                PaymentCertificate.Status.APPROVED,
-                PaymentCertificate.Status.SIGNATORIES_APPROVED,
-            ],
-            approved_on__date__range=(start_date, end_date),
-        ).order_by("-approved_on")
+        # 1. Certificates Detail (Certified Work) - DISABLED
+        # certificates = PaymentCertificate.objects.filter(
+        #     project=project,
+        #     status__in=[
+        #         PaymentCertificate.Status.APPROVED,
+        #         PaymentCertificate.Status.SIGNATORIES_APPROVED,
+        #     ],
+        #     approved_on__date__range=(start_date, end_date),
+        # ).order_by("-approved_on")
+        certificates = PaymentCertificate.objects.none()
 
         # 2. Journals Detail (Other Income)
         journal_entries = JournalEntry.objects.filter(
@@ -147,9 +148,10 @@ class FinancialBreakdownView(FinancialBaseView):
             date__range=(start_date, end_date),
         ).order_by("-date")
 
-        cert_total = sum(
-            getattr(c, "total_certified_amount", Decimal("0.00")) for c in certificates
-        )
+        # cert_total = sum(
+        #     getattr(c, "total_certified_amount", Decimal("0.00")) for c in certificates
+        # )
+        cert_total = Decimal("0.00")
         journal_total = sum(j.amount for j in journal_entries)
 
         # 3. Cost of Sales (COS) Breakdown
