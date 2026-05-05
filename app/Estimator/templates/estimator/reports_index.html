@@ -7,164 +7,496 @@
     </div>
     <!-- Priced BoQ Reports -->
     <div class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Priced BoQ Reports</h2>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}</div>
+        <h2 class="mb-4 text-lg font-semibold text-gray-900">Priced BoQ Reports</h2>
+        {% comment %} <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline Assessment</h3>
                 </div>
                 <p class="text-xs text-gray-500">Compares contract rates vs new baseline rates based on original quantities</p>
             </a>
-            <a href="{% url 'estimator:report_progress_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">
+            <a href="{% url 'estimator:report_progress_assessment' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-green-100 rounded-lg">
                         {% heroicon_outline "arrow-trending-up" class="w-5 h-5 text-green-600" %}
                     </div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress Assessment</h3>
                 </div>
                 <p class="text-xs text-gray-500">Compares baseline budget vs work completed at new rates</p>
             </a>
-            <a href="{% url 'estimator:report_forecast_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">
+            <a href="{% url 'estimator:report_forecast_assessment' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-purple-100 rounded-lg">
                         {% heroicon_outline "presentation-chart-line" class="w-5 h-5 text-purple-600" %}
                     </div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast Assessment</h3>
                 </div>
                 <p class="text-xs text-gray-500">Compares baseline BoQ with new rates and forecast quantities</p>
             </a>
-            <a href="{% url 'estimator:report_key_rates_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-amber-100 p-2">{% heroicon_outline "key" class="w-5 h-5 text-amber-600" %}</div>
+            <a href="{% url 'estimator:report_key_rates_assessment' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-amber-100 rounded-lg">{% heroicon_outline "key" class="w-5 h-5 text-amber-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Key Rates Assessment</h3>
                 </div>
                 <p class="text-xs text-gray-500">Contract vs new rates for items with computable material/labour rates</p>
             </a>
+        </div> {% endcomment %}
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 gap-4 mb-8 lg:grid-cols-3">
+            {% for summary in summaries %}
+                <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+                    <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-500">{{ summary.label }}</h3>
+                        <a href="{{ summary.url }}"
+                           class="text-[10px] font-bold uppercase tracking-widest text-indigo-600 hover:text-indigo-700">View Report</a>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between items-baseline mb-4">
+                            <div>
+                                <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                                <div class="text-2xl font-bold font-mono tabular-nums {% if summary.variance_pct > 0 %}text-rose-600{% elif summary.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                    {{ summary.variance_pct|default:"0.00"|floatformat:2 }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-500">Contract Amount</span>
+                                <span class="font-mono tabular-nums text-gray-900">{{ summary.amount_a|default:"0.00"|floatformat:2 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-500">Resource Baseline</span>
+                                <span class="font-mono tabular-nums text-gray-900">{{ summary.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-gray-50">
+                                <span class="text-xs font-bold tracking-tight text-gray-700 uppercase">Risk Variance</span>
+                                <span class="text-sm font-bold font-mono tabular-nums {% if summary.variance > 0 %}text-rose-600{% elif summary.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                    {% if summary.variance > 0 %}+{% endif %}
+                                    {{ summary.variance|default:"0.00"|floatformat:2 }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
     </div>
     <!-- Material Lists -->
     <div class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Material Lists</h2>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <a href="{% url 'estimator:report_material_list_baseline' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "cube" class="w-5 h-5 text-blue-600" %}</div>
+        <h2 class="mb-4 text-lg font-semibold text-gray-900">Material Lists</h2>
+        <!-- Material Summary Grid -->
+        <div class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-3">
+            <!-- Baseline Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ mat_summary.baseline.label }}</h3>
+                    <a href="{{ mat_summary.baseline.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
+                    <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
+                        {{ mat_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+            <!-- Progress Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ mat_summary.progress.label }}</h3>
+                    <a href="{{ mat_summary.progress.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if mat_summary.progress.variance_pct > 0 %}text-rose-600{% elif mat_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ mat_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Progress Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ mat_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if mat_summary.progress.variance > 0 %}text-rose-600{% elif mat_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ mat_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Forecast Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ mat_summary.forecast.label }}</h3>
+                    <a href="{{ mat_summary.forecast.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if mat_summary.forecast.variance_pct > 0 %}text-rose-600{% elif mat_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ mat_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Forecast Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ mat_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if mat_summary.forecast.variance > 0 %}text-rose-600{% elif mat_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ mat_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% comment %} <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <a href="{% url 'estimator:report_material_list_baseline' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "cube" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Material breakdown using contract quantities and new rates</p>
             </a>
-            <a href="{% url 'estimator:report_material_list_progress' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "cube" class="w-5 h-5 text-green-600" %}</div>
+            <a href="{% url 'estimator:report_material_list_progress' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-green-100 rounded-lg">{% heroicon_outline "cube" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Material breakdown using progress quantities and new rates</p>
             </a>
-            <a href="{% url 'estimator:report_material_list_forecast' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "cube" class="w-5 h-5 text-purple-600" %}</div>
+            <a href="{% url 'estimator:report_material_list_forecast' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-purple-100 rounded-lg">{% heroicon_outline "cube" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Material breakdown using forecast quantities and new rates</p>
             </a>
-        </div>
+        </div> {% endcomment %}
     </div>
     <!-- Labour Lists -->
     <div class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Labour Lists</h2>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <a href="{% url 'estimator:report_labour_list_baseline' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "user-group" class="w-5 h-5 text-blue-600" %}</div>
+        <h2 class="mb-4 text-lg font-semibold text-gray-900">Labour Lists</h2>
+        <!-- Labour Summary Grid -->
+        <div class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-3">
+            <!-- Baseline Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ lab_summary.baseline.label }}</h3>
+                    <a href="{{ lab_summary.baseline.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
+                    <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
+                        {{ lab_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+            <!-- Progress Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ lab_summary.progress.label }}</h3>
+                    <a href="{{ lab_summary.progress.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if lab_summary.progress.variance_pct > 0 %}text-rose-600{% elif lab_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ lab_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Progress Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ lab_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if lab_summary.progress.variance > 0 %}text-rose-600{% elif lab_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ lab_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Forecast Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ lab_summary.forecast.label }}</h3>
+                    <a href="{{ lab_summary.forecast.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if lab_summary.forecast.variance_pct > 0 %}text-rose-600{% elif lab_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ lab_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Forecast Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ lab_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if lab_summary.forecast.variance > 0 %}text-rose-600{% elif lab_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ lab_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% comment %} <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <a href="{% url 'estimator:report_labour_list_baseline' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "user-group" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Labour/crew breakdown using contract quantities</p>
             </a>
-            <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "user-group" class="w-5 h-5 text-green-600" %}</div>
+            <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-green-100 rounded-lg">{% heroicon_outline "user-group" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Labour/crew breakdown using progress quantities</p>
             </a>
-            <a href="{% url 'estimator:report_labour_list_forecast' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}</div>
+            <a href="{% url 'estimator:report_labour_list_forecast' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-purple-100 rounded-lg">{% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Labour/crew breakdown using forecast quantities</p>
             </a>
-        </div>
+        </div> {% endcomment %}
     </div>
     <!-- Plant Lists -->
     <div class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Plant Lists</h2>
+        <h2 class="mb-4 text-lg font-semibold text-gray-900">Plant Lists</h2>
+        <!-- Plant Summary Grid -->
+        <div class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-3">
+            <!-- Baseline Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ plt_summary.baseline.label }}</h3>
+                    <a href="{{ plt_summary.baseline.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
+                    <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
+                        {{ plt_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+            <!-- Progress Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ plt_summary.progress.label }}</h3>
+                    <a href="{{ plt_summary.progress.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if plt_summary.progress.variance_pct > 0 %}text-rose-600{% elif plt_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ plt_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Progress Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ plt_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if plt_summary.progress.variance > 0 %}text-rose-600{% elif plt_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ plt_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Forecast Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ plt_summary.forecast.label }}</h3>
+                    <a href="{{ plt_summary.forecast.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if plt_summary.forecast.variance_pct > 0 %}text-rose-600{% elif plt_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ plt_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Forecast Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ plt_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if plt_summary.forecast.variance > 0 %}text-rose-600{% elif plt_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ plt_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% comment %}
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <a href="{% url 'estimator:report_plant_list_baseline' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "truck" class="w-5 h-5 text-blue-600" %}</div>
+            <a href="{% url 'estimator:report_plant_list_baseline' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "truck" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Plant breakdown using contract quantities</p>
             </a>
-            <a href="{% url 'estimator:report_plant_list_progress' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "truck" class="w-5 h-5 text-green-600" %}</div>
+            <a href="{% url 'estimator:report_plant_list_progress' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-green-100 rounded-lg">{% heroicon_outline "truck" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Plant breakdown using progress quantities</p>
             </a>
-            <a href="{% url 'estimator:report_plant_list_forecast' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "truck" class="w-5 h-5 text-purple-600" %}</div>
+            <a href="{% url 'estimator:report_plant_list_forecast' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-purple-100 rounded-lg">{% heroicon_outline "truck" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Plant breakdown using forecast quantities</p>
             </a>
-        </div>
+        </div> {% endcomment %}
     </div>
     <!-- Preliminaries Lists -->
     <div class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Preliminaries Lists</h2>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <a href="{% url 'estimator:report_prelim_list_baseline' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "newspaper" class="w-5 h-5 text-blue-600" %}</div>
+        <h2 class="mb-4 text-lg font-semibold text-gray-900">Preliminaries Lists</h2>
+        <!-- Prelim Summary Grid -->
+        <div class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-3">
+            <!-- Baseline Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ pre_summary.baseline.label }}</h3>
+                    <a href="{{ pre_summary.baseline.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
+                    <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
+                        {{ pre_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+            <!-- Progress Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ pre_summary.progress.label }}</h3>
+                    <a href="{{ pre_summary.progress.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if pre_summary.progress.variance_pct > 0 %}text-rose-600{% elif pre_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ pre_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Progress Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ pre_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if pre_summary.progress.variance > 0 %}text-rose-600{% elif pre_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ pre_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Forecast Card -->
+            <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ pre_summary.forecast.label }}</h3>
+                    <a href="{{ pre_summary.forecast.url }}"
+                       class="text-[9px] font-bold uppercase tracking-widest text-indigo-600">View</a>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-baseline mb-3">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
+                            <div class="text-xl font-bold font-mono tabular-nums {% if pre_summary.forecast.variance_pct > 0 %}text-rose-600{% elif pre_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ pre_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2 space-y-1.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Forecast Amt</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ pre_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-500">Variance</span>
+                            <span class="font-mono tabular-nums {% if pre_summary.forecast.variance > 0 %}text-rose-600{% elif pre_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                                {{ pre_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% comment %} <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <a href="{% url 'estimator:report_prelim_list_baseline' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "newspaper" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Preliminaries breakdown using contract quantities</p>
             </a>
-            <a href="{% url 'estimator:report_prelim_list_progress' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "newspaper" class="w-5 h-5 text-green-600" %}</div>
+            <a href="{% url 'estimator:report_prelim_list_progress' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-green-100 rounded-lg">{% heroicon_outline "newspaper" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Preliminaries breakdown using progress quantities</p>
             </a>
-            <a href="{% url 'estimator:report_prelim_list_forecast' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "newspaper" class="w-5 h-5 text-purple-600" %}</div>
+            <a href="{% url 'estimator:report_prelim_list_forecast' project_pk=project_pk %}" class="p-5 bg-white rounded-lg shadow-sm transition group hover:shadow-md hover:ring-indigo-200">
+                <div class="flex gap-3 items-center mb-3">
+                    <div class="p-2 bg-purple-100 rounded-lg">{% heroicon_outline "newspaper" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Preliminaries breakdown using forecast quantities</p>
             </a>
-        </div>
+        </div> {% endcomment %}
     </div>
 {% endblock %}
