@@ -11,6 +11,7 @@ from app.BillOfQuantities.models import (
     PaymentCertificate,
 )
 from app.Project.models import (
+    BaseProjectEntity,
     JournalEntry,
     LabourCostTracker,
     MaterialCostTracker,
@@ -125,211 +126,185 @@ class FinancialBreakdownView(FinancialBaseView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["tab"] = "performance_report"
-        return context
-
-
-class IncomeStatementView(FinancialBaseView):
-    """
-    Detailed Income Statement Report with COS and OpEx breakdown.
-    """
-
-    template_name = "profitability/reports/income_statement.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
         project = self.project
         start_date = context["start_date"]
         end_date = context["end_date"]
 
-        from app.Project.models.entity_definitions import BaseProjectEntity
+        # 1. Certificates Detail (Certified Work)
+        certificates = PaymentCertificate.objects.filter(
+            project=project,
+            status__in=[
+                PaymentCertificate.Status.APPROVED,
+                PaymentCertificate.Status.SIGNATORIES_APPROVED,
+            ],
+            approved_on__date__range=(start_date, end_date),
+        ).order_by("-approved_on")
 
-        cos_code = BaseProjectEntity.ExpenseCode.COS
-        opex_code = BaseProjectEntity.ExpenseCode.OPEX
-
-        # 1. Revenue
-        revenue_items = []
-        # Certificates
-        cert_rev = ActualTransaction.objects.filter(
-            line_item__project=project,
-            payment_certificate__status=PaymentCertificate.Status.APPROVED,
-            payment_certificate__approved_on__date__range=(start_date, end_date),
-        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
-        if cert_rev > 0:
-            revenue_items.append({"label": "Certified Work", "amount": cert_rev})
-
-        # Journal Credits
-        journal_rev = JournalEntry.objects.filter(
+        # 2. Journals Detail (Other Income)
+        journal_entries = JournalEntry.objects.filter(
             project=project,
             transaction_type=JournalEntry.EntryType.CREDIT,
             date__range=(start_date, end_date),
-        ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
-        if journal_rev > 0:
-            revenue_items.append(
-                {"label": "Other Income (Journals)", "amount": journal_rev}
-            )
+        ).order_by("-date")
 
-        total_revenue = cert_rev + journal_rev
+        cert_total = sum(
+            getattr(c, "total_certified_amount", Decimal("0.00")) for c in certificates
+        )
+        journal_total = sum(j.amount for j in journal_entries)
 
-        # Helper for manual journal entries
-        def get_manual_journal_total(categories):
-            if isinstance(categories, str):
-                categories = [categories]
+        # 3. Cost of Sales (COS) Breakdown
+        cos_code = BaseProjectEntity.ExpenseCode.COS
 
-            return JournalEntry.objects.filter(
-                project=project,
-                transaction_type=JournalEntry.EntryType.DEBIT,
-                category__in=categories,
-                source_log_id__isnull=True,  # Manual entries only
-                date__range=(start_date, end_date),
-            ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        cos_journal_items = JournalEntry.objects.filter(
+            project=project,
+            transaction_type=JournalEntry.EntryType.DEBIT,
+            date__range=(start_date, end_date),
+            category__in=[
+                JournalEntry.Category.MATERIAL,
+                JournalEntry.Category.LABOUR,
+                JournalEntry.Category.SUBCONTRACTOR,
+                JournalEntry.Category.PLANT,
+            ],
+        ).order_by("-date")
 
-        # Helper for tracker summaries
-        def get_tracker_summary(code):
-            filters = {"project": project, "date__range": (start_date, end_date)}
-            items = []
+        # 4. Operating Expenses (OpEx) Breakdown
+        opex_code = BaseProjectEntity.ExpenseCode.OPEX
 
-            # Labour
-            lab_tracker = (
-                LabourCostTracker.objects.filter(
-                    **filters, labour_entity__expense_code=code
-                ).aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
-                or 0
-            )
-            lab_manual = Decimal("0.00")
-            # If we are in COS, add manual labour journals.
-            if code == cos_code:
-                lab_manual = get_manual_journal_total(JournalEntry.Category.LABOUR)
+        opex_journal_items = JournalEntry.objects.filter(
+            project=project,
+            transaction_type=JournalEntry.EntryType.DEBIT,
+            date__range=(start_date, end_date),
+            category__in=[
+                JournalEntry.Category.OVERHEAD,
+                JournalEntry.Category.OTHER,
+            ],
+        ).order_by("-date")
 
-            lab_total = Decimal(str(lab_tracker)) + lab_manual
-            if lab_total > 0:
-                items.append({"label": "Labour Costs", "amount": lab_total})
+        # Aggregates for Summary Rows
+        total_revenue = cert_total + journal_total
 
-            # Materials
-            mat_tracker = (
-                MaterialCostTracker.objects.filter(
-                    **filters, material_entity__expense_code=code
-                ).aggregate(total=Sum(F("quantity") * F("rate")))["total"]
-                or 0
-            )
-            mat_manual = Decimal("0.00")
-            if code == cos_code:
-                mat_manual = get_manual_journal_total(JournalEntry.Category.MATERIAL)
+        # Helper to sum trackers
+        def sum_trackers(models_map, code):
+            total = Decimal("0.00")
+            tracker_data = {}
+            sub_totals = {}
 
-            mat_total = Decimal(str(mat_tracker)) + mat_manual
-            if mat_total > 0:
-                items.append({"label": "Material Costs", "amount": mat_total})
+            for tracker_type, model_class in models_map.items():
+                try:
+                    # Use the provided helper logic for each model
+                    entity_field = f"{tracker_type}_entity"
+                    if tracker_type == "subcontractors":
+                        entity_field = "subcontractor_entity"
 
-            # Subcontractors
-            sub_tracker = (
-                SubcontractorCostTracker.objects.filter(
-                    **filters, subcontractor_entity__expense_code=code
-                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-                or 0
-            )
-            sub_manual = Decimal("0.00")
-            if code == cos_code:
-                sub_manual = get_manual_journal_total(
-                    JournalEntry.Category.SUBCONTRACTOR
-                )
+                    filters = {
+                        f"{entity_field}__expense_code": code,
+                        "project": project,
+                        "date__range": (start_date, end_date),
+                    }
+                    qs = model_class.objects.filter(**filters)
 
-            sub_total = Decimal(str(sub_tracker)) + sub_manual
-            if sub_total > 0:
-                items.append({"label": "Subcontractor Costs", "amount": sub_total})
+                    # Aggregate total
+                    if tracker_type == "labour":
+                        agg = qs.aggregate(t=Sum(F("amount_of_days") * F("salary")))[
+                            "t"
+                        ]
+                    elif tracker_type == "materials":
+                        agg = qs.aggregate(t=Sum(F("quantity") * F("rate")))["t"]
+                    elif tracker_type == "subcontractors":
+                        agg = qs.aggregate(t=Sum(F("amount_of_days") * F("rate")))["t"]
+                    elif tracker_type == "plant":
+                        agg = qs.aggregate(t=Sum(F("usage_hours") * F("hourly_rate")))[
+                            "t"
+                        ]
+                    elif tracker_type == "overhead":
+                        agg = qs.aggregate(t=Sum(F("amount_of_days") * F("rate")))["t"]
+                    else:
+                        agg = 0
 
-            # Plant
-            plt_tracker = (
-                PlantCostTracker.objects.filter(
-                    **filters, plant_entity__expense_code=code
-                ).aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
-                or 0
-            )
-            plt_manual = Decimal("0.00")
-            if code == cos_code:
-                plt_manual = get_manual_journal_total(JournalEntry.Category.PLANT)
+                    val = Decimal(str(agg or 0))
+                    total += val
+                    tracker_data[tracker_type] = qs
+                    sub_totals[f"{tracker_type}_total"] = val
+                except Exception:
+                    tracker_data[tracker_type] = []
+                    sub_totals[f"{tracker_type}_total"] = Decimal("0.00")
 
-            plt_total = Decimal(str(plt_tracker)) + plt_manual
-            if plt_total > 0:
-                items.append({"label": "Plant & Equipment", "amount": plt_total})
+            return {"total": total, "items": tracker_data, "sub_totals": sub_totals}
 
-            # Overheads Tracker
-            ovh_tracker = (
-                OverheadCostTracker.objects.filter(
-                    **filters, overhead_entity__expense_code=code
-                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-                or 0
-            )
-            ovh_manual = Decimal("0.00")
-            # Overheads manual journals go to OpEx usually
-            if code == opex_code:
-                ovh_manual = get_manual_journal_total(
-                    [JournalEntry.Category.OVERHEAD, JournalEntry.Category.OTHER]
-                )
-
-            ovh_total = Decimal(str(ovh_tracker)) + ovh_manual
-            if ovh_total > 0:
-                label = (
-                    "Administrative Overheads"
-                    if code == opex_code
-                    else "Direct Overheads"
-                )
-                items.append({"label": label, "amount": ovh_total})
-
-            return items
-
-        # 2. Cost of Sales (COS)
-        cos_items = get_tracker_summary(cos_code)
-        total_cos = sum(item["amount"] for item in cos_items)
-
-        # Gross Profit
-        gross_profit = total_revenue - total_cos
-        gp_margin = (gross_profit / total_revenue * 100) if total_revenue > 0 else 0
-
-        # 3. Operating Expenses (OpEx)
-        opex_items = get_tracker_summary(opex_code)
-
-        total_opex = sum(item["amount"] for item in opex_items)
-
-        # Net profit
-        net_profit = gross_profit - total_opex
-        np_margin = (net_profit / total_revenue * 100) if total_revenue > 0 else 0
-
-        # Inject percentages
-        def add_pct(items, base):
-            for item in items:
-                item["pct"] = (item["amount"] / base * 100) if base > 0 else 0
-            return items
-
-        context["income_statement"] = {
-            "revenue": {
-                "items": add_pct(revenue_items, total_revenue),
-                "total": total_revenue,
-            },
-            "cos": {
-                "items": add_pct(cos_items, total_revenue),
-                "total": total_cos,
-                "pct": (total_cos / total_revenue * 100) if total_revenue > 0 else 0,
-            },
-            "gross_profit": {
-                "amount": gross_profit,
-                "margin": gp_margin,
-            },
-            "opex": {
-                "items": add_pct(opex_items, total_revenue),
-                "total": total_opex,
-                "pct": (total_opex / total_revenue * 100) if total_revenue > 0 else 0,
-            },
-            "net_profit": {
-                "amount": net_profit,
-                "margin": np_margin,
-            },
+        tracker_models = {
+            "materials": MaterialCostTracker,
+            "labour": LabourCostTracker,
+            "subcontractors": SubcontractorCostTracker,
+            "plant": PlantCostTracker,
+            "overhead": OverheadCostTracker,
         }
 
-        context["tab"] = "performance_report"
-        context["report_name"] = "Income Statement"
-        context["generated_at"] = datetime.now()
+        cos_results = sum_trackers(tracker_models, cos_code)
+        cos_tracker_total = cos_results["total"]
+        cos_journal_total = sum(j.amount for j in cos_journal_items)
+        cos_total = cos_tracker_total + cos_journal_total
 
+        opex_results = sum_trackers(tracker_models, opex_code)
+        opex_tracker_total = opex_results["total"]
+        opex_journal_total = sum(j.amount for j in opex_journal_items)
+        opex_total = opex_tracker_total + opex_journal_total
+
+        context["cos_breakdown"] = {
+            "trackers": cos_results,
+            "journals": {"items": cos_journal_items, "total": cos_journal_total},
+            "total": cos_total,
+        }
+
+        context["opex_breakdown"] = {
+            "trackers": opex_results,
+            "journals": {"items": opex_journal_items, "total": opex_journal_total},
+            "total": opex_total,
+        }
+
+        context["revenue_breakdown"] = {
+            "certificates": {
+                "items": certificates,
+                "total": cert_total,
+                "pct": (cert_total / total_revenue * 100) if total_revenue > 0 else 0,
+            },
+            "journals": {
+                "items": journal_entries,
+                "total": journal_total,
+                "pct": (journal_total / total_revenue * 100)
+                if total_revenue > 0
+                else 0,
+            },
+            "total": total_revenue,
+        }
+
+        # Final Profit Aggregates
+        gross_profit = total_revenue - cos_total
+        net_profit = gross_profit - opex_total
+
+        gross_profit_pct = (
+            (gross_profit / total_revenue * 100) if total_revenue > 0 else 0
+        )
+        net_profit_pct = (net_profit / total_revenue * 100) if total_revenue > 0 else 0
+
+        context["gross_profit"] = {"total": gross_profit, "pct": gross_profit_pct}
+        context["net_profit"] = {"total": net_profit, "pct": net_profit_pct}
+
+        context["tab"] = "performance_report"
+        context["report_name"] = "Detailed Financial Breakdown"
+        context["generated_at"] = datetime.now()
+        context["total_revenue"] = (
+            total_revenue  # Ensure this is also available directly
+        )
         return context
+
+
+class IncomeStatementView(FinancialBreakdownView):
+    """
+    Simplified Income Statement Report. Now inherits from FinancialBreakdownView
+    to provide the same high-fidelity drill-down capabilities.
+    """
+
+    template_name = "profitability/reports/financial_breakdown.html"
 
 
 class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
