@@ -47,7 +47,7 @@
                                    step="1" 
                                    min="1" 
                                    value="{{ crew_count|floatformat:0 }}" 
-                                   class="px-2 py-1.5 w-20 font-mono text-sm font-bold text-center text-indigo-700 bg-white rounded-lg border-0 ring-1 ring-inset ring-indigo-200 focus:ring-2 focus:ring-indigo-600">
+                                   class="px-2 py-1.5 w-20 font-mono text-sm font-bold text-center text-indigo-700 rounded-lg border-0 ring-1 ring-inset bg-white ring-indigo-200 focus:ring-2 focus:ring-indigo-600">
                             <button id="save-crew-count" 
                                     class="inline-flex items-center px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm transition-all hover:bg-indigo-700 active:scale-95">
                                 Save
@@ -56,13 +56,20 @@
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-7">
+            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-6">
                 <div class="relative p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
                     <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Productivity</dt>
                     <dd class="text-lg font-black text-gray-900">
                         {{ daily_production|qty|default:"0" }} <span class="text-xs font-medium text-gray-400">{{ act_unit }} / Day</span>
                     </dd>
                     <div class="absolute top-4 right-4 text-gray-200">{% heroicon_outline "bolt" class="w-6 h-6" %}</div>
+                </div>
+                <div class="relative p-4 bg-amber-50 rounded-lg border border-amber-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
+                    <dt class="mb-1 text-[10px] font-bold text-amber-600 uppercase tracking-widest">Estimated Duration</dt>
+                    <dd class="text-lg font-black text-amber-700">
+                        {{ duration }} <span class="text-xs font-medium text-amber-400">Days</span>
+                    </dd>
+                    <div class="absolute top-4 right-4 text-amber-200">{% heroicon_outline "calendar" class="w-6 h-6" %}</div>
                 </div>
                 <div class="relative p-4 bg-purple-50 rounded-lg border border-purple-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
                     <dt class="mb-1 text-[10px] font-bold text-purple-600 uppercase tracking-widest">Crew Daily Cost</dt>
@@ -77,20 +84,6 @@
                         {{ daily_plant_cost|currency }}
                     </dd>
                     <div class="absolute top-4 right-4 text-emerald-200">{% heroicon_outline "truck" class="w-6 h-6" %}</div>
-                </div>
-                <div class="relative p-4 bg-blue-50 rounded-lg border border-blue-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
-                    <dt class="mb-1 text-[10px] font-bold text-blue-600 uppercase tracking-widest">Tracked Total</dt>
-                    <dd class="text-lg font-black text-blue-900">
-                        {{ total_tracker|qty }} <span class="text-xs font-medium text-gray-400">{{ act_unit }}</span>
-                    </dd>
-                    <div class="absolute top-4 right-4 text-blue-200">{% heroicon_outline "calculator" class="w-6 h-6" %}</div>
-                </div>
-                <div class="relative p-4 bg-indigo-50 rounded-lg border border-indigo-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
-                    <dt class="mb-1 text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Est. Duration</dt>
-                    <dd class="text-lg font-black text-indigo-900">
-                        {{ planned_duration|floatformat:1 }} <span class="text-xs font-medium text-gray-400">Days</span>
-                    </dd>
-                    <div class="absolute top-4 right-4 text-indigo-200">{% heroicon_outline "clock" class="w-6 h-6" %}</div>
                 </div>
                 <div class="relative p-4 text-white bg-indigo-600 rounded-lg shadow-lg transition-all duration-300 shadow-indigo-100 group hover:shadow-xl">
                     <dt class="mb-1 text-[10px] font-bold text-indigo-100 uppercase tracking-widest font-black">Budgeted Day Cost</dt>
@@ -230,9 +223,9 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-center text-[10px] text-gray-400 italic">{{ row.source_spec }}</td>
-                                    <td class="px-4 py-3 font-mono text-xs text-center text-gray-600">{{ row.boq_qty|floatformat:1 }}</td>
-                                    <td class="px-4 py-3 font-mono text-xs text-center text-gray-600">R {{ row.rate|floatformat:2|intcomma }}</td>
-                                    <td class="px-6 py-3 font-mono text-xs font-black text-right text-emerald-700">
+                                    <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">{{ row.boq_qty|floatformat:1 }}</td>
+                                    <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">R {{ row.rate|floatformat:2|intcomma }}</td>
+                                    <td class="px-6 py-3 text-right font-mono text-xs font-black text-emerald-700">
                                         R {{ row.total_cost|floatformat:2|intcomma }}
                                     </td>
                                 </tr>
@@ -273,7 +266,7 @@
                     const originalText = saveBtn.innerText;
                     
                     saveBtn.disabled = true;
-                    saveBtn.innerHTML = '<span class="mr-2 loading loading-spinner loading-xs"></span> Saving...';
+                    saveBtn.innerHTML = '<span class="loading loading-spinner loading-xs mr-2"></span> Saving...';
 
                     const formData = new FormData();
                     formData.append('act_name', '{{ act_name|escapejs }}');

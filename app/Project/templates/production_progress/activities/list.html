@@ -37,10 +37,9 @@
                             <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-indigo-600 uppercase text-center w-[80px]">Count</th>
                             <th class="text-xs font-bold text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Crew</th>
                             <th class="text-xs font-bold text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Plants</th>
-                            <th class="text-xs font-bold text-center text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Unit</th>
-                            <th class="text-xs font-bold text-right text-indigo-600 uppercase backdrop-blur-sm bg-gray-50/95">Planned Vol.</th>
+                            <th class="text-xs font-bold text-right text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Total Volume</th>
+                            <th class="text-xs font-bold text-right text-amber-600 uppercase backdrop-blur-sm bg-gray-50/95">Duration</th>
                             <th class="text-xs font-bold text-right text-indigo-600 uppercase backdrop-blur-sm bg-gray-50/95">Daily Prod.</th>
-                            <th class="text-xs font-bold text-center text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Duration</th>
                             <th class="text-xs font-bold text-right text-purple-600 uppercase backdrop-blur-sm bg-gray-50/95">Daily Labour</th>
                             <th class="text-xs font-bold text-right text-emerald-600 uppercase backdrop-blur-sm bg-gray-50/95">Daily Plant</th>
                             <th class="text-xs font-bold text-right text-gray-900 uppercase backdrop-blur-sm bg-gray-50/95">Daily Total</th>
@@ -65,8 +64,8 @@
                                     {{ activity.bill_no|default:"-" }}
                                 </th>
                                 <td class="px-2 text-center whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2 py-1 font-mono text-xs font-bold text-indigo-700 bg-indigo-50 rounded-md ring-1 ring-inset ring-indigo-600/20">
-                                        {{ activity.act_crew_count|floatformat:0 }}
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-bold font-mono text-indigo-700 bg-indigo-50 rounded-md ring-1 ring-inset ring-indigo-600/20">
+                                        {{ activity.crew_count|floatformat:0 }}
                                     </span>
                                 </td>
                                 <td class="whitespace-nowrap">
@@ -88,19 +87,23 @@
                                         <span class="text-xs italic text-gray-400">None</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-2 text-center whitespace-nowrap">
-                                    <span class="text-xs font-bold text-gray-500 uppercase">{{ activity.act_unit }}</span>
+                                <td class="font-mono text-sm tabular-nums text-right text-gray-900 whitespace-nowrap">
+                                    <div class="flex flex-col items-end leading-tight">
+                                        <span class="text-xs font-bold">{{ activity.total_tracker|qty }}</span>
+                                        <span class="text-[9px] text-gray-400 font-bold uppercase">{{ activity.act_unit }}</span>
+                                    </div>
                                 </td>
-                                <td class="font-mono text-sm font-bold tabular-nums text-right text-gray-700 whitespace-nowrap">
-                                    {{ activity.total_tracker|qty }}
+                                <td class="font-mono text-sm tabular-nums text-right text-amber-600 whitespace-nowrap">
+                                    <div class="flex flex-col items-end leading-tight">
+                                        <span class="text-xs font-bold">{{ activity.duration }}</span>
+                                        <span class="text-[9px] text-gray-400 font-bold uppercase">Days</span>
+                                    </div>
                                 </td>
                                 <td class="font-mono text-sm tabular-nums text-right text-gray-600 whitespace-nowrap">
-                                    {{ activity.daily_production|qty }}
-                                </td>
-                                <td class="text-center whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-black text-indigo-700 bg-indigo-50 rounded-md">
-                                        {{ activity.planned_duration|floatformat:1 }} <span class="ml-1 text-[9px] font-bold uppercase">Days</span>
-                                    </span>
+                                    <div class="flex flex-col items-end leading-tight">
+                                        <span class="text-xs font-bold">{{ activity.daily_production|qty }}</span>
+                                        <span class="text-[9px] text-gray-400 font-bold uppercase">{{ activity.act_unit }}</span>
+                                    </div>
                                 </td>
                                 <td class="font-mono text-xs tabular-nums text-right text-purple-600 whitespace-nowrap">
                                     {{ activity.daily_labour_cost|currency }}
@@ -123,7 +126,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="15" class="py-20 text-center bg-gray-50/30">
+                                <td colspan="12" class="py-20 text-center bg-gray-50/30">
                                     <div class="flex flex-col items-center">
                                         <div class="p-4 mb-4 bg-white rounded-2xl ring-1 ring-gray-200 shadow-sm transition-transform">
                                             {% heroicon_outline "clipboard-document-list" class="w-10 h-10 text-gray-400" %}

@@ -11,8 +11,11 @@ from django.db.models import (
     Sum,
     Value,
     When,
+    OuterRef,
+    Subquery,
 )
 from django.db.models.functions import Coalesce
+import math
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -67,7 +70,8 @@ class LaborActivityListView(
         if self.f_activity:
             queryset = queryset.filter(act_name__icontains=self.f_activity)
 
-        return (
+        # Prepare the base grouping
+        grouped_queryset = (
             queryset.values(
                 "section",
                 "bill_no",
@@ -82,13 +86,20 @@ class LaborActivityListView(
                     "labour_specification__crew__crew_type"
                 ),
                 num_items=Count("id"),
-                plant_count=Count(
-                    "plant_specification__components__plant_type", distinct=True
-                ),
+                # Total Tracker: Sum contract_quantity with Priority logic
                 total_tracker=Sum(
                     Case(
+                        # Rule: If item has labour, use it
                         When(
                             unit=F("act_unit"),
+                            labour_specification__isnull=False,
+                            then=F("contract_quantity"),
+                        ),
+                        # Rule: If item has NO labour but has plant, use it
+                        When(
+                            unit=F("act_unit"),
+                            labour_specification__isnull=True,
+                            plant_specification__isnull=False,
                             then=F("contract_quantity"),
                         ),
                         default=Value(0),
@@ -112,33 +123,58 @@ class LaborActivityListView(
                     * Coalesce(F("crew_count"), 1),
                     output_field=DecimalField(),
                 ),
-                # Multiplier for the number of crews (display)
-                act_crew_count=Coalesce(Max("crew_count"), Value(1), output_field=DecimalField()),
-                # Confirmed Formula: Sum(plant_rate) for all units in group
-                daily_plant_cost=Sum(
-                    Coalesce(
-                        F("plant_specification__components__plant_type__hourly_rate"), 0
-                    ),
-                    output_field=DecimalField(),
-                ),
-                # Daily production multiplied by crew count
-                daily_production=Max(
+                # Daily Production: Base spec output * crew multiplier
+                daily_production_base=Max(
                     Coalesce(F("labour_specification__daily_production"), 0)
                     * Coalesce(F("crew_count"), 1),
                     output_field=DecimalField(),
                 ),
+                # Multiplier for the number of crews (display)
+                crew_count=Coalesce(Max("crew_count"), Value(1), output_field=DecimalField()),
             )
-            .annotate(
-                total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"),
-                # Calculate planned duration: total_tracker / daily_production
-                planned_duration=Case(
-                    When(daily_production__gt=0, then=F("total_tracker") / F("daily_production")),
-                    default=Value(0),
-                    output_field=DecimalField(),
-                ),
-            )
-            .order_by("section", "bill_no", "act_name")
         )
+
+        # To avoid the Cartesian product duplication, we calculate plant metrics via subqueries
+        from app.Estimator.models import ProjectPlantSpecificationComponent
+
+        # Subquery for daily plant cost (sum of component hourly rates)
+        plant_cost_subquery = (
+            ProjectPlantSpecificationComponent.objects.filter(
+                specification__boq_items__section=OuterRef("section"),
+                specification__boq_items__bill_no=OuterRef("bill_no"),
+                specification__name=OuterRef("act_name"),
+            )
+            .values("specification__name")
+            .annotate(total_rate=Sum("plant_type__hourly_rate"))
+            .values("total_rate")
+        )
+
+        # Subquery for unique plant count
+        plant_count_subquery = (
+            ProjectPlantSpecificationComponent.objects.filter(
+                specification__boq_items__section=OuterRef("section"),
+                specification__boq_items__bill_no=OuterRef("bill_no"),
+                specification__name=OuterRef("act_name"),
+            )
+            .values("specification__name")
+            .annotate(cnt=Count("plant_type", distinct=True))
+            .values("cnt")
+        )
+
+        final_queryset = grouped_queryset.annotate(
+            daily_plant_cost=Coalesce(
+                Subquery(plant_cost_subquery, output_field=DecimalField()),
+                Value(0),
+                output_field=DecimalField(),
+            ),
+            plant_count=Coalesce(
+                Subquery(plant_count_subquery, output_field=DecimalField()),
+                Value(0),
+                output_field=DecimalField(),
+            )
+        ).annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
+
+        return final_queryset.order_by("section", "bill_no", "act_name")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -146,6 +182,8 @@ class LaborActivityListView(
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
         context["project_pk"] = project_pk
+
+        # Add filters to context for the template
 
         # Add filters to context for the template
         context["f_section"] = self.f_section
@@ -193,7 +231,7 @@ class LaborActivityListView(
             plant_map[key].append(
                 row["plant_specification__components__plant_type__name"]
             )
-
+            
         for activity in activities:
             spec_id = activity.get("labour_spec_id")
             spec = spec_map.get(spec_id) if spec_id else None
@@ -206,6 +244,14 @@ class LaborActivityListView(
             key = (activity["section"], activity["bill_no"], activity["act_name"])
             types = sorted(plant_map.get(key, []))
             activity["plant_types"] = ", ".join(types) if types else "None"
+
+            # Calculate Duration: Total Tracker / Daily Production (rounded up)
+            total_tracker = activity.get("total_tracker", 0)
+            daily_prod = activity.get("daily_production", 0)
+            if daily_prod and daily_prod > 0:
+                activity["duration"] = math.ceil(total_tracker / daily_prod)
+            else:
+                activity["duration"] = 0
 
         return context
 
@@ -286,7 +332,19 @@ class LaborActivityDetailView(
         metrics = group_items.aggregate(
             total_tracker=Sum(
                 Case(
-                    When(unit=act_unit, then=F("contract_quantity")),
+                    # Rule: If item has labour, use it
+                    When(
+                        unit=act_unit,
+                        labour_specification__isnull=False,
+                        then=F("contract_quantity"),
+                    ),
+                    # Rule: If item has NO labour but has plant, use it
+                    When(
+                        unit=act_unit,
+                        labour_specification__isnull=True,
+                        plant_specification__isnull=False,
+                        then=F("contract_quantity"),
+                    ),
                     default=Value(0),
                     output_field=DecimalField(),
                 )
@@ -313,7 +371,15 @@ class LaborActivityDetailView(
 
         # Daily production multiplied by crew count
         base_production = labour_spec.daily_production if labour_spec else 0
-        context["daily_production"] = base_production * crew_count
+        daily_production = base_production * crew_count
+        context["daily_production"] = daily_production
+
+        # Calculate Duration: Total Tracker / Daily Production (rounded up)
+        total_tracker = context.get("total_tracker", 0)
+        if daily_production and daily_production > 0:
+            context["duration"] = math.ceil(total_tracker / daily_production)
+        else:
+            context["duration"] = 0
 
         # Build BoQ Qty-driven plant spec rows using centralized logic
         from app.Project.production_progress.production_models import ProductionPlan
@@ -339,12 +405,6 @@ class LaborActivityDetailView(
         context["total_daily_cost"] = (
             context["daily_labour_cost"] + context["daily_plant_cost"]
         )
-        # Calculate planned duration: total_tracker / daily_production
-        daily_production = context.get("daily_production", 0)
-        total_tracker = context.get("total_tracker", 0)
-        context["planned_duration"] = 0
-        if daily_production and daily_production > 0:
-            context["planned_duration"] = total_tracker / daily_production
 
         return context
 
