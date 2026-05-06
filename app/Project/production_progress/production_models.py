@@ -123,12 +123,14 @@ class ProductionPlan(BaseModel):
         return self.unit
 
     def save(self, *args, **kwargs):
-        # 1. Flexible date/duration calculation
         if self.is_leaf:
-            if self.start_date and self.duration and not self.finish_date:
-                self.finish_date = self.start_date + timedelta(days=self.duration)
-            elif self.start_date and self.finish_date:
-                self.duration = (self.finish_date - self.start_date).days
+            if self.start_date:
+                if self.duration and (not self.finish_date or kwargs.get("update_fields") is None or "duration" in kwargs.get("update_fields", [])):
+                    # Duration is the driver
+                    self.finish_date = self.start_date + timedelta(days=self.duration)
+                elif self.finish_date:
+                    # Dates are the driver
+                    self.duration = (self.finish_date - self.start_date).days
 
         # 2. Track changes for propagation
         is_new = self.pk is None

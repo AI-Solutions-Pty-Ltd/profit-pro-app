@@ -11,6 +11,7 @@
          id="plan-detail-app"
          data-plan-id="{{ plan.pk }}"
          data-node-type="{{ plan.node_type }}"
+         data-quantity="{{ plan.quantity|default:0 }}"
          data-project-id="{{ project.pk }}">
         {{ date_form.media }}
         {{ dependency_formset.media }}
@@ -603,7 +604,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (isActivity) {
+        const appData = document.getElementById('plan-detail-app');
         const startDateInput = document.getElementById('ui-start-date');
+        const quantityInput = document.getElementById('ui-quantity');
+        const dailyRateInput = document.getElementById('ui-daily-rate');
         const durationInput = document.getElementById('ui-duration');
         const finishDateInput = document.getElementById('ui-finish-date');
         const updateBtn = document.getElementById('btn-update-schedule');
@@ -612,25 +616,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         captureInitialValues(dateForm);
 
+        function getQuantity() {
+            return parseFloat(quantityInput.value) || 0;
+        }
+
         function calculateFinishDate() {
             const start = new Date(startDateInput.value);
             const duration = parseInt(durationInput.value) || 0;
             
             if (startDateInput.value && !isNaN(start.getTime())) {
                 const finish = new Date(start);
-                finish.setDate(finish.getDate() + duration);
+                finish.setDate(finish.getDate() + (duration > 0 ? duration : 0));
                 finishDateInput.value = finish.toISOString().split('T')[0];
             }
         }
+
+        function updateDurationFromRate() {
+            const rate = parseFloat(dailyRateInput.value) || 0;
+            const quantity = getQuantity();
+            if (rate > 0 && quantity > 0) {
+                const duration = Math.ceil(quantity / rate);
+                durationInput.value = duration;
+            }
+            calculateFinishDate();
+        }
+
+        // Initialize duration calculation on load
+        updateDurationFromRate();
         
         startDateInput.addEventListener('change', function() {
-            calculateFinishDate();
-            if (updateBtn) updateBtn.disabled = false;
-            if (cancelBtn) cancelBtn.classList.remove('opacity-0');
-        });
-        
-        durationInput.addEventListener('input', function() {
-            calculateFinishDate();
+            updateDurationFromRate();
             if (updateBtn) updateBtn.disabled = false;
             if (cancelBtn) cancelBtn.classList.remove('opacity-0');
         });

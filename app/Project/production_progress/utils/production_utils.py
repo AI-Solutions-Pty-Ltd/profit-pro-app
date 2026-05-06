@@ -10,6 +10,9 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from ..production_models import DailyActivityEntry, ProductionPlan
+from app.Estimator.models import BOQItem, ProjectPlantSpecificationComponent
+from django.db.models import Case, When, Value, DecimalField, IntegerField, OuterRef, Subquery, Count, Max, F
+from django.db.models.functions import Ceil, Coalesce
 
 
 def calculate_progress_status(produced, planned, start_date=None, finish_date=None):
@@ -1719,3 +1722,129 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
         "sections": sections_list,
         "charts_json": json.dumps(charts_json),
     }
+
+def get_project_activity_summary(project_id, f_section=None, f_bill=None, f_activity=None):
+    """
+    Centralized logic to group BOQItems into Activities (Section > Bill > Act Name).
+    Applies the 'Labour Priority' rule for quantities and uses subqueries for plant costs
+     to avoid Cartesian product duplication.
+    """
+    from app.Estimator.models import BOQItem, ProjectPlantSpecificationComponent
+
+    # 1. Base Queryset with Coalesced names and units
+    queryset = BOQItem.objects.filter(
+        project_id=project_id,
+        is_section_header=False
+    ).filter(
+        models.Q(labour_specification__isnull=False) |
+        models.Q(plant_specification__isnull=False)
+    ).annotate(
+        act_name=Coalesce("labour_specification__name", "plant_specification__name"),
+        act_unit=Coalesce("labour_specification__unit", "plant_specification__unit"),
+    )
+
+    # 2. Apply optional filters
+    if f_section:
+        queryset = queryset.filter(section=f_section)
+    if f_bill:
+        queryset = queryset.filter(bill_no=f_bill)
+    if f_activity:
+        queryset = queryset.filter(act_name__icontains=f_activity)
+
+    # 3. Aggregation with Priority Logic
+    grouped_queryset = (
+        queryset.values("section", "bill_no", "act_name", "act_unit")
+        .annotate(
+            # Pick one labour_specification id per group for linking
+            labour_spec_id=Max("labour_specification"),
+            num_items=Count("id"),
+            # Total Tracker: Sum contract_quantity with Labour Priority logic
+            total_tracker=Sum(
+                Case(
+                    When(
+                        unit=F("act_unit"),
+                        labour_specification__isnull=False,
+                        then=F("contract_quantity"),
+                    ),
+                    When(
+                        unit=F("act_unit"),
+                        labour_specification__isnull=True,
+                        plant_specification__isnull=False,
+                        then=F("contract_quantity"),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            ),
+            total_amount=Sum(
+                F("contract_quantity") * F("contract_rate"),
+                output_field=DecimalField(),
+            ),
+            # Daily labour cost & production base
+            daily_labour_cost=Max(
+                (
+                    Coalesce(F("labour_specification__crew__skilled"), 0)
+                    * Coalesce(F("labour_specification__crew__skilled_rate"), 0)
+                    + Coalesce(F("labour_specification__crew__semi_skilled"), 0)
+                    * Coalesce(F("labour_specification__crew__semi_skilled_rate"), 0)
+                    + Coalesce(F("labour_specification__crew__general"), 0)
+                    * Coalesce(F("labour_specification__crew__general_rate"), 0)
+                ) * Coalesce(F("crew_count"), 1),
+                output_field=DecimalField(),
+            ),
+            daily_production_base=Max(
+                Coalesce(F("labour_specification__daily_production"), F("plant_specification__daily_production"), Value(0))
+                * Coalesce(F("crew_count"), 1),
+                output_field=DecimalField(),
+            ),
+            crew_count=Coalesce(Max("crew_count"), Value(1), output_field=DecimalField()),
+        )
+        .annotate(
+            duration=Case(
+                When(
+                    daily_production_base__gt=0,
+                    then=Ceil(F("total_tracker") / F("daily_production_base")),
+                ),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+    )
+
+    # 4. Plant Subqueries to avoid Join Multiplication
+    plant_cost_subquery = (
+        ProjectPlantSpecificationComponent.objects.filter(
+            specification__boq_items__section=OuterRef("section"),
+            specification__boq_items__bill_no=OuterRef("bill_no"),
+            specification__name=OuterRef("act_name"),
+        )
+        .values("specification__name")
+        .annotate(total_rate=Sum("plant_type__hourly_rate"))
+        .values("total_rate")
+    )
+
+    plant_count_subquery = (
+        ProjectPlantSpecificationComponent.objects.filter(
+            specification__boq_items__section=OuterRef("section"),
+            specification__boq_items__bill_no=OuterRef("bill_no"),
+            specification__name=OuterRef("act_name"),
+        )
+        .values("specification__name")
+        .annotate(cnt=Count("plant_type", distinct=True))
+        .values("cnt")
+    )
+
+    final_queryset = grouped_queryset.annotate(
+        daily_plant_cost=Coalesce(
+            Subquery(plant_cost_subquery, output_field=DecimalField()),
+            Value(0),
+            output_field=DecimalField(),
+        ),
+        plant_count=Coalesce(
+            Subquery(plant_count_subquery, output_field=DecimalField()),
+            Value(0),
+            output_field=DecimalField(),
+        )
+    ).annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
+
+    return final_queryset.order_by("section", "bill_no", "act_name")

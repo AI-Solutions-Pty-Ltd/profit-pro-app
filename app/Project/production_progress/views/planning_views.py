@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_CEILING
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -36,7 +36,10 @@ from ..production_models import (
     ProductionPlan,
     ProductionResource,
 )
-from ..utils.production_utils import get_project_performance_summary
+from ..utils.production_utils import (
+    get_project_activity_summary,
+    get_project_performance_summary,
+)
 
 
 class ProductionPlanGanttView(
@@ -517,91 +520,95 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
     def post(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
 
-        # Fetch BOQItems that have a labour specification and are not headers
-        boq_items = (
-            BOQItem.objects.filter(
-                project=project,
-                labour_specification__isnull=False,
-                is_section_header=False,
-            )
-            .values("section", "bill_no", "labour_specification")
-            .annotate(total_quantity=Sum("contract_quantity"))
-        )
+        # Fetch grouped activities using the centralized utility
+        activities = get_project_activity_summary(project.id)
 
-        if not boq_items.exists():
+        if not activities.exists():
             messages.warning(
-                request, "No labour-based items found in the Project Estimator."
+                request, "No activities (Labour or Plant) found in the Project Estimator."
             )
             return redirect("project:production-planning", project_pk=project.pk)
 
         created_count = 0
+        updated_count = 0
         skipped_count = 0
 
-        # Fetch Labour Specifications for this project to get daily rates
-        labour_specs = ProjectLabourSpecification.objects.filter(project=project)
-        spec_rate_map = {spec.id: (spec.daily_output or 0) for spec in labour_specs}
-
-        for item in boq_items:
-            # Check if plan already exists for this grouping
-            existing = ProductionPlan.objects.filter(
+        for item in activities:
+            # Match on section, bill, and activity name
+            plan = ProductionPlan.objects.filter(
                 project=project,
                 section=item["section"],
                 bill_no=item["bill_no"],
-                labour_activity_id=item["labour_specification"],
+                activity=item["act_name"],
                 is_archived=False,
-            ).exists()
-
-            if existing:
-                skipped_count += 1
-                continue
-
-            # Fetch the first BOQItem to get the unit (or look it up from spec)
-            sample_item = BOQItem.objects.filter(
-                project=project,
-                section=item["section"],
-                bill_no=item["bill_no"],
-                labour_specification_id=item["labour_specification"],
             ).first()
 
-            unit = sample_item.unit if sample_item else ""
-            daily_rate = spec_rate_map.get(item["labour_specification"], 0)
+            if plan:
+                # Check for changes
+                changed = False
+                
+                # Check Quantity
+                new_qty = item["total_tracker"] or 0
+                if plan.quantity != new_qty:
+                    plan.quantity = new_qty
+                    changed = True
+                
+                # Check Unit
+                new_unit = item["act_unit"] or ""
+                if plan.unit != new_unit:
+                    plan.unit = new_unit
+                    changed = True
+                
+                # Check Daily Rate (Production Base)
+                new_rate = item["daily_production_base"] or 0
+                if plan.daily_rate != new_rate:
+                    plan.daily_rate = new_rate
+                    changed = True
+                
+                # Update labour_activity link if missing
+                if not plan.labour_activity_id and item["labour_spec_id"]:
+                    plan.labour_activity_id = item["labour_spec_id"]
+                    changed = True
 
-            # Get the labour specification name
-            labour_spec_name = ""
-            if item["labour_specification"]:
-                labour_spec = ProjectLabourSpecification.objects.filter(
-                    id=item["labour_specification"]
-                ).first()
-                if labour_spec:
-                    labour_spec_name = labour_spec.name
+                # Recalculate duration if quantity or rate changed
+                if (plan.quantity != new_qty or plan.daily_rate != new_rate) and plan.daily_rate > 0:
+                    new_duration = int((plan.quantity / plan.daily_rate).to_integral_value(rounding=ROUND_CEILING))
+                    if plan.duration != new_duration:
+                        plan.duration = new_duration
+                        changed = True
 
-            # Create the ProductionPlan
-            # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
-            ProductionPlan.objects.create(
-                project=project,
-                section=item["section"],
-                bill_no=item["bill_no"],
-                activity=labour_spec_name,
-                labour_activity_id=item["labour_specification"],
-                quantity=item["total_quantity"] or 0,
-                unit=unit,
-                daily_rate=daily_rate,
-                start_date=None,
-                finish_date=None,
-            )
-            created_count += 1
+                if changed:
+                    plan.save() # Triggers date and hierarchy updates
+                    updated_count += 1
+                else:
+                    skipped_count += 1
+            else:
+                # Create the ProductionPlan
+                # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
+                plan = ProductionPlan.objects.create(
+                    project=project,
+                    section=item["section"],
+                    bill_no=item["bill_no"],
+                    activity=item["act_name"],
+                    labour_activity_id=item["labour_spec_id"],
+                    quantity=item["total_tracker"] or 0,
+                    unit=item["act_unit"],
+                    daily_rate=item["daily_production_base"] or 0,
+                    start_date=None,
+                    finish_date=None,
+                )
+                # Calculate initial duration for new plan
+                if plan.daily_rate > 0:
+                    plan.duration = int((plan.quantity / plan.daily_rate).to_integral_value(rounding=ROUND_CEILING))
+                    plan.save()
+                
+                created_count += 1
 
-        if created_count > 0:
-            messages.success(
-                request,
-                f"Successfully created {created_count} activities from the Estimator.",
-            )
-        if skipped_count > 0:
-            messages.info(
-                request,
-                f"{skipped_count} activities already existed and were skipped.",
-            )
-
+        if created_count > 0 or updated_count > 0:
+            msg = f"Successfully synced from Estimator: {created_count} created, {updated_count} updated."
+            messages.success(request, msg)
+        else:
+            messages.info(request, "Production plan is already up to date with the Estimator.")
         return redirect("project:production-planning", project_pk=project.pk)
 
 
