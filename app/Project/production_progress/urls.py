@@ -185,4 +185,9 @@ urlpatterns = [
         views.ProductionPlanRefreshAjaxView.as_view(),
         name="production-plan-refresh-ajax",
     ),
+    path(
+        "<int:project_pk>/ajax/update-activity-crew-count/",
+        views.UpdateActivityCrewCountAjaxView.as_view(),
+        name="ajax-update-activity-crew-count",
+    ),
 ]
