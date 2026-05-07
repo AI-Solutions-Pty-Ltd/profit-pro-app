@@ -317,10 +317,12 @@ class ProductionDailyLogUpdateView(
         available_plants = [
             {
                 "id": a["id"],
-                "name": a["name"],
-                "hours_per_day": float(a["hours_per_day"]),
+                "name": a["plant_name"],
+                "hours_per_day": float(
+                    a["hours"]
+                ),  # Defaulting to BoQ hours/unit as a starting point
             }
-            for a in entry.production_plan.get_plant_allocations()
+            for a in entry.production_plan.get_boq_driven_plant_rows()
         ]
 
         # Fallback to project-wide plant types if no specific allocations found
@@ -481,10 +483,12 @@ class DailyActivityEntryUpdateView(
         available_plants = [
             {
                 "id": a["id"],
-                "name": a["name"],
-                "hours_per_day": float(a["hours_per_day"]),
+                "name": a["plant_name"],
+                "hours_per_day": float(
+                    a["hours"]
+                ),  # Defaulting to BoQ hours/unit as a starting point
             }
-            for a in entry.production_plan.get_plant_allocations()
+            for a in entry.production_plan.get_boq_driven_plant_rows()
         ]
         is_generic_plant = not bool(available_plants)
         if is_generic_plant:
@@ -615,10 +619,10 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
         available_plants = [
             {
                 "id": a["id"],
-                "name": a["name"],
-                "hours_per_day": float(a["hours_per_day"]),
+                "name": a["plant_name"],
+                "hours_per_day": float(a["hours"]),
             }
-            for a in plan.get_plant_allocations()
+            for a in plan.get_boq_driven_plant_rows()
         ]
 
         # Fallback to project-wide plant types if no specific allocations found

@@ -1,7 +1,9 @@
+import math
+from decimal import Decimal
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import (
     Case,
-    Count,
     DecimalField,
     F,
     Max,
@@ -25,6 +27,10 @@ from app.Estimator.models import (
 )
 from app.Project.models import Project
 
+from ..utils.production_utils import (
+    get_project_activity_summary,
+)
+
 
 class LaborActivityListView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
@@ -40,84 +46,16 @@ class LaborActivityListView(
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
-        project_pk = self.kwargs["project_pk"]
         self.f_section = self.request.GET.get("section", "")
         self.f_bill = self.request.GET.get("bill_no", "")
         self.f_activity = self.request.GET.get("activity", "")
 
-        queryset = BOQItem.objects.filter(
-            Q(labour_specification__isnull=False)
-            | Q(plant_specification__isnull=False),
-            project_id=project_pk,
-        ).annotate(
-            act_name=Coalesce(
-                "labour_specification__name", "plant_specification__name"
-            ),
-            act_unit=Coalesce(
-                "labour_specification__unit", "plant_specification__unit"
-            ),
-        )
-
-        if self.f_section:
-            queryset = queryset.filter(section=self.f_section)
-        if self.f_bill:
-            queryset = queryset.filter(bill_no=self.f_bill)
-        if self.f_activity:
-            queryset = queryset.filter(act_name__icontains=self.f_activity)
-
-        return (
-            queryset.values(
-                "section",
-                "bill_no",
-                "act_name",
-                "act_unit",
-            )
-            .annotate(
-                # Pick one labour_specification id per group for spec_map lookup
-                labour_spec_id=Max("labour_specification"),
-                # Crew type: annotated (not grouped) so plant-only items don't split the group
-                labour_specification__crew__crew_type=Max(
-                    "labour_specification__crew__crew_type"
-                ),
-                num_items=Count("id"),
-                plant_count=Count(
-                    "plant_specification__components__plant_type", distinct=True
-                ),
-                total_tracker=Sum(
-                    Case(
-                        When(
-                            unit=F("act_unit"),
-                            then=F("contract_quantity"),
-                        ),
-                        default=Value(0),
-                        output_field=DecimalField(),
-                    )
-                ),
-                total_amount=Sum(
-                    F("contract_quantity") * F("contract_rate"),
-                    output_field=DecimalField(),
-                ),
-                # Daily labour cost: wrap in Max() (aggregate) so it stays out of GROUP BY.
-                # The crew cost is a constant per labour spec — Max picks the non-zero value.
-                daily_labour_cost=Max(
-                    Coalesce(F("labour_specification__crew__skilled"), 0)
-                    * Coalesce(F("labour_specification__crew__skilled_rate"), 0)
-                    + Coalesce(F("labour_specification__crew__semi_skilled"), 0)
-                    * Coalesce(F("labour_specification__crew__semi_skilled_rate"), 0)
-                    + Coalesce(F("labour_specification__crew__general"), 0)
-                    * Coalesce(F("labour_specification__crew__general_rate"), 0),
-                    output_field=DecimalField(),
-                ),
-                # Confirmed Formula: Sum(plant_rate) for all units in group
-                daily_plant_cost=Sum(
-                    Coalesce(
-                        F("plant_specification__components__plant_type__hourly_rate"), 0
-                    ),
-                    output_field=DecimalField(),
-                ),
-            )
-            .annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
-            .order_by("section", "bill_no", "act_name")
+        # Use the centralized activity summary utility
+        return get_project_activity_summary(
+            project_id=self.kwargs["project_pk"],
+            f_section=self.f_section,
+            f_bill=self.f_bill,
+            f_activity=self.f_activity,
         )
 
     def get_context_data(self, **kwargs):
@@ -126,6 +64,8 @@ class LaborActivityListView(
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
         context["project_pk"] = project_pk
+
+        # Add filters to context for the template
 
         # Add filters to context for the template
         context["f_section"] = self.f_section
@@ -154,35 +94,82 @@ class LaborActivityListView(
         spec_map = {spec.id: spec for spec in labour_specs}
 
         # Map plant types in bulk to avoid N+1 queries
+        # Fetch plant mapping data for tooltips
+        # We must use logic consistent with get_project_activity_summary's subqueries
+        from app.Estimator.models import ProjectPlantSpecificationComponent
+
+        # Map plant types in bulk using normalized keys to ensure matches
         plant_mapping_data = (
-            all_items.filter(plant_specification__components__plant_type__isnull=False)
+            ProjectPlantSpecificationComponent.objects.filter(
+                specification__boq_items__project_id=project_pk
+            )
             .values(
-                "section",
-                "bill_no",
-                "act_name",
-                "plant_specification__components__plant_type__name",
+                "plant_type__name",
+                "specification__boq_items__section",
+                "specification__boq_items__bill_no",
+                "specification__boq_items__labour_specification__name",
+                "specification__boq_items__plant_specification__name",
             )
             .distinct()
         )
 
         plant_map = {}
-        for row in plant_mapping_data:
-            key = (row["section"], row["bill_no"], row["act_name"])
-            if key not in plant_map:
-                plant_map[key] = []
-            plant_map[key].append(
-                row["plant_specification__components__plant_type__name"]
-            )
+        for p in plant_mapping_data:
+            # Normalize keys to empty strings to avoid None vs "" mismatches
+            section = str(p["specification__boq_items__section"] or "").strip()
+            bill = str(p["specification__boq_items__bill_no"] or "").strip()
+            plant_name = p["plant_type__name"]
+            l_name = p["specification__boq_items__labour_specification__name"]
+            p_name = p["specification__boq_items__plant_specification__name"]
+
+            # Map to the same keys used for grouping (Section, Bill, Name)
+            # We map to both names because act_name could be either
+            for name in [l_name, p_name]:
+                if name:
+                    key = (section, bill, name.strip())
+                    if key not in plant_map:
+                        plant_map[key] = set()
+                    plant_map[key].add(plant_name)
 
         for activity in activities:
             spec_id = activity.get("labour_spec_id")
             spec = spec_map.get(spec_id) if spec_id else None
-            activity["daily_production"] = spec.daily_production if spec else 0
 
-            # Set aggregated plant types from map
-            key = (activity["section"], activity["bill_no"], activity["act_name"])
+            # Multiply daily production by crew count
+            crew_count = activity.get("crew_count") or Decimal("1")
+            activity["daily_production"] = (
+                spec.daily_production if spec else 0
+            ) * crew_count
+
+            # Add crew info for display
+            if spec and spec.crew:
+                activity["labour_specification__crew__crew_type"] = spec.crew.crew_type
+            else:
+                activity["labour_specification__crew__crew_type"] = "No Crew"
+
+            # Normalize lookup key to match the mapping logic above
+            s_key = str(activity["section"] or "").strip()
+            b_key = str(activity["bill_no"] or "").strip()
+            n_key = str(activity["act_name"] or "").strip()
+
+            key = (s_key, b_key, n_key)
             types = sorted(plant_map.get(key, []))
-            activity["plant_types"] = ", ".join(types) if types else "None"
+            if crew_count > 1:
+                activity["plant_types"] = (
+                    ", ".join([f"{int(crew_count)}x {t}" for t in types])
+                    if types
+                    else "None"
+                )
+            else:
+                activity["plant_types"] = ", ".join(types) if types else "None"
+
+            # Calculate Duration: Total Tracker / Daily Production (rounded up)
+            total_tracker = activity.get("total_tracker", 0)
+            daily_prod = activity.get("daily_production", 0)
+            if daily_prod and daily_prod > 0:
+                activity["duration"] = math.ceil(total_tracker / daily_prod)
+            else:
+                activity["duration"] = 0
 
         return context
 
@@ -263,7 +250,19 @@ class LaborActivityDetailView(
         metrics = group_items.aggregate(
             total_tracker=Sum(
                 Case(
-                    When(unit=act_unit, then=F("contract_quantity")),
+                    # Rule: If item has labour, use it
+                    When(
+                        unit=act_unit,
+                        labour_specification__isnull=False,
+                        then=F("contract_quantity"),
+                    ),
+                    # Rule: If item has NO labour but has plant, use it
+                    When(
+                        unit=act_unit,
+                        labour_specification__isnull=True,
+                        plant_specification__isnull=False,
+                        then=F("contract_quantity"),
+                    ),
                     default=Value(0),
                     output_field=DecimalField(),
                 )
@@ -275,10 +274,30 @@ class LaborActivityDetailView(
         context["total_tracker"] = metrics["total_tracker"] or 0
         context["total_amount"] = metrics["total_amount"] or 0
 
+        # Multiplier for the number of crews
+        crew_count = group_items.aggregate(count=Max("crew_count"))["count"] or Decimal(
+            "1"
+        )
+        context["crew_count"] = crew_count
+
         # Calculate daily costs for the "Budgeted Daily Cost" card
-        context["daily_labour_cost"] = (
+        # Multiply daily labour cost by crew count
+        base_labour_cost = (
             labour_spec.crew.crew_daily_cost if labour_spec and labour_spec.crew else 0
         )
+        context["daily_labour_cost"] = base_labour_cost * crew_count
+
+        # Daily production multiplied by crew count
+        base_production = labour_spec.daily_production if labour_spec else 0
+        daily_production = base_production * crew_count
+        context["daily_production"] = daily_production
+
+        # Calculate Duration: Total Tracker / Daily Production (rounded up)
+        total_tracker = context.get("total_tracker", 0)
+        if daily_production and daily_production > 0:
+            context["duration"] = math.ceil(total_tracker / daily_production)
+        else:
+            context["duration"] = 0
 
         # Build BoQ Qty-driven plant spec rows using centralized logic
         from app.Project.production_progress.production_models import ProductionPlan
@@ -291,16 +310,41 @@ class LaborActivityDetailView(
         context["plant_spec_rows"] = plant_spec_rows
         context["plant_spec_total"] = plant_spec_total
 
-        # Daily plant cost for KPI card (sum of component hourly rates)
-        plant_metrics = group_items.aggregate(
-            plant_cost=Sum(
-                Coalesce(
-                    F("plant_specification__components__plant_type__hourly_rate"), 0
-                ),
-                output_field=DecimalField(),
+        # Set plant types for tooltip (including multiplier)
+        plant_names = sorted({row["plant_name"] for row in plant_spec_rows})
+        if crew_count > 1:
+            context["plant_types"] = ", ".join(
+                [f"{int(crew_count)}x {n}" for n in plant_names]
             )
+        else:
+            context["plant_types"] = ", ".join(plant_names)
+
+        # Daily plant cost for KPI card (sum of unique component hourly rates in this group)
+        from app.Estimator.models import ProjectPlantSpecificationComponent
+
+        plant_components = (
+            ProjectPlantSpecificationComponent.objects.filter(
+                specification__boq_items__in=group_items
+            )
+            .distinct()
+            .aggregate(total_rate=Sum("plant_type__hourly_rate"))
         )
-        context["daily_plant_cost"] = plant_metrics["plant_cost"] or 0
+
+        daily_plant_rate = plant_components["total_rate"] or Decimal("0")
+        context["daily_plant_cost"] = daily_plant_rate * Decimal("8.0") * crew_count
+
+        # Add detailed crew composition for display
+        if labour_spec and labour_spec.crew:
+            context["crew_type"] = labour_spec.crew.crew_type
+            context["crew_skilled"] = labour_spec.crew.skilled * crew_count
+            context["crew_semi_skilled"] = labour_spec.crew.semi_skilled * crew_count
+            context["crew_general"] = labour_spec.crew.general * crew_count
+        else:
+            context["crew_type"] = "No Crew"
+            context["crew_skilled"] = 0
+            context["crew_semi_skilled"] = 0
+            context["crew_general"] = 0
+
         context["total_daily_cost"] = (
             context["daily_labour_cost"] + context["daily_plant_cost"]
         )
@@ -324,61 +368,25 @@ class LaborActivityDetailView(
 class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
     """
     Returns unique Production Activities (Labour & Plant) for a given project.
-    Groups BOQItems by (ActivityName, Section, BillNo).
+    Uses the centralized activity summary utility for consistency.
     """
 
     def get(self, request, *args, **kwargs):
         project_id = self.kwargs.get("project_pk")
 
-        queryset = BOQItem.objects.filter(
-            Q(labour_specification__isnull=False)
-            | Q(plant_specification__isnull=False),
-            project_id=project_id,
-        ).annotate(
-            act_name=Coalesce(
-                "labour_specification__name", "plant_specification__name"
-            ),
-            act_unit=Coalesce(
-                "labour_specification__unit", "plant_specification__unit"
-            ),
-            act_daily_prod=Coalesce(
-                "labour_specification__daily_production",
-                "plant_specification__daily_production",
-                0.0,
-            ),
-        )
+        # Use centralized utility
+        activities = get_project_activity_summary(project_id)
 
-        items = (
-            queryset.values(
-                "act_name",
-                "act_unit",
-                "act_daily_prod",
-                "labour_specification",
-                "labour_specification__team_mix",
-                "labour_specification__site_factor",
-                "labour_specification__tools_factor",
-                "labour_specification__leadership_factor",
-                "section",
-                "bill_no",
+        # Bulk fetch plant details for mapping
+        all_plants = (
+            BOQItem.objects.filter(
+                project_id=project_id, plant_specification__isnull=False
             )
             .annotate(
-                total_quantity=Sum(
-                    Case(
-                        When(
-                            unit=F("act_unit"),
-                            then=F("contract_quantity"),
-                        ),
-                        default=Value(0),
-                        output_field=DecimalField(),
-                    )
+                act_name=Coalesce(
+                    "labour_specification__name", "plant_specification__name"
                 ),
             )
-            .order_by("section", "bill_no", "act_name")
-        )
-
-        # Map plant types in bulk
-        all_plants = (
-            queryset.filter(plant_specification__isnull=False)
             .values(
                 "section",
                 "bill_no",
@@ -410,30 +418,84 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
             )
 
         data = []
-        for item in items:
+        for item in activities:
             key = (item["section"], item["bill_no"], item["act_name"])
             label = f"[{item['section']}][{item['bill_no']}] {item['act_name']}"
 
+            # Calculate daily output using factors if it's a labour item
+            daily_output = item["daily_production_base"] or 0
+
             data.append(
                 {
-                    "id": item["labour_specification"],  # Can be None
+                    "id": item["labour_spec_id"],
                     "label": label,
                     "activity_name": item["act_name"],
                     "section": item["section"],
                     "bill_no": item["bill_no"],
                     "unit": item["act_unit"],
-                    "quantity": str(item["total_quantity"] or 0),
-                    "daily_production": str(item["act_daily_prod"] or 0),
-                    "daily_output": str(
-                        (item["act_daily_prod"] or 0)
-                        * (item["labour_specification__team_mix"] or 1)
-                        * (item["labour_specification__site_factor"] or 1)
-                        * (item["labour_specification__tools_factor"] or 1)
-                        * (item["labour_specification__leadership_factor"] or 1)
-                    ),
+                    "quantity": str(item["total_tracker"] or 0),
+                    "daily_production": str(item["daily_production_base"] or 0),
+                    "daily_output": str(daily_output),
+                    "crew_count": str(item["crew_count"]),
+                    "daily_plant_cost": str(item["daily_plant_cost"]),
                     "plant_specs": plant_spec_map.get(key, []),
-                    "plant_types": sorted(plant_type_map.get(key, [])),
+                    "plant_types": [
+                        f"{int(item['crew_count'])}x {t}"
+                        for t in sorted(plant_type_map.get(key, []))
+                    ]
+                    if item["crew_count"] > 1
+                    else sorted(plant_type_map.get(key, [])),
                 }
             )
 
         return JsonResponse({"activities": data})
+
+
+class UpdateActivityCrewCountAjaxView(LoginRequiredMixin, TemplateView):
+    """
+    Updates the crew_count for all BOQItems in an activity group.
+    """
+
+    def post(self, request, *args, **kwargs):
+        project_id = self.kwargs.get("project_pk")
+        act_name = request.POST.get("act_name")
+        section = request.POST.get("section")
+        bill_no = request.POST.get("bill_no")
+        crew_count = request.POST.get("crew_count")
+
+        if not all([act_name, section, bill_no, crew_count]):
+            return JsonResponse(
+                {"status": "error", "message": "Missing parameters"}, status=400
+            )
+
+        try:
+            crew_count = Decimal(crew_count)
+        except Exception:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid crew count"}, status=400
+            )
+
+        # Update all items in the group
+        items = (
+            BOQItem.objects.filter(
+                project_id=project_id,
+                section=section,
+                bill_no=bill_no,
+            )
+            .annotate(
+                act_name_annotated=Coalesce(
+                    "labour_specification__name", "plant_specification__name"
+                )
+            )
+            .filter(act_name_annotated=act_name)
+        )
+
+        updated_count = items.update(crew_count=crew_count)
+
+        return JsonResponse(
+            {
+                "status": "success",
+                "updated_count": updated_count,
+                "crew_count": str(crew_count),
+            }
+        )

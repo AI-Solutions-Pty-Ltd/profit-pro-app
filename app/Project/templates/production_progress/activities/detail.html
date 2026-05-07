@@ -9,39 +9,73 @@
     <div class="pb-12">
         <!-- Activity Overview Card -->
         <div class="overflow-hidden mb-8 bg-white rounded-xl border border-gray-100 shadow-sm">
-            <div class="flex flex-col gap-2 justify-between items-start px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                <nav class="flex" aria-label="Breadcrumb">
-                    <ol role="list" class="flex items-center space-x-2">
-                        <li>
-                            <div>
-                                <a href="{% url 'project:labor-activity-list' project_pk=project_pk %}"
-                                   class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
-                                    {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %}
-                                    <span class="text-sm font-semibold">Activities</span>
-                                </a>
-                            </div>
-                        </li>
-                    </ol>
-                </nav>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight text-gray-900">{{ act_name }}</h1>
-                    <div class="flex gap-3 items-center mt-1">
-                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">
-                            Section: {{ section|default:"All"|title }}
-                        </span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-gray-700 bg-gray-50 rounded-full ring-1 ring-inset ring-gray-700/10">
-                            Bill: {{ bill_no|default:"All" }}
-                        </span>
+            <div class="flex flex-col gap-4 justify-between items-start px-6 py-4 border-b border-gray-100 bg-gray-50/50 sm:flex-row sm:items-center">
+                <div class="flex flex-col gap-2">
+                    <nav class="flex" aria-label="Breadcrumb">
+                        <ol role="list" class="flex items-center space-x-2">
+                            <li>
+                                <div>
+                                    <a href="{% url 'project:labor-activity-list' project_pk=project_pk %}"
+                                       class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
+                                        {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %}
+                                        <span class="text-sm font-semibold">Activities</span>
+                                    </a>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight text-gray-900">{{ act_name }}</h1>
+                        <div class="flex gap-3 items-center mt-1">
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">
+                                Section: {{ section|default:"All"|title }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-gray-700 bg-gray-50 rounded-full ring-1 ring-inset ring-gray-700/10">
+                                Bill: {{ bill_no|default:"All" }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-purple-700 bg-purple-50 rounded-full ring-1 ring-inset ring-purple-700/10">
+                                Crew: {{ crew_type }} (
+                                {% if crew_skilled > 0 %}{{ crew_skilled|floatformat:0 }}S,{% endif %}
+                                {% if crew_semi_skilled > 0 %}{{ crew_semi_skilled|floatformat:0 }}SS,{% endif %}
+                                {% if crew_general > 0 %}{{ crew_general|floatformat:0 }}G{% endif %}
+                                )
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Multiplier Control -->
+                <div class="flex gap-3 items-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Crew Multiplier (Count)</span>
+                        <div class="flex gap-2 items-center mt-1">
+                            <input type="number"
+                                   id="crew-count-input"
+                                   step="1"
+                                   min="1"
+                                   value="{{ crew_count|floatformat:0 }}"
+                                   class="px-2 py-1.5 w-20 font-mono text-sm font-bold text-center text-indigo-700 rounded-lg border-0 ring-1 ring-inset bg-white ring-indigo-200 focus:ring-2 focus:ring-indigo-600">
+                            <button id="save-crew-count"
+                                    class="inline-flex items-center px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm transition-all hover:bg-indigo-700 active:scale-95">
+                                Save
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-5">
+            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-6">
                 <div class="relative p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
                     <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Productivity</dt>
                     <dd class="text-lg font-black text-gray-900">
-                        {{ labour_spec.daily_production|qty|default:"0" }} <span class="text-xs font-medium text-gray-400">{{ act_unit }} / Day</span>
+                        {{ daily_production|qty|default:"0" }} <span class="text-xs font-medium text-gray-400">{{ act_unit }} / Day</span>
                     </dd>
                     <div class="absolute top-4 right-4 text-gray-200">{% heroicon_outline "bolt" class="w-6 h-6" %}</div>
+                </div>
+                <div class="relative p-4 bg-amber-50 rounded-lg border border-amber-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
+                    <dt class="mb-1 text-[10px] font-bold text-amber-600 uppercase tracking-widest">Estimated Duration</dt>
+                    <dd class="text-lg font-black text-amber-700">
+                        {{ duration }} <span class="text-xs font-medium text-amber-400">Days</span>
+                    </dd>
+                    <div class="absolute top-4 right-4 text-amber-200">{% heroicon_outline "calendar" class="w-6 h-6" %}</div>
                 </div>
                 <div class="relative p-4 bg-purple-50 rounded-lg border border-purple-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
                     <dt class="mb-1 text-[10px] font-bold text-purple-600 uppercase tracking-widest">Crew Daily Cost</dt>
@@ -181,6 +215,7 @@
                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Plant Component</th>
                                 <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Source Spec</th>
                                 <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">BoQ Qty</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Allocation</th>
                                 <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rate/hr</th>
                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total BoQ Cost</th>
                             </tr>
@@ -196,6 +231,9 @@
                                     </td>
                                     <td class="px-4 py-3 text-center text-[10px] text-gray-400 italic">{{ row.source_spec }}</td>
                                     <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">{{ row.boq_qty|floatformat:1 }}</td>
+                                    <td class="px-4 py-3 text-xs text-center text-indigo-600 font-bold font-mono">
+                                        {{ row.hours|multiply:daily_production|floatformat:1 }} h/day
+                                    </td>
                                     <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">R {{ row.rate|floatformat:2|intcomma }}</td>
                                     <td class="px-6 py-3 text-right font-mono text-xs font-black text-emerald-700">
                                         R {{ row.total_cost|floatformat:2|intcomma }}
@@ -225,6 +263,51 @@
                         table.classList.remove('table-pin-cols');
                         table.classList.remove('table-pin-rows');
                     }
+                });
+            }
+
+            // Crew Multiplier Save Functionality
+            const saveBtn = document.getElementById('save-crew-count');
+            const countInput = document.getElementById('crew-count-input');
+
+            if (saveBtn && countInput) {
+                saveBtn.addEventListener('click', function() {
+                    const crew_count = countInput.value;
+                    const originalText = saveBtn.innerText;
+                    
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<span class="loading loading-spinner loading-xs mr-2"></span> Saving...';
+
+                    const formData = new FormData();
+                    formData.append('act_name', '{{ act_name|escapejs }}');
+                    formData.append('section', '{{ section|escapejs }}');
+                    formData.append('bill_no', '{{ bill_no|escapejs }}');
+                    formData.append('crew_count', crew_count);
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                    fetch("{% url 'project:ajax-update-activity-crew-count' project_pk=project_pk %}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                            saveBtn.disabled = false;
+                            saveBtn.innerText = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while saving the crew count.');
+                        saveBtn.disabled = false;
+                        saveBtn.innerText = originalText;
+                    });
                 });
             }
         });
