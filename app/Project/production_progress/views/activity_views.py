@@ -1,9 +1,9 @@
+import math
 from decimal import Decimal
-from django.contrib.auth.mixins import LoginRequiredMixin
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import (
     Case,
-    Count,
     DecimalField,
     F,
     Max,
@@ -11,21 +11,12 @@ from django.db.models import (
     Sum,
     Value,
     When,
-    OuterRef,
-    Subquery,
 )
 from django.db.models.functions import Coalesce
-import math
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, TemplateView
-
-from ..utils.production_utils import (
-    calculate_progress_status,
-    calculate_trend,
-    get_project_activity_summary,
-)
 
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
@@ -35,6 +26,10 @@ from app.Estimator.models import (
     ProjectLabourSpecification,
 )
 from app.Project.models import Project
+
+from ..utils.production_utils import (
+    get_project_activity_summary,
+)
 
 
 class LaborActivityListView(
@@ -61,7 +56,7 @@ class LaborActivityListView(
             project_id=self.kwargs["project_pk"],
             f_section=self.f_section,
             f_bill=self.f_bill,
-            f_activity=self.f_activity
+            f_activity=self.f_activity,
         )
 
     def get_context_data(self, **kwargs):
@@ -119,14 +114,16 @@ class LaborActivityListView(
             plant_map[key].append(
                 row["plant_specification__components__plant_type__name"]
             )
-            
+
         for activity in activities:
             spec_id = activity.get("labour_spec_id")
             spec = spec_map.get(spec_id) if spec_id else None
-            
+
             # Multiply daily production by crew count
             crew_count = activity.get("crew_count") or Decimal("1")
-            activity["daily_production"] = (spec.daily_production if spec else 0) * crew_count
+            activity["daily_production"] = (
+                spec.daily_production if spec else 0
+            ) * crew_count
 
             # Set aggregated plant types from map
             key = (activity["section"], activity["bill_no"], activity["act_name"])
@@ -245,8 +242,8 @@ class LaborActivityDetailView(
         context["total_amount"] = metrics["total_amount"] or 0
 
         # Multiplier for the number of crews
-        crew_count = (
-            group_items.aggregate(count=Max("crew_count"))["count"] or Decimal("1")
+        crew_count = group_items.aggregate(count=Max("crew_count"))["count"] or Decimal(
+            "1"
         )
         context["crew_count"] = crew_count
 
@@ -318,21 +315,30 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         project_id = self.kwargs.get("project_pk")
-        
+
         # Use centralized utility
         activities = get_project_activity_summary(project_id)
 
         # Bulk fetch plant details for mapping
-        all_plants = BOQItem.objects.filter(
-            project_id=project_id,
-            plant_specification__isnull=False
-        ).annotate(
-            act_name=Coalesce("labour_specification__name", "plant_specification__name"),
-        ).values(
-            "section", "bill_no", "act_name",
-            "plant_specification", "plant_specification__name",
-            "plant_specification__components__plant_type__name"
-        ).distinct()
+        all_plants = (
+            BOQItem.objects.filter(
+                project_id=project_id, plant_specification__isnull=False
+            )
+            .annotate(
+                act_name=Coalesce(
+                    "labour_specification__name", "plant_specification__name"
+                ),
+            )
+            .values(
+                "section",
+                "bill_no",
+                "act_name",
+                "plant_specification",
+                "plant_specification__name",
+                "plant_specification__components__plant_type__name",
+            )
+            .distinct()
+        )
 
         plant_spec_map = {}
         plant_type_map = {}
@@ -341,13 +347,17 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
             if key not in plant_spec_map:
                 plant_spec_map[key] = []
                 plant_type_map[key] = set()
-            
-            plant_spec_map[key].append({
-                "id": p["plant_specification"],
-                "name": p["plant_specification__name"],
-                "type": p["plant_specification__components__plant_type__name"],
-            })
-            plant_type_map[key].add(p["plant_specification__components__plant_type__name"])
+
+            plant_spec_map[key].append(
+                {
+                    "id": p["plant_specification"],
+                    "name": p["plant_specification__name"],
+                    "type": p["plant_specification__components__plant_type__name"],
+                }
+            )
+            plant_type_map[key].add(
+                p["plant_specification__components__plant_type__name"]
+            )
 
         data = []
         for item in activities:
@@ -424,4 +434,3 @@ class UpdateActivityCrewCountAjaxView(LoginRequiredMixin, TemplateView):
                 "crew_count": str(crew_count),
             }
         )
-

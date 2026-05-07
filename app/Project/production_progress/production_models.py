@@ -131,7 +131,11 @@ class ProductionPlan(BaseModel):
     def save(self, *args, **kwargs):
         if self.is_leaf:
             if self.start_date:
-                if self.duration and (not self.finish_date or kwargs.get("update_fields") is None or "duration" in kwargs.get("update_fields", [])):
+                if self.duration and (
+                    not self.finish_date
+                    or kwargs.get("update_fields") is None
+                    or "duration" in kwargs.get("update_fields", [])
+                ):
                     # Duration is the driver
                     self.finish_date = self.start_date + timedelta(days=self.duration)
                 elif self.finish_date:
@@ -433,7 +437,9 @@ class ProductionPlan(BaseModel):
         spec_cost = 0
         if self.labour_activity and self.labour_activity.crew:
             # Use crew_count * daily_cost (excluding duration)
-            spec_cost = self.labour_activity.crew.crew_daily_cost * (self.crew_count or 1)
+            spec_cost = self.labour_activity.crew.crew_daily_cost * (
+                self.crew_count or 1
+            )
 
         return manual_cost + spec_cost
 

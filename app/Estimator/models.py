@@ -1060,7 +1060,6 @@ class BOQItem(models.Model):
         help_text="Multiplier for the number of crews working on this item.",
     )
 
-
     class Meta:
         ordering = ["id"]
         verbose_name = "BoQ Item"

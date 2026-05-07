@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-from decimal import Decimal, ROUND_CEILING
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -23,7 +23,7 @@ from django.views.generic import (
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Estimator.models import BOQItem, ProjectLabourSpecification
+from app.Estimator.models import BOQItem
 from app.Project.models import Project
 
 from ..production_forms import (
@@ -525,7 +525,8 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
 
         if not activities.exists():
             messages.warning(
-                request, "No activities (Labour or Plant) found in the Project Estimator."
+                request,
+                "No activities (Labour or Plant) found in the Project Estimator.",
             )
             return redirect("project:production-planning", project_pk=project.pk)
 
@@ -554,12 +555,12 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
             if plan:
                 # Check for any drift from Estimator (Quantity, Rate, Crew Count, Unit, Duration, or Spec)
                 changed = (
-                    plan.quantity != new_qty or
-                    plan.daily_rate != new_rate or
-                    plan.crew_count != new_crew_count or
-                    plan.unit != new_unit or
-                    plan.duration != new_duration or
-                    plan.labour_activity_id != new_spec_id
+                    plan.quantity != new_qty
+                    or plan.daily_rate != new_rate
+                    or plan.crew_count != new_crew_count
+                    or plan.unit != new_unit
+                    or plan.duration != new_duration
+                    or plan.labour_activity_id != new_spec_id
                 )
 
                 if changed:
@@ -569,8 +570,8 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
                     plan.unit = new_unit
                     plan.duration = new_duration
                     plan.labour_activity_id = new_spec_id
-                    
-                    # The save() method in models.py handles recalculating finish_date 
+
+                    # The save() method in models.py handles recalculating finish_date
                     # based on the new duration if start_date exists.
                     plan.save()
                     updated_count += 1
@@ -598,7 +599,9 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
             msg = f"Successfully synced from Estimator: {created_count} created, {updated_count} updated."
             messages.success(request, msg)
         else:
-            messages.info(request, "Production plan is already up to date with the Estimator.")
+            messages.info(
+                request, "Production plan is already up to date with the Estimator."
+            )
         return redirect("project:production-planning", project_pk=project.pk)
 
 

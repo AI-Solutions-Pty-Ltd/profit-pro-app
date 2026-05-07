@@ -5,14 +5,26 @@ from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 from django.db import models
-from django.db.models import F, Sum
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    F,
+    IntegerField,
+    Max,
+    OuterRef,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Ceil, Coalesce
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from ..production_models import DailyActivityEntry, ProductionPlan
 from app.Estimator.models import BOQItem, ProjectPlantSpecificationComponent
-from django.db.models import Case, When, Value, DecimalField, IntegerField, OuterRef, Subquery, Count, Max, F
-from django.db.models.functions import Ceil, Coalesce
+
+from ..production_models import DailyActivityEntry, ProductionPlan
 
 
 def calculate_progress_status(produced, planned, start_date=None, finish_date=None):
@@ -840,7 +852,6 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
     from dateutil.relativedelta import relativedelta
     from django.db.models import Sum
 
-    from app.Estimator.models import BOQItem
     from app.Project.models import Project
 
     get_object_or_404(Project, pk=project_id)
@@ -1723,24 +1734,31 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
         "charts_json": json.dumps(charts_json),
     }
 
-def get_project_activity_summary(project_id, f_section=None, f_bill=None, f_activity=None):
+
+def get_project_activity_summary(
+    project_id, f_section=None, f_bill=None, f_activity=None
+):
     """
     Centralized logic to group BOQItems into Activities (Section > Bill > Act Name).
     Applies the 'Labour Priority' rule for quantities and uses subqueries for plant costs
      to avoid Cartesian product duplication.
     """
-    from app.Estimator.models import BOQItem, ProjectPlantSpecificationComponent
 
     # 1. Base Queryset with Coalesced names and units
-    queryset = BOQItem.objects.filter(
-        project_id=project_id,
-        is_section_header=False
-    ).filter(
-        models.Q(labour_specification__isnull=False) |
-        models.Q(plant_specification__isnull=False)
-    ).annotate(
-        act_name=Coalesce("labour_specification__name", "plant_specification__name"),
-        act_unit=Coalesce("labour_specification__unit", "plant_specification__unit"),
+    queryset = (
+        BOQItem.objects.filter(project_id=project_id, is_section_header=False)
+        .filter(
+            models.Q(labour_specification__isnull=False)
+            | models.Q(plant_specification__isnull=False)
+        )
+        .annotate(
+            act_name=Coalesce(
+                "labour_specification__name", "plant_specification__name"
+            ),
+            act_unit=Coalesce(
+                "labour_specification__unit", "plant_specification__unit"
+            ),
+        )
     )
 
     # 2. Apply optional filters
@@ -1789,15 +1807,22 @@ def get_project_activity_summary(project_id, f_section=None, f_bill=None, f_acti
                     * Coalesce(F("labour_specification__crew__semi_skilled_rate"), 0)
                     + Coalesce(F("labour_specification__crew__general"), 0)
                     * Coalesce(F("labour_specification__crew__general_rate"), 0)
-                ) * Coalesce(F("crew_count"), 1),
-                output_field=DecimalField(),
-            ),
-            daily_production_base=Max(
-                Coalesce(F("labour_specification__daily_production"), F("plant_specification__daily_production"), Value(0))
+                )
                 * Coalesce(F("crew_count"), 1),
                 output_field=DecimalField(),
             ),
-            crew_count=Coalesce(Max("crew_count"), Value(1), output_field=DecimalField()),
+            daily_production_base=Max(
+                Coalesce(
+                    F("labour_specification__daily_production"),
+                    F("plant_specification__daily_production"),
+                    Value(0),
+                )
+                * Coalesce(F("crew_count"), 1),
+                output_field=DecimalField(),
+            ),
+            crew_count=Coalesce(
+                Max("crew_count"), Value(1), output_field=DecimalField()
+            ),
         )
         .annotate(
             duration=Case(
@@ -1844,7 +1869,7 @@ def get_project_activity_summary(project_id, f_section=None, f_bill=None, f_acti
             Subquery(plant_count_subquery, output_field=DecimalField()),
             Value(0),
             output_field=DecimalField(),
-        )
+        ),
     ).annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
 
     return final_queryset.order_by("section", "bill_no", "act_name")
