@@ -76,9 +76,9 @@
                                 <td class="whitespace-nowrap">
                                     {% if activity.plant_count > 0 %}
                                         <div class="flex flex-col gap-0.5 items-start">
-                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-md ring-1 ring-inset ring-amber-600/20 tooltip tooltip-right"
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-md ring-1 ring-inset ring-amber-600/20 tooltip tooltip-right before:max-w-xs before:text-left"
                                                   data-tip="{{ activity.plant_types }}">
-                                                {{ activity.plant_count }} Plant{{ activity.plant_count|pluralize }}
+                                                {{ activity.plant_count|floatformat:0 }} Plant{{ activity.plant_count|pluralize }}
                                             </span>
                                             <span class="text-[9px] text-gray-400 truncate max-w-[120px] italic"
                                                   title="{{ activity.plant_types }}">{{ activity.plant_types }}</span>

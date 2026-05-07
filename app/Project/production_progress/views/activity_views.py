@@ -125,10 +125,23 @@ class LaborActivityListView(
                 spec.daily_production if spec else 0
             ) * crew_count
 
-            # Set aggregated plant types from map
+            # Add crew info for display
+            if spec and spec.crew:
+                activity["labour_specification__crew__crew_type"] = spec.crew.crew_type
+            else:
+                activity["labour_specification__crew__crew_type"] = "No Crew"
+
+            # Set aggregated plant types from map (including multiplier if > 1)
             key = (activity["section"], activity["bill_no"], activity["act_name"])
             types = sorted(plant_map.get(key, []))
-            activity["plant_types"] = ", ".join(types) if types else "None"
+            if crew_count > 1:
+                activity["plant_types"] = (
+                    ", ".join([f"{int(crew_count)}x {t}" for t in types])
+                    if types
+                    else "None"
+                )
+            else:
+                activity["plant_types"] = ", ".join(types) if types else "None"
 
             # Calculate Duration: Total Tracker / Daily Production (rounded up)
             total_tracker = activity.get("total_tracker", 0)
@@ -277,16 +290,41 @@ class LaborActivityDetailView(
         context["plant_spec_rows"] = plant_spec_rows
         context["plant_spec_total"] = plant_spec_total
 
-        # Daily plant cost for KPI card (sum of component hourly rates)
-        plant_metrics = group_items.aggregate(
-            plant_cost=Sum(
-                Coalesce(
-                    F("plant_specification__components__plant_type__hourly_rate"), 0
-                ),
-                output_field=DecimalField(),
+        # Set plant types for tooltip (including multiplier)
+        plant_names = sorted(set(row["plant_name"] for row in plant_spec_rows))
+        if crew_count > 1:
+            context["plant_types"] = ", ".join(
+                [f"{int(crew_count)}x {n}" for n in plant_names]
             )
+        else:
+            context["plant_types"] = ", ".join(plant_names)
+
+        # Daily plant cost for KPI card (sum of unique component hourly rates in this group)
+        from app.Estimator.models import ProjectPlantSpecificationComponent
+
+        plant_components = (
+            ProjectPlantSpecificationComponent.objects.filter(
+                specification__boq_items__in=group_items
+            )
+            .distinct()
+            .aggregate(total_rate=Sum("plant_type__hourly_rate"))
         )
-        context["daily_plant_cost"] = plant_metrics["plant_cost"] or 0
+
+        daily_plant_rate = plant_components["total_rate"] or Decimal("0")
+        context["daily_plant_cost"] = daily_plant_rate * Decimal("8.0") * crew_count
+
+        # Add detailed crew composition for display
+        if labour_spec and labour_spec.crew:
+            context["crew_type"] = labour_spec.crew.crew_type
+            context["crew_skilled"] = labour_spec.crew.skilled * crew_count
+            context["crew_semi_skilled"] = labour_spec.crew.semi_skilled * crew_count
+            context["crew_general"] = labour_spec.crew.general * crew_count
+        else:
+            context["crew_type"] = "No Crew"
+            context["crew_skilled"] = 0
+            context["crew_semi_skilled"] = 0
+            context["crew_general"] = 0
+
         context["total_daily_cost"] = (
             context["daily_labour_cost"] + context["daily_plant_cost"]
         )
@@ -378,8 +416,15 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                     "quantity": str(item["total_tracker"] or 0),
                     "daily_production": str(item["daily_production_base"] or 0),
                     "daily_output": str(daily_output),
+                    "crew_count": str(item["crew_count"]),
+                    "daily_plant_cost": str(item["daily_plant_cost"]),
                     "plant_specs": plant_spec_map.get(key, []),
-                    "plant_types": sorted(list(plant_type_map.get(key, []))),
+                    "plant_types": [
+                        f"{int(item['crew_count'])}x {t}"
+                        for t in sorted(list(plant_type_map.get(key, [])))
+                    ]
+                    if item["crew_count"] > 1
+                    else sorted(list(plant_type_map.get(key, []))),
                 }
             )
 

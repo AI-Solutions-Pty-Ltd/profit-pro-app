@@ -33,6 +33,9 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-gray-700 bg-gray-50 rounded-full ring-1 ring-inset ring-gray-700/10">
                                 Bill: {{ bill_no|default:"All" }}
                             </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-purple-700 bg-purple-50 rounded-full ring-1 ring-inset ring-purple-700/10">
+                                Crew: {{ crew_type }} ({% if crew_skilled > 0 %}{{ crew_skilled|floatformat:0 }}S, {% endif %}{% if crew_semi_skilled > 0 %}{{ crew_semi_skilled|floatformat:0 }}SS, {% endif %}{% if crew_general > 0 %}{{ crew_general|floatformat:0 }}G{% endif %})
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -209,6 +212,7 @@
                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Plant Component</th>
                                 <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Source Spec</th>
                                 <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">BoQ Qty</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Allocation</th>
                                 <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rate/hr</th>
                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total BoQ Cost</th>
                             </tr>
@@ -224,6 +228,9 @@
                                     </td>
                                     <td class="px-4 py-3 text-center text-[10px] text-gray-400 italic">{{ row.source_spec }}</td>
                                     <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">{{ row.boq_qty|floatformat:1 }}</td>
+                                    <td class="px-4 py-3 text-xs text-center text-indigo-600 font-bold font-mono">
+                                        {{ row.hours|multiply:daily_production|floatformat:1 }} h/day
+                                    </td>
                                     <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">R {{ row.rate|floatformat:2|intcomma }}</td>
                                     <td class="px-6 py-3 text-right font-mono text-xs font-black text-emerald-700">
                                         R {{ row.total_cost|floatformat:2|intcomma }}

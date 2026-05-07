@@ -1841,9 +1841,20 @@ def get_project_activity_summary(
         ProjectPlantSpecificationComponent.objects.filter(
             specification__boq_items__section=OuterRef("section"),
             specification__boq_items__bill_no=OuterRef("bill_no"),
-            specification__name=OuterRef("act_name"),
         )
-        .values("specification__name")
+        .filter(
+            models.Q(
+                specification__boq_items__labour_specification__name=OuterRef(
+                    "act_name"
+                )
+            )
+            | models.Q(
+                specification__boq_items__plant_specification__name=OuterRef("act_name")
+            )
+        )
+        .distinct()
+        .order_by()
+        .values("specification__boq_items__section")
         .annotate(total_rate=Sum("plant_type__hourly_rate"))
         .values("total_rate")
     )
@@ -1852,24 +1863,38 @@ def get_project_activity_summary(
         ProjectPlantSpecificationComponent.objects.filter(
             specification__boq_items__section=OuterRef("section"),
             specification__boq_items__bill_no=OuterRef("bill_no"),
-            specification__name=OuterRef("act_name"),
         )
-        .values("specification__name")
+        .filter(
+            models.Q(
+                specification__boq_items__labour_specification__name=OuterRef(
+                    "act_name"
+                )
+            )
+            | models.Q(
+                specification__boq_items__plant_specification__name=OuterRef("act_name")
+            )
+        )
+        .distinct()
+        .order_by()
+        .values("specification__boq_items__section")
         .annotate(cnt=Count("plant_type", distinct=True))
         .values("cnt")
     )
 
     final_queryset = grouped_queryset.annotate(
-        daily_plant_cost=Coalesce(
+        daily_plant_cost_base=Coalesce(
             Subquery(plant_cost_subquery, output_field=DecimalField()),
             Value(0),
             output_field=DecimalField(),
         ),
-        plant_count=Coalesce(
+        plant_count_base=Coalesce(
             Subquery(plant_count_subquery, output_field=DecimalField()),
             Value(0),
             output_field=DecimalField(),
         ),
+    ).annotate(
+        daily_plant_cost=F("daily_plant_cost_base") * F("crew_count"),
+        plant_count=F("plant_count_base") * F("crew_count"),
     ).annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
 
     return final_queryset.order_by("section", "bill_no", "act_name")

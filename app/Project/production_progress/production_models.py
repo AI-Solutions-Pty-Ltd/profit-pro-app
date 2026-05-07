@@ -405,7 +405,7 @@ class ProductionPlan(BaseModel):
 
     @property
     def daily_plant_cost(self) -> Decimal:
-        return self.hourly_plant_rate * Decimal("8.0")
+        return self.hourly_plant_rate * Decimal("8.0") * (self.crew_count or 1)
 
     @property
     def is_active(self):
@@ -552,6 +552,8 @@ class ProductionPlan(BaseModel):
             "plant_specification__name"
         ):
             spec = boq.plant_specification
+            if not spec:
+                continue
             if spec.pk not in spec_groups:
                 spec_groups[spec.pk] = {"spec": spec, "boq_qty": Decimal("0")}
             if boq.contract_quantity:
