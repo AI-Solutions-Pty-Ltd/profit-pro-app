@@ -185,8 +185,9 @@ class ProductionPlan(BaseModel):
 
     def refresh_plant_types(self):
         """Updates plant_types field from BoQ allocations for list view display."""
-        allocations = self.get_plant_allocations()
-        names = sorted({a["name"] for a in allocations})
+        # Use the BoQ-driven rows which match the logic in activity_views.py
+        rows = self.get_boq_driven_plant_rows()
+        names = sorted({row["plant_name"] for row in rows})
         self.plant_types = names
 
     def sync_parent_metrics(self):
@@ -443,76 +444,6 @@ class ProductionPlan(BaseModel):
 
         return manual_cost + spec_cost
 
-    def get_plant_allocations(self):
-        """Returns a list of granular plant allocations for this plan."""
-        allocations = []
-        unique_specs = {}
-
-        if self.plant_specification:
-            unique_specs[self.plant_specification.name] = self.plant_specification
-        else:
-            # Fallback: Pull from related BOQItems
-            from django.db import models as db_models
-
-            from app.Estimator.models import BOQItem, ProjectPlantSpecification
-
-            qs = BOQItem.objects.filter(
-                project=self.project, plant_specification__isnull=False
-            )
-            if self.labour_activity_id:
-                qs = qs.filter(labour_specification_id=self.labour_activity_id)
-            else:
-                qs = qs.annotate(
-                    act_name_annotated=db_models.functions.Coalesce(
-                        "labour_specification__name", "plant_specification__name"
-                    )
-                ).filter(act_name_annotated=self.activity)
-
-            spec_ids = qs.values_list("plant_specification", flat=True).distinct()
-
-            if spec_ids:
-                specs = ProjectPlantSpecification.objects.filter(
-                    pk__in=spec_ids
-                ).prefetch_related("components__plant_type")
-                for spec in specs:
-                    # Get all type names from components
-                    type_names = [
-                        c.plant_type.name for c in spec.components.all() if c.plant_type
-                    ]
-                    name = (
-                        ", ".join(sorted(set(type_names))) if type_names else spec.name
-                    )
-                    if name not in unique_specs:
-                        unique_specs[name] = spec
-
-        # Expand unique specs into components
-        for display_name, spec in unique_specs.items():
-            for comp in spec.components.all():
-                if not comp.plant_type:
-                    continue
-
-                duration = Decimal(str(self.duration or 0))
-                hours_per_day = comp.hours
-                total_hours = hours_per_day * duration
-                rate = comp.plant_type.hourly_rate or Decimal("0")
-                total_cost = total_hours * rate
-
-                allocations.append(
-                    {
-                        "id": comp.plant_type_id,
-                        "name": comp.plant_type.name,
-                        "hours_per_day": hours_per_day,
-                        "total_hours": total_hours,
-                        "rate": rate,
-                        "total_cost": total_cost,
-                        "source_name": spec.name,
-                        "display_name": display_name,
-                        "is_fallback": not self.plant_specification,
-                    }
-                )
-
-        return allocations
-
     @staticmethod
     def calculate_boq_driven_plant_rows(
         project, section, bill_no, activity, labour_activity_id=None
@@ -527,23 +458,32 @@ class ProductionPlan(BaseModel):
 
         from app.Estimator.models import BOQItem
 
-        # Filter BOQItems for the project/section/bill
+        # Normalize strings for matching
+        s_key = str(section or "").strip()
+        b_key = str(bill_no or "").strip()
+        a_key = str(activity or "").strip()
+
+        # Filter BOQItems for the project
         boq_qs = BOQItem.objects.filter(
             project=project,
             is_section_header=False,
-            section=section,
-            bill_no=bill_no,
             plant_specification__isnull=False,
         )
 
-        if labour_activity_id:
-            boq_qs = boq_qs.filter(labour_specification_id=labour_activity_id)
-        else:
-            boq_qs = boq_qs.annotate(
-                act_name_annotated=db_models.functions.Coalesce(
-                    "labour_specification__name", "plant_specification__name"
-                )
-            ).filter(act_name_annotated=activity)
+        # Apply flexible matching including spec names and description
+        # Use icontains to handle trailing spaces or minor variations
+        boq_qs = boq_qs.filter(
+            db_models.Q(labour_specification_id=labour_activity_id)
+            | db_models.Q(description__icontains=a_key)
+            | db_models.Q(labour_specification__name__icontains=a_key)
+            | db_models.Q(plant_specification__name__icontains=a_key)
+        )
+
+        # Apply section/bill filters with normalization
+        if s_key:
+            boq_qs = boq_qs.filter(section__icontains=s_key)
+        if b_key:
+            boq_qs = boq_qs.filter(bill_no__icontains=b_key)
 
         from collections import OrderedDict
 
@@ -601,18 +541,8 @@ class ProductionPlan(BaseModel):
                 child.total_plant_cost for child in self.children.filter(deleted=False)
             )
 
-        # Manual resources cost
-        manual_cost = (
-            self.resources.filter(resource_type="PLANT").aggregate(
-                total=models.Sum("total_cost")
-            )["total"]
-            or 0
-        )
-
-        # Plan-level specification cost (budgeted cost based on duration)
-        plan_spec_cost = sum(row["total_cost"] for row in self.get_plant_allocations())
-
-        return manual_cost + plan_spec_cost
+        # We now only use BoQ driven plant costs (Estimator-based)
+        return sum(row["total_cost"] for row in self.get_boq_driven_plant_rows())
 
     @property
     def total_other_cost(self):

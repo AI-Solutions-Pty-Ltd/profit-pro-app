@@ -1881,20 +1881,24 @@ def get_project_activity_summary(
         .values("cnt")
     )
 
-    final_queryset = grouped_queryset.annotate(
-        daily_plant_cost_base=Coalesce(
-            Subquery(plant_cost_subquery, output_field=DecimalField()),
-            Value(0),
-            output_field=DecimalField(),
-        ),
-        plant_count_base=Coalesce(
-            Subquery(plant_count_subquery, output_field=DecimalField()),
-            Value(0),
-            output_field=DecimalField(),
-        ),
-    ).annotate(
-        daily_plant_cost=F("daily_plant_cost_base") * F("crew_count"),
-        plant_count=F("plant_count_base") * F("crew_count"),
-    ).annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
+    final_queryset = (
+        grouped_queryset.annotate(
+            daily_plant_cost_base=Coalesce(
+                Subquery(plant_cost_subquery, output_field=DecimalField()),
+                Value(0),
+                output_field=DecimalField(),
+            ),
+            plant_count_base=Coalesce(
+                Subquery(plant_count_subquery, output_field=DecimalField()),
+                Value(0),
+                output_field=DecimalField(),
+            ),
+        )
+        .annotate(
+            daily_plant_cost=F("daily_plant_cost_base") * F("crew_count"),
+            plant_count=F("plant_count_base") * F("crew_count"),
+        )
+        .annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
+    )
 
     return final_queryset.order_by("section", "bill_no", "act_name")

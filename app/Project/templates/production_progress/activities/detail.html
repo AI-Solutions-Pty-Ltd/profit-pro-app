@@ -34,24 +34,27 @@
                                 Bill: {{ bill_no|default:"All" }}
                             </span>
                             <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-purple-700 bg-purple-50 rounded-full ring-1 ring-inset ring-purple-700/10">
-                                Crew: {{ crew_type }} ({% if crew_skilled > 0 %}{{ crew_skilled|floatformat:0 }}S, {% endif %}{% if crew_semi_skilled > 0 %}{{ crew_semi_skilled|floatformat:0 }}SS, {% endif %}{% if crew_general > 0 %}{{ crew_general|floatformat:0 }}G{% endif %})
+                                Crew: {{ crew_type }} (
+                                {% if crew_skilled > 0 %}{{ crew_skilled|floatformat:0 }}S,{% endif %}
+                                {% if crew_semi_skilled > 0 %}{{ crew_semi_skilled|floatformat:0 }}SS,{% endif %}
+                                {% if crew_general > 0 %}{{ crew_general|floatformat:0 }}G{% endif %}
+                                )
                             </span>
                         </div>
                     </div>
                 </div>
-
                 <!-- Multiplier Control -->
                 <div class="flex gap-3 items-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
                     <div class="flex flex-col">
                         <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Crew Multiplier (Count)</span>
                         <div class="flex gap-2 items-center mt-1">
-                            <input type="number" 
+                            <input type="number"
                                    id="crew-count-input"
-                                   step="1" 
-                                   min="1" 
-                                   value="{{ crew_count|floatformat:0 }}" 
+                                   step="1"
+                                   min="1"
+                                   value="{{ crew_count|floatformat:0 }}"
                                    class="px-2 py-1.5 w-20 font-mono text-sm font-bold text-center text-indigo-700 rounded-lg border-0 ring-1 ring-inset bg-white ring-indigo-200 focus:ring-2 focus:ring-indigo-600">
-                            <button id="save-crew-count" 
+                            <button id="save-crew-count"
                                     class="inline-flex items-center px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm transition-all hover:bg-indigo-700 active:scale-95">
                                 Save
                             </button>

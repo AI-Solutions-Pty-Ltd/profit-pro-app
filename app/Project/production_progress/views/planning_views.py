@@ -384,7 +384,7 @@ class ProductionPlanDetailView(
             context["child_title"] = None
             context["children"] = []
 
-        # Resources logic (from previous version)
+        # Resources logic (Excluding PLANT from manual list as it is now exclusively BoQ Driven)
         resource_categories = []
         for type_code, type_name in ProductionResource.RESOURCE_TYPES:
             if type_code == "PLANT":

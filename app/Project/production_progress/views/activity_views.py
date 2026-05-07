@@ -46,7 +46,6 @@ class LaborActivityListView(
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
-        project_pk = self.kwargs["project_pk"]
         self.f_section = self.request.GET.get("section", "")
         self.f_bill = self.request.GET.get("bill_no", "")
         self.f_activity = self.request.GET.get("activity", "")
@@ -95,25 +94,42 @@ class LaborActivityListView(
         spec_map = {spec.id: spec for spec in labour_specs}
 
         # Map plant types in bulk to avoid N+1 queries
+        # Fetch plant mapping data for tooltips
+        # We must use logic consistent with get_project_activity_summary's subqueries
+        from app.Estimator.models import ProjectPlantSpecificationComponent
+
+        # Map plant types in bulk using normalized keys to ensure matches
         plant_mapping_data = (
-            all_items.filter(plant_specification__components__plant_type__isnull=False)
+            ProjectPlantSpecificationComponent.objects.filter(
+                specification__boq_items__project_id=project_pk
+            )
             .values(
-                "section",
-                "bill_no",
-                "act_name",
-                "plant_specification__components__plant_type__name",
+                "plant_type__name",
+                "specification__boq_items__section",
+                "specification__boq_items__bill_no",
+                "specification__boq_items__labour_specification__name",
+                "specification__boq_items__plant_specification__name",
             )
             .distinct()
         )
 
         plant_map = {}
-        for row in plant_mapping_data:
-            key = (row["section"], row["bill_no"], row["act_name"])
-            if key not in plant_map:
-                plant_map[key] = []
-            plant_map[key].append(
-                row["plant_specification__components__plant_type__name"]
-            )
+        for p in plant_mapping_data:
+            # Normalize keys to empty strings to avoid None vs "" mismatches
+            section = str(p["specification__boq_items__section"] or "").strip()
+            bill = str(p["specification__boq_items__bill_no"] or "").strip()
+            plant_name = p["plant_type__name"]
+            l_name = p["specification__boq_items__labour_specification__name"]
+            p_name = p["specification__boq_items__plant_specification__name"]
+
+            # Map to the same keys used for grouping (Section, Bill, Name)
+            # We map to both names because act_name could be either
+            for name in [l_name, p_name]:
+                if name:
+                    key = (section, bill, name.strip())
+                    if key not in plant_map:
+                        plant_map[key] = set()
+                    plant_map[key].add(plant_name)
 
         for activity in activities:
             spec_id = activity.get("labour_spec_id")
@@ -131,8 +147,12 @@ class LaborActivityListView(
             else:
                 activity["labour_specification__crew__crew_type"] = "No Crew"
 
-            # Set aggregated plant types from map (including multiplier if > 1)
-            key = (activity["section"], activity["bill_no"], activity["act_name"])
+            # Normalize lookup key to match the mapping logic above
+            s_key = str(activity["section"] or "").strip()
+            b_key = str(activity["bill_no"] or "").strip()
+            n_key = str(activity["act_name"] or "").strip()
+
+            key = (s_key, b_key, n_key)
             types = sorted(plant_map.get(key, []))
             if crew_count > 1:
                 activity["plant_types"] = (
@@ -291,7 +311,7 @@ class LaborActivityDetailView(
         context["plant_spec_total"] = plant_spec_total
 
         # Set plant types for tooltip (including multiplier)
-        plant_names = sorted(set(row["plant_name"] for row in plant_spec_rows))
+        plant_names = sorted({row["plant_name"] for row in plant_spec_rows})
         if crew_count > 1:
             context["plant_types"] = ", ".join(
                 [f"{int(crew_count)}x {n}" for n in plant_names]
@@ -421,10 +441,10 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                     "plant_specs": plant_spec_map.get(key, []),
                     "plant_types": [
                         f"{int(item['crew_count'])}x {t}"
-                        for t in sorted(list(plant_type_map.get(key, [])))
+                        for t in sorted(plant_type_map.get(key, []))
                     ]
                     if item["crew_count"] > 1
-                    else sorted(list(plant_type_map.get(key, []))),
+                    else sorted(plant_type_map.get(key, [])),
                 }
             )
 
