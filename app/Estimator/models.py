@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from django.core.validators import MinValueValidator
 from django.db import models
 
 if TYPE_CHECKING:
@@ -1051,6 +1052,13 @@ class BOQItem(models.Model):
     material_markup_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     labour_markup_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     transport_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    crew_count = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=1,
+        validators=[MinValueValidator(0)],
+        help_text="Multiplier for the number of crews working on this item.",
+    )
 
     class Meta:
         ordering = ["id"]

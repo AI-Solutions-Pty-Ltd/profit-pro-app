@@ -70,6 +70,12 @@
                                         Crew: {{ plan.labour_activity.crew.crew_type }}
                                     </span>
                                 {% endif %}
+                                {% if plan.plant_types %}
+                                    <span class="flex items-center text-amber-600">
+                                        {% heroicon_mini "truck" class="mr-1 w-3.5 h-3.5" %}
+                                        Plant: {{ plan.plant_types|join:", " }}
+                                    </span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
