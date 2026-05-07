@@ -148,6 +148,7 @@ class ProductionPlanForm(forms.ModelForm):
             "finish_date",
             "duration",
             "daily_rate",
+            "crew_count",
             "quantity",
             "unit",
         ]
@@ -299,6 +300,7 @@ class ProductionPlanForm(forms.ModelForm):
                 "labour_activity",
                 "plant_specification",
                 "daily_rate",
+                "crew_count",
                 "section",
                 "bill_no",
             ]
@@ -417,7 +419,14 @@ class ProductionPlanDateControlForm(forms.ModelForm):
 
     class Meta:
         model = ProductionPlan
-        fields = ["start_date", "quantity", "daily_rate", "duration", "finish_date"]
+        fields = [
+            "start_date",
+            "quantity",
+            "daily_rate",
+            "crew_count",
+            "duration",
+            "finish_date",
+        ]
         widgets = {
             "start_date": forms.DateInput(
                 attrs={
@@ -448,6 +457,13 @@ class ProductionPlanDateControlForm(forms.ModelForm):
                     "class": "block w-full text-xs text-gray-900 bg-gray-50 rounded-md border-0 ring-1 ring-inset ring-gray-300 cursor-not-allowed",
                 }
             ),
+            "crew_count": forms.NumberInput(
+                attrs={
+                    "id": "ui-crew-count",
+                    "readonly": "readonly",
+                    "class": "block w-full text-xs text-gray-900 bg-gray-50 rounded-md border-0 ring-1 ring-inset ring-gray-300 cursor-not-allowed",
+                }
+            ),
             "duration": forms.NumberInput(
                 attrs={
                     "id": "ui-duration",
@@ -469,10 +485,14 @@ class ProductionPlanDateControlForm(forms.ModelForm):
                 Field("quantity", label="Tracker Total*"),
                 Div(
                     Field("daily_rate", label="Daily Prod*"),
-                    Field("duration", label="Duration*"),
+                    Field("crew_count", label="Multiplier*"),
                     css_class="grid grid-cols-2 gap-3",
                 ),
-                Field("finish_date", label="Finish date"),
+                Div(
+                    Field("duration", label="Duration*"),
+                    Field("finish_date", label="Finish date"),
+                    css_class="grid grid-cols-2 gap-3",
+                ),
                 css_class="space-y-4",
             )
         )

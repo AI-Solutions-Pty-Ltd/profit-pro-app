@@ -543,65 +543,55 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
                 is_archived=False,
             ).first()
 
-            if plan:
-                # Check for changes
-                changed = False
-                
-                # Check Quantity
-                new_qty = item["total_tracker"] or 0
-                if plan.quantity != new_qty:
-                    plan.quantity = new_qty
-                    changed = True
-                
-                # Check Unit
-                new_unit = item["act_unit"] or ""
-                if plan.unit != new_unit:
-                    plan.unit = new_unit
-                    changed = True
-                
-                # Check Daily Rate (Production Base)
-                new_rate = item["daily_production_base"] or 0
-                if plan.daily_rate != new_rate:
-                    plan.daily_rate = new_rate
-                    changed = True
-                
-                # Update labour_activity link if missing
-                if not plan.labour_activity_id and item["labour_spec_id"]:
-                    plan.labour_activity_id = item["labour_spec_id"]
-                    changed = True
+            # Values from Estimator
+            new_qty = item["total_tracker"] or 0
+            new_rate = item["daily_production_base"] or 0
+            new_crew_count = item["crew_count"] or 1
+            new_unit = item["act_unit"] or ""
+            new_spec_id = item["labour_spec_id"]
+            new_duration = item["duration"] or 0
 
-                # Recalculate duration if quantity or rate changed
-                if (plan.quantity != new_qty or plan.daily_rate != new_rate) and plan.daily_rate > 0:
-                    new_duration = int((plan.quantity / plan.daily_rate).to_integral_value(rounding=ROUND_CEILING))
-                    if plan.duration != new_duration:
-                        plan.duration = new_duration
-                        changed = True
+            if plan:
+                # Check for any drift from Estimator (Quantity, Rate, Crew Count, Unit, Duration, or Spec)
+                changed = (
+                    plan.quantity != new_qty or
+                    plan.daily_rate != new_rate or
+                    plan.crew_count != new_crew_count or
+                    plan.unit != new_unit or
+                    plan.duration != new_duration or
+                    plan.labour_activity_id != new_spec_id
+                )
 
                 if changed:
-                    plan.save() # Triggers date and hierarchy updates
+                    plan.quantity = new_qty
+                    plan.daily_rate = new_rate
+                    plan.crew_count = new_crew_count
+                    plan.unit = new_unit
+                    plan.duration = new_duration
+                    plan.labour_activity_id = new_spec_id
+                    
+                    # The save() method in models.py handles recalculating finish_date 
+                    # based on the new duration if start_date exists.
+                    plan.save()
                     updated_count += 1
                 else:
                     skipped_count += 1
             else:
-                # Create the ProductionPlan
-                # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
-                plan = ProductionPlan.objects.create(
+                # Create a fresh plan with the correct duration immediately
+                ProductionPlan.objects.create(
                     project=project,
                     section=item["section"],
                     bill_no=item["bill_no"],
                     activity=item["act_name"],
-                    labour_activity_id=item["labour_spec_id"],
-                    quantity=item["total_tracker"] or 0,
-                    unit=item["act_unit"],
-                    daily_rate=item["daily_production_base"] or 0,
+                    labour_activity_id=new_spec_id,
+                    quantity=new_qty,
+                    unit=new_unit,
+                    daily_rate=new_rate,
+                    crew_count=new_crew_count,
+                    duration=new_duration,
                     start_date=None,
                     finish_date=None,
                 )
-                # Calculate initial duration for new plan
-                if plan.daily_rate > 0:
-                    plan.duration = int((plan.quantity / plan.daily_rate).to_integral_value(rounding=ROUND_CEILING))
-                    plan.save()
-                
                 created_count += 1
 
         if created_count > 0 or updated_count > 0:

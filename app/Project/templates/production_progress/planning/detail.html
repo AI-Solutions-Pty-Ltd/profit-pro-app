@@ -115,14 +115,14 @@
                     <div class="p-2 text-indigo-600 bg-indigo-50 rounded-lg">{% heroicon_mini "calendar" class="w-5 h-5" %}</div>
                     <div>
                         <dt class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Project Schedule</dt>
-                        <dd class="text-sm font-black leading-none text-gray-900">
+                        <dd class="text-sm font-black leading-none text-gray-900" id="ui-card-schedule-dates">
                             {% if plan.start_date %}
                                 {{ plan.start_date|date:"d M" }} — {{ plan.finish_date|date:"d M Y" }}
                             {% else %}
                                 <span class="text-gray-500">Not Scheduled</span>
                             {% endif %}
                         </dd>
-                        <div class="mt-1 text-[10px] font-bold text-indigo-600 uppercase">{{ plan.duration }} Days Planned</div>
+                        <div class="mt-1 text-[10px] font-bold text-indigo-600 uppercase" id="ui-card-schedule-duration">{{ plan.duration }} Days Planned</div>
                     </div>
                 </div>
                 {% if plan.node_type == 'ACTIVITY' %}
@@ -132,7 +132,7 @@
                         <div>
                             <dt class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Planned Volume</dt>
                             <dd class="text-sm font-black leading-none text-gray-900">
-                                {{ plan.quantity|floatformat:1 }} <span class="text-[10px] font-medium text-gray-500 uppercase">{{ plan.unit_display }}</span>
+                                <span id="ui-card-planned-volume">{{ plan.quantity|floatformat:1 }}</span> <span class="text-[10px] font-medium text-gray-500 uppercase">{{ plan.unit_display }}</span>
                             </dd>
                             <div class="mt-1 text-[10px] font-bold text-emerald-600 uppercase">Progress: {{ plan.progress_percentage }}%</div>
                         </div>
@@ -155,7 +155,7 @@
                     <div class="p-2 text-blue-600 bg-blue-50 rounded-lg">{% heroicon_mini "banknotes" class="w-5 h-5" %}</div>
                     <div>
                         <dt class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Labour Budget</dt>
-                        <dd class="text-sm font-black leading-none text-gray-900">
+                        <dd class="text-sm font-black leading-none text-gray-900" id="ui-card-labour-budget">
                             R {{ plan.total_labour_cost|floatformat:0|intcomma }}
                         </dd>
                         <div class="mt-1 text-[10px] font-bold text-blue-600 uppercase">Resource Cost</div>
@@ -276,7 +276,7 @@
                                             <h3 class="text-xs font-bold text-gray-500 uppercase">{{ category.type_name }} Resources</h3>
                                         </div>
                                         <div class="text-xs font-bold text-indigo-600">
-                                            Total: <span class="ml-1 text-sm font-black tabular-nums">R {{ category.total_cost|floatformat:2|intcomma }}</span>
+                                            Total: <span class="ml-1 text-sm font-black tabular-nums" {% if type_code == 'LABOUR' %}id="ui-labour-total-value"{% endif %}>R {{ category.total_cost|floatformat:2|intcomma }}</span>
                                         </div>
                                     </div>
                                     <div class="overflow-x-auto">
@@ -293,7 +293,10 @@
                                             <tbody class="bg-white divide-y divide-gray-50">
                                                 <!-- Spec-based Resources -->
                                                 {% if type_code == 'LABOUR' and plan.labour_activity.crew %}
-                                                    <tr class="bg-indigo-50/20 group/row">
+                                                    <tr class="bg-indigo-50/20 group/row" 
+                                                        data-resource-type="spec" 
+                                                        data-rate="{{ plan.labour_activity.crew.crew_daily_cost|default:0 }}" 
+                                                        data-count="{{ plan.crew_count|default:1 }}">
                                                         <td class="px-6 py-3">
                                                             <div class="flex flex-col">
                                                                 <span class="text-xs font-bold text-indigo-900">{{ plan.labour_activity.crew.crew_type }}</span>
@@ -303,19 +306,22 @@
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">1</td>
-                                                        <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">{{ plan.duration }}</td>
+                                                        <td class="px-4 py-3 text-xs font-medium text-center text-gray-500" id="ui-labour-spec-count">{{ plan.crew_count|default:1|floatformat:0 }}</td>
+                                                        <td class="px-4 py-3 text-xs font-medium text-center text-gray-500" id="ui-labour-spec-duration">{{ plan.duration }}</td>
                                                         <td class="px-4 py-3 font-mono text-xs tabular-nums text-right text-gray-500">
                                                             R {{ plan.labour_activity.crew.crew_daily_cost|floatformat:2|intcomma }}
                                                         </td>
-                                                        <td class="px-6 py-3 font-mono text-xs font-black tabular-nums text-right text-indigo-600">
+                                                        <td class="px-6 py-3 font-mono text-xs font-black tabular-nums text-right text-indigo-600" id="ui-labour-spec-total">
                                                             R {{ plan.total_labour_cost|floatformat:2|intcomma }}
                                                         </td>
                                                     </tr>
                                                 {% endif %}
                                                 <!-- Manual Resources -->
                                                 {% for resource in category.resources %}
-                                                    <tr class="transition-all hover:bg-gray-50 group/row">
+                                                    <tr class="transition-all hover:bg-gray-50 group/row"
+                                                        data-resource-type="manual"
+                                                        data-rate="{{ resource.rate|default:0 }}"
+                                                        data-count="{{ resource.number|default:0 }}">
                                                         <td class="px-6 py-3">
                                                             <div class="flex flex-col">
                                                                 <span class="text-xs font-bold text-gray-700">{{ resource.name }}</span>
@@ -325,11 +331,11 @@
                                                             </div>
                                                         </td>
                                                         <td class="px-4 py-3 text-xs text-center text-gray-600">{{ resource.number|floatformat:0 }}</td>
-                                                        <td class="px-4 py-3 text-xs text-center text-gray-600">{{ resource.days|floatformat:0 }}</td>
+                                                        <td class="px-4 py-3 text-xs text-center text-gray-600 ui-manual-duration">{{ resource.days|floatformat:0 }}</td>
                                                         <td class="px-4 py-3 font-mono text-xs tabular-nums text-right text-gray-600">
                                                             R {{ resource.rate|floatformat:2|intcomma }}
                                                         </td>
-                                                        <td class="px-6 py-3 font-mono text-xs font-black tabular-nums text-right text-gray-900 whitespace-nowrap">
+                                                        <td class="px-6 py-3 font-mono text-xs font-black tabular-nums text-right text-gray-900 whitespace-nowrap ui-manual-total">
                                                             R {{ resource.total_cost|floatformat:2|intcomma }}
                                                         </td>
                                                     </tr>
@@ -608,6 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const startDateInput = document.getElementById('ui-start-date');
         const quantityInput = document.getElementById('ui-quantity');
         const dailyRateInput = document.getElementById('ui-daily-rate');
+        const crewCountInput = document.getElementById('ui-crew-count');
         const durationInput = document.getElementById('ui-duration');
         const finishDateInput = document.getElementById('ui-finish-date');
         const updateBtn = document.getElementById('btn-update-schedule');
@@ -620,6 +627,90 @@ document.addEventListener('DOMContentLoaded', function() {
             return parseFloat(quantityInput.value) || 0;
         }
 
+        function updateMetricCards() {
+            const startStr = startDateInput.value;
+            const finishStr = finishDateInput.value;
+            const duration = durationInput.value;
+            const quantity = quantityInput.value;
+
+            // Update Dates
+            const dateEl = document.getElementById('ui-card-schedule-dates');
+            if (dateEl && startStr && finishStr) {
+                const start = new Date(startStr);
+                const finish = new Date(finishStr);
+                
+                if (!isNaN(start.getTime()) && !isNaN(finish.getTime())) {
+                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const startFormatted = `${start.getDate()} ${monthNames[start.getMonth()]}`;
+                    const finishFormatted = `${finish.getDate()} ${monthNames[finish.getMonth()]} ${finish.getFullYear()}`;
+                    
+                    dateEl.innerText = `${startFormatted} — ${finishFormatted}`;
+                }
+            }
+
+            // Update Duration
+            const durEl = document.getElementById('ui-card-schedule-duration');
+            if (durEl) {
+                durEl.innerText = `${duration} Days Planned`;
+            }
+
+            // Update Volume
+            const volEl = document.getElementById('ui-card-planned-volume');
+            if (volEl) {
+                volEl.innerText = parseFloat(quantity).toFixed(1);
+            }
+        }
+
+        function updateLabourResources() {
+            const duration = parseInt(durationInput.value) || 0;
+            let categoryTotal = 0;
+
+            // Update Spec-based Resource
+            const specRow = document.querySelector('tr[data-resource-type="spec"]');
+            if (specRow) {
+                const rate = parseFloat(specRow.dataset.rate) || 0;
+                // Use input value if available (for real-time sync), otherwise data attribute
+                const count = crewCountInput ? (parseFloat(crewCountInput.value) || 1) : (parseFloat(specRow.dataset.count) || 1);
+                const countEl = document.getElementById('ui-labour-spec-count');
+                const durationEl = document.getElementById('ui-labour-spec-duration');
+                const totalEl = document.getElementById('ui-labour-spec-total');
+                
+                if (countEl) countEl.innerText = count.toFixed(0);
+                if (durationEl) durationEl.innerText = duration;
+                
+                const total = count * rate;
+                if (totalEl) totalEl.innerText = `R ${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                categoryTotal += total;
+            }
+
+            // Update Manual Resources
+            const manualRows = document.querySelectorAll('tr[data-resource-type="manual"]');
+            manualRows.forEach(row => {
+                const rate = parseFloat(row.dataset.rate) || 0;
+                const count = parseFloat(row.dataset.count) || 0;
+                const durationEl = row.querySelector('.ui-manual-duration');
+                const totalEl = row.querySelector('.ui-manual-total');
+                
+                if (durationEl) durationEl.innerText = duration;
+                
+                const total = count * rate;
+                if (totalEl) totalEl.innerText = `R ${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                categoryTotal += total;
+            });
+
+            // Update Category Total
+            const totalValEl = document.getElementById('ui-labour-total-value');
+            if (totalValEl) {
+                totalValEl.innerText = `R ${categoryTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+
+            // Update Labour Budget Card
+            const budgetEl = document.getElementById('ui-card-labour-budget');
+            if (budgetEl) {
+                budgetEl.innerText = `R ${categoryTotal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+            }
+        }
+
         function calculateFinishDate() {
             const start = new Date(startDateInput.value);
             const duration = parseInt(durationInput.value) || 0;
@@ -629,6 +720,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 finish.setDate(finish.getDate() + (duration > 0 ? duration : 0));
                 finishDateInput.value = finish.toISOString().split('T')[0];
             }
+            updateMetricCards();
+            updateLabourResources();
         }
 
         function updateDurationFromRate() {

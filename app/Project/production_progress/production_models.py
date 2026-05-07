@@ -92,6 +92,12 @@ class ProductionPlan(BaseModel):
     daily_rate = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, help_text="Daily production rate"
     )
+    crew_count = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=1,
+        help_text="Number of crews/resources assigned (multiplier)",
+    )
     duration = models.IntegerField(default=0, help_text="Duration in days")
     is_archived = models.BooleanField(default=False)
 
@@ -426,7 +432,8 @@ class ProductionPlan(BaseModel):
         # Crew-based specification cost
         spec_cost = 0
         if self.labour_activity and self.labour_activity.crew:
-            spec_cost = self.labour_activity.crew.crew_daily_cost * (self.duration or 0)
+            # Use crew_count * daily_cost (excluding duration)
+            spec_cost = self.labour_activity.crew.crew_daily_cost * (self.crew_count or 1)
 
         return manual_cost + spec_cost
 
@@ -714,7 +721,7 @@ class ProductionResource(BaseModel):
             self.name = self.plant_type.name
             self.rate = self.plant_type.hourly_rate
 
-        self.total_cost = (self.number or 0) * (self.days or 0) * (self.rate or 0)
+        self.total_cost = (self.number or 0) * (self.rate or 0)
         super().save(*args, **kwargs)
 
 
