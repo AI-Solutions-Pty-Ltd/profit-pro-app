@@ -284,6 +284,11 @@ class PaymentCertificate(BaseModel):
         return total
 
     @property
+    def total_certified_amount(self) -> Decimal:
+        """Alias for total_submitted to be used in financial reporting."""
+        return self.total_submitted
+
+    @property
     def total_claimed(self) -> Decimal:
         total = Decimal(0)
         total += self.items_claimed

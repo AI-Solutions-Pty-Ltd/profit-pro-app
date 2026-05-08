@@ -113,9 +113,7 @@ class ProductivityLogsView(
         )
 
         # Get all entries for this project
-        entries = DailyActivityEntry.objects.filter(report__project=project).order_by(
-            "report__date"
-        )
+        entries = DailyActivityEntry.objects.filter(project=project).order_by("date")
 
         logs_data = []
         for plan in plans:
@@ -575,7 +573,8 @@ class ProductionControllerView(
                         float(
                             sum(
                                 [
-                                    k["daily_output"]["index"] * float(lc.quantity)
+                                    Decimal(str(k["daily_output"]["index"]))
+                                    * lc.quantity
                                     for k, lc in zip(
                                         child_kpis, leaf_children, strict=False
                                     )

@@ -7,7 +7,6 @@ from app.Project.tests.factories import ProjectFactory
 
 from .production_models import (
     DailyActivityEntry,
-    DailyActivityReport,
     DailyLabourUsage,
     DailyPlantUsage,
     ProductionPlan,
@@ -31,25 +30,18 @@ class ProductionPlanFactory(DjangoModelFactory):
     labour_activity = None
 
 
-class DailyActivityReportFactory(DjangoModelFactory):
-    """Factory for DailyActivityReport model."""
-
-    class Meta:
-        model = DailyActivityReport
-
-    project = factory.SubFactory(ProjectFactory)
-    date = factory.Faker("date_between", start_date="-1y", end_date="today")
-    notes = factory.Faker("text")
-
-
 class DailyActivityEntryFactory(DjangoModelFactory):
     """Factory for DailyActivityEntry model."""
 
     class Meta:
         model = DailyActivityEntry
 
-    report = factory.SubFactory(DailyActivityReportFactory)
-    production_plan = factory.SubFactory(ProductionPlanFactory)
+    project = factory.SubFactory(ProjectFactory)
+    date = factory.Faker("date_between", start_date="-1y", end_date="today")
+    notes = factory.Faker("text")
+    production_plan = factory.SubFactory(
+        ProductionPlanFactory, project=factory.SelfAttribute("..project")
+    )
     quantity = 100
     hours_on_activity = 8.0
 
@@ -61,7 +53,11 @@ class DailyLabourUsageFactory(DjangoModelFactory):
         model = DailyLabourUsage
 
     entry = factory.SubFactory(DailyActivityEntryFactory)
-    skill_type = "Skilled"
+    resource = factory.SubFactory(
+        "app.Project.production_progress.factories.ProductionResourceFactory",
+        production_plan=factory.SelfAttribute("..entry.production_plan"),
+        resource_type="LABOUR",
+    )
     number = 2
     hours = 8.0
 
@@ -73,7 +69,11 @@ class DailyPlantUsageFactory(DjangoModelFactory):
         model = DailyPlantUsage
 
     entry = factory.SubFactory(DailyActivityEntryFactory)
-    plant_name = factory.Faker("word")
+    resource = factory.SubFactory(
+        "app.Project.production_progress.factories.ProductionResourceFactory",
+        production_plan=factory.SelfAttribute("..entry.production_plan"),
+        resource_type="PLANT",
+    )
     hours = 8.0
     quantity = 50.0
 

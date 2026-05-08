@@ -991,6 +991,174 @@ class ExcelImportView(ProjectEstimatorMixin, FormView):
 class ReportsIndexView(ProjectEstimatorMixin, TemplateView):
     template_name = "estimator/reports_index.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        items = BOQItem.objects.filter(project=project)
+
+        totals = {
+            "contract": Decimal("0"),
+            "baseline": Decimal("0"),
+            "progress": Decimal("0"),
+            "forecast": Decimal("0"),
+            "mat": {
+                "baseline": Decimal("0"),
+                "progress": Decimal("0"),
+                "forecast": Decimal("0"),
+            },
+            "lab": {
+                "baseline": Decimal("0"),
+                "progress": Decimal("0"),
+                "forecast": Decimal("0"),
+            },
+            "plt": {
+                "baseline": Decimal("0"),
+                "progress": Decimal("0"),
+                "forecast": Decimal("0"),
+            },
+            "pre": {
+                "baseline": Decimal("0"),
+                "progress": Decimal("0"),
+                "forecast": Decimal("0"),
+            },
+        }
+
+        for item in items:
+            # Total Project Amounts
+            contract_amt = item.contract_amount
+            baseline_price = item.baseline_new_price
+            qty_c = item.contract_quantity or Decimal("0")
+            qty_p = item.progress_quantity or Decimal("0")
+            qty_f = item.forecast_quantity or Decimal("0")
+
+            baseline_amt = baseline_price * qty_c if baseline_price else Decimal("0")
+            progress_amt = item.progress_amount or Decimal("0")
+            forecast_amt = item.forecast_amount or Decimal("0")
+
+            if contract_amt:
+                totals["contract"] += contract_amt
+            if baseline_amt:
+                totals["baseline"] += baseline_amt
+            if progress_amt:
+                totals["progress"] += progress_amt
+            if forecast_amt:
+                totals["forecast"] += forecast_amt
+
+            # Resource Specific Amounts
+            m_rate = item.new_materials_rate
+            m_wastage = item._wastage_factor
+            if m_rate:
+                totals["mat"]["baseline"] += m_rate * m_wastage * qty_c
+                totals["mat"]["progress"] += m_rate * m_wastage * qty_p
+                totals["mat"]["forecast"] += m_rate * m_wastage * qty_f
+
+            l_rate = item.new_labour_rate
+            if l_rate:
+                totals["lab"]["baseline"] += l_rate * qty_c
+                totals["lab"]["progress"] += l_rate * qty_p
+                totals["lab"]["forecast"] += l_rate * qty_f
+
+            p_rate = item.new_plant_rate
+            if p_rate:
+                totals["plt"]["baseline"] += p_rate * qty_c
+                totals["plt"]["progress"] += p_rate * qty_p
+                totals["plt"]["forecast"] += p_rate * qty_f
+
+            pr_rate = item.new_preliminary_rate
+            if pr_rate:
+                totals["pre"]["baseline"] += pr_rate * qty_c
+                totals["pre"]["progress"] += pr_rate * qty_p
+                totals["pre"]["forecast"] += pr_rate * qty_f
+
+        def get_summary(label, amt_a, amt_b, report_url_name):
+            var, pct = calculate_variance(amt_a, amt_b)
+            return {
+                "label": label,
+                "amount_a": amt_a,
+                "amount_b": amt_b,
+                "variance": var,
+                "variance_pct": pct,
+                "url": reverse(
+                    f"estimator:{report_url_name}",
+                    kwargs={"project_pk": project.pk},
+                ),
+            }
+
+        context["summaries"] = [
+            get_summary(
+                "Baseline Assessment",
+                totals["contract"],
+                totals["baseline"],
+                "report_baseline_assessment",
+            ),
+            get_summary(
+                "Progress Assessment",
+                totals["baseline"],
+                totals["progress"],
+                "report_progress_assessment",
+            ),
+            get_summary(
+                "Forecast Assessment",
+                totals["baseline"],
+                totals["forecast"],
+                "report_forecast_assessment",
+            ),
+        ]
+
+        def get_resource_summaries(resource_totals, res_type, list_prefix):
+            base = resource_totals["baseline"]
+            prog = resource_totals["progress"]
+            fore = resource_totals["forecast"]
+
+            var_p, pct_p = calculate_variance(base, prog)
+            var_f, pct_f = calculate_variance(base, fore)
+
+            return {
+                "baseline": {
+                    "label": f"{res_type} Baseline",
+                    "amount": base,
+                    "url": reverse(
+                        f"estimator:report_{list_prefix}_list_baseline",
+                        kwargs={"project_pk": project.pk},
+                    ),
+                },
+                "progress": {
+                    "label": f"{res_type} Progress",
+                    "amount_a": base,
+                    "amount_b": prog,
+                    "variance": var_p,
+                    "variance_pct": pct_p,
+                    "url": reverse(
+                        f"estimator:report_{list_prefix}_list_progress",
+                        kwargs={"project_pk": project.pk},
+                    ),
+                },
+                "forecast": {
+                    "label": f"{res_type} Forecast",
+                    "amount_a": base,
+                    "amount_b": fore,
+                    "variance": var_f,
+                    "variance_pct": pct_f,
+                    "url": reverse(
+                        f"estimator:report_{list_prefix}_list_forecast",
+                        kwargs={"project_pk": project.pk},
+                    ),
+                },
+            }
+
+        context["mat_summary"] = get_resource_summaries(
+            totals["mat"], "Material", "material"
+        )
+        context["lab_summary"] = get_resource_summaries(
+            totals["lab"], "Labour", "labour"
+        )
+        context["plt_summary"] = get_resource_summaries(totals["plt"], "Plant", "plant")
+        context["pre_summary"] = get_resource_summaries(
+            totals["pre"], "Prelim", "prelim"
+        )
+
+        return context
+
 
 class PricedBoqReportView(ProjectEstimatorMixin, ListView):
     model = BOQItem

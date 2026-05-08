@@ -2,11 +2,11 @@ from .activity_views import (
     GetProjectLaborActivitiesAjaxView,
     LaborActivityDetailView,
     LaborActivityListView,
+    UpdateActivityCrewCountAjaxView,
 )
 from .dashboard_views import (
     PlanProductivityDashboardView,
     ProductionActivityDetailView,
-    ProductionDashboardView,
     ProductionProgressDashboardView,
 )
 from .planning_views import (
@@ -47,8 +47,6 @@ from .reports_views import (
 from .tracking_views import ProgressTrackingView
 
 __all__ = [
-    "ProductionDashboardView",
-    "ProductionProgressDashboardView",
     "ProductionActivityDetailView",
     "PlanProductivityDashboardView",
     "ProductionPlanCreateView",
@@ -84,4 +82,5 @@ __all__ = [
     "ProductionProgressReportView",
     "DailyActivityEntryUpdateView",
     "ProductionControllerView",
+    "UpdateActivityCrewCountAjaxView",
 ]

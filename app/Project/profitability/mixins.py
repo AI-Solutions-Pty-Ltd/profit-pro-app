@@ -119,6 +119,10 @@ class FinancialCalculationMixin:
             approved=True,
         ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
 
+        # Force Planned Revenue to match Actual
+        planned_revenue_to_date = actual_revenue_to_date
+        planned_revenue_this_month = actual_revenue_this_month
+
         forecast_revenue = CashflowForecast.objects.filter(
             project=project,
             status=CashflowForecast.Status.APPROVED,
@@ -233,21 +237,14 @@ class FinancialCalculationMixin:
             start=this_month_start, end=end_date, code=opex
         )
 
-        # Use Baseline Assumptions for planned values (Based on PLANNED REVENUE)
+        # Use Baseline Assumptions for forecasts and margins
         baseline = self.get_baseline_assumptions()
-        planned_cogs_to_date = planned_revenue_to_date * Decimal(
-            str(baseline["cost_of_sales_percent"] / 100)
-        )
-        planned_opex_to_date = planned_revenue_to_date * Decimal(
-            str(baseline["operating_expenses_percent"] / 100)
-        )
 
-        planned_cogs_this_month = planned_revenue_this_month * Decimal(
-            str(baseline["cost_of_sales_percent"] / 100)
-        )
-        planned_opex_this_month = planned_revenue_this_month * Decimal(
-            str(baseline["operating_expenses_percent"] / 100)
-        )
+        # Force Planned Costs to match Actual
+        planned_cogs_to_date = actual_cogs_to_date
+        planned_opex_to_date = actual_opex_to_date
+        planned_cogs_this_month = actual_cogs_this_month
+        planned_opex_this_month = actual_opex_this_month
 
         # --- CALCULATIONS ---
         actual_gp_to_date = actual_revenue_to_date - actual_cogs_to_date

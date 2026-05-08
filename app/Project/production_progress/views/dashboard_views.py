@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import DetailView, TemplateView
 
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
@@ -10,7 +10,6 @@ from app.Project.models import Project
 
 from ..production_forms import PlanFilterForm
 from ..production_models import (
-    DailyProduction,
     ProductionPlan,
 )
 from ..utils.production_utils import (
@@ -18,40 +17,6 @@ from ..utils.production_utils import (
     get_dashboard_data,
     get_plan_productivity_data,
 )
-
-
-class ProductionDashboardView(
-    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
-):
-    """Summarizes daily logs, cumulative progress vs budget."""
-
-    model = DailyProduction
-    template_name = "production_progress/dashboard/dashboard.html"
-    context_object_name = "productions"
-    required_tiers = [Subscription.PROFIT_AND_LOSS]
-
-    def get_queryset(self):
-        return DailyProduction.objects.filter(
-            project_id=self.kwargs["project_pk"],
-        ).select_related("project")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
-        return context
-
-    def get_breadcrumbs(self):
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {
-                "title": f"Project: {project.name}",
-                "url": reverse_lazy(
-                    "project:project-management", kwargs={"pk": project.pk}
-                ),
-            },
-            {"title": "Production Dashboard", "url": None},
-        ]
 
 
 class ProductionProgressDashboardView(
@@ -198,9 +163,9 @@ class PlanProductivityDashboardView(
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {
-                "title": "Production Dashboard",
+                "title": "Project Management",
                 "url": reverse_lazy(
-                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                    "project:project-management", kwargs={"pk": project_pk}
                 ),
             },
             {"title": "Productivity Forecast", "url": None},

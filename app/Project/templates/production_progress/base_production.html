@@ -25,6 +25,12 @@
                 <nav class="flex overflow-x-auto -mb-px space-x-8 pb-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
                      aria-label="Tabs">
                     {% with current_url=request.resolver_match.url_name %}
+                        <!-- Dashboard -->
+                        <a href="{% url 'project:production-dashboard' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'dashboard' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "presentation-chart-line" class="inline-block mr-1 w-4 h-4" %}
+                            Dashboard
+                        </a>
                         <!-- Planning -->
                         <a href="{% url 'project:production-planning' project.pk %}"
                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'planning' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
