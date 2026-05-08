@@ -11,6 +11,16 @@
                 </p>
             </div>
             <div class="mt-4 sm:mt-0 flex flex-wrap gap-2">
+                <form method="post"
+                      action="{% url 'estimator:item_library_create' project_pk=project_pk %}"
+                      class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                        Add Item
+                    </button>
+                </form>
                 <form method="post" class="inline">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="sync_system">
@@ -37,7 +47,7 @@
                     Template
                 </a>
                 <a href="{% url 'estimator:item_library_upload' project_pk=project_pk %}"
-                   class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                   class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                     Upload
                 </a>
@@ -74,6 +84,13 @@
             <a href="{% url 'estimator:item_library' project_pk=project_pk %}"
                class="text-sm text-gray-600 hover:text-gray-900">Clear</a>
         </form>
+        {% if messages %}
+            <div class="mb-3 space-y-1">
+                {% for m in messages %}
+                    <div class="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">{{ m }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
         <div class="overflow-hidden bg-white shadow-sm rounded-lg">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -87,28 +104,106 @@
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Labour</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Plant</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Prelim</th>
+                            <th class="px-3 py-3 text-right font-semibold uppercase text-xs tracking-wider text-gray-500">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
                         {% for e in entries %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-3 py-2 whitespace-nowrap text-gray-700">
-                                    {% if e.trade_code %}
-                                        <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">{{ e.trade_code.prefix }}</span>
-                                    {% endif %}
+                            <tr class="hover:bg-gray-50" data-entry-id="{{ e.id }}">
+                                <td class="px-2 py-1.5">
+                                    <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="trade_code">
+                                        <option value="">—</option>
+                                        {% for tc in trade_codes %}
+                                            <option value="{{ tc.id }}"
+                                                    {% if e.trade_code_id == tc.id %}selected{% endif %}>{{ tc.trade_code }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </td>
-                                <td class="px-3 py-2 text-gray-700">{{ e.component }}</td>
-                                <td class="px-3 py-2 text-gray-900 font-medium">{{ e.description }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-gray-500">{{ e.unit }}</td>
-                                <td class="px-3 py-2 text-gray-500">{{ e.material_spec.name|default:"—" }}</td>
-                                <td class="px-3 py-2 text-gray-500">{{ e.labour_spec.name|default:"—" }}</td>
-                                <td class="px-3 py-2 text-gray-500">{{ e.plant_spec.name|default:"—" }}</td>
-                                <td class="px-3 py-2 text-gray-500">{{ e.preliminary_spec.name|default:"—" }}</td>
+                                <td class="px-2 py-1.5">
+                                    <input type="text"
+                                           class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                           data-entry-id="{{ e.id }}"
+                                           data-field="component"
+                                           value="{{ e.component }}">
+                                </td>
+                                <td class="px-2 py-1.5 min-w-[260px]">
+                                    <input type="text"
+                                           class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                           data-entry-id="{{ e.id }}"
+                                           data-field="description"
+                                           value="{{ e.description }}">
+                                </td>
+                                <td class="px-2 py-1.5 w-20">
+                                    <input type="text"
+                                           class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                           data-entry-id="{{ e.id }}"
+                                           data-field="unit"
+                                           value="{{ e.unit }}">
+                                </td>
+                                <td class="px-2 py-1.5">
+                                    <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="material_spec">
+                                        <option value="">—</option>
+                                        {% for s in material_specs %}
+                                            <option value="{{ s.id }}"
+                                                    {% if e.material_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="px-2 py-1.5">
+                                    <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="labour_spec">
+                                        <option value="">—</option>
+                                        {% for s in labour_specs %}
+                                            <option value="{{ s.id }}"
+                                                    {% if e.labour_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="px-2 py-1.5">
+                                    <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="plant_spec">
+                                        <option value="">—</option>
+                                        {% for s in plant_specs %}
+                                            <option value="{{ s.id }}"
+                                                    {% if e.plant_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="px-2 py-1.5">
+                                    <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="preliminary_spec">
+                                        <option value="">—</option>
+                                        {% for s in preliminary_specs %}
+                                            <option value="{{ s.id }}"
+                                                    {% if e.preliminary_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="px-2 py-1.5 text-right">
+                                    <form method="post"
+                                          action="{% url 'estimator:item_library_delete' project_pk=project_pk pk=e.id %}"
+                                          class="inline"
+                                          onsubmit="return confirm('Delete this entry?');">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="text-red-600 hover:text-red-800"
+                                                title="Delete">
+                                            {% heroicon_outline "trash" class="w-4 h-4" %}
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-sm text-gray-500">
-                                    No entries yet. Use <em>Sync from System</em> / <em>Sync from Contractor</em>, or upload an Excel sheet.
+                                <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">
+                                    No entries yet. Click <em>Add Item</em>, sync from System / Contractor, or upload an Excel sheet.
                                 </td>
                             </tr>
                         {% endfor %}
@@ -119,5 +214,59 @@
                 {% include "estimator/_pagination.html" %}
             {% endif %}
         </div>
+        <span id="entry-save-toast"
+              class="fixed bottom-4 right-4 hidden rounded-md bg-gray-900 px-3 py-2 text-xs text-white shadow"></span>
     </div>
+    <script>
+        (function () {
+            const updateUrlTemplate = "{% url 'estimator:update_item_library_entry' project_pk=project_pk pk=0 %}";
+            const csrfToken = "{{ csrf_token }}";
+            const toast = document.getElementById('entry-save-toast');
+
+            function showToast(text, isError) {
+                if (!toast) return;
+                toast.textContent = text;
+                toast.classList.remove('hidden');
+                toast.classList.toggle('bg-red-600', !!isError);
+                toast.classList.toggle('bg-gray-900', !isError);
+                clearTimeout(toast._t);
+                toast._t = setTimeout(() => toast.classList.add('hidden'), 1500);
+            }
+
+            async function saveField(el) {
+                const id = el.dataset.entryId;
+                const field = el.dataset.field;
+                const value = el.value;
+                const url = updateUrlTemplate.replace(/\/0\/update\/?$/, `/${id}/update/`);
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: JSON.stringify({ field, value }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.ok) {
+                        showToast(data.error || 'Save failed', true);
+                        el.classList.add('ring-1', 'ring-red-400');
+                    } else {
+                        showToast('Saved');
+                        el.classList.remove('ring-1', 'ring-red-400');
+                    }
+                } catch (e) {
+                    showToast('Network error', true);
+                }
+            }
+
+            document.querySelectorAll('.entry-edit-select').forEach((el) => {
+                el.addEventListener('change', () => saveField(el));
+            });
+            document.querySelectorAll('.entry-edit-input').forEach((el) => {
+                el.addEventListener('change', () => saveField(el));
+                el.addEventListener('blur', () => saveField(el));
+            });
+        })();
+    </script>
 {% endblock %}

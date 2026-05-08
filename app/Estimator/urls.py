@@ -207,6 +207,21 @@ urlpatterns = [
         name="download_item_library_template",
     ),
     path(
+        "project/<int:project_pk>/item-library/create/",
+        views.CreateItemLibraryEntryView.as_view(),
+        name="item_library_create",
+    ),
+    path(
+        "project/<int:project_pk>/item-library/<int:pk>/delete/",
+        views.DeleteItemLibraryEntryView.as_view(),
+        name="item_library_delete",
+    ),
+    path(
+        "project/<int:project_pk>/api/item-library/<int:pk>/update/",
+        views.UpdateItemLibraryEntryView.as_view(),
+        name="update_item_library_entry",
+    ),
+    path(
         "project/<int:project_pk>/boq/autofill-from-library/",
         views.AutofillBoqFromLibraryView.as_view(),
         name="autofill_boq_from_library",
@@ -808,6 +823,21 @@ urlpatterns = [
         views.DownloadSystemItemLibraryTemplateView.as_view(),
         name="sys_download_item_library_template",
     ),
+    path(
+        "system/item-library/create/",
+        views.CreateSystemItemLibraryEntryView.as_view(),
+        name="sys_item_library_create",
+    ),
+    path(
+        "system/item-library/<int:pk>/delete/",
+        views.DeleteSystemItemLibraryEntryView.as_view(),
+        name="sys_item_library_delete",
+    ),
+    path(
+        "system/api/item-library/<int:pk>/update/",
+        views.UpdateSystemItemLibraryEntryView.as_view(),
+        name="sys_update_item_library_entry",
+    ),
     # ── Contractor Library ────────────────────────────────────────
     path(
         "contractor/",
@@ -1050,5 +1080,20 @@ urlpatterns = [
         "contractor/item-library/download-template/",
         views.DownloadContractorItemLibraryTemplateView.as_view(),
         name="ctr_download_item_library_template",
+    ),
+    path(
+        "contractor/item-library/create/",
+        views.CreateContractorItemLibraryEntryView.as_view(),
+        name="ctr_item_library_create",
+    ),
+    path(
+        "contractor/item-library/<int:pk>/delete/",
+        views.DeleteContractorItemLibraryEntryView.as_view(),
+        name="ctr_item_library_delete",
+    ),
+    path(
+        "contractor/api/item-library/<int:pk>/update/",
+        views.UpdateContractorItemLibraryEntryView.as_view(),
+        name="ctr_update_item_library_entry",
     ),
 ]
