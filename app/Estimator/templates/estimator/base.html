@@ -78,7 +78,9 @@
         </div>
         <!-- Main Content Area -->
         <div class="py-8">
-            {% block estimator_content %}{% endblock %}
+            {% block estimator_content %}
+                {% block sub_content %}{% endblock %}
+            {% endblock %}
         </div>
     </div>
 {% endblock %}

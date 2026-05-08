@@ -63,6 +63,7 @@ from .models import (
     ContractorLabourCrew,
     ContractorLabourSpecification,
     ContractorMaterial,
+    ContractorMaterialSpec,
     ContractorPlantCost,
     ContractorPlantSpecification,
     ContractorPlantSpecificationComponent,
@@ -88,6 +89,7 @@ from .models import (
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemMaterialSpec,
     SystemPlantCost,
     SystemPlantSpecification,
     SystemPlantSpecificationComponent,
@@ -454,6 +456,28 @@ class AutofillBoqFromLibraryView(ProjectEstimatorMixin, View):
         )
         return redirect(
             reverse("estimator:dashboard", kwargs={"project_pk": project_pk})
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class SaveBoqRowToLibraryView(View):
+    """AJAX: upsert a single BoQ row's spec mapping into the project Item Library."""
+
+    def post(self, request, project_pk, pk):
+        from .services import save_boq_item_to_library
+
+        item = get_object_or_404(BOQItem, pk=pk, project_id=project_pk)
+        if item.is_section_header:
+            return JsonResponse(
+                {"error": "Section headers cannot be saved to library"}, status=400
+            )
+        result = save_boq_item_to_library(item)
+        return JsonResponse(
+            {
+                "ok": True,
+                "created": result["created"],
+                "entry_id": result["entry_id"],
+            }
         )
 
 
@@ -6990,6 +7014,18 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         project = self.get_project()
         ctx["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
+        ctx["material_specs"] = ProjectSpecification.objects.filter(
+            project=project
+        ).order_by("name")
+        ctx["labour_specs"] = ProjectLabourSpecification.objects.filter(
+            project=project
+        ).order_by("name")
+        ctx["plant_specs"] = ProjectPlantSpecification.objects.filter(
+            project=project
+        ).order_by("name")
+        ctx["preliminary_specs"] = ProjectPreliminarySpecification.objects.filter(
+            project=project
+        ).order_by("name")
         ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
@@ -7109,11 +7145,28 @@ class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         company = self.get_company()
-        ctx["trade_codes"] = (
-            ContractorTradeCode.objects.filter(company=company)
-            if company
-            else ContractorTradeCode.objects.none()
-        )
+        if company is None:
+            ctx["trade_codes"] = ContractorTradeCode.objects.none()
+            ctx["material_specs"] = ContractorMaterialSpec.objects.none()
+            ctx["labour_specs"] = ContractorLabourSpecification.objects.none()
+            ctx["plant_specs"] = ContractorPlantSpecification.objects.none()
+            ctx["preliminary_specs"] = ContractorPreliminarySpecification.objects.none()
+        else:
+            ctx["trade_codes"] = ContractorTradeCode.objects.filter(company=company)
+            ctx["material_specs"] = ContractorMaterialSpec.objects.filter(
+                company=company
+            ).order_by("name")
+            ctx["labour_specs"] = ContractorLabourSpecification.objects.filter(
+                company=company
+            ).order_by("name")
+            ctx["plant_specs"] = ContractorPlantSpecification.objects.filter(
+                company=company
+            ).order_by("name")
+            ctx["preliminary_specs"] = (
+                ContractorPreliminarySpecification.objects.filter(
+                    company=company
+                ).order_by("name")
+            )
         ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
@@ -7198,6 +7251,12 @@ class SystemItemLibraryListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["trade_codes"] = SystemTradeCode.objects.all()
+        ctx["material_specs"] = SystemMaterialSpec.objects.all().order_by("name")
+        ctx["labour_specs"] = SystemLabourSpecification.objects.all().order_by("name")
+        ctx["plant_specs"] = SystemPlantSpecification.objects.all().order_by("name")
+        ctx["preliminary_specs"] = (
+            SystemPreliminarySpecification.objects.all().order_by("name")
+        )
         ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
@@ -7235,3 +7294,184 @@ class DownloadSystemItemLibraryTemplateView(SystemLibraryMixin, View):
         return _generate_template(
             _ITEM_LIBRARY_HEADERS, "system_item_library_template.xlsx"
         )
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Item Library — inline edit / create / delete (project, contractor, system)
+# ─────────────────────────────────────────────────────────────────────
+
+
+_ITEM_LIBRARY_TEXT_FIELDS = {"accounts_code", "component", "description", "unit"}
+_ITEM_LIBRARY_INT_FIELDS = {"display_order"}
+
+
+def _apply_item_library_field(entry, field, value, fk_models):
+    """Mutate `entry` based on `{field, value}`. Returns None on success or an
+    error JsonResponse. `fk_models` maps fk field name → related model class."""
+    if field in _ITEM_LIBRARY_TEXT_FIELDS:
+        setattr(entry, field, (value or "").strip() if value is not None else "")
+        return None
+    if field in _ITEM_LIBRARY_INT_FIELDS:
+        try:
+            setattr(entry, field, int(value or 0))
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "Invalid value"}, status=400)
+        return None
+    if field in fk_models:
+        model_cls, scope_filter = fk_models[field]
+        if value in (None, "", 0, "0"):
+            setattr(entry, field, None)
+            return None
+        try:
+            obj = model_cls.objects.filter(pk=int(value), **scope_filter).first()
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "Invalid id"}, status=400)
+        if obj is None:
+            return JsonResponse({"error": f"{field} not found"}, status=404)
+        setattr(entry, field, obj)
+        return None
+    return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateItemLibraryEntryView(View):
+    """AJAX: update a single field on a ProjectItemLibraryEntry."""
+
+    def post(self, request, project_pk, pk):
+        entry = get_object_or_404(ProjectItemLibraryEntry, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        scope = {"project_id": project_pk}
+        fk_models = {
+            "trade_code": (ProjectTradeCode, scope),
+            "material_spec": (ProjectSpecification, scope),
+            "labour_spec": (ProjectLabourSpecification, scope),
+            "plant_spec": (ProjectPlantSpecification, scope),
+            "preliminary_spec": (ProjectPreliminarySpecification, scope),
+        }
+        err = _apply_item_library_field(
+            entry, data.get("field"), data.get("value"), fk_models
+        )
+        if err is not None:
+            return err
+        entry.save()
+        return JsonResponse({"ok": True})
+
+
+class CreateItemLibraryEntryView(ProjectEstimatorMixin, View):
+    """Create a blank ProjectItemLibraryEntry and redirect back to the list."""
+
+    def post(self, request, project_pk):
+        project = self.get_project()
+        ProjectItemLibraryEntry.objects.create(project=project, description="")
+        messages.success(
+            request, "New library entry added — fill in the fields inline."
+        )
+        return redirect(
+            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        )
+
+
+class DeleteItemLibraryEntryView(ProjectEstimatorMixin, View):
+    def post(self, request, project_pk, pk):
+        entry = get_object_or_404(ProjectItemLibraryEntry, pk=pk, project_id=project_pk)
+        entry.delete()
+        messages.success(request, "Library entry deleted.")
+        return redirect(
+            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateContractorItemLibraryEntryView(View):
+    def post(self, request, pk):
+        company = _contractor_company_for(request)
+        if company is None:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        entry = get_object_or_404(ContractorItemLibraryEntry, pk=pk, company=company)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        scope = {"company": company}
+        fk_models = {
+            "trade_code": (ContractorTradeCode, scope),
+            "material_spec": (ContractorMaterialSpec, scope),
+            "labour_spec": (ContractorLabourSpecification, scope),
+            "plant_spec": (ContractorPlantSpecification, scope),
+            "preliminary_spec": (ContractorPreliminarySpecification, scope),
+        }
+        err = _apply_item_library_field(
+            entry, data.get("field"), data.get("value"), fk_models
+        )
+        if err is not None:
+            return err
+        entry.save()
+        return JsonResponse({"ok": True})
+
+
+class CreateContractorItemLibraryEntryView(ContractorLibraryMixin, View):
+    def post(self, request):
+        company = self.get_company()
+        ContractorItemLibraryEntry.objects.create(company=company, description="")
+        messages.success(
+            request, "New library entry added — fill in the fields inline."
+        )
+        return redirect(reverse("estimator:ctr_item_library"))
+
+
+class DeleteContractorItemLibraryEntryView(ContractorLibraryMixin, View):
+    def post(self, request, pk):
+        company = self.get_company()
+        entry = get_object_or_404(ContractorItemLibraryEntry, pk=pk, company=company)
+        entry.delete()
+        messages.success(request, "Library entry deleted.")
+        return redirect(reverse("estimator:ctr_item_library"))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemItemLibraryEntryView(View):
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        entry = get_object_or_404(SystemItemLibraryEntry, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        fk_models = {
+            "trade_code": (SystemTradeCode, {}),
+            "material_spec": (SystemMaterialSpec, {}),
+            "labour_spec": (SystemLabourSpecification, {}),
+            "plant_spec": (SystemPlantSpecification, {}),
+            "preliminary_spec": (SystemPreliminarySpecification, {}),
+        }
+        err = _apply_item_library_field(
+            entry, data.get("field"), data.get("value"), fk_models
+        )
+        if err is not None:
+            return err
+        entry.save()
+        return JsonResponse({"ok": True})
+
+
+class CreateSystemItemLibraryEntryView(SystemLibraryMixin, View):
+    def post(self, request):
+        SystemItemLibraryEntry.objects.create(description="")
+        messages.success(
+            request, "New library entry added — fill in the fields inline."
+        )
+        return redirect(reverse("estimator:sys_item_library"))
+
+
+class DeleteSystemItemLibraryEntryView(SystemLibraryMixin, View):
+    def post(self, request, pk):
+        entry = get_object_or_404(SystemItemLibraryEntry, pk=pk)
+        entry.delete()
+        messages.success(request, "Library entry deleted.")
+        return redirect(reverse("estimator:sys_item_library"))
