@@ -39,6 +39,14 @@
                                     System Library
                                 </a>
                             {% endif %}
+                            {% if user.contractor_company %}
+                                <!-- 4c. Contractor Library -->
+                                <a href="{% url 'estimator:ctr_trade_codes' %}"
+                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                    {% heroicon_outline "archive-box" class="w-4 h-4 mr-1" %}
+                                    Contractor Library
+                                </a>
+                            {% endif %}
                             {% if request.user|userhassubscription:"BUSINESS_MANAGEMENT" %}
                                 <!-- 3. Companies (only if user has companies) -->
                                 <a href="{% url 'project:company-dashboard' %}"
