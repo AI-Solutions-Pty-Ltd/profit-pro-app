@@ -87,7 +87,9 @@
         {% if messages %}
             <div class="mb-3 space-y-1">
                 {% for m in messages %}
-                    <div class="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">{{ m }}</div>
+                    <div class="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                        {{ m }}
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}
@@ -117,7 +119,9 @@
                                         <option value="">—</option>
                                         {% for tc in trade_codes %}
                                             <option value="{{ tc.id }}"
-                                                    {% if e.trade_code_id == tc.id %}selected{% endif %}>{{ tc.trade_code }}</option>
+                                                    {% if e.trade_code_id == tc.id %}selected{% endif %}>
+                                                {{ tc.trade_code }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </td>
@@ -149,7 +153,9 @@
                                         <option value="">—</option>
                                         {% for s in material_specs %}
                                             <option value="{{ s.id }}"
-                                                    {% if e.material_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                                    {% if e.material_spec_id == s.id %}selected{% endif %}>
+                                                {{ s.name }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </td>
@@ -160,7 +166,9 @@
                                         <option value="">—</option>
                                         {% for s in labour_specs %}
                                             <option value="{{ s.id }}"
-                                                    {% if e.labour_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                                    {% if e.labour_spec_id == s.id %}selected{% endif %}>
+                                                {{ s.name }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </td>
@@ -171,7 +179,9 @@
                                         <option value="">—</option>
                                         {% for s in plant_specs %}
                                             <option value="{{ s.id }}"
-                                                    {% if e.plant_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                                    {% if e.plant_spec_id == s.id %}selected{% endif %}>
+                                                {{ s.name }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </td>
@@ -182,7 +192,9 @@
                                         <option value="">—</option>
                                         {% for s in preliminary_specs %}
                                             <option value="{{ s.id }}"
-                                                    {% if e.preliminary_spec_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                                                    {% if e.preliminary_spec_id == s.id %}selected{% endif %}>
+                                                {{ s.name }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </td>
@@ -192,9 +204,7 @@
                                           class="inline"
                                           onsubmit="return confirm('Delete this entry?');">
                                         {% csrf_token %}
-                                        <button type="submit"
-                                                class="text-red-600 hover:text-red-800"
-                                                title="Delete">
+                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
                                             {% heroicon_outline "trash" class="w-4 h-4" %}
                                         </button>
                                     </form>

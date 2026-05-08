@@ -38,16 +38,6 @@
                 </button>
             </form>
             <form method="post"
-                  action="{% url 'estimator:bulk_save_boq_to_library' project_pk=project_pk %}">
-                {% csrf_token %}
-                <button type="submit"
-                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-emerald-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-emerald-300 hover:bg-emerald-50"
-                        onclick="return confirm('Save every BoQ row into the Item Library? Existing entries with the same component + trade code + description are updated; new ones are created.')">
-                    {% heroicon_outline "bookmark-square" class="mr-1.5 -ml-0.5 w-5 h-5" %}
-                    Save BoQ → Library
-                </button>
-            </form>
-            <form method="post"
                   action="{% url 'estimator:sync_boq' project_pk=project_pk %}">
                 {% csrf_token %}
                 <button type="submit"

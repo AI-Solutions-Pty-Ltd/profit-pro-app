@@ -227,11 +227,6 @@ urlpatterns = [
         name="autofill_boq_from_library",
     ),
     path(
-        "project/<int:project_pk>/boq/save-all-to-library/",
-        views.BulkSaveBoqToLibraryView.as_view(),
-        name="bulk_save_boq_to_library",
-    ),
-    path(
         "project/<int:project_pk>/api/boq-item/<int:pk>/save-to-library/",
         views.SaveBoqRowToLibraryView.as_view(),
         name="save_boq_row_to_library",

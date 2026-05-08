@@ -1856,28 +1856,3 @@ def save_boq_item_to_library(item):
     item.save(update_fields=["library_entry"])
 
     return {"created": created, "entry_id": entry.id, "skipped": False}
-
-
-def bulk_save_boq_to_library(project):
-    """Walk every non-header BoQ row and upsert it into the Item Library.
-
-    Returns counts: {"created": int, "updated": int, "skipped": int}.
-    """
-    created = updated = skipped = 0
-    for item in BOQItem.objects.filter(
-        project=project, is_section_header=False
-    ).select_related(
-        "trade_code",
-        "specification",
-        "labour_specification",
-        "plant_specification",
-        "preliminary_specification",
-    ):
-        result = save_boq_item_to_library(item)
-        if result["skipped"]:
-            skipped += 1
-        elif result["created"]:
-            created += 1
-        else:
-            updated += 1
-    return {"created": created, "updated": updated, "skipped": skipped}

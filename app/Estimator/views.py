@@ -481,25 +481,6 @@ class SaveBoqRowToLibraryView(View):
         )
 
 
-class BulkSaveBoqToLibraryView(ProjectEstimatorMixin, View):
-    """Walk every BoQ row and upsert into the Item Library."""
-
-    def post(self, request, project_pk):
-        from .services import bulk_save_boq_to_library
-
-        result = bulk_save_boq_to_library(self.get_project())
-        messages.success(
-            request,
-            "Saved BoQ → Item Library — "
-            f"{result['created']} new, {result['updated']} updated"
-            + (f", {result['skipped']} skipped" if result["skipped"] else "")
-            + ".",
-        )
-        return redirect(
-            reverse("estimator:dashboard", kwargs={"project_pk": project_pk})
-        )
-
-
 class SpecificationListView(ProjectEstimatorMixin, TemplateView):
     """Material calculator — driven by Output BoQ.
 
@@ -7033,10 +7014,18 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         project = self.get_project()
         ctx["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
-        ctx["material_specs"] = ProjectSpecification.objects.filter(project=project).order_by("name")
-        ctx["labour_specs"] = ProjectLabourSpecification.objects.filter(project=project).order_by("name")
-        ctx["plant_specs"] = ProjectPlantSpecification.objects.filter(project=project).order_by("name")
-        ctx["preliminary_specs"] = ProjectPreliminarySpecification.objects.filter(project=project).order_by("name")
+        ctx["material_specs"] = ProjectSpecification.objects.filter(
+            project=project
+        ).order_by("name")
+        ctx["labour_specs"] = ProjectLabourSpecification.objects.filter(
+            project=project
+        ).order_by("name")
+        ctx["plant_specs"] = ProjectPlantSpecification.objects.filter(
+            project=project
+        ).order_by("name")
+        ctx["preliminary_specs"] = ProjectPreliminarySpecification.objects.filter(
+            project=project
+        ).order_by("name")
         ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
@@ -7164,10 +7153,20 @@ class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
             ctx["preliminary_specs"] = ContractorPreliminarySpecification.objects.none()
         else:
             ctx["trade_codes"] = ContractorTradeCode.objects.filter(company=company)
-            ctx["material_specs"] = ContractorMaterialSpec.objects.filter(company=company).order_by("name")
-            ctx["labour_specs"] = ContractorLabourSpecification.objects.filter(company=company).order_by("name")
-            ctx["plant_specs"] = ContractorPlantSpecification.objects.filter(company=company).order_by("name")
-            ctx["preliminary_specs"] = ContractorPreliminarySpecification.objects.filter(company=company).order_by("name")
+            ctx["material_specs"] = ContractorMaterialSpec.objects.filter(
+                company=company
+            ).order_by("name")
+            ctx["labour_specs"] = ContractorLabourSpecification.objects.filter(
+                company=company
+            ).order_by("name")
+            ctx["plant_specs"] = ContractorPlantSpecification.objects.filter(
+                company=company
+            ).order_by("name")
+            ctx["preliminary_specs"] = (
+                ContractorPreliminarySpecification.objects.filter(
+                    company=company
+                ).order_by("name")
+            )
         ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
@@ -7255,7 +7254,9 @@ class SystemItemLibraryListView(SystemLibraryMixin, ListView):
         ctx["material_specs"] = SystemMaterialSpec.objects.all().order_by("name")
         ctx["labour_specs"] = SystemLabourSpecification.objects.all().order_by("name")
         ctx["plant_specs"] = SystemPlantSpecification.objects.all().order_by("name")
-        ctx["preliminary_specs"] = SystemPreliminarySpecification.objects.all().order_by("name")
+        ctx["preliminary_specs"] = (
+            SystemPreliminarySpecification.objects.all().order_by("name")
+        )
         ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
@@ -7366,18 +7367,22 @@ class CreateItemLibraryEntryView(ProjectEstimatorMixin, View):
     def post(self, request, project_pk):
         project = self.get_project()
         ProjectItemLibraryEntry.objects.create(project=project, description="")
-        messages.success(request, "New library entry added — fill in the fields inline.")
-        return redirect(reverse("estimator:item_library", kwargs={"project_pk": project_pk}))
+        messages.success(
+            request, "New library entry added — fill in the fields inline."
+        )
+        return redirect(
+            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        )
 
 
 class DeleteItemLibraryEntryView(ProjectEstimatorMixin, View):
     def post(self, request, project_pk, pk):
-        entry = get_object_or_404(
-            ProjectItemLibraryEntry, pk=pk, project_id=project_pk
-        )
+        entry = get_object_or_404(ProjectItemLibraryEntry, pk=pk, project_id=project_pk)
         entry.delete()
         messages.success(request, "Library entry deleted.")
-        return redirect(reverse("estimator:item_library", kwargs={"project_pk": project_pk}))
+        return redirect(
+            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        )
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -7386,9 +7391,7 @@ class UpdateContractorItemLibraryEntryView(View):
         company = _contractor_company_for(request)
         if company is None:
             return JsonResponse({"error": "Forbidden"}, status=403)
-        entry = get_object_or_404(
-            ContractorItemLibraryEntry, pk=pk, company=company
-        )
+        entry = get_object_or_404(ContractorItemLibraryEntry, pk=pk, company=company)
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
@@ -7415,16 +7418,16 @@ class CreateContractorItemLibraryEntryView(ContractorLibraryMixin, View):
     def post(self, request):
         company = self.get_company()
         ContractorItemLibraryEntry.objects.create(company=company, description="")
-        messages.success(request, "New library entry added — fill in the fields inline.")
+        messages.success(
+            request, "New library entry added — fill in the fields inline."
+        )
         return redirect(reverse("estimator:ctr_item_library"))
 
 
 class DeleteContractorItemLibraryEntryView(ContractorLibraryMixin, View):
     def post(self, request, pk):
         company = self.get_company()
-        entry = get_object_or_404(
-            ContractorItemLibraryEntry, pk=pk, company=company
-        )
+        entry = get_object_or_404(ContractorItemLibraryEntry, pk=pk, company=company)
         entry.delete()
         messages.success(request, "Library entry deleted.")
         return redirect(reverse("estimator:ctr_item_library"))
@@ -7460,7 +7463,9 @@ class UpdateSystemItemLibraryEntryView(View):
 class CreateSystemItemLibraryEntryView(SystemLibraryMixin, View):
     def post(self, request):
         SystemItemLibraryEntry.objects.create(description="")
-        messages.success(request, "New library entry added — fill in the fields inline.")
+        messages.success(
+            request, "New library entry added — fill in the fields inline."
+        )
         return redirect(reverse("estimator:sys_item_library"))
 
 
