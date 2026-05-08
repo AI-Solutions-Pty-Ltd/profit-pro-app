@@ -6941,7 +6941,10 @@ class DownloadContractorPreliminarySpecTemplateView(ContractorLibraryMixin, View
 
 
 _ITEM_LIBRARY_COLUMNS = [
-    ("Trade Code", "Full trade code label (e.g. 'PRE-Preliminaries' or just the prefix)"),
+    (
+        "Trade Code",
+        "Full trade code label (e.g. 'PRE-Preliminaries' or just the prefix)",
+    ),
     ("Accounts Code", "Optional finance/accounts mapping code"),
     ("Component", "Component / category prefix (e.g. 'Concrete 25MPa/19mm - ')"),
     ("Material Specification", "Name of an existing material spec; left blank if none"),

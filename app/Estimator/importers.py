@@ -1489,9 +1489,7 @@ class ItemLibraryImporter:
         created = updated = skipped = 0
         warnings = []
 
-        for idx, row in enumerate(
-            ws.iter_rows(min_row=2, values_only=True), start=2
-        ):
+        for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             ncols = len(row) if row else 0
             trade_code_str = _safe_str(row[0]) if ncols > 0 else ""
             accounts_code = _safe_str(row[1]) if ncols > 1 else ""
@@ -1523,15 +1521,15 @@ class ItemLibraryImporter:
 
             if material_spec_name and not material_spec:
                 warnings.append(
-                    f"Row {idx}: material spec \"{material_spec_name}\" not found"
+                    f'Row {idx}: material spec "{material_spec_name}" not found'
                 )
             if labour_plant_name and not (labour_spec or plant_spec):
                 warnings.append(
-                    f"Row {idx}: labour/plant spec \"{labour_plant_name}\" not found"
+                    f'Row {idx}: labour/plant spec "{labour_plant_name}" not found'
                 )
             if prelim_spec_name and not prelim_spec:
                 warnings.append(
-                    f"Row {idx}: preliminary spec \"{prelim_spec_name}\" not found"
+                    f'Row {idx}: preliminary spec "{prelim_spec_name}" not found'
                 )
 
             defaults = {
