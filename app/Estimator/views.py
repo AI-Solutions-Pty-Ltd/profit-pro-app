@@ -459,6 +459,47 @@ class AutofillBoqFromLibraryView(ProjectEstimatorMixin, View):
         )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class SaveBoqRowToLibraryView(View):
+    """AJAX: upsert a single BoQ row's spec mapping into the project Item Library."""
+
+    def post(self, request, project_pk, pk):
+        from .services import save_boq_item_to_library
+
+        item = get_object_or_404(BOQItem, pk=pk, project_id=project_pk)
+        if item.is_section_header:
+            return JsonResponse(
+                {"error": "Section headers cannot be saved to library"}, status=400
+            )
+        result = save_boq_item_to_library(item)
+        return JsonResponse(
+            {
+                "ok": True,
+                "created": result["created"],
+                "entry_id": result["entry_id"],
+            }
+        )
+
+
+class BulkSaveBoqToLibraryView(ProjectEstimatorMixin, View):
+    """Walk every BoQ row and upsert into the Item Library."""
+
+    def post(self, request, project_pk):
+        from .services import bulk_save_boq_to_library
+
+        result = bulk_save_boq_to_library(self.get_project())
+        messages.success(
+            request,
+            "Saved BoQ → Item Library — "
+            f"{result['created']} new, {result['updated']} updated"
+            + (f", {result['skipped']} skipped" if result["skipped"] else "")
+            + ".",
+        )
+        return redirect(
+            reverse("estimator:dashboard", kwargs={"project_pk": project_pk})
+        )
+
+
 class SpecificationListView(ProjectEstimatorMixin, TemplateView):
     """Material calculator — driven by Output BoQ.
 
