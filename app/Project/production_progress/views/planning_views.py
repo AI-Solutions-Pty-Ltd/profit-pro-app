@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -22,11 +23,12 @@ from django.views.generic import (
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Estimator.models import BOQItem, ProjectLabourSpecification
+from app.Estimator.models import BOQItem
 from app.Project.models import Project
 
 from ..production_forms import (
     PlanDependencyFormSet,
+    ProductionPlanDateControlForm,
     ProductionPlanForm,
     ProductionResourceForm,
 )
@@ -34,7 +36,10 @@ from ..production_models import (
     ProductionPlan,
     ProductionResource,
 )
-from ..utils.production_utils import get_project_performance_summary
+from ..utils.production_utils import (
+    get_project_activity_summary,
+    get_project_performance_summary,
+)
 
 
 class ProductionPlanGanttView(
@@ -90,6 +95,8 @@ class ProductionPlanGanttView(
         perf_data = get_project_performance_summary(project_pk)
         ppi = perf_data.get("ppi", 1.0)
 
+        from django.db.models import Prefetch
+
         all_plans = list(
             ProductionPlan.objects.filter(
                 project=project,
@@ -101,13 +108,19 @@ class ProductionPlanGanttView(
             .prefetch_related(
                 "predecessors",
                 "predecessors__predecessor",
-                "children",
+                Prefetch(
+                    "children",
+                    queryset=ProductionPlan.objects.filter(deleted=False).order_by(
+                        "start_date", "activity"
+                    ),
+                ),
                 "daily_entries",
             )
             .order_by("start_date", "activity")
         )
 
         context["plans"] = all_plans
+        context["root_plans"] = [p for p in all_plans if not p.parent_id]
 
         # Build flat ordered list with depth for the Gantt canvas
         ordered = self._flatten_tree(all_plans)
@@ -353,16 +366,33 @@ class ProductionPlanDetailView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         plan = self.get_object()
-        context["project"] = self.object.project
+        project = plan.project
+        context["project"] = project
 
+        # Fetch children based on node type
+        if plan.node_type == "SECTION":
+            context["child_title"] = "Bills"
+            context["children"] = plan.children.filter(
+                deleted=False, node_type="BILL"
+            ).order_by("bill_no")
+        elif plan.node_type == "BILL":
+            context["child_title"] = "Activities"
+            context["children"] = plan.children.filter(
+                deleted=False, node_type="ACTIVITY"
+            ).order_by("start_date")
+        else:
+            context["child_title"] = None
+            context["children"] = []
+
+        # Resources logic (Excluding PLANT from manual list as it is now exclusively BoQ Driven)
         resource_categories = []
         for type_code, type_name in ProductionResource.RESOURCE_TYPES:
+            if type_code == "PLANT":
+                continue
+
             resources = plan.resources.filter(resource_type=type_code)
-            total_cost = 0
             if type_code == "LABOUR":
                 total_cost = plan.total_labour_cost
-            elif type_code == "PLANT":
-                total_cost = plan.total_plant_cost
             else:
                 total_cost = plan.total_other_cost
 
@@ -374,9 +404,89 @@ class ProductionPlanDetailView(
                     "total_cost": total_cost,
                 }
             )
-
         context["resource_categories"] = resource_categories
+
+        # Provide granular BoQ driven plant rows
+        boq_plant_rows = plan.get_boq_driven_plant_rows()
+        context["boq_plant_rows"] = boq_plant_rows
+        context["boq_plant_total"] = sum(row["total_cost"] for row in boq_plant_rows)
+
+        # Fetch related BOQItems for the activity line items section
+        if plan.labour_activity:
+            items = plan.labour_activity.boq_items.all()
+            if plan.section:
+                items = items.filter(section=plan.section)
+            if plan.bill_no:
+                items = items.filter(bill_no=plan.bill_no)
+            context["activity_line_items"] = items
+
+        # Predecessors / Dependencies logic
+        if self.request.POST:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                self.request.POST,
+                instance=plan,
+                project_id=project.pk,
+                plan_id=plan.pk,
+            )
+        else:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                instance=plan,
+                project_id=project.pk,
+                plan_id=plan.pk,
+            )
+
+        # Date Control Form
+        if self.request.POST and "submit_dates" in self.request.POST:
+            context["date_form"] = ProductionPlanDateControlForm(
+                self.request.POST, instance=plan
+            )
+        else:
+            context["date_form"] = ProductionPlanDateControlForm(instance=plan)
+
         return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle predecessor/dependency updates from the detail page."""
+        self.object = self.get_object()
+        context = self.get_context_data()
+
+        # Handle Dependencies Formset
+        if "submit_dependencies" in request.POST:
+            dependency_formset = context["dependency_formset"]
+            if dependency_formset.is_valid():
+                dependency_formset.save()
+                # After saving, trigger date propagation
+                self.object.update_successor_dates()
+                messages.success(request, "Dependencies updated successfully.")
+                return redirect(
+                    "project:production-plan-detail",
+                    project_pk=self.object.project.pk,
+                    pk=self.object.pk,
+                )
+            else:
+                messages.error(
+                    request, "Please correct the errors in the dependencies form."
+                )
+
+        # Handle Date Control Form
+        if "submit_dates" in request.POST:
+            date_form = context["date_form"]
+            if date_form.is_valid():
+                date_form.save()
+                messages.success(request, "Schedule updated successfully.")
+                return redirect(
+                    "project:production-plan-detail",
+                    project_pk=self.object.project.pk,
+                    pk=self.object.pk,
+                )
+            else:
+                messages.error(
+                    request, "Please correct the errors in the schedule form."
+                )
+
+        return self.render_to_response(context)
+
+        return self.render_to_response(context)
 
     def get_breadcrumbs(self):
         project_pk = self.kwargs["project_pk"]
@@ -410,91 +520,88 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
     def post(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
 
-        # Fetch BOQItems that have a labour specification and are not headers
-        boq_items = (
-            BOQItem.objects.filter(
-                project=project,
-                labour_specification__isnull=False,
-                is_section_header=False,
-            )
-            .values("section", "bill_no", "labour_specification")
-            .annotate(total_quantity=Sum("contract_quantity"))
-        )
+        # Fetch grouped activities using the centralized utility
+        activities = get_project_activity_summary(project.id)
 
-        if not boq_items.exists():
+        if not activities.exists():
             messages.warning(
-                request, "No labour-based items found in the Project Estimator."
+                request,
+                "No activities (Labour or Plant) found in the Project Estimator.",
             )
             return redirect("project:production-planning", project_pk=project.pk)
 
         created_count = 0
+        updated_count = 0
         skipped_count = 0
 
-        # Fetch Labour Specifications for this project to get daily rates
-        labour_specs = ProjectLabourSpecification.objects.filter(project=project)
-        spec_rate_map = {spec.id: (spec.daily_output or 0) for spec in labour_specs}
-
-        for item in boq_items:
-            # Check if plan already exists for this grouping
-            existing = ProductionPlan.objects.filter(
+        for item in activities:
+            # Match on section, bill, and activity name
+            plan = ProductionPlan.objects.filter(
                 project=project,
                 section=item["section"],
                 bill_no=item["bill_no"],
-                labour_activity_id=item["labour_specification"],
+                activity=item["act_name"],
                 is_archived=False,
-            ).exists()
-
-            if existing:
-                skipped_count += 1
-                continue
-
-            # Fetch the first BOQItem to get the unit (or look it up from spec)
-            sample_item = BOQItem.objects.filter(
-                project=project,
-                section=item["section"],
-                bill_no=item["bill_no"],
-                labour_specification_id=item["labour_specification"],
             ).first()
 
-            unit = sample_item.unit if sample_item else ""
-            daily_rate = spec_rate_map.get(item["labour_specification"], 0)
+            # Values from Estimator
+            new_qty = item["total_tracker"] or 0
+            new_rate = item["daily_production_base"] or 0
+            new_crew_count = item["crew_count"] or 1
+            new_unit = item["act_unit"] or ""
+            new_spec_id = item["labour_spec_id"]
+            new_duration = item["duration"] or 0
 
-            # Get the labour specification name
-            labour_spec_name = ""
-            if item["labour_specification"]:
-                labour_spec = ProjectLabourSpecification.objects.filter(
-                    id=item["labour_specification"]
-                ).first()
-                if labour_spec:
-                    labour_spec_name = labour_spec.name
+            if plan:
+                # Check for any drift from Estimator (Quantity, Rate, Crew Count, Unit, Duration, or Spec)
+                changed = (
+                    plan.quantity != new_qty
+                    or plan.daily_rate != new_rate
+                    or plan.crew_count != new_crew_count
+                    or plan.unit != new_unit
+                    or plan.duration != new_duration
+                    or plan.labour_activity_id != new_spec_id
+                )
 
-            # Create the ProductionPlan
-            # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
-            ProductionPlan.objects.create(
-                project=project,
-                section=item["section"],
-                bill_no=item["bill_no"],
-                activity=labour_spec_name,
-                labour_activity_id=item["labour_specification"],
-                quantity=item["total_quantity"] or 0,
-                unit=unit,
-                daily_rate=daily_rate,
-                start_date=None,
-                finish_date=None,
-            )
-            created_count += 1
+                if changed:
+                    plan.quantity = new_qty
+                    plan.daily_rate = new_rate
+                    plan.crew_count = new_crew_count
+                    plan.unit = new_unit
+                    plan.duration = new_duration
+                    plan.labour_activity_id = new_spec_id
 
-        if created_count > 0:
-            messages.success(
-                request,
-                f"Successfully created {created_count} activities from the Estimator.",
-            )
-        if skipped_count > 0:
+                    # The save() method in models.py handles recalculating finish_date
+                    # based on the new duration if start_date exists.
+                    plan.save()
+                    updated_count += 1
+                else:
+                    skipped_count += 1
+            else:
+                # Create a fresh plan with the correct duration immediately
+                ProductionPlan.objects.create(
+                    project=project,
+                    section=item["section"],
+                    bill_no=item["bill_no"],
+                    activity=item["act_name"],
+                    labour_activity_id=new_spec_id,
+                    quantity=new_qty,
+                    unit=new_unit,
+                    daily_rate=new_rate,
+                    crew_count=new_crew_count,
+                    duration=new_duration,
+                    start_date=None,
+                    finish_date=None,
+                )
+                created_count += 1
+
+        if created_count > 0 or updated_count > 0:
+            msg = f"Successfully synced from Estimator: {created_count} created, {updated_count} updated."
+            messages.success(request, msg)
+        else:
             messages.info(
-                request,
-                f"{skipped_count} activities already existed and were skipped.",
+                request, "Production plan is already up to date with the Estimator."
             )
-
         return redirect("project:production-planning", project_pk=project.pk)
 
 
@@ -762,8 +869,32 @@ class ProductionCostBreakdownDetailView(
                 items = items.filter(bill_no=selected_plan.bill_no)
             context["activity_line_items"] = items
 
-        # Provide granular plant allocations (direct or fallback)
-        context["plant_allocations"] = selected_plan.get_plant_allocations()
+        # Build BoQ Qty-driven plant rows using model method
+        plant_spec_rows = selected_plan.get_boq_driven_plant_rows()
+        plant_spec_total = sum(row["total_cost"] for row in plant_spec_rows)
+
+        context["plant_spec_rows"] = plant_spec_rows
+        context["plant_spec_total"] = plant_spec_total
+
+        # Calculate combined total for summary metrics to ensure consistency
+        manual_labour = selected_plan.resources.filter(
+            resource_type="LABOUR"
+        ).aggregate(total=Sum("total_cost"))["total"] or Decimal("0")
+        spec_labour = (
+            selected_plan.labour_activity.crew.crew_daily_cost * selected_plan.duration
+            if selected_plan.labour_activity and selected_plan.labour_activity.crew
+            else Decimal("0")
+        )
+
+        manual_plant = selected_plan.resources.filter(resource_type="PLANT").aggregate(
+            total=Sum("total_cost")
+        )["total"] or Decimal("0")
+
+        context["total_labour_cost_calc"] = manual_labour + spec_labour
+        context["total_plant_cost_calc"] = manual_plant + plant_spec_total
+        context["total_planned_cost"] = (
+            context["total_labour_cost_calc"] + context["total_plant_cost_calc"]
+        )
 
         return context
 
@@ -1027,9 +1158,9 @@ class ProductionCashflowForecastView(
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
 
-        horizon = self.request.GET.get("horizon", "month").lower()
+        horizon = self.request.GET.get("horizon", "term").lower()
         if horizon not in ["month", "term", "half", "year"]:
-            horizon = "month"
+            horizon = "term"
 
         try:
             history = int(self.request.GET.get("history", 3))

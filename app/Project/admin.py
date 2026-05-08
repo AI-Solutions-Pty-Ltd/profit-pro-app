@@ -293,7 +293,7 @@ class SubCategoryAdmin(SoftDeleteAdmin):
         "description",
         "deleted",
         "created_at",
-        "category__name",
+        "get_category_name",
     ]
     list_filter = [
         "category",
@@ -307,6 +307,11 @@ class SubCategoryAdmin(SoftDeleteAdmin):
     ]
     readonly_fields = ["created_at", "updated_at"]
 
+    @admin.display(description="Category", ordering="category__name")
+    def get_category_name(self, obj):
+        """Display the category name."""
+        return obj.category.name if obj.category else "-"
+
 
 @admin.register(Group)
 class GroupAdmin(SoftDeleteAdmin):
@@ -315,7 +320,7 @@ class GroupAdmin(SoftDeleteAdmin):
         "description",
         "deleted",
         "created_at",
-        "sub_category__name",
+        "get_sub_category_name",
     ]
     list_filter = [
         "sub_category",
@@ -328,6 +333,11 @@ class GroupAdmin(SoftDeleteAdmin):
         "description",
     ]
     readonly_fields = ["created_at", "updated_at"]
+
+    @admin.display(description="Sub Category", ordering="sub_category__name")
+    def get_sub_category_name(self, obj):
+        """Display the sub category name."""
+        return obj.sub_category.name if obj.sub_category else "-"
 
 
 @admin.register(Discipline)

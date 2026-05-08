@@ -39,11 +39,12 @@ class TestProjectContractorForm(TestCase):
         self.project2.contractor = self.contractor2
         self.project2.save()
 
-    def test_form_requires_user_parameter(self):
-        """Test that the form requires a user parameter."""
-        with self.assertRaises(AttributeError):
-            # This should fail because user is None
-            ProjectContractorForm(user=None)
+    def test_form_works_with_none_user(self):
+        """Test that the form works even if user is None (uses fallback)."""
+        form = ProjectContractorForm(user=None)
+        queryset = form.fields["contractor"].queryset  # type: ignore
+        # Fallback should show all contractors
+        self.assertEqual(queryset.count(), 2)
 
     def test_form_filters_by_user_projects(self):
         """Test that the form filters contractors by user's projects."""

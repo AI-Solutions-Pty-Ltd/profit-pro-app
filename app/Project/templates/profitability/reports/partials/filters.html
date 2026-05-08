@@ -5,43 +5,66 @@
             <a href="{% url 'project:company-management' project.pk %}"
                class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white transition-colors hover:text-indigo-600 focus:outline-none">
                 {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-2">Back to Management</span>
+                <span class="ml-2 font-bold tracking-tight">Back to Projects</span>
             </a>
             <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 text-xs font-medium text-gray-500">
+                    <span class="flex relative w-2 h-2">
+                        <span class="inline-flex absolute w-full h-full bg-emerald-400 rounded-full opacity-75 animate-ping"></span>
+                        <span class="inline-flex relative w-2 h-2 bg-emerald-500 rounded-full"></span>
+                    </span>
+                    <span class="tracking-widest uppercase">Live Performance Data</span>
+                </div>
                 <a href="."
                    class="p-2 text-gray-500 rounded-md border border-gray-200 transition-colors hover:text-indigo-600 hover:bg-gray-50"
                    title="Refresh Data">{% heroicon_outline "arrow-path" size="18" %}</a>
             </div>
         </div>
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-end pt-4 border-t border-gray-50">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Financial Performance Reports</h1>
-                <p class="mt-1 text-sm text-gray-600">Real-time profitability tracking and financial metrics for {{ project.name }}</p>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Financial Performance Reports</h1>
+                <p class="mt-1 text-sm text-gray-500">Real-time profitability tracking and financial metrics for {{ project.name }}</p>
             </div>
-            <div class="flex items-center space-x-3">
-                <form method="get"
-                      class="flex items-center px-3 py-2 space-x-2 bg-white rounded-md border border-gray-300 shadow-sm focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500">
-                    <input type="date"
-                           name="start_date"
-                           value="{{ start_date|date:'Y-m-d' }}"
-                           class="p-0 text-xs border-0 focus:ring-0">
-                    <span class="text-gray-400">to</span>
-                    <input type="date"
-                           name="end_date"
-                           value="{{ end_date|date:'Y-m-d' }}"
-                           class="p-0 text-xs border-0 focus:ring-0">
-                    <button type="submit" class="ml-1 text-gray-400 hover:text-indigo-600">
-                        {% heroicon_outline "magnifying-glass" size="16" %}
-                    </button>
-                </form>
-                {% comment %} <div class="flex items-center p-1 bg-gray-50 rounded-md border border-gray-200">
-                    <button onclick="window.print()" class="flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 rounded transition-colors hover:bg-white hover:shadow-sm">
+            <div class="flex items-center space-x-6">
+                <!-- Analysis Period Slider -->
+                <div class="flex flex-col gap-2 w-72">
+                    <div class="flex justify-between items-center px-0.5">
+                        <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Analysis Period</label>
+                        <span id="periodVal"
+                              class="px-2 py-0.5 font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 rounded border border-indigo-100">
+                            {% if request.GET.lookback %}
+                                {{ request.GET.lookback }}
+                            {% else %}
+                                All Time
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="relative px-1">
+                        <input type="range"
+                               id="periodSlider"
+                               min="0"
+                               max="4"
+                               step="1"
+                               value="{% if request.GET.lookback == '1M' %}1{% elif request.GET.lookback == '3M' %}2{% elif request.GET.lookback == '6M' %}3{% elif request.GET.lookback == '12M' %}4{% else %}0{% endif %}"
+                               class="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                               onchange="handlePeriodChange(this.value)">
+                        <div class="flex justify-between px-0.5 mt-2.5">
+                            <span class="text-[9px] font-bold text-gray-400">ALL</span>
+                            <span class="text-[9px] font-bold text-gray-400">1M</span>
+                            <span class="text-[9px] font-bold text-gray-400">3M</span>
+                            <span class="text-[9px] font-bold text-gray-400">6M</span>
+                            <span class="text-[9px] font-bold text-gray-400">12M</span>
+                        </div>
+                    </div>
+                </div>
+                {% comment %} <div class="flex items-center p-1 bg-gray-50 rounded-md border border-gray-100">
+                    <button onclick="window.print()" class="flex items-center px-3 py-1.5 text-[10px] font-bold text-gray-600 rounded transition-colors hover:bg-white hover:shadow-sm uppercase tracking-wider">
                         {% heroicon_outline "document-arrow-down" size="14" class="mr-1.5" %}
-                        PDF Report
+                        PDF
                     </button>
-                    <button class="flex items-center px-3 py-1.5 pl-2 ml-1 text-xs font-bold text-gray-600 rounded border-l border-gray-200 transition-colors hover:bg-white hover:shadow-sm">
+                    <button class="flex items-center px-3 py-1.5 text-[10px] font-bold text-gray-600 rounded border-l border-gray-100 transition-colors hover:bg-white hover:shadow-sm uppercase tracking-wider ml-1 pl-2">
                         {% heroicon_outline "share" size="14" class="mr-1.5" %}
-                        Export
+                        Share
                     </button>
                 </div> {% endcomment %}
             </div>

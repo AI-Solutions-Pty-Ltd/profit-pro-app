@@ -21,156 +21,121 @@
                 </a>
             </div>
         </div>
-        <!-- Filter Bar Card -->
-        {% comment %} <div class="p-4 mb-6 bg-white rounded-xl border border-gray-100 shadow-sm">
-            <form method="get" id="filter-form" class="flex flex-wrap gap-4 items-end">
-                <div class="min-w-[180px]">
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 ml-0.5">Section</label>
-                    <select name="section" onchange="this.form.submit()" class="block py-2 pr-10 pl-3 w-full text-sm text-gray-900 bg-white rounded-lg border-0 ring-1 ring-inset ring-gray-200 shadow-sm transition-all duration-200 focus:ring-2 focus:ring-indigo-600">
-                        <option value="">All Sections</option>
-                        {% for s in sections %}
-                            <option value="{{ s }}" {% if f_section == s %}selected{% endif %}>{{ s|title }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="min-w-[180px]">
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 ml-0.5">Bill No</label>
-                    <select name="bill_no" onchange="this.form.submit()" class="block py-2 pr-10 pl-3 w-full text-sm text-gray-900 bg-white rounded-lg border-0 ring-1 ring-inset ring-gray-200 shadow-sm transition-all duration-200 focus:ring-2 focus:ring-indigo-600">
-                        <option value="">All Bills</option>
-                        {% for b in bills %}
-                            <option value="{{ b }}" {% if f_bill == b %}selected{% endif %}>{{ b }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex-grow min-w-[200px]">
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 ml-0.5">Activity Search</label>
-                    <div class="relative">
-                        <input type="text" name="activity" value="{{ f_activity }}" placeholder="e.g. Blinding Layer..." class="block py-2 pr-3 pl-10 w-full text-sm text-gray-900 bg-white rounded-lg border-0 ring-1 ring-inset ring-gray-200 shadow-sm transition-all duration-200 focus:ring-2 focus:ring-indigo-600">
-                        <div class="flex absolute inset-y-0 left-0 items-center pl-3 text-gray-400 pointer-events-none">
-                            {% heroicon_outline "magnifying-glass" class="w-4 h-4" %}
-                        </div>
-                    </div>
-                </div>
-                <div class="flex gap-2 items-center">
-                    <button type="submit" class="hidden">Search</button>
-                    {% if f_section or f_bill or f_activity %}
-                        <a href="{% url 'project:labor-activity-list' project_pk=project_pk %}" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-gray-600 bg-gray-50 rounded-lg ring-1 ring-inset ring-gray-200 transition-all duration-200 hover:bg-gray-100">
-                            {% heroicon_outline "x-mark" class="mr-1.5 w-4 h-4" %}
-                            Clear
-                        </a>
-                    {% endif %}
-                </div>
-            </form>
-        </div> {% endcomment %}
         <!-- Activities Table Card -->
         <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
-            <div class="overflow-x-auto overflow-y-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="backdrop-blur-sm bg-gray-50/80">
-                        <tr>
-                            <th scope="col"
-                                class="py-3.5 pr-3 pl-4 text-xs font-bold text-left text-gray-600 uppercase sm:pl-6">
+            <div class="overflow-x-auto max-h-[calc(100vh-250px)]">
+                <table class="table table-sm table-pin-rows table-pin-cols">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="sticky left-0 z-40 bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-gray-600 uppercase border-r border-gray-100 min-w-[200px] w-[200px]">
                                 Activity / Specification
                             </th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Section</th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Bill No</th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Crew</th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Plants</th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-right text-indigo-600 uppercase">
-                                Daily Prod.
+                            <th class="sticky left-[200px] z-40 bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-gray-600 uppercase border-r border-gray-100 min-w-[100px] w-[100px]">
+                                Section
                             </th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-right text-purple-600 uppercase">
-                                Daily Labour
-                            </th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-right text-emerald-600 uppercase">
-                                Daily Plant
-                            </th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-right text-gray-900 uppercase">
-                                Daily Total
-                            </th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold tracking-tighter text-right text-gray-600 uppercase">
+                            <th class="text-xs font-bold text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Bill No</th>
+                            <th class="bg-gray-50/95 backdrop-blur-sm text-xs font-bold text-indigo-600 uppercase text-center w-[80px]">Count</th>
+                            <th class="text-xs font-bold text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Crew</th>
+                            <th class="text-xs font-bold text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Plants</th>
+                            <th class="text-xs font-bold text-right text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">Total Volume</th>
+                            <th class="text-xs font-bold text-right text-amber-600 uppercase backdrop-blur-sm bg-gray-50/95">Duration</th>
+                            <th class="text-xs font-bold text-right text-indigo-600 uppercase backdrop-blur-sm bg-gray-50/95">Daily Prod.</th>
+                            <th class="text-xs font-bold text-right text-purple-600 uppercase backdrop-blur-sm bg-gray-50/95">Daily Labour</th>
+                            <th class="text-xs font-bold text-right text-emerald-600 uppercase backdrop-blur-sm bg-gray-50/95">Daily Plant</th>
+                            <th class="text-xs font-bold text-right text-gray-900 uppercase backdrop-blur-sm bg-gray-50/95">Daily Total</th>
+                            <th class="text-xs font-bold tracking-tighter text-right text-gray-600 uppercase backdrop-blur-sm bg-gray-50/95">
                                 Contract Amount
                             </th>
-                            <th scope="col" class="relative py-3.5 pr-4 pl-3 sm:pr-6">
+                            <th class="sticky right-0 z-40 text-right border-l border-gray-100 backdrop-blur-sm bg-gray-50/95">
                                 <span class="sr-only">Actions</span>
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
+                    <tbody class="divide-y divide-gray-100">
                         {% for activity in activities %}
-                            <tr class="transition-all duration-150 hover:bg-indigo-50/30 group">
-                                <td class="py-4 pr-3 pl-4 text-sm whitespace-nowrap sm:pl-6">
-                                    <div class="font-semibold text-gray-900 transition-colors group-hover:text-indigo-700">{{ activity.act_name }}</div>
+                            <tr class="transition-colors hover:bg-indigo-50/30 group">
+                                <th class="sticky left-0 z-10 font-semibold text-gray-900 whitespace-nowrap bg-white border-r border-gray-100 group-hover:bg-indigo-50/50">
+                                    <div class="truncate max-w-[180px]" title="{{ activity.act_name }}">{{ activity.act_name }}</div>
+                                </th>
+                                <th class="sticky left-[200px] z-10 bg-white group-hover:bg-indigo-50/50 border-r border-gray-100 text-gray-500 capitalize whitespace-nowrap font-normal">
+                                    {{ activity.section|default:"-" }}
+                                </th>
+                                <th class="sticky left-[300px] z-10 bg-white group-hover:bg-indigo-50/50 border-r border-gray-100 text-gray-500 whitespace-nowrap font-normal">
+                                    {{ activity.bill_no|default:"-" }}
+                                </th>
+                                <td class="px-2 text-center whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-bold font-mono text-indigo-700 bg-indigo-50 rounded-md ring-1 ring-inset ring-indigo-600/20">
+                                        {{ activity.crew_count|floatformat:0 }}
+                                    </span>
                                 </td>
-                                <td class="px-3 py-4 text-sm text-gray-500 capitalize whitespace-nowrap">{{ activity.section|default:"-" }}</td>
-                                <td class="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{{ activity.bill_no|default:"-" }}</td>
-                                <td class="px-3 py-4 text-sm whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-purple-700 bg-purple-50 rounded-md ring-1 ring-inset ring-purple-600/20">
+                                <td class="whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold text-purple-700 bg-purple-50 rounded-md ring-1 ring-inset ring-purple-600/20">
                                         {{ activity.labour_specification__crew__crew_type|default:"No Crew" }}
                                     </span>
                                 </td>
-                                <td class="px-3 py-4 text-sm whitespace-nowrap">
+                                <td class="whitespace-nowrap">
                                     {% if activity.plant_count > 0 %}
-                                        <div class="flex flex-col gap-1 items-start">
-                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-md ring-1 ring-inset ring-amber-600/20 tooltip tooltip-right"
+                                        <div class="flex flex-col gap-0.5 items-start">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-md ring-1 ring-inset ring-amber-600/20 tooltip tooltip-right before:max-w-xs before:text-left"
                                                   data-tip="{{ activity.plant_types }}">
-                                                {{ activity.plant_count }} Plant{{ activity.plant_count|pluralize }}
+                                                {{ activity.plant_count|floatformat:0 }} Plant{{ activity.plant_count|pluralize }}
                                             </span>
-                                            <span class="text-[10px] text-gray-400 truncate max-w-[130px] italic"
+                                            <span class="text-[9px] text-gray-400 truncate max-w-[120px] italic"
                                                   title="{{ activity.plant_types }}">{{ activity.plant_types }}</span>
                                         </div>
                                     {% else %}
                                         <span class="text-xs italic text-gray-400">None</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-3 py-4 font-mono text-sm tabular-nums text-right text-gray-600 whitespace-nowrap">
-                                    <div class="flex flex-col items-end">
-                                        <span class="font-bold">{{ activity.daily_production|qty }}</span>
-                                        <span class="text-[10px] text-gray-400 font-bold uppercase">{{ activity.act_unit }}</span>
+                                <td class="font-mono text-sm tabular-nums text-right text-gray-900 whitespace-nowrap">
+                                    <div class="flex flex-col items-end leading-tight">
+                                        <span class="text-xs font-bold">{{ activity.total_tracker|qty }}</span>
+                                        <span class="text-[9px] text-gray-400 font-bold uppercase">{{ activity.act_unit }}</span>
                                     </div>
                                 </td>
-                                <td class="px-3 py-4 font-mono text-sm tabular-nums text-right text-purple-600 whitespace-nowrap">
+                                <td class="font-mono text-sm tabular-nums text-right text-amber-600 whitespace-nowrap">
+                                    <div class="flex flex-col items-end leading-tight">
+                                        <span class="text-xs font-bold">{{ activity.duration }}</span>
+                                        <span class="text-[9px] text-gray-400 font-bold uppercase">Days</span>
+                                    </div>
+                                </td>
+                                <td class="font-mono text-sm tabular-nums text-right text-gray-600 whitespace-nowrap">
+                                    <div class="flex flex-col items-end leading-tight">
+                                        <span class="text-xs font-bold">{{ activity.daily_production|qty }}</span>
+                                        <span class="text-[9px] text-gray-400 font-bold uppercase">{{ activity.act_unit }}</span>
+                                    </div>
+                                </td>
+                                <td class="font-mono text-xs tabular-nums text-right text-purple-600 whitespace-nowrap">
                                     {{ activity.daily_labour_cost|currency }}
                                 </td>
-                                <td class="px-3 py-4 font-mono text-sm tabular-nums text-right text-emerald-600 whitespace-nowrap">
+                                <td class="font-mono text-xs tabular-nums text-right text-emerald-600 whitespace-nowrap">
                                     {{ activity.daily_plant_cost|currency }}
                                 </td>
-                                <td class="px-3 py-4 font-mono text-sm font-black tabular-nums text-right text-gray-900 whitespace-nowrap">
+                                <td class="font-mono text-xs font-black tabular-nums text-right text-gray-900 whitespace-nowrap">
                                     {{ activity.total_daily_cost|currency }}
                                 </td>
-                                <td class="px-3 py-4 text-sm font-bold tabular-nums text-right text-gray-500 whitespace-nowrap">
+                                <td class="text-xs font-bold tabular-nums text-right text-gray-500 whitespace-nowrap">
                                     {{ activity.total_amount|currency }}
                                 </td>
-                                <td class="relative py-4 pr-4 pl-3 text-sm font-medium text-right whitespace-nowrap sm:pr-6">
+                                <th class="text-right whitespace-nowrap bg-white border-l border-gray-100 group-hover:bg-indigo-50/50">
                                     <a href="{% url 'project:labor-activity-detail' project_pk=project_pk %}?act_name={{ activity.act_name|urlencode }}&section={{ activity.section|urlencode }}&bill_no={{ activity.bill_no|urlencode }}"
-                                       class="inline-flex items-center font-bold text-indigo-600 transition-all hover:text-indigo-900 group-hover:translate-x-1">
-                                        {% heroicon_outline "chevron-right" class="ml-1 w-3 h-3" %}
+                                       class="p-1 text-indigo-600 btn btn-ghost btn-xs hover:bg-indigo-100">
+                                        {% heroicon_outline "chevron-right" class="w-4 h-4" %}
                                     </a>
-                                </td>
+                                </th>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="9" class="px-6 py-20 text-center bg-gray-50/30">
+                                <td colspan="12" class="py-20 text-center bg-gray-50/30">
                                     <div class="flex flex-col items-center">
-                                        <div class="p-4 mb-4 bg-white rounded-2xl ring-1 ring-gray-200 shadow-sm transition-transform group-hover:scale-110">
+                                        <div class="p-4 mb-4 bg-white rounded-2xl ring-1 ring-gray-200 shadow-sm transition-transform">
                                             {% heroicon_outline "clipboard-document-list" class="w-10 h-10 text-gray-400" %}
                                         </div>
                                         <h3 class="text-base font-bold text-gray-900">No Production Activities Found</h3>
-                                        <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500">
-                                            We couldn't find any activities matching your filters. Try adjusting them or Assigning Labor Specifications in the Estimator.
-                                        </p>
+                                        <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500">We couldn't find any activities matching your filters.</p>
                                         <div class="flex gap-3 mt-6">
                                             <a href="{% url 'project:labor-activity-list' project_pk=project_pk %}"
-                                               class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Clear all filters</a>
+                                               class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Clear filters</a>
                                             <span class="text-gray-300">|</span>
                                             <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
                                                class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Go to Estimator</a>

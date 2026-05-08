@@ -35,7 +35,7 @@
         <div class="space-y-6">
             <!-- Activity Detail Card -->
             <div id="activity-row"
-                 class="overflow-hidden bg-white rounded-3xl border border-gray-200 shadow-lg duration-300 shadow-gray-100/50 group/row animate-in fade-in slide-in-from-bottom-4">
+                 class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-lg duration-300 shadow-gray-100/50 group/row animate-in fade-in slide-in-from-bottom-4">
                 <!-- Row Header -->
                 <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <div class="flex flex-grow gap-4 items-center">
@@ -76,7 +76,7 @@
                                     <input type="number"
                                            step="0.5"
                                            id="activity-hours-input"
-                                           class="px-4 py-2.5 w-full font-mono text-sm bg-indigo-50/30 rounded-xl border-0 ring-1 ring-inset ring-indigo-100 transition-all focus:ring-0 cursor-not-allowed"
+                                           class="px-4 py-2.5 w-full font-mono text-sm rounded-xl border-0 ring-1 ring-inset ring-indigo-100 transition-all cursor-not-allowed bg-indigo-50/30 focus:ring-0"
                                            placeholder="0.0"
                                            readonly
                                            tabindex="-1">
@@ -201,7 +201,7 @@
             <td class="px-3 py-2 w-10">
                 <button type="button"
                         onclick="removePlantRow(this)"
-                        class="p-1 text-gray-300 transition-all hover:text-red-500 hover:bg-red-50 rounded-md">
+                        class="p-1 text-gray-300 rounded-md transition-all hover:text-red-500 hover:bg-red-50">
                     {% heroicon_outline "trash" class="w-4 h-4" %}
                 </button>
             </td>
@@ -239,7 +239,7 @@
             });
         } else if (initialData.available_plants && initialData.available_plants.length > 0) {
             initialData.available_plants.forEach(plant => {
-                addPlantRow(plant.id, plant.name);
+                addPlantRow(plant.id, plant.name, plant.hours_per_day);
             });
         }
 
