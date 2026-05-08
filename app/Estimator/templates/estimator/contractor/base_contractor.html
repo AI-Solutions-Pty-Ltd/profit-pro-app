@@ -1,0 +1,87 @@
+{% extends "base_full.html" %}
+{% load heroicons %}
+{% block title %}Contractor Library{% endblock %}
+{% block content %}
+    <div class="pb-12 min-h-screen">
+        <!-- Submodule Header -->
+        <div class="sticky top-0 z-10 bg-white rounded-xl shadow-sm">
+            <div class="px-4 py-4 sm:px-6 lg:px-8">
+                <a href="{% url 'home' %}"
+                   class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "chevron-left" size="20" %}
+                    <span class="ml-2">Home</span>
+                </a>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Contractor Library</h1>
+                            <p class="text-sm text-gray-500">Your master data — synced from System Library, used by your projects.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Navigation Tabs -->
+            <div class="px-4 sm:px-6 lg:px-8">
+                <nav class="flex overflow-x-auto -mb-px space-x-8 pb-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+                     aria-label="Contractor Library sections">
+                    {% with url_name=request.resolver_match.url_name %}
+                        <a href="{% url 'estimator:ctr_trade_codes' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_trade_codes' or url_name == 'ctr_trade_code_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "tag" class="inline-block mr-1 w-4 h-4" %}
+                            Trade Codes
+                        </a>
+                        <a href="{% url 'estimator:ctr_materials' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_materials' or url_name == 'ctr_material_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "cube" class="inline-block mr-1 w-4 h-4" %}
+                            Materials
+                        </a>
+                        <a href="{% url 'estimator:ctr_material_specs' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_material_specs' or url_name == 'ctr_material_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "document-text" class="inline-block mr-1 w-4 h-4" %}
+                            Material Specs
+                        </a>
+                        <a href="{% url 'estimator:ctr_labour_crews' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_labour_crews' or url_name == 'ctr_labour_crew_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "user-group" class="inline-block mr-1 w-4 h-4" %}
+                            Labour Crews
+                        </a>
+                        <a href="{% url 'estimator:ctr_labour_specs' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_labour_specs' or url_name == 'ctr_labour_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "clipboard-document-list" class="inline-block mr-1 w-4 h-4" %}
+                            Labour Specs
+                        </a>
+                        <a href="{% url 'estimator:ctr_plant_costs' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_plant_costs' or url_name == 'ctr_plant_cost_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "truck" class="inline-block mr-1 w-4 h-4" %}
+                            Plant Costs
+                        </a>
+                        <a href="{% url 'estimator:ctr_plant_specs' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_plant_specs' or url_name == 'ctr_plant_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "wrench-screwdriver" class="inline-block mr-1 w-4 h-4" %}
+                            Plant Specs
+                        </a>
+                        <a href="{% url 'estimator:ctr_preliminary_costs' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_preliminary_costs' or url_name == 'ctr_preliminary_cost_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "currency-dollar" class="inline-block mr-1 w-4 h-4" %}
+                            Preliminary Costs
+                        </a>
+                        <a href="{% url 'estimator:ctr_preliminary_specs' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_preliminary_specs' or url_name == 'ctr_preliminary_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "book-open" class="inline-block mr-1 w-4 h-4" %}
+                            Preliminary Specs
+                        </a>
+                        <a href="{% url 'estimator:ctr_item_library' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'ctr_item_library' or url_name == 'ctr_item_library_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "rectangle-stack" class="inline-block mr-1 w-4 h-4" %}
+                            Item Library
+                        </a>
+                    {% endwith %}
+                </nav>
+            </div>
+        </div>
+        <!-- Main Content Area -->
+        <div class="py-8">
+            {% block sub_content %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}

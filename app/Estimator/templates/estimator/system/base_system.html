@@ -70,6 +70,11 @@
                             {% heroicon_outline "book-open" class="inline-block mr-1 w-4 h-4" %}
                             Preliminary Specs
                         </a>
+                        <a href="{% url 'estimator:sys_item_library' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'sys_item_library' or url_name == 'sys_item_library_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "rectangle-stack" class="inline-block mr-1 w-4 h-4" %}
+                            Item Library
+                        </a>
                     {% endwith %}
                 </nav>
             </div>

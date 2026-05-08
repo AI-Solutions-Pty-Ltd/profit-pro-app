@@ -1,6 +1,6 @@
-{% extends "estimator/base_labour_estimator.html" %}
+{% extends "estimator/contractor/base_contractor.html" %}
 {% load estimator_tags %}
-{% block title %}Labour Specs - Project Resource Estimator{% endblock %}
+{% block title %}Labour Specs - Contractor Library{% endblock %}
 {% block sub_content %}
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
@@ -10,22 +10,22 @@
             </p>
         </div>
         <div class="mt-2 sm:mt-0 flex gap-2">
+            <a href="{% url 'estimator:ctr_download_labour_spec_template' %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
             <form method="post" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="sync_system">
                 <button type="submit"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('This will sync from the contractor library. Existing specs will be overwritten. Continue?')">
+                        onclick="return confirm('This will sync from the system library. Existing rows linked to system data will be overwritten. Continue?')">
                     {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                    Sync with Contractor
+                    Sync from System
                 </button>
             </form>
-            <a href="{% url 'estimator:download_labour_spec_template' project_pk=project_pk %}"
-               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                Template
-            </a>
-            <a href="{% url 'estimator:labour_spec_upload' project_pk=project_pk %}"
+            <a href="{% url 'estimator:ctr_labour_spec_upload' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
@@ -151,7 +151,7 @@
                 </select>
             </div>
             {% if f_section or f_trade_name or f_name %}
-                <a href="{% url 'estimator:labour_spec_defs' project_pk=project_pk %}"
+                <a href="{% url 'estimator:ctr_labour_specs' %}"
                    class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
                     {% heroicon_outline "x-mark" class="w-3.5 h-3.5 mr-1" %}
                     Clear
@@ -330,7 +330,7 @@
             if (input.value === original) return;
             const id = input.dataset.itemId;
             const field = input.dataset.field;
-            fetch(`/estimator/project/{{ project_pk }}/api/labour-spec/${id}/update/`, {
+            fetch(`/estimator/contractor/api/labour-spec/${id}/update/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({field, value: input.value})

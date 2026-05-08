@@ -28,6 +28,16 @@
                 Labor Activities
             </a>
             <form method="post"
+                  action="{% url 'estimator:autofill_boq_from_library' project_pk=project_pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
+                        onclick="return confirm('Autofill specs on every BoQ row that is missing them, using matching Item Library entries?')">
+                    {% heroicon_outline "sparkles" class="mr-1.5 -ml-0.5 w-5 h-5" %}
+                    Autofill from Library
+                </button>
+            </form>
+            <form method="post"
                   action="{% url 'estimator:sync_boq' project_pk=project_pk %}">
                 {% csrf_token %}
                 <button type="submit"

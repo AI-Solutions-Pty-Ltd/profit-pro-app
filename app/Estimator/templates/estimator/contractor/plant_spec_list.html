@@ -1,6 +1,6 @@
-{% extends "estimator/base_plant_estimator.html" %}
+{% extends "estimator/contractor/base_contractor.html" %}
 {% load estimator_tags %}
-{% block title %}Plant Specs - Project Resource Estimator{% endblock %}
+{% block title %}Plant Specs - Contractor Library{% endblock %}
 {% block sub_content %}
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
@@ -8,22 +8,22 @@
             <p class="mt-1 text-sm text-gray-500">Plant specification definitions with production factors.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex gap-2">
+            <a href="{% url 'estimator:ctr_download_plant_spec_template' %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
             <form method="post" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="sync_system">
                 <button type="submit"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('This will sync from the contractor library. Existing specs will be overwritten. Continue?')">
+                        onclick="return confirm('This will sync from the system library. Existing rows linked to system data will be overwritten. Continue?')">
                     {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                    Sync with Contractor
+                    Sync from System
                 </button>
             </form>
-            <a href="{% url 'estimator:download_plant_spec_template' project_pk=project_pk %}"
-               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                Template
-            </a>
-            <a href="{% url 'estimator:plant_spec_upload' project_pk=project_pk %}"
+            <a href="{% url 'estimator:ctr_plant_spec_upload' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
@@ -36,7 +36,6 @@
             </button>
         </div>
     </div>
-    <!-- Add Spec Form -->
     <div id="plant-spec-form"
          class="{% if not form.errors %}hidden{% endif %} mb-6">
         <div class="overflow-hidden bg-white shadow-sm rounded-lg">
@@ -55,33 +54,31 @@
                     {% endif %}
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
                         <div class="sm:col-span-1">
-                            <label for="id_section" class="block text-sm font-medium text-gray-700">Section</label>
+                            <label class="block text-sm font-medium text-gray-700">Section</label>
                             <div class="mt-1">{{ form.section }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_trade_name" class="block text-sm font-medium text-gray-700">Trade Name</label>
+                            <label class="block text-sm font-medium text-gray-700">Trade Name</label>
                             <div class="mt-1">{{ form.trade_name }}</div>
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="id_name" class="block text-sm font-medium text-gray-700">Specification Name</label>
+                            <label class="block text-sm font-medium text-gray-700">Specification Name</label>
                             <div class="mt-1">{{ form.name }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_unit" class="block text-sm font-medium text-gray-700">Unit</label>
+                            <label class="block text-sm font-medium text-gray-700">Unit</label>
                             <div class="mt-1">{{ form.unit }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_daily_production"
-                                   class="block text-sm font-medium text-gray-700">Daily Production</label>
+                            <label class="block text-sm font-medium text-gray-700">Daily Production</label>
                             <div class="mt-1">{{ form.daily_production }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_operator_factor"
-                                   class="block text-sm font-medium text-gray-700">Operator</label>
+                            <label class="block text-sm font-medium text-gray-700">Operator</label>
                             <div class="mt-1">{{ form.operator_factor }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_site_factor" class="block text-sm font-medium text-gray-700">Site</label>
+                            <label class="block text-sm font-medium text-gray-700">Site</label>
                             <div class="mt-1">{{ form.site_factor }}</div>
                         </div>
                     </div>
@@ -108,40 +105,17 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col"
-                            class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
+                        <th class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
                             Section
                         </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Trade Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Specification
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Unit
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Plant &amp; Hours
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Daily Prod.
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Operator
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Site
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Trade Name</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Specification</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Unit</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Plant &amp; Hours</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Daily Prod.</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Operator</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Site</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -261,7 +235,6 @@
     {% include "estimator/_pagination.html" %}
     <script>
 (function() {
-    const projectPk = {{ project_pk }};
     const plantOptions = `<option value="">—</option>{% for p in plants %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}`;
 
     function flash(el, ok) {
@@ -277,25 +250,17 @@
             if (input.value === original) return;
             const id = input.dataset.itemId;
             const field = input.dataset.field;
-            fetch(`/estimator/project/${projectPk}/api/plant-spec/${id}/update/`, {
+            fetch(`/estimator/contractor/api/plant-spec/${id}/update/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({field, value: input.value})
             })
             .then(r => r.json())
             .then(data => {
-                if (data.ok) {
-                    flash(input, true);
-                    original = input.value;
-                } else {
-                    flash(input, false);
-                    input.value = original;
-                }
+                if (data.ok) { flash(input, true); original = input.value; }
+                else { flash(input, false); input.value = original; }
             })
-            .catch(() => {
-                flash(input, false);
-                input.value = original;
-            });
+            .catch(() => { flash(input, false); input.value = original; });
         });
     });
 
@@ -306,7 +271,7 @@
             if (el.value === original) return;
             const id = el.dataset.componentId;
             const field = el.dataset.field;
-            fetch(`/estimator/project/${projectPk}/api/plant-spec-component/${id}/update/`, {
+            fetch(`/estimator/contractor/api/plant-spec-component/${id}/update/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({field, value: el.value})
@@ -324,7 +289,7 @@
         btn.addEventListener('click', () => {
             if (!confirm('Remove this component?')) return;
             const id = btn.dataset.componentId;
-            fetch(`/estimator/project/${projectPk}/api/plant-spec-component/${id}/delete/`, {
+            fetch(`/estimator/contractor/api/plant-spec-component/${id}/delete/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: '{}'
@@ -363,8 +328,8 @@
         btn.addEventListener('click', () => {
             const specId = btn.dataset.specId;
             const specName = btn.dataset.specName || 'this specification';
-            if (!confirm(`Delete "${specName}"? This will unassign it from any BoQ items.`)) return;
-            fetch(`/estimator/project/${projectPk}/api/plant-spec/${specId}/delete/`, {
+            if (!confirm(`Delete "${specName}"? This will remove it from the contractor library.`)) return;
+            fetch(`/estimator/contractor/api/plant-spec/${specId}/delete/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: '{}'
@@ -382,7 +347,7 @@
     document.querySelectorAll('.plant-comp-add').forEach(btn => {
         btn.addEventListener('click', () => {
             const specId = btn.dataset.specId;
-            fetch(`/estimator/project/${projectPk}/api/plant-spec/${specId}/components/add/`, {
+            fetch(`/estimator/contractor/api/plant-spec/${specId}/components/add/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({plant_type: '', hours: 0})
