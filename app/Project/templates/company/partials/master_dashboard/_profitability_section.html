@@ -1,0 +1,56 @@
+{% load humanize %}
+{% load heroicons %}
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <!-- Header matching Sedge Build style -->
+    <div class="bg-rose-600 px-4 py-2 flex items-center justify-between text-white text-sm font-bold">
+        <div class="flex items-center">
+            {% heroicon_outline "chart-pie" size="18" class="mr-2" %}
+            Profitability Analysis
+        </div>
+    </div>
+
+    <!-- Profitability Grid -->
+    <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Net Profit Card -->
+        <div class="bg-gray-900 rounded-lg p-6 text-white shadow-lg relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-2 -mr-2 w-20 h-20 bg-rose-500/10 rounded-full blur-2xl"></div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-rose-300 mb-1">Projected Net Profit</p>
+            <h3 class="text-3xl font-black font-mono">R {{ financials.net_profit|default:0|floatformat:0|intcomma }}</h3>
+            
+            <div class="mt-6 flex items-center space-x-6">
+                <div class="flex flex-col">
+                    <span class="text-[9px] uppercase text-gray-400 font-bold tracking-wider">Net Margin</span>
+                    <span class="text-lg font-bold text-emerald-400 font-mono">{{ financials.margin }}%</span>
+                </div>
+                <div class="h-6 w-px bg-gray-700"></div>
+                <div class="flex flex-col">
+                    <span class="text-[9px] uppercase text-gray-400 font-bold tracking-wider">Performance</span>
+                    <span class="text-lg font-bold {% if financials.variance > 0 %}text-emerald-400{% else %}text-rose-400{% endif %} font-mono">
+                        {% if financials.variance > 0 %}+{% endif %}{{ financials.variance }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Profit Stats -->
+        <div class="bg-rose-50 border border-rose-100 rounded-lg p-6 flex flex-col justify-center">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Gross Margin</span>
+                    <span class="text-sm font-black text-rose-700 font-mono">24.5%</span>
+                </div>
+                <div class="h-1 w-full bg-rose-100 rounded-full">
+                    <div class="h-full bg-rose-500 rounded-full" style="width: 24.5%"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">OpEx Ratio</span>
+                    <span class="text-sm font-black text-gray-700 font-mono">12.2%</span>
+                </div>
+                <div class="h-1 w-full bg-gray-200 rounded-full">
+                    <div class="h-full bg-gray-500 rounded-full" style="width: 12.2%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
