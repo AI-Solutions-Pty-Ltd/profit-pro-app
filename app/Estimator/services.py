@@ -1791,3 +1791,68 @@ def autofill_boq_from_library(project):
         "no_match": no_match,
         "ambiguous": ambiguous,
     }
+
+
+def save_boq_item_to_library(item):
+    """Upsert a single BOQItem's spec mapping into the project Item Library.
+
+    Match key (case-insensitive, trimmed): (component, trade_code_id, description).
+    If an entry exists, its spec FKs are overwritten; otherwise a new entry is
+    created. The BOQItem's `library_entry` back-link is updated to point at
+    whichever entry is now authoritative.
+
+    Returns the dict {"created": bool, "entry_id": int}.
+    """
+    if item.is_section_header:
+        return {"created": False, "entry_id": None, "skipped": True}
+
+    component = (item.component or "").strip()
+    description = (item.description or "").strip()
+    trade_code_id = item.trade_code_id
+
+    existing = (
+        ProjectItemLibraryEntry.objects.filter(
+            project=item.project,
+            trade_code_id=trade_code_id,
+            component__iexact=component,
+            description__iexact=description,
+        )
+        .order_by("id")
+        .first()
+    )
+
+    if existing is None:
+        entry = ProjectItemLibraryEntry.objects.create(
+            project=item.project,
+            trade_code_id=trade_code_id,
+            component=component,
+            description=description,
+            unit=item.unit or "",
+            material_spec=item.specification,
+            labour_spec=item.labour_specification,
+            plant_spec=item.plant_specification,
+            preliminary_spec=item.preliminary_specification,
+        )
+        created = True
+    else:
+        existing.unit = item.unit or existing.unit
+        existing.material_spec = item.specification
+        existing.labour_spec = item.labour_specification
+        existing.plant_spec = item.plant_specification
+        existing.preliminary_spec = item.preliminary_specification
+        existing.save(
+            update_fields=[
+                "unit",
+                "material_spec",
+                "labour_spec",
+                "plant_spec",
+                "preliminary_spec",
+            ]
+        )
+        entry = existing
+        created = False
+
+    item.library_entry = entry
+    item.save(update_fields=["library_entry"])
+
+    return {"created": created, "entry_id": entry.id, "skipped": False}

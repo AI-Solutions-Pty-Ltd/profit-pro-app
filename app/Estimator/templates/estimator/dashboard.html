@@ -745,13 +745,19 @@
                             </tr>
                         {% else %}
                             <tr class="align-top hover:bg-gray-50/50" data-item-id="{{ item.id }}">
-                                <!-- Select checkbox -->
+                                <!-- Select checkbox + save-to-library icon -->
                                 <td class="text-center border-r border-gray-100 align-middle p-0">
-                                    <label class="flex items-center justify-center w-full h-full px-2 py-1.5 cursor-pointer">
+                                    <div class="flex items-center justify-center gap-1 px-1 py-1.5">
                                         <input type="checkbox"
                                                class="boq-row-select rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                                value="{{ item.id }}">
-                                    </label>
+                                        <button type="button"
+                                                class="boq-save-to-library text-gray-300 hover:text-emerald-600"
+                                                data-item-id="{{ item.id }}"
+                                                title="Save this row to Item Library">
+                                            {% heroicon_outline "bookmark-square" class="w-4 h-4" %}
+                                        </button>
+                                    </div>
                                 </td>
                                 <!-- Section -->
                                 <td class="py-1.5 pl-3 pr-1 text-gray-400 whitespace-normal break-words column-group-item-details col-section w-[100px]">
@@ -1137,6 +1143,42 @@
             .catch(err => {
                 this.style.opacity = '1';
                 flashElement(this, false);
+                console.error('Network error:', err);
+            });
+        });
+    });
+
+    // ============ Save-to-Library (per row) ============
+    document.querySelectorAll('.boq-save-to-library').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const button = this;
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            fetch(`/estimator/project/{{ project_pk }}/api/boq-item/${itemId}/save-to-library/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            .then(r => r.json())
+            .then(data => {
+                button.disabled = false;
+                button.style.opacity = '1';
+                if (data.ok) {
+                    button.classList.remove('text-gray-300', 'hover:text-emerald-600');
+                    button.classList.add('text-emerald-600');
+                    button.title = data.created
+                        ? 'Saved to Item Library (new entry)'
+                        : 'Updated existing Item Library entry';
+                    flashElement(button, true);
+                } else {
+                    flashElement(button, false);
+                    console.error('Save-to-library error:', data.error);
+                }
+            })
+            .catch(err => {
+                button.disabled = false;
+                button.style.opacity = '1';
+                flashElement(button, false);
                 console.error('Network error:', err);
             });
         });
