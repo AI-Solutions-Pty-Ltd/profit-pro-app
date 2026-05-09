@@ -2,15 +2,17 @@
 {% load estimator_tags %}
 {% block title %}{{ report_title }} - Project Resource Estimator{% endblock %}
 {% block sub_content %}
-    <div class="mb-4 sm:flex sm:items-center sm:justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">{{ report_title }}</h1>
-        <nav class="mt-3 sm:mt-0 flex space-x-1 rounded-lg bg-gray-100 p-1"
+    <div class="mb-3 flex">
+        <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1"
              aria-label="Labour report view">
             <a href="{% url 'estimator:report_labour_list_'|add:variant project_pk=project_pk %}"
-               class="text-gray-500 hover:text-gray-700 rounded-md px-3 py-1.5 text-sm font-medium">By Spec</a>
+               class="rounded-md px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700">By Spec</a>
             <a href="{% url 'estimator:report_labour_skills_'|add:variant project_pk=project_pk %}"
-               class="bg-white text-gray-900 shadow rounded-md px-3 py-1.5 text-sm font-medium">By Skill</a>
+               class="rounded-md px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white shadow">By Skill</a>
         </nav>
+    </div>
+    <div class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-900">{{ report_title }}</h1>
     </div>
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">

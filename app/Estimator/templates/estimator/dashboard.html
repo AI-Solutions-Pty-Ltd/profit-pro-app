@@ -660,7 +660,7 @@
                         <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[160px]">
                             preliminaries
                         </th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[280px]">
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[280px] sticky left-0 z-20 shadow-[1px_0_0_#e5e7eb]">
                             Details
                         </th>
                         <th class="bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[40px]">
@@ -744,7 +744,8 @@
                                 </td>
                             </tr>
                         {% else %}
-                            <tr class="align-top hover:bg-gray-50/50" data-item-id="{{ item.id }}">
+                            <tr class="align-top group hover:bg-gray-50/50"
+                                data-item-id="{{ item.id }}">
                                 <!-- Select checkbox + save-to-library icon -->
                                 <td class="text-center border-r border-gray-100 align-middle p-0">
                                     <div class="flex items-center justify-center gap-1 px-1 py-1.5">
@@ -824,7 +825,7 @@
                                     </select>
                                 </td>
                                 <!-- Details -->
-                                <td class="px-1 py-1.5 whitespace-normal break-words text-gray-700 border-r border-gray-100 w-[280px]">
+                                <td class="px-1 py-1.5 whitespace-normal break-words text-gray-700 border-r border-gray-100 w-[280px] sticky left-0 z-10 bg-white group-hover:bg-gray-50/50 shadow-[1px_0_0_#f3f4f6]">
                                     {% if item.description %}
                                         <div class="text-gray-600 text-[11px]">{{ item.description }}</div>
                                     {% else %}
