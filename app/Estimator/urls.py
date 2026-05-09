@@ -279,6 +279,11 @@ urlpatterns = [
         name="delete_specification",
     ),
     path(
+        "project/<int:project_pk>/api/spec/<int:pk>/update/",
+        views.UpdateSpecificationView.as_view(),
+        name="update_specification",
+    ),
+    path(
         "project/<int:project_pk>/api/labour-spec/<int:pk>/update/",
         views.UpdateLabourSpecView.as_view(),
         name="update_labour_spec",

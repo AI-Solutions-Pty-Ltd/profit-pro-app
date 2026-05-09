@@ -342,36 +342,36 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             .order_by("bill_no")
         )
         context["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
-        context["spec_names"] = (
-            ProjectSpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
+        # Spec names for dropdowns: active specs + any inactive spec currently
+        # linked on a BoQ row (so existing data still renders correctly).
+        def _names_active_plus_linked(spec_model):
+            active = set(
+                spec_model.objects.filter(project=project, is_active=True)
+                .exclude(name="")
+                .values_list("name", flat=True)
+            )
+            linked_inactive = set(
+                spec_model.objects.filter(
+                    project=project, is_active=False, boq_items__isnull=False
+                )
+                .exclude(name="")
+                .values_list("name", flat=True)
+                .distinct()
+            )
+            return sorted(active | linked_inactive)
+
+        context["spec_names"] = _names_active_plus_linked(ProjectSpecification)
+        context["labour_spec_names"] = _names_active_plus_linked(
+            ProjectLabourSpecification
         )
-        context["labour_spec_names"] = (
-            ProjectLabourSpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
-        )
-        context["plant_spec_names"] = (
-            ProjectPlantSpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
+        context["plant_spec_names"] = _names_active_plus_linked(
+            ProjectPlantSpecification
         )
         context["labour_plant_spec_names"] = sorted(
             set(context["labour_spec_names"]) | set(context["plant_spec_names"])
         )
-        context["prelim_spec_names"] = (
-            ProjectPreliminarySpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
+        context["prelim_spec_names"] = _names_active_plus_linked(
+            ProjectPreliminarySpecification
         )
 
         # Current filter values
@@ -520,6 +520,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
             BOQItem.objects.filter(
                 project=project,
                 specification__isnull=False,
+                specification__is_active=True,
                 is_section_header=False,
             )
             .select_related(
@@ -607,6 +608,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
         boq_with_spec = BOQItem.objects.filter(
             project=project,
             specification__isnull=False,
+            specification__is_active=True,
             is_section_header=False,
         )
         context["sections"] = (
@@ -857,6 +859,7 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
         qs = BOQItem.objects.filter(
             project=project,
             labour_specification__isnull=False,
+            labour_specification__is_active=True,
             is_section_header=False,
         ).select_related(
             "labour_specification__crew",
@@ -923,6 +926,7 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
         boq_with_lspec = BOQItem.objects.filter(
             project=project,
             labour_specification__isnull=False,
+            labour_specification__is_active=True,
             is_section_header=False,
         )
         context["sections"] = (
@@ -2300,7 +2304,10 @@ class _SimpleSpecCalculatorView(ProjectEstimatorMixin, TemplateView):
         qs = BOQItem.objects.filter(
             project=project,
             is_section_header=False,
-            **{f"{self.spec_field}__isnull": False},
+            **{
+                f"{self.spec_field}__isnull": False,
+                f"{self.spec_field}__is_active": True,
+            },
         ).select_related(self.spec_field)
         if f_section:
             qs = qs.filter(section=f_section)
@@ -2345,7 +2352,10 @@ class _SimpleSpecCalculatorView(ProjectEstimatorMixin, TemplateView):
         boq_with = BOQItem.objects.filter(
             project=project,
             is_section_header=False,
-            **{f"{self.spec_field}__isnull": False},
+            **{
+                f"{self.spec_field}__isnull": False,
+                f"{self.spec_field}__is_active": True,
+            },
         )
         context["sections"] = (
             boq_with.exclude(section="")
@@ -2833,6 +2843,43 @@ class DeleteSpecificationView(View):
         return JsonResponse({"ok": True})
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSpecificationView(View):
+    """AJAX endpoint to update fields on a ProjectSpecification (material spec)."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "name": "str",
+        "unit_label": "str",
+        "is_active": "bool",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(ProjectSpecification, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
 class SystemMaterialSpecListView(ProjectEstimatorMixin, ListView):
     """List System Specifications with form to add new spec (project-scoped view)."""
 
@@ -3000,6 +3047,7 @@ class UpdateLabourSpecView(View):
         "site_factor": "decimal",
         "tools_factor": "decimal",
         "leadership_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, project_pk, pk):
@@ -3028,6 +3076,8 @@ class UpdateLabourSpecView(View):
                     item.crew = get_object_or_404(
                         ProjectLabourCrew, pk=int(value), project_id=project_pk
                     )
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -3353,6 +3403,7 @@ class UpdatePlantSpecView(View):
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, project_pk, pk):
@@ -3374,6 +3425,8 @@ class UpdatePlantSpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -3680,6 +3733,7 @@ class UpdatePreliminarySpecView(View):
         "name": "str",
         "unit": "str",
         "preliminary_type": "str",
+        "is_active": "bool",
     }
 
     def post(self, request, project_pk, pk):
@@ -3701,6 +3755,8 @@ class UpdatePreliminarySpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:

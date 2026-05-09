@@ -1244,6 +1244,7 @@ class ProjectSpecification(models.Model):
     )
     unit_label = models.CharField(max_length=20, default="m3")
     name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1397,6 +1398,7 @@ class ProjectLabourSpecification(models.Model):
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1492,6 +1494,7 @@ class ProjectPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1620,6 +1623,7 @@ class ProjectPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1901,7 +1905,7 @@ class BOQItem(models.Model):
 
     @property
     def new_materials_rate(self):
-        if self.specification:
+        if self.specification and self.specification.is_active:
             base = calculate_materials_rate(None, self.specification.rate_per_unit)
         elif self.material:
             base = self.material.market_rate
@@ -1913,7 +1917,7 @@ class BOQItem(models.Model):
 
     @property
     def new_labour_rate(self):
-        if self.labour_specification:
+        if self.labour_specification and self.labour_specification.is_active:
             base = self.labour_specification.rate_per_unit
             if base is None:
                 return None
@@ -1936,7 +1940,7 @@ class BOQItem(models.Model):
 
     @property
     def new_plant_rate(self):
-        if self.plant_specification:
+        if self.plant_specification and self.plant_specification.is_active:
             return self.plant_specification.rate_per_unit
         return None
 
@@ -1949,7 +1953,7 @@ class BOQItem(models.Model):
 
     @property
     def new_preliminary_rate(self):
-        if self.preliminary_specification:
+        if self.preliminary_specification and self.preliminary_specification.is_active:
             return self.preliminary_specification.amount
         return None
 
