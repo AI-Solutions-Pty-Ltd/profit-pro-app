@@ -155,10 +155,33 @@ class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         assumptions = self.get_assumptions()
+        old_values = {
+            "material_markup_pct": assumptions.material_markup_pct,
+            "labour_markup_pct": assumptions.labour_markup_pct,
+            "transport_pct": assumptions.transport_pct,
+        }
         form = ProjectAssumptionsForm(request.POST, instance=assumptions)
         if form.is_valid():
             form.save()
-            messages.success(request, "Project assumptions saved.")
+            new = form.instance
+            project = self.get_project()
+            propagated = 0
+            for field in ("material_markup_pct", "labour_markup_pct", "transport_pct"):
+                old_value = old_values[field]
+                new_value = getattr(new, field)
+                if new_value == old_value:
+                    continue
+                propagated += BOQItem.objects.filter(
+                    project=project, **{field: old_value}
+                ).update(**{field: new_value})
+            msg = "Project assumptions saved."
+            if propagated:
+                msg += (
+                    f" Propagated to {propagated} default markup field"
+                    f"{'s' if propagated != 1 else ''} on BoQ items "
+                    "(rows with manually edited markups left unchanged)."
+                )
+            messages.success(request, msg)
             return redirect(
                 "estimator:project_assumptions", project_pk=self.kwargs["project_pk"]
             )
@@ -1426,17 +1449,21 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
             )
         else:
             context["parent_template"] = "estimator/base_materials_estimator.html"
-            variant = self.kwargs["variant"]
-            context["toggle_spec_url"] = reverse(
-                f"estimator:report_material_list_{variant}",
-                kwargs={"project_pk": self.get_project().pk},
-            )
-            context["toggle_alt_url"] = reverse(
-                f"estimator:report_material_components_{variant}",
-                kwargs={"project_pk": self.get_project().pk},
-            )
-            context["toggle_alt_label"] = "Component"
-            context["toggle_active"] = "spec"
+        variant = self.kwargs["variant"]
+        list_url_name = (
+            f"estimator:report_material_list_{variant}_contract"
+            if rate_type == "contract"
+            else f"estimator:report_material_list_{variant}"
+        )
+        context["toggle_spec_url"] = reverse(
+            list_url_name, kwargs={"project_pk": self.get_project().pk}
+        )
+        context["toggle_alt_url"] = reverse(
+            f"estimator:report_material_components_{variant}",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+        context["toggle_alt_label"] = "Component"
+        context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
         aggregated: dict[tuple, dict] = {}
@@ -1615,17 +1642,21 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
             context["parent_template"] = "estimator/base_baseline_estimator_labour.html"
         else:
             context["parent_template"] = "estimator/base_labour_estimator.html"
-            variant = self.kwargs["variant"]
-            context["toggle_spec_url"] = reverse(
-                f"estimator:report_labour_list_{variant}",
-                kwargs={"project_pk": self.get_project().pk},
-            )
-            context["toggle_alt_url"] = reverse(
-                f"estimator:report_labour_skills_{variant}",
-                kwargs={"project_pk": self.get_project().pk},
-            )
-            context["toggle_alt_label"] = "Skill"
-            context["toggle_active"] = "spec"
+        variant = self.kwargs["variant"]
+        list_url_name = (
+            f"estimator:report_labour_list_{variant}_contract"
+            if rate_type == "contract"
+            else f"estimator:report_labour_list_{variant}"
+        )
+        context["toggle_spec_url"] = reverse(
+            list_url_name, kwargs={"project_pk": self.get_project().pk}
+        )
+        context["toggle_alt_url"] = reverse(
+            f"estimator:report_labour_skills_{variant}",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+        context["toggle_alt_label"] = "Skill"
+        context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
         aggregated: dict[int, dict] = {}
@@ -1796,14 +1827,14 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
             if rate_type == "contract"
             else self.parent_template_new
         )
-        if (
-            rate_type != "contract"
-            and self.spec_url_prefix
-            and self.component_url_prefix
-        ):
+        if self.spec_url_prefix and self.component_url_prefix:
+            list_url_name = (
+                f"{self.spec_url_prefix}{variant}_contract"
+                if rate_type == "contract"
+                else f"{self.spec_url_prefix}{variant}"
+            )
             context["toggle_spec_url"] = reverse(
-                f"{self.spec_url_prefix}{variant}",
-                kwargs={"project_pk": self.get_project().pk},
+                list_url_name, kwargs={"project_pk": self.get_project().pk}
             )
             context["toggle_alt_url"] = reverse(
                 f"{self.component_url_prefix}{variant}",
