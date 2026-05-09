@@ -155,10 +155,33 @@ class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         assumptions = self.get_assumptions()
+        old_values = {
+            "material_markup_pct": assumptions.material_markup_pct,
+            "labour_markup_pct": assumptions.labour_markup_pct,
+            "transport_pct": assumptions.transport_pct,
+        }
         form = ProjectAssumptionsForm(request.POST, instance=assumptions)
         if form.is_valid():
             form.save()
-            messages.success(request, "Project assumptions saved.")
+            new = form.instance
+            project = self.get_project()
+            propagated = 0
+            for field in ("material_markup_pct", "labour_markup_pct", "transport_pct"):
+                old_value = old_values[field]
+                new_value = getattr(new, field)
+                if new_value == old_value:
+                    continue
+                propagated += BOQItem.objects.filter(
+                    project=project, **{field: old_value}
+                ).update(**{field: new_value})
+            msg = "Project assumptions saved."
+            if propagated:
+                msg += (
+                    f" Propagated to {propagated} default markup field"
+                    f"{'s' if propagated != 1 else ''} on BoQ items "
+                    "(rows with manually edited markups left unchanged)."
+                )
+            messages.success(request, msg)
             return redirect(
                 "estimator:project_assumptions", project_pk=self.kwargs["project_pk"]
             )
