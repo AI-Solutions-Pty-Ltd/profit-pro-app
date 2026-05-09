@@ -69,13 +69,13 @@ class ProjectDocumentForm(forms.ModelForm):
             "notes": "Notes (Optional)",
             "project_category": "Sector",
             "area": "Area",
-            "project_discipline": "Project Stage",
+            "project_discipline": "Discipline",
         }
         help_texts = {
             "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
             "project_category": "Select the project sector",
             "area": "Select the project area (Municipality)",
-            "project_discipline": "Select the project stage",
+            "project_discipline": "Select the discipline",
         }
 
     def __init__(self, *args, **kwargs):
@@ -93,6 +93,9 @@ class ProjectDocumentForm(forms.ModelForm):
         if is_edit and self.instance and self.instance.pk:
             self.fields["file"].required = False
             self.fields["file"].help_text = "Leave empty to keep the current file"
+
+        self.fields["project_discipline"].label = "Discipline"
+        self.fields["project_discipline"].help_text = "Select the discipline"
 
         if project:
             # Filter categories, areas, and disciplines by project

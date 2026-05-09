@@ -28,6 +28,16 @@
                 Labor Activities
             </a>
             <form method="post"
+                  action="{% url 'estimator:autofill_boq_from_library' project_pk=project_pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
+                        onclick="return confirm('Autofill specs on every BoQ row that is missing them, using matching Item Library entries?')">
+                    {% heroicon_outline "sparkles" class="mr-1.5 -ml-0.5 w-5 h-5" %}
+                    Autofill from Library
+                </button>
+            </form>
+            <form method="post"
                   action="{% url 'estimator:sync_boq' project_pk=project_pk %}">
                 {% csrf_token %}
                 <button type="submit"
@@ -650,7 +660,7 @@
                         <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[160px]">
                             preliminaries
                         </th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[280px]">
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[280px] sticky left-0 z-20 shadow-[1px_0_0_#e5e7eb]">
                             Details
                         </th>
                         <th class="bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[40px]">
@@ -734,14 +744,21 @@
                                 </td>
                             </tr>
                         {% else %}
-                            <tr class="align-top hover:bg-gray-50/50" data-item-id="{{ item.id }}">
-                                <!-- Select checkbox -->
+                            <tr class="align-top group hover:bg-gray-50/50"
+                                data-item-id="{{ item.id }}">
+                                <!-- Select checkbox + save-to-library icon -->
                                 <td class="text-center border-r border-gray-100 align-middle p-0">
-                                    <label class="flex items-center justify-center w-full h-full px-2 py-1.5 cursor-pointer">
+                                    <div class="flex items-center justify-center gap-1 px-1 py-1.5">
                                         <input type="checkbox"
                                                class="boq-row-select rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                                value="{{ item.id }}">
-                                    </label>
+                                        <button type="button"
+                                                class="boq-save-to-library text-gray-300 hover:text-emerald-600"
+                                                data-item-id="{{ item.id }}"
+                                                title="Save this row to Item Library">
+                                            {% heroicon_outline "bookmark-square" class="w-4 h-4" %}
+                                        </button>
+                                    </div>
                                 </td>
                                 <!-- Section -->
                                 <td class="py-1.5 pl-3 pr-1 text-gray-400 whitespace-normal break-words column-group-item-details col-section w-[100px]">
@@ -808,7 +825,7 @@
                                     </select>
                                 </td>
                                 <!-- Details -->
-                                <td class="px-1 py-1.5 whitespace-normal break-words text-gray-700 border-r border-gray-100 w-[280px]">
+                                <td class="px-1 py-1.5 whitespace-normal break-words text-gray-700 border-r border-gray-100 w-[280px] sticky left-0 z-10 bg-white group-hover:bg-gray-50/50 shadow-[1px_0_0_#f3f4f6]">
                                     {% if item.description %}
                                         <div class="text-gray-600 text-[11px]">{{ item.description }}</div>
                                     {% else %}
@@ -931,6 +948,7 @@
             </table>
         </div>
     </div>
+    {% include "estimator/_pagination.html" %}
     <!-- AJAX auto-save script for inline dropdowns, qty inputs, and markup inputs -->
     <script>
 (function() {
@@ -1126,6 +1144,42 @@
             .catch(err => {
                 this.style.opacity = '1';
                 flashElement(this, false);
+                console.error('Network error:', err);
+            });
+        });
+    });
+
+    // ============ Save-to-Library (per row) ============
+    document.querySelectorAll('.boq-save-to-library').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const button = this;
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            fetch(`/estimator/project/{{ project_pk }}/api/boq-item/${itemId}/save-to-library/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            .then(r => r.json())
+            .then(data => {
+                button.disabled = false;
+                button.style.opacity = '1';
+                if (data.ok) {
+                    button.classList.remove('text-gray-300', 'hover:text-emerald-600');
+                    button.classList.add('text-emerald-600');
+                    button.title = data.created
+                        ? 'Saved to Item Library (new entry)'
+                        : 'Updated existing Item Library entry';
+                    flashElement(button, true);
+                } else {
+                    flashElement(button, false);
+                    console.error('Save-to-library error:', data.error);
+                }
+            })
+            .catch(err => {
+                button.disabled = false;
+                button.style.opacity = '1';
+                flashElement(button, false);
                 console.error('Network error:', err);
             });
         });

@@ -1,13 +1,9 @@
 from django.urls import path
 
+# Trigger reload
 from . import views
 
 urlpatterns = [
-    path(
-        "<int:project_pk>/dashboard/",
-        views.ProductionDashboardView.as_view(),
-        name="production-dashboard",
-    ),
     path(
         "<int:project_pk>/planning/",
         views.ProductionPlanListView.as_view(),
@@ -99,6 +95,16 @@ urlpatterns = [
         name="performance-report",
     ),
     path(
+        "<int:project_pk>/dashboard/",
+        views.ProductionPlanGanttView.as_view(),
+        name="production-dashboard",
+    ),
+    path(
+        "<int:project_pk>/integrated-control/",
+        views.ProductionControllerView.as_view(),
+        name="production-integrated-control",
+    ),
+    path(
         "<int:project_pk>/productivity-report/",
         views.ProductionProductivityReportView.as_view(),
         name="productivity-report",
@@ -178,5 +184,10 @@ urlpatterns = [
         "<int:project_pk>/plan/<int:pk>/refresh/",
         views.ProductionPlanRefreshAjaxView.as_view(),
         name="production-plan-refresh-ajax",
+    ),
+    path(
+        "<int:project_pk>/ajax/update-activity-crew-count/",
+        views.UpdateActivityCrewCountAjaxView.as_view(),
+        name="ajax-update-activity-crew-count",
     ),
 ]

@@ -30,6 +30,7 @@
 {% endblock extra_css %}
 {% block content %}
     <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        {% include "company/reports_nav.html" %}
         <!-- Header Card -->
         {% include "profitability/reports/partials/filters.html" %}
         <!-- Overall Summary Section -->
@@ -51,7 +52,7 @@
                                 Full Breakdown
                                 {% heroicon_outline "chevron-right" size="12" class="ml-1 transition-transform group-hover:translate-x-0.5" %}
                                 </a> {% endcomment %}
-                                <a href="{% url 'project:profitability-income-statement' project.pk %}"
+                                <a href="{% url 'project:profitability-performance-breakdown' project.pk %}"
                                    class="flex items-center text-sm text-indigo-600 transition-colors hover:text-indigo-800 group">
                                     Full Breakdown
                                     {% heroicon_outline "chevron-right" size="12" class="ml-1 transition-transform group-hover:translate-x-0.5" %}
@@ -64,26 +65,71 @@
                 </div>
             </div>
         </div>
-        <!-- Table Section -->
-        <div class="overflow-hidden mb-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
-                <h3 class="text-lg font-bold text-gray-900">Actual vs. Planned vs. Forecast</h3>
-            </div>
-            {% include "profitability/reports/partials/financial_table.html" %}
-        </div>
         <!-- Charts Grid -->
         {% include "profitability/reports/partials/charts_grid.html" %}
+        <div class="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-3">
+            <!-- Table Section -->
+            <div class="overflow-hidden mb-8 bg-white rounded-lg border border-gray-200 shadow-sm lg:col-span-2">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
+                    <h3 class="text-lg font-bold text-gray-900">Profit and Loss (Planned vs. Actual)</h3>
+                </div>
+                {% include "profitability/reports/partials/financial_table.html" %}
+            </div>
+            <!-- Actual Cost Composition -->
+            <div class="overflow-hidden bg-white border border-gray-100 shadow-sm card">
+                <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50 bg-gray-50/30">
+                    <h3 class="flex items-center text-xs font-black tracking-[0.1em] text-gray-500 uppercase">
+                        {% heroicon_outline "chart-pie" size="18" class="mr-2 text-amber-500" %}
+                        Actual Cost Composition
+                    </h3>
+                </div>
+                <div class="p-6 h-[320px]">
+                    <canvas id="costCompositionChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock content %}
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'profitability_management/js/financial_reports.js' %}"></script>
     <script>
+    // Parameter Persistence
+    function updateParams(newParams) {
+        const url = new URL(window.location);
+        Object.entries(newParams).forEach(([key, value]) => {
+            url.searchParams.set(key, value);
+        });
+        window.location.href = url.toString();
+    }
+
+    function handlePeriodChange(val) {
+        const mapping = { '0': 'ALL', '1': '1M', '2': '3M', '3': '6M', '4': '12M' };
+        const labelMapping = { '0': 'All Time', '1': '1 Month', '2': '3 Months', '3': '6 Months', '4': '12 Months' };
+        
+        // Update label immediately for feedback
+        const periodVal = document.getElementById('periodVal');
+        if (periodVal) periodVal.textContent = labelMapping[val];
+        
+        // Update URL and refresh
+        updateParams({ 'lookback': mapping[val] });
+    }
+
     function openDrillDown() {
         document.getElementById('drill-down-modal').classList.remove('hidden');
     }
     function closeDrillDown() {
         document.getElementById('drill-down-modal').classList.add('hidden');
     }
+
+    // Initialize labels on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const slider = document.getElementById('periodSlider');
+        if (slider) {
+            const labelMapping = { '0': 'All Time', '1': '1 Month', '2': '3 Months', '3': '6 Months', '4': '12 Months' };
+            const periodVal = document.getElementById('periodVal');
+            if (periodVal) periodVal.textContent = labelMapping[slider.value];
+        }
+    });
     </script>
 {% endblock extra_js %}

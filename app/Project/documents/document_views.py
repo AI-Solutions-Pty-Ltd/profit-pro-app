@@ -64,7 +64,7 @@ class DocumentListView(DocumentMixin, ListView):
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-setup", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {"title": self.get_category_display(), "url": None},
@@ -91,7 +91,7 @@ class DocumentCreateView(DocumentMixin, CreateView):
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-setup", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {
@@ -141,6 +141,15 @@ class DocumentCreateView(DocumentMixin, CreateView):
                 for value, label in ProjectDocument.DocumentCategory.choices
                 if value not in excluded_categories
             ]
+
+        if self.get_category() in {
+            ProjectDocument.DocumentCategory.DRAWINGS,
+            ProjectDocument.DocumentCategory.SPECIFICATIONS,
+            ProjectDocument.DocumentCategory.TECHNICAL_SPECIFICATIONS,
+        }:
+            context["form"].fields["project_category"].widget = forms.HiddenInput()
+            context["form"].fields["area"].widget = forms.HiddenInput()
+
         return context
 
     def form_valid(self, form):
@@ -179,7 +188,7 @@ class DocumentEditView(DocumentMixin, UpdateView):
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-setup", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {
@@ -220,6 +229,15 @@ class DocumentEditView(DocumentMixin, UpdateView):
         context["category"] = self.get_category()
         context["category_display"] = self.get_category_display()
         context["is_edit"] = True
+
+        if self.get_category() in {
+            ProjectDocument.DocumentCategory.DRAWINGS,
+            ProjectDocument.DocumentCategory.SPECIFICATIONS,
+            ProjectDocument.DocumentCategory.TECHNICAL_SPECIFICATIONS,
+        }:
+            context["form"].fields["project_category"].widget = forms.HiddenInput()
+            context["form"].fields["area"].widget = forms.HiddenInput()
+
         return context
 
     def form_valid(self, form):
@@ -278,7 +296,7 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-setup", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {

@@ -3,7 +3,6 @@ from rest_framework import serializers
 
 from .production_models import (
     DailyActivityEntry,
-    DailyActivityReport,
     DailyLabourUsage,
     DailyPlantUsage,
     ProductionResource,
@@ -43,9 +42,11 @@ class DailyLogLabourUsageSerializer(serializers.ModelSerializer):
 class DailyLogEntrySerializer(serializers.ModelSerializer):
     """Serializer for an activity entry in a daily log."""
 
-    production_plan_id = serializers.IntegerField()
+    project_id = serializers.IntegerField(required=False)
+    production_plan_id = serializers.IntegerField(required=False)
+    date = serializers.DateField(required=False)
     labour_details = serializers.JSONField(
-        write_only=True
+        write_only=True, required=False
     )  # Skilled, Semi-Skilled, General
     plant_usage = DailyLogPlantUsageSerializer(many=True, required=False)
 
@@ -53,7 +54,10 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
         model = DailyActivityEntry
         fields = [
             "id",
+            "project_id",
             "production_plan_id",
+            "date",
+            "notes",
             "quantity",
             "hours_on_activity",
             "labour_details",
@@ -62,32 +66,32 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        project_id = validated_data.pop("project_id")
         plan_id = validated_data.pop("production_plan_id")
         labour_details = validated_data.pop("labour_details")
         plant_usage_data = validated_data.pop("plant_usage", [])
-        report = validated_data.get("report")
-        project_id = report.project_id if report else None
 
         entry = DailyActivityEntry.objects.create(
-            production_plan_id=plan_id, **validated_data
+            project_id=project_id, production_plan_id=plan_id, **validated_data
         )
 
         # Handle Labour (Skilled, Semi-Skilled, General)
-        if project_id:
-            self._handle_labour_usage(entry, plan_id, project_id, labour_details)
+        self._handle_labour_usage(entry, plan_id, project_id, labour_details)
 
         # Handle Plants
-        self._handle_plant_usage(entry, plan_id, plant_usage_data)
+        self._handle_plant_usage(entry, plan_id, project_id, plant_usage_data)
 
         return entry
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        project_id = validated_data.pop("project_id", instance.project_id)
         plan_id = validated_data.pop("production_plan_id", instance.production_plan_id)
         labour_details = validated_data.pop("labour_details", None)
         plant_usage_data = validated_data.pop("plant_usage", None)
-        project_id = instance.report.project_id
 
+        instance.date = validated_data.get("date", instance.date)
+        instance.notes = validated_data.get("notes", instance.notes)
         instance.quantity = validated_data.get("quantity", instance.quantity)
         instance.hours_on_activity = validated_data.get(
             "hours_on_activity", instance.hours_on_activity
@@ -100,7 +104,7 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
 
         if plant_usage_data is not None:
             instance.plant_usage.all().delete()
-            self._handle_plant_usage(instance, plan_id, plant_usage_data)
+            self._handle_plant_usage(instance, plan_id, project_id, plant_usage_data)
 
         return instance
 
@@ -130,7 +134,7 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
                 hours=float(data.get("hours", 0) or 0),
             )
 
-    def _handle_plant_usage(self, entry, plan_id, plant_usage_data):
+    def _handle_plant_usage(self, entry, plan_id, project_id, plant_usage_data):
         """Processes plant usage entries, linking to specific plant types from specification."""
         from app.Estimator.models import ProjectPlantCost
 
@@ -153,10 +157,16 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
                 ).first()
 
             if not plant_type and not resource and name:
-                # Fallback to finding by name in project plant costs
+                # Fallback to finding by name in project plant costs (Estimator specs)
                 plant_type = ProjectPlantCost.objects.filter(
-                    project_id=entry.report.project_id, name=name
+                    project_id=project_id, name=name
                 ).first()
+
+                # Second fallback: search in manual ProductionResources for this plan
+                if not plant_type:
+                    resource = ProductionResource.objects.filter(
+                        production_plan_id=plan_id, name=name, resource_type="PLANT"
+                    ).first()
 
             # Create usage record if we have either a spec plant type or a legacy resource
             if plant_type or resource:
@@ -170,48 +180,28 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
                 )
 
 
-class DailyLogReportSerializer(serializers.ModelSerializer):
-    """Top-level serializer for the Daily Activity Report."""
+class DailyLogBatchSerializer(serializers.Serializer):
+    """Top-level serializer for batch creation of daily entries."""
 
     project_id = serializers.IntegerField()
+    date = serializers.DateField()
+    notes = serializers.CharField(required=False, allow_blank=True)
     entries = DailyLogEntrySerializer(many=True)
-
-    class Meta:
-        model = DailyActivityReport
-        fields = ["id", "project_id", "date", "notes", "entries"]
 
     @transaction.atomic
     def create(self, validated_data):
-        entries_data = validated_data.pop("entries")
         project_id = validated_data.pop("project_id")
-        report = DailyActivityReport.objects.create(
-            project_id=project_id, **validated_data
-        )
+        date = validated_data.pop("date")
+        notes = validated_data.pop("notes", "")
+        entries_data = validated_data.pop("entries")
+        results = []
 
-        self._process_entries(report, project_id, entries_data)
-        return report
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        entries_data = validated_data.pop("entries", None)
-        project_id = validated_data.pop("project_id", instance.project_id)
-
-        # Update report fields
-        instance.date = validated_data.get("date", instance.date)
-        instance.notes = validated_data.get("notes", instance.notes)
-        instance.save()
-
-        if entries_data is not None:
-            # Simple sync: Clear and recreate entries
-            # This is safer since the frontend doesn't track entry IDs
-            instance.entries.all().delete()
-            self._process_entries(instance, project_id, entries_data)
-
-        return instance
-
-    def _process_entries(self, report, project_id, entries_data):
-        """Helper to create entries and associated usage from validated data."""
         for entry_data in entries_data:
+            entry_data["project_id"] = project_id
+            entry_data["date"] = date
+            entry_data["notes"] = notes
             serializer = DailyLogEntrySerializer(data=entry_data)
             if serializer.is_valid(raise_exception=True):
-                serializer.save(report=report)
+                results.append(serializer.save())
+
+        return {"project_id": project_id, "entries": results}

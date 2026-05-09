@@ -40,6 +40,7 @@ from app.Project.models import (
     PlannedValue,
     Project,
     ProjectCategory,
+    ProjectDocument,
     ProjectRole,
     Role,
 )
@@ -403,6 +404,14 @@ class ProjectSetupView(ProjectMixin, DetailView):
         context["has_estimator_data"] = ProjectMaterial.objects.filter(
             project=project
         ).exists()
+        context["boq_documents"] = (
+            ProjectDocument.objects.filter(
+                project=project,
+                category=ProjectDocument.DocumentCategory.BILL_OF_QUANTITIES,
+            )
+            .select_related("uploaded_by")
+            .order_by("-created_at")[:5]
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -415,7 +424,13 @@ class ProjectSetupView(ProjectMixin, DetailView):
 
             try:
                 result = initialize_project_estimator(project)
-                if result.get("status") == "already_initialized":
+                if result.get("status") == "no_contractor_company":
+                    messages.error(
+                        request,
+                        "This project has no contractor assigned. Set a "
+                        "contractor on the project before cloning the library.",
+                    )
+                elif result.get("status") == "already_initialized":
                     messages.warning(
                         request,
                         "This project already has estimator data. "
@@ -424,7 +439,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
                 else:
                     messages.success(
                         request,
-                        f"System library cloned — "
+                        f"Contractor library cloned — "
                         f"{result['trade_codes']} trade codes, "
                         f"{result['materials']} materials, "
                         f"{result['labour_crews']} labour crews, "
@@ -432,7 +447,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
                         f"{result['labour_specs']} labour specs.",
                     )
             except Exception as e:
-                messages.error(request, f"Clone from system failed: {e}")
+                messages.error(request, f"Clone from contractor library failed: {e}")
 
         elif action == "clone_project":
             from django.shortcuts import get_object_or_404
@@ -457,6 +472,29 @@ class ProjectSetupView(ProjectMixin, DetailView):
                     )
                 except Exception as e:
                     messages.error(request, f"Clone from project failed: {e}")
+
+        elif action == "upload_boq_attachment":
+            boq_file = request.FILES.get("boq_file")
+            if not boq_file:
+                messages.error(request, "Please select a BOQ file to upload.")
+            else:
+                title = (request.POST.get("boq_title") or "").strip()
+                notes = (request.POST.get("boq_notes") or "").strip()
+                if not title:
+                    title = f"BOQ upload - {boq_file.name}"
+
+                ProjectDocument.objects.create(
+                    project=project,
+                    category=ProjectDocument.DocumentCategory.BILL_OF_QUANTITIES,
+                    title=title,
+                    file=boq_file,
+                    uploaded_by=request.user,
+                    notes=notes,
+                )
+                messages.success(
+                    request,
+                    "BOQ file uploaded. Our team will format it and upload it into the system.",
+                )
 
         return HttpResponseRedirect(
             reverse("project:project-setup", kwargs={"pk": project.pk})
@@ -687,6 +725,7 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
     template_name = "project/project_confirm_delete.html"
     success_url = reverse_lazy("project:portfolio-dashboard")
     roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_context_data(self, **kwargs):
         """Add project context to delete confirmation."""

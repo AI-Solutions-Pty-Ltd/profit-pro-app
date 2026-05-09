@@ -40,7 +40,7 @@ class StructureAdmin(SoftDeleteAdmin):
 @admin.register(Bill)
 class BillAdmin(SoftDeleteAdmin):
     list_display = [
-        "structure__project__name",
+        "get_project_name",
         "name",
         "structure",
         "deleted",
@@ -48,6 +48,15 @@ class BillAdmin(SoftDeleteAdmin):
     ]
     list_filter = ["deleted", "created_at", "structure__project"]
     search_fields = ["name", "structure__name"]
+
+    @admin.display(description="Project", ordering="structure__project__name")
+    def get_project_name(self, obj):
+        """Display the project name."""
+        return (
+            obj.structure.project.name
+            if obj.structure and obj.structure.project
+            else "-"
+        )
 
 
 @admin.register(Package)
@@ -139,7 +148,7 @@ class ForecastTransactionAdmin(SoftDeleteAdmin):
         "unit_price",
         "total_price",
         "deleted",
-        "forecast__period",
+        "get_forecast_period",
         "notes",
     ]
     list_filter = [
@@ -149,6 +158,11 @@ class ForecastTransactionAdmin(SoftDeleteAdmin):
     ]
     search_fields = ["line_item__description", "forecast__project__name"]
     autocomplete_fields = ["forecast", "line_item"]
+
+    @admin.display(description="Period", ordering="forecast__period")
+    def get_forecast_period(self, obj):
+        """Display the forecast period."""
+        return obj.forecast.period if obj.forecast else "-"
 
     @admin.display(description="Line Item", ordering="line_item__description")
     def get_line_item_description(self, obj):

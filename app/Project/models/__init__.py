@@ -22,7 +22,6 @@ from app.Project.projects.projects_models import (
 from ..milestone_schedules.milestone_models import Milestone
 from ..production_progress.production_models import (
     DailyActivityEntry,
-    DailyActivityReport,
     DailyLabourUsage,
     DailyPlantUsage,
     DailyProduction,
@@ -96,7 +95,6 @@ __all__ = [
     "DailyProduction",
     "ProductionPlan",
     "ProductionResource",
-    "DailyActivityReport",
     "DailyActivityEntry",
     "DailyLabourUsage",
     "DailyPlantUsage",

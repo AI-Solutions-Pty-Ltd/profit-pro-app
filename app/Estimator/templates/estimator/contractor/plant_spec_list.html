@@ -1,0 +1,381 @@
+{% extends "estimator/contractor/base_contractor.html" %}
+{% load estimator_tags %}
+{% block title %}Plant Specs - Contractor Library{% endblock %}
+{% block sub_content %}
+    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Plant Specifications</h1>
+            <p class="mt-1 text-sm text-gray-500">Plant specification definitions with production factors.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex gap-2">
+            <a href="{% url 'estimator:ctr_download_plant_spec_template' %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="sync_system">
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
+                        onclick="return confirm('This will sync from the system library. Existing rows linked to system data will be overwritten. Continue?')">
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Sync from System
+                </button>
+            </form>
+            <a href="{% url 'estimator:ctr_plant_spec_upload' %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Upload
+            </a>
+            <button type="button"
+                    onclick="document.getElementById('plant-spec-form').classList.toggle('hidden')"
+                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
+                Add Spec
+            </button>
+        </div>
+    </div>
+    <div id="plant-spec-form"
+         class="{% if not form.errors %}hidden{% endif %} mb-6">
+        <div class="overflow-hidden bg-white shadow-sm rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">New Plant Specification</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                        <div class="rounded-md bg-red-50 p-4 mb-4">
+                            <div class="text-sm text-red-700">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}<p>{{ field }}: {{ error }}</p>{% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+                        <div class="sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700">Section</label>
+                            <div class="mt-1">{{ form.section }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700">Trade Name</label>
+                            <div class="mt-1">{{ form.trade_name }}</div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">Specification Name</label>
+                            <div class="mt-1">{{ form.name }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700">Unit</label>
+                            <div class="mt-1">{{ form.unit }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700">Daily Production</label>
+                            <div class="mt-1">{{ form.daily_production }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700">Operator</label>
+                            <div class="mt-1">{{ form.operator_factor }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700">Site</label>
+                            <div class="mt-1">{{ form.site_factor }}</div>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-xs text-gray-500">
+                        Plant types and hours are managed per spec in Django admin or via Excel upload.
+                    </p>
+                    <div class="mt-4 flex justify-end gap-x-3">
+                        <button type="button"
+                                onclick="document.getElementById('plant-spec-form').classList.add('hidden')"
+                                class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            Save Spec
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="overflow-hidden bg-white shadow-sm rounded-lg">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
+                            Section
+                        </th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Trade Name</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Specification</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Unit</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Plant &amp; Hours</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Daily Prod.</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Operator</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Site</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for ps in plant_specs %}
+                        <tr class="hover:bg-gray-50" data-plant-spec-id="{{ ps.id }}">
+                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                                <input type="text"
+                                       class="inline-edit w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ps.id }}"
+                                       data-field="section"
+                                       value="{{ ps.section }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit w-28 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ps.id }}"
+                                       data-field="trade_name"
+                                       value="{{ ps.trade_name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
+                                <input type="text"
+                                       class="inline-edit w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ps.id }}"
+                                       data-field="name"
+                                       value="{{ ps.name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit w-12 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ps.id }}"
+                                       data-field="unit"
+                                       value="{{ ps.unit }}">
+                            </td>
+                            <td class="px-3 py-3 text-xs text-gray-600"
+                                data-spec-components="{{ ps.id }}">
+                                <div class="space-y-1" data-components-list>
+                                    {% for comp in ps.components.all %}
+                                        <div class="flex items-center gap-1" data-component-id="{{ comp.id }}">
+                                            <select class="plant-comp-edit plant-comp-plant-select w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500"
+                                                    data-component-id="{{ comp.id }}"
+                                                    data-field="plant_type"
+                                                    data-selected-id="{{ comp.plant_type_id|default_if_none:'' }}">
+                                                {% if comp.plant_type_id %}
+                                                    <option value="{{ comp.plant_type_id }}" selected>{{ comp.plant_type.name }}</option>
+                                                {% else %}
+                                                    <option value="" selected>—</option>
+                                                {% endif %}
+                                            </select>
+                                            <input type="number"
+                                                   step="0.01"
+                                                   value="{{ comp.hours }}"
+                                                   class="plant-comp-edit w-16 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500"
+                                                   data-component-id="{{ comp.id }}"
+                                                   data-field="hours">
+                                            <span class="text-gray-400 text-[10px]">h</span>
+                                            <button type="button"
+                                                    class="plant-comp-delete text-gray-400 hover:text-red-500 ml-0.5"
+                                                    data-component-id="{{ comp.id }}"
+                                                    title="Remove component">
+                                                {% heroicon_outline "trash" class="w-3.5 h-3.5" %}
+                                            </button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button"
+                                        class="plant-comp-add inline-flex items-center gap-1 mt-1 text-[11px] text-indigo-600 hover:text-indigo-800"
+                                        data-spec-id="{{ ps.id }}">
+                                    {% heroicon_outline "plus" class="w-3 h-3" %}
+                                    Add component
+                                </button>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.01"
+                                       class="inline-edit w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ps.id }}"
+                                       data-field="daily_production"
+                                       value="{{ ps.daily_production }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit w-16 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ps.id }}"
+                                       data-field="operator_factor"
+                                       value="{{ ps.operator_factor }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit w-16 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ps.id }}"
+                                       data-field="site_factor"
+                                       value="{{ ps.site_factor }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-right text-sm sm:pr-6">
+                                <button type="button"
+                                        class="plant-spec-delete inline-flex items-center text-gray-400 hover:text-red-600"
+                                        data-spec-id="{{ ps.id }}"
+                                        data-spec-name="{{ ps.name }}"
+                                        title="Delete specification">
+                                    {% heroicon_outline "trash" class="w-4 h-4" %}
+                                </button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">No plant specifications found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% include "estimator/_pagination.html" %}
+    <script>
+(function() {
+    const plantOptions = `<option value="">—</option>{% for p in plants %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}`;
+
+    function flash(el, ok) {
+        const cls = ok ? 'ring-green-500' : 'ring-red-500';
+        el.classList.add('ring-2', cls);
+        setTimeout(() => el.classList.remove('ring-2', cls), 800);
+    }
+
+    document.querySelectorAll('.inline-edit').forEach(input => {
+        let original = input.value;
+        input.addEventListener('focus', () => { original = input.value; });
+        input.addEventListener('change', () => {
+            if (input.value === original) return;
+            const id = input.dataset.itemId;
+            const field = input.dataset.field;
+            fetch(`/estimator/contractor/api/plant-spec/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field, value: input.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) { flash(input, true); original = input.value; }
+                else { flash(input, false); input.value = original; }
+            })
+            .catch(() => { flash(input, false); input.value = original; });
+        });
+    });
+
+    function bindComponentEdit(el) {
+        let original = el.value;
+        el.addEventListener('focus', () => { original = el.value; });
+        el.addEventListener('change', () => {
+            if (el.value === original) return;
+            const id = el.dataset.componentId;
+            const field = el.dataset.field;
+            fetch(`/estimator/contractor/api/plant-spec-component/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field, value: el.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) { flash(el, true); original = el.value; }
+                else { flash(el, false); el.value = original; }
+            })
+            .catch(() => { flash(el, false); el.value = original; });
+        });
+    }
+
+    function bindComponentDelete(btn) {
+        btn.addEventListener('click', () => {
+            if (!confirm('Remove this component?')) return;
+            const id = btn.dataset.componentId;
+            fetch(`/estimator/contractor/api/plant-spec-component/${id}/delete/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: '{}'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const row = btn.closest('[data-component-id]');
+                    if (row) row.remove();
+                }
+            });
+        });
+    }
+
+    function populatePlantOptions(select) {
+        if (select.dataset.populated === '1') return;
+        const selectedId = select.dataset.selectedId || '';
+        select.innerHTML = plantOptions;
+        if (selectedId) {
+            const opt = select.querySelector(`option[value="${selectedId}"]`);
+            if (opt) opt.selected = true;
+        }
+        select.dataset.populated = '1';
+    }
+
+    function bindPlantSelect(select) {
+        select.addEventListener('mousedown', () => populatePlantOptions(select));
+        select.addEventListener('focus', () => populatePlantOptions(select));
+    }
+
+    document.querySelectorAll('.plant-comp-plant-select').forEach(bindPlantSelect);
+    document.querySelectorAll('.plant-comp-edit').forEach(bindComponentEdit);
+    document.querySelectorAll('.plant-comp-delete').forEach(bindComponentDelete);
+
+    document.querySelectorAll('.plant-spec-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const specId = btn.dataset.specId;
+            const specName = btn.dataset.specName || 'this specification';
+            if (!confirm(`Delete "${specName}"? This will remove it from the contractor library.`)) return;
+            fetch(`/estimator/contractor/api/plant-spec/${specId}/delete/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: '{}'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const row = document.querySelector(`tr[data-plant-spec-id="${specId}"]`);
+                    if (row) row.remove();
+                }
+            });
+        });
+    });
+
+    document.querySelectorAll('.plant-comp-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const specId = btn.dataset.specId;
+            fetch(`/estimator/contractor/api/plant-spec/${specId}/components/add/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({plant_type: '', hours: 0})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+                const comp = data.component;
+                const list = document.querySelector(`[data-spec-components="${specId}"] [data-components-list]`);
+                if (!list) return;
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-1';
+                row.dataset.componentId = comp.id;
+                row.innerHTML = `
+                    <select class="plant-comp-edit plant-comp-plant-select w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="plant_type" data-selected-id="">
+                        <option value="" selected>—</option>
+                    </select>
+                    <input type="number" step="0.01" value="${comp.hours}" class="plant-comp-edit w-16 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="hours">
+                    <span class="text-gray-400 text-[10px]">h</span>
+                    <button type="button" class="plant-comp-delete text-gray-400 hover:text-red-500 ml-0.5" data-component-id="${comp.id}" title="Remove component">✕</button>
+                `;
+                list.appendChild(row);
+                row.querySelectorAll('.plant-comp-edit').forEach(bindComponentEdit);
+                row.querySelectorAll('.plant-comp-delete').forEach(bindComponentDelete);
+                row.querySelectorAll('.plant-comp-plant-select').forEach(bindPlantSelect);
+            });
+        });
+    });
+})();
+    </script>
+{% endblock %}

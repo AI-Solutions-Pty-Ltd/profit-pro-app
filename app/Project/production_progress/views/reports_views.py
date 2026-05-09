@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -57,12 +58,12 @@ class ProductionProductivityReportView(
         project = get_object_or_404(Project, pk=project_pk)
 
         # Filters
-        horizon = self.request.GET.get("horizon", "ptd")
-        active_only = self.request.GET.get("active_only") == "true"
+        active_only = self.request.GET.get("active_only", "true").lower() == "true"
 
         # Fetch premium report data
         data = get_premium_productivity_report_data(
-            project_pk, horizon=horizon, active_only=active_only
+            project_pk,
+            active_only=active_only,
         )
 
         context.update(
@@ -71,7 +72,7 @@ class ProductionProductivityReportView(
                 "company": project.contractor,
                 "summary": data.get("summary", {}),
                 "sections": data.get("sections", []),
-                "active_horizon": horizon,
+                "trajectory_json": data.get("charts_json", "{}"),
                 "active_only": active_only,
                 "tab": "productivity_report",
             }
@@ -112,9 +113,7 @@ class ProductivityLogsView(
         )
 
         # Get all entries for this project
-        entries = DailyActivityEntry.objects.filter(report__project=project).order_by(
-            "report__date"
-        )
+        entries = DailyActivityEntry.objects.filter(project=project).order_by("date")
 
         logs_data = []
         for plan in plans:
@@ -389,7 +388,7 @@ class ProductionProgressReportView(
                 current_rate = plan.daily_rate * ppi
                 if current_rate > 0:
                     days_left = int(remaining_qty / current_rate)
-                    forecast_end_date = today + timezone.timedelta(days=days_left)
+                    forecast_end_date = today + timedelta(days=days_left)
 
             days_variance = 0
             if plan.finish_date and forecast_end_date:
@@ -418,4 +417,260 @@ class ProductionProgressReportView(
                 "tab": "production_progress_report",
             }
         )
+        return context
+
+
+class ProductionControllerView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Integrated Production Control Center.
+    Combines the Gantt Schedule and Progress Metrics Table into a single synchronized view.
+    """
+
+    template_name = "production_progress/reports/integrated_control.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Integrated Control Center", "url": None},
+        ]
+
+    @staticmethod
+    def _flatten_tree(plans, parent_id=None, depth=0):
+        """Reused from Gantt view to build ordered list."""
+        rows = []
+        for plan in plans:
+            if plan.parent_id == parent_id:
+                rows.append((plan, depth))
+                rows.extend(
+                    ProductionControllerView._flatten_tree(plans, plan.pk, depth + 1)
+                )
+        return rows
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # 1. Fetch Performance Summary (PPI etc)
+        perf_data = get_project_performance_summary(project_pk)
+        ppi = perf_data.get("ppi", Decimal("1.0"))
+        context.update(
+            {
+                "project": project,
+                "summary": perf_data,
+                "tab": "integrated_control",
+            }
+        )
+
+        # 2. Gantt Data Logic (Reused from ProductionPlanGanttView)
+        all_plans = list(
+            ProductionPlan.objects.filter(
+                project=project,
+                is_archived=False,
+                start_date__isnull=False,
+                finish_date__isnull=False,
+            )
+            .select_related("labour_activity", "parent")
+            .prefetch_related(
+                "predecessors",
+                "predecessors__predecessor",
+                "children",
+                "daily_entries",
+            )
+            .order_by("section", "bill_no", "start_date")
+        )
+        context["plans"] = all_plans
+        ordered = self._flatten_tree(all_plans)
+
+        # 2. Progress Data (Unified KPI Logic for Gantt & Table)
+        from app.Project.production_progress.utils.production_utils import (
+            get_plan_forecast_kpis,
+        )
+
+        gantt_data = []
+        report_items = []
+
+        # Aggregates for KPI Cards & Project Health
+        planned_dates = []
+        forecast_dates = []
+        total_p_qty = Decimal("0")
+        total_a_qty = Decimal("0")
+
+        # Map to store KPIs for aggregation
+        plan_kpis = {}
+
+        # First pass: Calculate leaf node KPIs and collect project totals
+        for plan, _depth in ordered:
+            if plan.is_leaf:
+                kpis = get_plan_forecast_kpis(plan, ppi)
+                plan_kpis[plan.id] = kpis
+
+                total_p_qty += plan.quantity
+                total_a_qty += Decimal(str(kpis["summary"]["completed_units"]))
+
+                if plan.finish_date:
+                    planned_dates.append(plan.finish_date)
+                if kpis["daily_output"]["forecast_finish"]:
+                    forecast_dates.append(kpis["daily_output"]["forecast_finish"])
+
+        # Second pass: Build report items with parent aggregation
+        for plan, depth in ordered:
+            kpis = plan_kpis.get(plan.id)
+
+            if not plan.is_leaf:
+                # Aggregate for headers (Section/Bill)
+                # Find all leaf descendants in the 'ordered' list
+
+                def get_descendants(p_id):
+                    res = []
+                    for p, _d in ordered:
+                        if p.parent_id == p_id:
+                            if p.is_leaf:
+                                res.append(p)
+                            else:
+                                res.extend(get_descendants(p.id))
+                    return res
+
+                # Optimized: Since we have plan_kpis for leaves, just find those
+                leaf_children = get_descendants(plan.id)
+                child_kpis = [
+                    plan_kpis[lc.id] for lc in leaf_children if lc.id in plan_kpis
+                ]
+
+                if child_kpis:
+                    # Aggregate Forecast Finish
+                    f_finish = max(
+                        [
+                            k["daily_output"]["forecast_finish"]
+                            for k in child_kpis
+                            if k["daily_output"]["forecast_finish"]
+                        ]
+                    )
+
+                    # Aggregate Progress (Weighted)
+                    c_planned = sum([lc.quantity for lc in leaf_children])
+                    c_actual = sum(
+                        [
+                            Decimal(str(k["summary"]["completed_units"]))
+                            for k in child_kpis
+                        ]
+                    )
+                    c_prog = float(c_actual / c_planned * 100) if c_planned > 0 else 0
+
+                    # Estimate Parent SPI (Weighted)
+                    # We'll use the same project PPI logic or weighted average
+                    c_spi = (
+                        float(
+                            sum(
+                                [
+                                    Decimal(str(k["daily_output"]["index"]))
+                                    * lc.quantity
+                                    for k, lc in zip(
+                                        child_kpis, leaf_children, strict=False
+                                    )
+                                ]
+                            )
+                        )
+                        / float(c_planned)
+                        if c_planned > 0
+                        else float(ppi)
+                    )
+
+                    # Mock a KPI object for the parent
+                    kpis = {
+                        "daily_output": {
+                            "forecast_finish": f_finish,
+                            "index": c_spi,
+                            "time_variance": (plan.finish_date - f_finish).days
+                            if plan.finish_date and f_finish
+                            else 0,
+                            "days_remaining": sum(
+                                [
+                                    k["daily_output"]["days_remaining"]
+                                    for k in child_kpis
+                                ]
+                            ),
+                            "forecast_duration": (f_finish - plan.start_date).days
+                            if plan.start_date and f_finish
+                            else 0,
+                        },
+                        "summary": {
+                            "progress_pct": round(c_prog, 1),
+                            "completed_units": float(c_actual),
+                            "remaining_units": float(c_planned - c_actual),
+                            "status": "Ongoing",
+                            "status_color": "indigo",
+                        },
+                    }
+
+            # Prepare Gantt JSON Data
+            prog = kpis["summary"]["progress_pct"] if kpis else 0
+            f_fin = (
+                kpis["daily_output"]["forecast_finish"] if kpis else plan.finish_date
+            )
+
+            gantt_data.append(
+                {
+                    "id": str(plan.id),
+                    "activity": plan.activity,
+                    "start_date": plan.start_date.isoformat(),
+                    "finish_date": plan.finish_date.isoformat(),
+                    "forecast_finish_date": f_fin.isoformat() if f_fin else None,
+                    "progress_pct": float(prog),
+                    "parent_id": str(plan.parent_id) if plan.parent_id else None,
+                    "has_children": plan.children.exists(),
+                    "depth": depth,
+                    "predecessors": [
+                        str(dep.predecessor_id) for dep in plan.predecessors.all()
+                    ],
+                }
+            )
+
+            # Add to table if it's a leaf or has children with data
+            if kpis:
+                report_items.append(
+                    {
+                        "plan": plan,
+                        "depth": depth,
+                        "kpis": kpis,
+                        "progress_pct": kpis["summary"]["progress_pct"],
+                        "status": kpis["summary"]["status"],
+                        "status_color": kpis["summary"]["status_color"],
+                        "spi": kpis["daily_output"]["index"],
+                    }
+                )
+
+        context["gantt_data_json"] = json.dumps(gantt_data)
+
+        # 3. Finalize Project-Level Metrics for KPI Cards
+        # Ensure we match the "Production Plan" scope (all_plans)
+        project_planned_finish = max(planned_dates) if planned_dates else None
+        project_forecast_finish = max(forecast_dates) if forecast_dates else None
+
+        overrun_days = 0
+        if project_planned_finish and project_forecast_finish:
+            overrun_days = (project_forecast_finish - project_planned_finish).days
+
+        # Overall Progress calculated from the same plan quantities
+        overall_prog = float(total_a_qty / total_p_qty * 100) if total_p_qty > 0 else 0
+
+        context["project_kpis"] = {
+            "planned_finish": project_planned_finish,
+            "forecast_finish": project_forecast_finish,
+            "overrun_days": overrun_days,
+            "progress_pct": round(overall_prog, 1),
+            "spi": float(ppi),
+        }
+
+        context["report_items"] = report_items
         return context

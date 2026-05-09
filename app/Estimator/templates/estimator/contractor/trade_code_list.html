@@ -1,0 +1,69 @@
+{% extends "estimator/contractor/base_contractor.html" %}
+{% block title %}Trade Codes - Contractor Library{% endblock %}
+{% block sub_content %}
+    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Trade Codes</h1>
+            <p class="mt-1 text-sm text-gray-500">Trade code prefixes and their associated trade names.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex gap-2">
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="sync_system">
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
+                        onclick="return confirm('This will sync from the system library. Existing rows linked to system data will be overwritten. Continue?')">
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Sync from System
+                </button>
+            </form>
+            <a href="{% url 'estimator:ctr_trade_code_upload' %}"
+               class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Upload
+            </a>
+            <a href="{% url 'estimator:ctr_download_trade_code_template' %}"
+               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
+        </div>
+    </div>
+    <div class="overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
+                            Prefix
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Trade Name
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Full Code
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for tc in trade_codes %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm sm:pl-6">
+                                <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">{{ tc.prefix }}</span>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-900 font-medium">{{ tc.trade_name }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ tc.trade_code }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">No trade codes found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

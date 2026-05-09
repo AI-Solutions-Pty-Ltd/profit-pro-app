@@ -13,9 +13,9 @@
                 <input type="hidden" name="action" value="sync_system">
                 <button type="submit"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('This will sync plant costs with the system library. Existing rates linked to system data will be overwritten. Continue?')">
+                        onclick="return confirm('This will sync from the contractor library. Existing rates will be overwritten. Continue?')">
                     {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                    Sync with System
+                    Sync with Contractor
                 </button>
             </form>
             <a href="{% url 'estimator:download_plant_cost_template' project_pk=project_pk %}"
