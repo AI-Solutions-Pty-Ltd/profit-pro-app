@@ -41,6 +41,19 @@ TAILWIND_INPUT = "block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 sha
 TAILWIND_SELECT = TAILWIND_INPUT
 
 
+def _attach_datalists(form, field_to_list_id):
+    """Wire a `list="<datalist-id>"` attribute onto each given field's widget.
+
+    Renders a combobox in the browser: an editable text input that also
+    surfaces existing values as suggestions. Templates supply the matching
+    `<datalist id="...">` block.
+    """
+    for field_name, list_id in field_to_list_id.items():
+        field = form.fields.get(field_name)
+        if field is not None:
+            field.widget.attrs["list"] = list_id
+
+
 class MaterialForm(forms.ModelForm):
     class Meta:
         model = ProjectMaterial
@@ -100,6 +113,10 @@ class SpecificationForm(forms.ModelForm):
             cast(
                 ModelChoiceField, self.fields["trade_code"]
             ).queryset = ProjectTradeCode.objects.filter(project=project)
+        _attach_datalists(
+            self,
+            {"section": "spec-sections", "unit_label": "spec-units"},
+        )
 
 
 class SpecificationComponentForm(forms.ModelForm):
@@ -242,6 +259,14 @@ class LabourSpecificationForm(forms.ModelForm):
             cast(
                 ModelChoiceField, self.fields["crew"]
             ).queryset = ProjectLabourCrew.objects.filter(project=project)
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
 
 
 class SystemTradeCodeForm(forms.ModelForm):
@@ -382,6 +407,14 @@ class SystemLabourSpecificationForm(forms.ModelForm):
         cast(
             ModelChoiceField, self.fields["crew"]
         ).queryset = SystemLabourCrew.objects.all()
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
 
 
 class SystemSpecificationForm(forms.ModelForm):
@@ -406,6 +439,10 @@ class SystemSpecificationForm(forms.ModelForm):
         cast(
             ModelChoiceField, self.fields["trade_code"]
         ).queryset = SystemTradeCode.objects.all()
+        _attach_datalists(
+            self,
+            {"section": "spec-sections", "unit_label": "spec-units"},
+        )
 
 
 class SystemSpecificationComponentForm(forms.ModelForm):
@@ -528,6 +565,14 @@ class PlantSpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
 
 
 class SystemPlantSpecificationForm(forms.ModelForm):
@@ -564,6 +609,17 @@ class SystemPlantSpecificationForm(forms.ModelForm):
                 attrs={"class": TAILWIND_INPUT, "step": "0.0001"}
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
 
 
 # ── Preliminary Cost Forms ───────────────────────────────────────
@@ -667,6 +723,17 @@ class PreliminarySpecificationForm(forms.ModelForm):
             "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
+
 
 class SystemPreliminarySpecificationForm(forms.ModelForm):
     class Meta:
@@ -686,6 +753,17 @@ class SystemPreliminarySpecificationForm(forms.ModelForm):
             ),
             "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
 
 
 class ProjectAssumptionsForm(forms.ModelForm):
@@ -857,6 +935,14 @@ class ContractorLabourSpecificationForm(forms.ModelForm):
         if company is not None:
             crew_qs = crew_qs.filter(company=company)
         cast(ModelChoiceField, self.fields["crew"]).queryset = crew_qs
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
 
 
 class ContractorSpecificationForm(forms.ModelForm):
@@ -882,6 +968,10 @@ class ContractorSpecificationForm(forms.ModelForm):
         if company is not None:
             tc_qs = tc_qs.filter(company=company)
         cast(ModelChoiceField, self.fields["trade_code"]).queryset = tc_qs
+        _attach_datalists(
+            self,
+            {"section": "spec-sections", "unit_label": "spec-units"},
+        )
 
 
 class ContractorSpecificationComponentForm(forms.ModelForm):
@@ -977,6 +1067,17 @@ class ContractorPlantSpecificationForm(forms.ModelForm):
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )
+
 
 class ContractorPreliminaryCostForm(forms.ModelForm):
     class Meta:
@@ -1034,3 +1135,14 @@ class ContractorPreliminarySpecificationForm(forms.ModelForm):
             ),
             "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _attach_datalists(
+            self,
+            {
+                "section": "spec-sections",
+                "trade_name": "spec-trade-names",
+                "unit": "spec-units",
+            },
+        )

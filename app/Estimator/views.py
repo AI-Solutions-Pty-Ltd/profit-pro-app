@@ -125,6 +125,31 @@ def _pagination_query_params(request):
     return params.urlencode()
 
 
+def _spec_datalist_context(qs, unit_field="unit"):
+    """Distinct existing values for the section / trade_name / unit datalists.
+
+    `qs` should be a queryset already scoped to the relevant tier (project,
+    contractor, or system). `unit_field` is "unit_label" for material specs
+    and "unit" for labour/plant/prelim specs.
+    """
+
+    def _values(field):
+        if not hasattr(qs.model, field):
+            return []
+        return list(
+            qs.exclude(**{field: ""})
+            .values_list(field, flat=True)
+            .distinct()
+            .order_by(field)
+        )
+
+    return {
+        "dl_sections": _values("section"),
+        "dl_trade_names": _values("trade_name"),
+        "dl_units": _values(unit_field),
+    }
+
+
 def _flash_sync_result(request, result, entity_label):
     """Flash a success/error message for a project-side contractor sync."""
     if result.get("skipped_no_contractor"):
@@ -342,36 +367,37 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             .order_by("bill_no")
         )
         context["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
-        context["spec_names"] = (
-            ProjectSpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
+
+        # Spec names for dropdowns: active specs + any inactive spec currently
+        # linked on a BoQ row (so existing data still renders correctly).
+        def _names_active_plus_linked(spec_model):
+            active = set(
+                spec_model.objects.filter(project=project, is_active=True)
+                .exclude(name="")
+                .values_list("name", flat=True)
+            )
+            linked_inactive = set(
+                spec_model.objects.filter(
+                    project=project, is_active=False, boq_items__isnull=False
+                )
+                .exclude(name="")
+                .values_list("name", flat=True)
+                .distinct()
+            )
+            return sorted(active | linked_inactive)
+
+        context["spec_names"] = _names_active_plus_linked(ProjectSpecification)
+        context["labour_spec_names"] = _names_active_plus_linked(
+            ProjectLabourSpecification
         )
-        context["labour_spec_names"] = (
-            ProjectLabourSpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
-        )
-        context["plant_spec_names"] = (
-            ProjectPlantSpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
+        context["plant_spec_names"] = _names_active_plus_linked(
+            ProjectPlantSpecification
         )
         context["labour_plant_spec_names"] = sorted(
             set(context["labour_spec_names"]) | set(context["plant_spec_names"])
         )
-        context["prelim_spec_names"] = (
-            ProjectPreliminarySpecification.objects.filter(project=project)
-            .exclude(name="")
-            .values_list("name", flat=True)
-            .distinct()
-            .order_by("name")
+        context["prelim_spec_names"] = _names_active_plus_linked(
+            ProjectPreliminarySpecification
         )
 
         # Current filter values
@@ -520,6 +546,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
             BOQItem.objects.filter(
                 project=project,
                 specification__isnull=False,
+                specification__is_active=True,
                 is_section_header=False,
             )
             .select_related(
@@ -607,6 +634,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
         boq_with_spec = BOQItem.objects.filter(
             project=project,
             specification__isnull=False,
+            specification__is_active=True,
             is_section_header=False,
         )
         context["sections"] = (
@@ -720,6 +748,13 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["query_params"] = _pagination_query_params(self.request)
+
+        context.update(
+            _spec_datalist_context(
+                ProjectSpecification.objects.filter(project=project),
+                unit_field="unit_label",
+            )
+        )
 
         return context
 
@@ -857,6 +892,7 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
         qs = BOQItem.objects.filter(
             project=project,
             labour_specification__isnull=False,
+            labour_specification__is_active=True,
             is_section_header=False,
         ).select_related(
             "labour_specification__crew",
@@ -923,6 +959,7 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
         boq_with_lspec = BOQItem.objects.filter(
             project=project,
             labour_specification__isnull=False,
+            labour_specification__is_active=True,
             is_section_header=False,
         )
         context["sections"] = (
@@ -2300,7 +2337,10 @@ class _SimpleSpecCalculatorView(ProjectEstimatorMixin, TemplateView):
         qs = BOQItem.objects.filter(
             project=project,
             is_section_header=False,
-            **{f"{self.spec_field}__isnull": False},
+            **{
+                f"{self.spec_field}__isnull": False,
+                f"{self.spec_field}__is_active": True,
+            },
         ).select_related(self.spec_field)
         if f_section:
             qs = qs.filter(section=f_section)
@@ -2345,7 +2385,10 @@ class _SimpleSpecCalculatorView(ProjectEstimatorMixin, TemplateView):
         boq_with = BOQItem.objects.filter(
             project=project,
             is_section_header=False,
-            **{f"{self.spec_field}__isnull": False},
+            **{
+                f"{self.spec_field}__isnull": False,
+                f"{self.spec_field}__is_active": True,
+            },
         )
         context["sections"] = (
             boq_with.exclude(section="")
@@ -2833,6 +2876,43 @@ class DeleteSpecificationView(View):
         return JsonResponse({"ok": True})
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSpecificationView(View):
+    """AJAX endpoint to update fields on a ProjectSpecification (material spec)."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "name": "str",
+        "unit_label": "str",
+        "is_active": "bool",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(ProjectSpecification, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
 class SystemMaterialSpecListView(ProjectEstimatorMixin, ListView):
     """List System Specifications with form to add new spec (project-scoped view)."""
 
@@ -3000,6 +3080,7 @@ class UpdateLabourSpecView(View):
         "site_factor": "decimal",
         "tools_factor": "decimal",
         "leadership_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, project_pk, pk):
@@ -3028,6 +3109,8 @@ class UpdateLabourSpecView(View):
                     item.crew = get_object_or_404(
                         ProjectLabourCrew, pk=int(value), project_id=project_pk
                     )
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -3158,6 +3241,8 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = ProjectLabourCrew.objects.filter(project=project)
         context["query_params"] = _pagination_query_params(self.request)
+
+        context.update(_spec_datalist_context(project_lspecs))
 
         return context
 
@@ -3310,6 +3395,7 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(project_pspecs))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -3353,6 +3439,7 @@ class UpdatePlantSpecView(View):
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, project_pk, pk):
@@ -3374,6 +3461,8 @@ class UpdatePlantSpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -3639,6 +3728,13 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
+        context.update(
+            _spec_datalist_context(
+                ProjectPreliminarySpecification.objects.filter(
+                    project=self.get_project()
+                )
+            )
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -3680,6 +3776,7 @@ class UpdatePreliminarySpecView(View):
         "name": "str",
         "unit": "str",
         "preliminary_type": "str",
+        "is_active": "bool",
     }
 
     def post(self, request, project_pk, pk):
@@ -3701,6 +3798,8 @@ class UpdatePreliminarySpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -4577,6 +4676,11 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(
+            _spec_datalist_context(
+                SystemSpecification.objects.all(), unit_field="unit_label"
+            )
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4792,6 +4896,45 @@ class DeleteSystemSpecificationView(View):
         return JsonResponse({"ok": True})
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemSpecificationView(View):
+    """AJAX endpoint to update fields on a SystemSpecification (material spec)."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "name": "str",
+        "unit_label": "str",
+        "is_active": "bool",
+    }
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        item = get_object_or_404(SystemSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
 # ── System Labour Crews ───────────────────────────────────────────────
 
 
@@ -4930,6 +5073,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = SystemLabourCrew.objects.all()
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(all_specs))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4954,6 +5098,7 @@ class UpdateSystemLabourSpecView(View):
         "site_factor": "decimal",
         "tools_factor": "decimal",
         "leadership_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -4974,6 +5119,8 @@ class UpdateSystemLabourSpecView(View):
                     ls.crew = None
                 else:
                     ls.crew = get_object_or_404(SystemLabourCrew, pk=int(value))
+            elif field_type == "bool":
+                setattr(ls, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(ls, field, str(value))
         except Exception:
@@ -5141,6 +5288,7 @@ class SystemPlantSpecListView(SystemLibraryMixin, ListView):
         context["form"] = context.get("form", SystemPlantSpecificationForm())
         context["plants"] = SystemPlantCost.objects.all()
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(SystemPlantSpecification.objects.all()))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -5162,6 +5310,7 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -5181,6 +5330,8 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -5482,6 +5633,9 @@ class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
+        context.update(
+            _spec_datalist_context(SystemPreliminarySpecification.objects.all())
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -5501,6 +5655,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
         "name": "str",
         "unit": "str",
         "preliminary_type": "str",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -5520,6 +5675,8 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -5855,6 +6012,7 @@ class ContractorMaterialSpecListView(ContractorLibraryMixin, ListView):
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(all_specs, unit_field="unit_label"))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6095,6 +6253,46 @@ class DeleteContractorSpecificationView(View):
         return JsonResponse({"ok": True})
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateContractorSpecificationView(View):
+    """AJAX endpoint to update fields on a ContractorSpecification (material spec)."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "name": "str",
+        "unit_label": "str",
+        "is_active": "bool",
+    }
+
+    def post(self, request, pk):
+        company = _contractor_company_for(request)
+        if company is None:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        item = get_object_or_404(ContractorSpecification, pk=pk, company=company)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
 # ── Contractor Labour Crews ───────────────────────────────────────────
 
 
@@ -6251,6 +6449,7 @@ class ContractorLabourSpecListView(ContractorLibraryMixin, ListView):
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = ContractorLabourCrew.objects.filter(company=company)
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(all_specs))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6289,6 +6488,7 @@ class UpdateContractorLabourSpecView(View):
         "site_factor": "decimal",
         "tools_factor": "decimal",
         "leadership_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -6312,6 +6512,8 @@ class UpdateContractorLabourSpecView(View):
                     ls.crew = get_object_or_404(
                         ContractorLabourCrew, pk=int(value), company=company
                     )
+            elif field_type == "bool":
+                setattr(ls, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(ls, field, str(value))
         except Exception:
@@ -6498,6 +6700,11 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
         context["form"] = context.get("form", ContractorPlantSpecificationForm())
         context["plants"] = ContractorPlantCost.objects.filter(company=company)
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(
+            _spec_datalist_context(
+                ContractorPlantSpecification.objects.filter(company=company)
+            )
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6532,6 +6739,7 @@ class UpdateContractorPlantSpecView(View):
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -6554,6 +6762,8 @@ class UpdateContractorPlantSpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -6893,6 +7103,12 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
+        company = self.get_company()
+        context.update(
+            _spec_datalist_context(
+                ContractorPreliminarySpecification.objects.filter(company=company)
+            )
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6925,6 +7141,7 @@ class UpdateContractorPreliminarySpecView(View):
         "name": "str",
         "unit": "str",
         "preliminary_type": "str",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -6949,6 +7166,8 @@ class UpdateContractorPreliminarySpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
