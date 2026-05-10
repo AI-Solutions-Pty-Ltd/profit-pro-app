@@ -301,7 +301,13 @@
                                         data-item-id="{{ ls.id }}"
                                         data-active="{{ ls.is_active|yesno:'1,0' }}"
                                         title="Click to toggle active/inactive">
-                                    <span class="ls-active-label">{% if ls.is_active %}Active{% else %}Inactive{% endif %}</span>
+                                    <span class="ls-active-label">
+                                        {% if ls.is_active %}
+                                            Active
+                                        {% else %}
+                                            Inactive
+                                        {% endif %}
+                                    </span>
                                 </button>
                             </td>
                         </tr>
@@ -317,6 +323,7 @@
         </div>
     </div>
     {% include "estimator/_pagination.html" %}
+    {% include "estimator/_spec_datalists.html" %}
     <script>
 (function() {
     const crewOptions = `<option value="">-</option>{% for c in crews %}<option value="{{ c.id }}">{{ c.crew_type }}</option>{% endfor %}`;

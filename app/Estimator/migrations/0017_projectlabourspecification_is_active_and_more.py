@@ -4,30 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0016_merge_20260508_1350'),
+        ("estimator", "0016_merge_20260508_1350"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='projectlabourspecification',
-            name='is_active',
+            model_name="projectlabourspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='projectplantspecification',
-            name='is_active',
+            model_name="projectplantspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='projectpreliminaryspecification',
-            name='is_active',
+            model_name="projectpreliminaryspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='projectspecification',
-            name='is_active',
+            model_name="projectspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
     ]

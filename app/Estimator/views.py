@@ -125,6 +125,31 @@ def _pagination_query_params(request):
     return params.urlencode()
 
 
+def _spec_datalist_context(qs, unit_field="unit"):
+    """Distinct existing values for the section / trade_name / unit datalists.
+
+    `qs` should be a queryset already scoped to the relevant tier (project,
+    contractor, or system). `unit_field` is "unit_label" for material specs
+    and "unit" for labour/plant/prelim specs.
+    """
+
+    def _values(field):
+        if not hasattr(qs.model, field):
+            return []
+        return list(
+            qs.exclude(**{field: ""})
+            .values_list(field, flat=True)
+            .distinct()
+            .order_by(field)
+        )
+
+    return {
+        "dl_sections": _values("section"),
+        "dl_trade_names": _values("trade_name"),
+        "dl_units": _values(unit_field),
+    }
+
+
 def _flash_sync_result(request, result, entity_label):
     """Flash a success/error message for a project-side contractor sync."""
     if result.get("skipped_no_contractor"):
@@ -342,6 +367,7 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             .order_by("bill_no")
         )
         context["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
+
         # Spec names for dropdowns: active specs + any inactive spec currently
         # linked on a BoQ row (so existing data still renders correctly).
         def _names_active_plus_linked(spec_model):
@@ -722,6 +748,13 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["query_params"] = _pagination_query_params(self.request)
+
+        context.update(
+            _spec_datalist_context(
+                ProjectSpecification.objects.filter(project=project),
+                unit_field="unit_label",
+            )
+        )
 
         return context
 
@@ -3209,6 +3242,8 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
         context["crews"] = ProjectLabourCrew.objects.filter(project=project)
         context["query_params"] = _pagination_query_params(self.request)
 
+        context.update(_spec_datalist_context(project_lspecs))
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -3360,6 +3395,7 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(project_pspecs))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -3691,6 +3727,13 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
         context["form"] = context.get("form", PreliminarySpecificationForm())
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
+        context.update(
+            _spec_datalist_context(
+                ProjectPreliminarySpecification.objects.filter(
+                    project=self.get_project()
+                )
+            )
         )
         return context
 
@@ -4633,6 +4676,11 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(
+            _spec_datalist_context(
+                SystemSpecification.objects.all(), unit_field="unit_label"
+            )
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -5025,6 +5073,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = SystemLabourCrew.objects.all()
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(all_specs))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -5239,6 +5288,7 @@ class SystemPlantSpecListView(SystemLibraryMixin, ListView):
         context["form"] = context.get("form", SystemPlantSpecificationForm())
         context["plants"] = SystemPlantCost.objects.all()
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(SystemPlantSpecification.objects.all()))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -5582,6 +5632,9 @@ class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
         context["form"] = context.get("form", SystemPreliminarySpecificationForm())
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
+        context.update(
+            _spec_datalist_context(SystemPreliminarySpecification.objects.all())
         )
         return context
 
@@ -5959,6 +6012,7 @@ class ContractorMaterialSpecListView(ContractorLibraryMixin, ListView):
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(all_specs, unit_field="unit_label"))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6395,6 +6449,7 @@ class ContractorLabourSpecListView(ContractorLibraryMixin, ListView):
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = ContractorLabourCrew.objects.filter(company=company)
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(_spec_datalist_context(all_specs))
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6645,6 +6700,11 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
         context["form"] = context.get("form", ContractorPlantSpecificationForm())
         context["plants"] = ContractorPlantCost.objects.filter(company=company)
         context["query_params"] = _pagination_query_params(self.request)
+        context.update(
+            _spec_datalist_context(
+                ContractorPlantSpecification.objects.filter(company=company)
+            )
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -7042,6 +7102,12 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
         context["form"] = context.get("form", ContractorPreliminarySpecificationForm())
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
+        company = self.get_company()
+        context.update(
+            _spec_datalist_context(
+                ContractorPreliminarySpecification.objects.filter(company=company)
+            )
         )
         return context
 

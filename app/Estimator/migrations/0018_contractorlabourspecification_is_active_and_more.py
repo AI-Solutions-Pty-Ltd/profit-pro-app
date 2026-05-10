@@ -4,60 +4,59 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0017_projectlabourspecification_is_active_and_more'),
+        ("estimator", "0017_projectlabourspecification_is_active_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='contractorlabourspecification',
-            name='is_active',
+            model_name="contractorlabourspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='contractormaterialspec',
-            name='is_active',
+            model_name="contractormaterialspec",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='contractorplantspecification',
-            name='is_active',
+            model_name="contractorplantspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='contractorpreliminaryspecification',
-            name='is_active',
+            model_name="contractorpreliminaryspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='contractorspecification',
-            name='is_active',
+            model_name="contractorspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='systemlabourspecification',
-            name='is_active',
+            model_name="systemlabourspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='systemmaterialspec',
-            name='is_active',
+            model_name="systemmaterialspec",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='systemplantspecification',
-            name='is_active',
+            model_name="systemplantspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='systempreliminaryspecification',
-            name='is_active',
+            model_name="systempreliminaryspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='systemspecification',
-            name='is_active',
+            model_name="systemspecification",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
     ]

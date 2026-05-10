@@ -158,7 +158,13 @@
                                         data-item-id="{{ spec.id }}"
                                         data-active="{{ spec.is_active|yesno:'1,0' }}"
                                         title="Click to toggle active/inactive">
-                                    <span class="prelim-active-label">{% if spec.is_active %}Active{% else %}Inactive{% endif %}</span>
+                                    <span class="prelim-active-label">
+                                        {% if spec.is_active %}
+                                            Active
+                                        {% else %}
+                                            Inactive
+                                        {% endif %}
+                                    </span>
                                 </button>
                             </td>
                         </tr>
@@ -171,6 +177,7 @@
             </table>
         </div>
     </div>
+    {% include "estimator/_spec_datalists.html" %}
     <script>
 document.querySelectorAll('.prelim-active-toggle').forEach(btn => {
     btn.addEventListener('click', () => {

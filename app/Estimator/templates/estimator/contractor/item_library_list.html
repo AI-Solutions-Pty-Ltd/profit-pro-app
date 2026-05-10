@@ -143,7 +143,8 @@
                                         {% if s.is_active or e.material_spec_id == s.id %}
                                             <option value="{{ s.id }}"
                                                     {% if e.material_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}{% if not s.is_active %} (inactive){% endif %}
+                                                {{ s.name }}
+                                                {% if not s.is_active %}(inactive){% endif %}
                                             </option>
                                         {% endif %}
                                     {% endfor %}
@@ -158,7 +159,8 @@
                                         {% if s.is_active or e.labour_spec_id == s.id %}
                                             <option value="{{ s.id }}"
                                                     {% if e.labour_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}{% if not s.is_active %} (inactive){% endif %}
+                                                {{ s.name }}
+                                                {% if not s.is_active %}(inactive){% endif %}
                                             </option>
                                         {% endif %}
                                     {% endfor %}
@@ -173,7 +175,8 @@
                                         {% if s.is_active or e.plant_spec_id == s.id %}
                                             <option value="{{ s.id }}"
                                                     {% if e.plant_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}{% if not s.is_active %} (inactive){% endif %}
+                                                {{ s.name }}
+                                                {% if not s.is_active %}(inactive){% endif %}
                                             </option>
                                         {% endif %}
                                     {% endfor %}
@@ -188,7 +191,8 @@
                                         {% if s.is_active or e.preliminary_spec_id == s.id %}
                                             <option value="{{ s.id }}"
                                                     {% if e.preliminary_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}{% if not s.is_active %} (inactive){% endif %}
+                                                {{ s.name }}
+                                                {% if not s.is_active %}(inactive){% endif %}
                                             </option>
                                         {% endif %}
                                     {% endfor %}
