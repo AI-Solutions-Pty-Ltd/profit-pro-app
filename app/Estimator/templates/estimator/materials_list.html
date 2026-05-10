@@ -69,8 +69,14 @@
                             <div class="mt-1">{{ form.unit }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_market_rate" class="block text-sm font-medium text-gray-700">Market Rate (R)</label>
-                            <div class="mt-1">{{ form.market_rate }}</div>
+                            <label for="id_pack_qty" class="block text-sm font-medium text-gray-700">Pack Qty</label>
+                            <div class="mt-1">{{ form.pack_qty }}</div>
+                            <p class="mt-1 text-[10px] text-gray-500">Pack size the price covers (e.g. 1000)</p>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label for="id_pack_cost" class="block text-sm font-medium text-gray-700">Pack Cost (R)</label>
+                            <div class="mt-1">{{ form.pack_cost }}</div>
+                            <p class="mt-1 text-[10px] text-gray-500">Total cost for the pack</p>
                         </div>
                         <div class="sm:col-span-2">
                             <label for="id_material_variety"
@@ -116,7 +122,15 @@
                         </th>
                         <th scope="col"
                             class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Market Rate
+                            Pack Qty
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Pack Cost
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Rate / unit
                         </th>
                         <th scope="col"
                             class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -130,7 +144,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for mat in materials %}
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50" data-mat-id="{{ mat.id }}">
                             <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">{{ mat.trade_name|default:"-" }}</td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
                                 <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-700/10 ring-inset">
@@ -138,20 +152,30 @@
                                 </span>
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.unit }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right">
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit w-20 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ mat.id }}"
+                                       data-field="pack_qty"
+                                       value="{{ mat.pack_qty }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
                                        step="0.01"
-                                       class="inline-edit w-24 text-right border-0 bg-transparent text-sm font-semibold text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       class="inline-edit w-24 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ mat.id }}"
-                                       data-field="market_rate"
-                                       value="{{ mat.market_rate }}">
+                                       data-field="pack_cost"
+                                       value="{{ mat.pack_cost }}">
                             </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right tabular-nums computed-rate"
+                                data-mat-id="{{ mat.id }}">{{ mat.market_rate }}</td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.material_variety }}</td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:pr-6">{{ mat.market_spec }}</td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">No materials found.</td>
+                            <td colspan="8" class="px-6 py-12 text-center text-sm text-gray-500">No materials found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -177,6 +201,10 @@ document.querySelectorAll('.inline-edit').forEach(input => {
                 input.classList.add('ring-2', 'ring-green-500');
                 setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
                 original = input.value;
+                if (data.market_rate !== undefined) {
+                    const cell = document.querySelector(`.computed-rate[data-mat-id="${id}"]`);
+                    if (cell) cell.textContent = data.market_rate;
+                }
             } else {
                 input.classList.add('ring-2', 'ring-red-500');
                 setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
