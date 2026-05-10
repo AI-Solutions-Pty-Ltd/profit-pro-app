@@ -73,7 +73,8 @@ def initialize_project_estimator(project):
             trade_name=cm.trade_name,
             material_code=cm.material_code,
             unit=cm.unit,
-            market_rate=cm.market_rate,
+            pack_qty=cm.pack_qty,
+            pack_cost=cm.pack_cost,
             material_variety=cm.material_variety,
             market_spec=cm.market_spec,
         )
@@ -264,7 +265,8 @@ def clone_from_project(target_project, source_project):
             trade_name=sm.trade_name,
             material_code=sm.material_code,
             unit=sm.unit,
-            market_rate=sm.market_rate,
+            pack_qty=sm.pack_qty,
+            pack_cost=sm.pack_cost,
             material_variety=sm.material_variety,
             market_spec=sm.market_spec,
         )
@@ -445,7 +447,8 @@ def pull_from_library(project):
     ).select_related("source"):
         pm.trade_name = pm.source.trade_name
         pm.unit = pm.source.unit
-        pm.market_rate = pm.source.market_rate
+        pm.pack_qty = pm.source.pack_qty
+        pm.pack_cost = pm.source.pack_cost
         pm.material_variety = pm.source.material_variety
         pm.market_spec = pm.source.market_spec
         pm.save()
@@ -538,7 +541,8 @@ def sync_materials_from_contractor(project):
         defaults = {
             "trade_name": cm.trade_name,
             "unit": cm.unit,
-            "market_rate": cm.market_rate,
+            "pack_qty": cm.pack_qty,
+            "pack_cost": cm.pack_cost,
             "material_variety": cm.material_variety,
             "market_spec": cm.market_spec,
         }
@@ -954,7 +958,8 @@ def sync_materials_to_contractor(company):
     ).select_related("source"):
         cm.trade_name = cm.source.trade_name
         cm.unit = cm.source.unit
-        cm.market_rate = cm.source.market_rate
+        cm.pack_qty = cm.source.pack_qty
+        cm.pack_cost = cm.source.pack_cost
         cm.material_variety = cm.source.material_variety
         cm.market_spec = cm.source.market_spec
         cm.save()
@@ -971,7 +976,8 @@ def sync_materials_to_contractor(company):
             "source": sm,
             "trade_name": sm.trade_name,
             "unit": sm.unit,
-            "market_rate": sm.market_rate,
+            "pack_qty": sm.pack_qty,
+            "pack_cost": sm.pack_cost,
             "material_variety": sm.material_variety,
             "market_spec": sm.market_spec,
         }

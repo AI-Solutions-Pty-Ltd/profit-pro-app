@@ -61,7 +61,8 @@ class MaterialForm(forms.ModelForm):
             "trade_name",
             "material_code",
             "unit",
-            "market_rate",
+            "pack_qty",
+            "pack_cost",
             "material_variety",
             "market_spec",
         ]
@@ -78,7 +79,10 @@ class MaterialForm(forms.ModelForm):
             "unit": forms.TextInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Bag"}
             ),
-            "market_rate": forms.NumberInput(
+            "pack_qty": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "1", "step": "0.0001"}
+            ),
+            "pack_cost": forms.NumberInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "0.00", "step": "0.01"}
             ),
             "material_variety": forms.TextInput(
@@ -293,7 +297,8 @@ class SystemMaterialForm(forms.ModelForm):
             "trade_name",
             "material_code",
             "unit",
-            "market_rate",
+            "pack_qty",
+            "pack_cost",
             "material_variety",
             "market_spec",
         ]
@@ -310,7 +315,10 @@ class SystemMaterialForm(forms.ModelForm):
             "unit": forms.TextInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Bag"}
             ),
-            "market_rate": forms.NumberInput(
+            "pack_qty": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "1", "step": "0.0001"}
+            ),
+            "pack_cost": forms.NumberInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "0.00", "step": "0.01"}
             ),
             "material_variety": forms.TextInput(
@@ -820,7 +828,8 @@ class ContractorMaterialForm(forms.ModelForm):
             "trade_name",
             "material_code",
             "unit",
-            "market_rate",
+            "pack_qty",
+            "pack_cost",
             "material_variety",
             "market_spec",
         ]
@@ -837,7 +846,10 @@ class ContractorMaterialForm(forms.ModelForm):
             "unit": forms.TextInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Bag"}
             ),
-            "market_rate": forms.NumberInput(
+            "pack_qty": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "1", "step": "0.0001"}
+            ),
+            "pack_cost": forms.NumberInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "0.00", "step": "0.01"}
             ),
             "material_variety": forms.TextInput(
