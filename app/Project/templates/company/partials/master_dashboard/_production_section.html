@@ -1,6 +1,5 @@
 {% load humanize %}
 {% load heroicons %}
-
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     <!-- Header matching Sedge Build style -->
     <div class="bg-blue-600 px-4 py-2 flex items-center justify-between text-white text-sm font-bold">
@@ -8,11 +7,8 @@
             {% heroicon_outline "cog-8-tooth" size="18" class="mr-2" %}
             Production Performance
         </div>
-        <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded bg-white/20">
-            {{ production.status }}
-        </span>
+        <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded bg-white/20">{{ production.status }}</span>
     </div>
-
     <!-- Production KPI Grid -->
     <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
         <!-- Progress Gauge -->
@@ -28,7 +24,6 @@
             </div>
             <p class="text-[9px] font-bold text-blue-600 uppercase tracking-widest">Overall Progress</p>
         </div>
-
         <!-- U/MH Efficiency -->
         <div class="bg-purple-50 border border-purple-100 rounded-lg p-6 flex flex-col items-center text-center">
             <div class="bg-purple-500 rounded-lg p-2 mb-3 shadow-sm">
@@ -37,7 +32,6 @@
             <h3 class="text-2xl font-black text-purple-900 font-mono">{{ production.umh }}</h3>
             <p class="text-[9px] font-bold text-purple-600 uppercase tracking-widest">Units per Man-Hour</p>
         </div>
-
         <!-- Total Hours -->
         <div class="bg-amber-50 border border-amber-100 rounded-lg p-6 flex flex-col items-center text-center">
             <div class="bg-amber-500 rounded-lg p-2 mb-3 shadow-sm">
@@ -46,7 +40,6 @@
             <h3 class="text-2xl font-black text-amber-900 font-mono">{{ production.total_hours|floatformat:0 }}h</h3>
             <p class="text-[9px] font-bold text-amber-600 uppercase tracking-widest">Total Production Hours</p>
         </div>
-
         <!-- Actual Quantity -->
         <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-6 flex flex-col items-center text-center">
             <div class="bg-emerald-500 rounded-lg p-2 mb-3 shadow-sm">

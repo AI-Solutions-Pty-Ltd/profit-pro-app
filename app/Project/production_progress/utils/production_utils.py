@@ -1735,7 +1735,7 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
     }
 
 
-def get_project_activity_summary(
+def get_activity_financial_summary(
     project_id, f_section=None, f_bill=None, f_activity=None
 ):
     """
@@ -1743,6 +1743,8 @@ def get_project_activity_summary(
     Applies the 'Labour Priority' rule for quantities and uses subqueries for plant costs
      to avoid Cartesian product duplication.
     """
+
+    from django.db.models.functions import Trim
 
     # 1. Base Queryset with Coalesced names and units
     queryset = (
@@ -1752,8 +1754,10 @@ def get_project_activity_summary(
             | models.Q(plant_specification__isnull=False)
         )
         .annotate(
-            act_name=Coalesce(
-                "labour_specification__name", "plant_specification__name"
+            clean_section=Trim(Coalesce("section", Value(""))),
+            clean_bill=Trim(Coalesce("bill_no", Value(""))),
+            act_name=Trim(
+                Coalesce("labour_specification__name", "plant_specification__name")
             ),
             act_unit=Coalesce(
                 "labour_specification__unit", "plant_specification__unit"
@@ -1763,15 +1767,20 @@ def get_project_activity_summary(
 
     # 2. Apply optional filters
     if f_section:
-        queryset = queryset.filter(section=f_section)
+        queryset = queryset.filter(clean_section=f_section)
     if f_bill:
-        queryset = queryset.filter(bill_no=f_bill)
+        queryset = queryset.filter(clean_bill=f_bill)
     if f_activity:
         queryset = queryset.filter(act_name__icontains=f_activity)
 
     # 3. Aggregation with Priority Logic
     grouped_queryset = (
-        queryset.values("section", "bill_no", "act_name", "act_unit")
+        queryset.values(
+            act_section=F("clean_section"),
+            act_bill=F("clean_bill"),
+            act_name=F("act_name"),
+            act_unit=F("act_unit"),
+        )
         .annotate(
             # Pick one labour_specification id per group for linking
             labour_spec_id=Max("labour_specification"),
@@ -1839,8 +1848,8 @@ def get_project_activity_summary(
     # 4. Plant Subqueries to avoid Join Multiplication
     plant_cost_subquery = (
         ProjectPlantSpecificationComponent.objects.filter(
-            specification__boq_items__section=OuterRef("section"),
-            specification__boq_items__bill_no=OuterRef("bill_no"),
+            specification__boq_items__section=OuterRef("act_section"),
+            specification__boq_items__bill_no=OuterRef("act_bill"),
         )
         .filter(
             models.Q(
@@ -1861,8 +1870,8 @@ def get_project_activity_summary(
 
     plant_count_subquery = (
         ProjectPlantSpecificationComponent.objects.filter(
-            specification__boq_items__section=OuterRef("section"),
-            specification__boq_items__bill_no=OuterRef("bill_no"),
+            specification__boq_items__section=OuterRef("act_section"),
+            specification__boq_items__bill_no=OuterRef("act_bill"),
         )
         .filter(
             models.Q(
@@ -1901,4 +1910,4 @@ def get_project_activity_summary(
         .annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
     )
 
-    return final_queryset.order_by("section", "bill_no", "act_name")
+    return final_queryset.order_by("act_section", "act_bill", "act_name")

@@ -10,25 +10,19 @@
             <!-- Active Projects -->
             <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 text-center">
                 <div class="flex justify-center mb-2">
-                    <div class="bg-blue-500 rounded-lg p-1.5">
-                        {% heroicon_outline "briefcase" size="16" class="text-white" %}
-                    </div>
+                    <div class="bg-blue-500 rounded-lg p-1.5">{% heroicon_outline "briefcase" size="16" class="text-white" %}</div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-1">Active Projects</p>
                 <p class="text-2xl font-black text-blue-900 font-mono">{{ projects_count|default:"0" }}</p>
             </div>
-
             <!-- Profits -->
             <div class="bg-rose-50 border border-rose-100 rounded-lg p-4 text-center">
                 <div class="flex justify-center mb-2">
-                    <div class="bg-rose-500 rounded-lg p-1.5">
-                        {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
-                    </div>
+                    <div class="bg-rose-500 rounded-lg p-1.5">{% heroicon_outline "currency-dollar" size="16" class="text-white" %}</div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Profits</p>
                 <p class="text-xl font-black text-rose-900 font-mono">R {{ financials.net_profit|floatformat:0|intcomma }}</p>
             </div>
-
             <!-- Urgent Intervention -->
             <div class="bg-red-50 border border-red-100 rounded-lg p-4 text-center">
                 <div class="flex justify-center mb-2">
@@ -39,43 +33,33 @@
                 <p class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-1">Urgent Intervention</p>
                 <p class="text-2xl font-black text-red-900 font-mono">{{ exceptions|length|default:"0" }}</p>
             </div>
-
             <!-- Requiring Attention -->
             <div class="bg-orange-50 border border-orange-100 rounded-lg p-4 text-center">
                 <div class="flex justify-center mb-2">
-                    <div class="bg-orange-500 rounded-lg p-1.5">
-                        {% heroicon_outline "eye" size="16" class="text-white" %}
-                    </div>
+                    <div class="bg-orange-500 rounded-lg p-1.5">{% heroicon_outline "eye" size="16" class="text-white" %}</div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-orange-600 mb-1">Requiring Attention</p>
                 <p class="text-2xl font-black text-orange-900 font-mono">1</p>
             </div>
-
             <!-- Compliance % -->
             <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-center">
                 <div class="flex justify-center mb-2">
-                    <div class="bg-emerald-500 rounded-lg p-1.5">
-                        {% heroicon_outline "shield-check" size="16" class="text-white" %}
-                    </div>
+                    <div class="bg-emerald-500 rounded-lg p-1.5">{% heroicon_outline "shield-check" size="16" class="text-white" %}</div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">Compliance %</p>
                 <p class="text-2xl font-black text-emerald-900 font-mono">100.0%</p>
                 <p class="text-[9px] text-emerald-600">1 Items</p>
             </div>
-
             <!-- Urgent Compliance -->
             <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-center">
                 <div class="flex justify-center mb-2">
-                    <div class="bg-indigo-500 rounded-lg p-1.5">
-                        {% heroicon_outline "clock" size="16" class="text-white" %}
-                    </div>
+                    <div class="bg-indigo-500 rounded-lg p-1.5">{% heroicon_outline "clock" size="16" class="text-white" %}</div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-1">Urgent Compliance</p>
                 <p class="text-2xl font-black text-indigo-900 font-mono">0</p>
             </div>
         </div>
     </div>
-
     <!-- Income Statement Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="bg-emerald-600 px-4 py-2 flex items-center text-white text-sm font-bold">
@@ -86,24 +70,23 @@
             <!-- Baseline Profit -->
             <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 text-center">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-1">Baseline Profit</p>
-                <p class="text-xl font-black text-blue-900 font-mono">R {{ baseline_comparison.original_revenue|floatformat:0|intcomma }}</p>
+                <p class="text-xl font-black text-blue-900 font-mono">
+                    R {{ baseline_comparison.original_revenue|floatformat:0|intcomma }}
+                </p>
                 <p class="text-[10px] text-blue-500">(99.9%)</p>
             </div>
-
             <!-- Progress Profit -->
             <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-center">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">Progress Profit</p>
                 <p class="text-xl font-black text-emerald-900 font-mono">R 0</p>
                 <p class="text-[10px] text-emerald-500">(0.0%)</p>
             </div>
-
             <!-- Forecast Profit -->
             <div class="bg-yellow-50 border border-yellow-100 rounded-lg p-4 text-center">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-yellow-600 mb-1">Forecast Profit</p>
                 <p class="text-xl font-black text-yellow-900 font-mono">R 0</p>
                 <p class="text-[10px] text-yellow-500">(0.0%)</p>
             </div>
-
             <!-- Overheads -->
             <div class="bg-rose-50 border border-rose-100 rounded-lg p-4 text-center">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Overheads</p>

@@ -25,7 +25,10 @@ from app.Project.models import (
     Portfolio,
     Project,
 )
-from app.Project.production_progress.production_models import DailyActivityEntry, ProductionPlan
+from app.Project.production_progress.production_models import (
+    DailyActivityEntry,
+    ProductionPlan,
+)
 
 from .company_forms import CompanyFilterForm, CompanyForm
 
@@ -460,6 +463,7 @@ class CompanyReportView(
         context["forecast_profit"] = 6_500_000
         return context
 
+
 class MasterDashboardDataMixin:
     """Aggregates multi-module data for Master Dashboards."""
 
@@ -467,15 +471,15 @@ class MasterDashboardDataMixin:
         """Centralized logic for Production, Baseline, Revenue, and Profitability."""
         # Use existing financial metrics as a base
         metrics = {}
-        
+
         # 1. Production Metrics
         production_data = self._get_production_summary(projects)
         metrics["production"] = production_data
-        
+
         # 2. Baseline Metrics (Original vs Adjusted)
         baseline_data = self._get_baseline_comparison(projects)
         metrics["baseline_comparison"] = baseline_data
-        
+
         # 3. Revenue & Profitability (Re-using some logic but expanding)
         financial_data = self._get_financial_performance(projects)
         metrics["financials"] = financial_data
@@ -483,7 +487,7 @@ class MasterDashboardDataMixin:
         # 4. Portfolio Specific: Exception List
         if projects.count() > 1:
             metrics["exceptions"] = self._get_exception_list(projects)
-        
+
         return metrics
 
     def _get_exception_list(self, projects):
@@ -492,68 +496,93 @@ class MasterDashboardDataMixin:
         for project in projects:
             # Check progress vs time (Simplified)
             plans = ProductionPlan.objects.filter(project=project, is_leaf=True)
-            actual = DailyActivityEntry.objects.filter(production_plan__in=plans).aggregate(total=Sum("quantity"))["total"] or 0
+            actual = (
+                DailyActivityEntry.objects.filter(production_plan__in=plans).aggregate(
+                    total=Sum("quantity")
+                )["total"]
+                or 0
+            )
             total = plans.aggregate(total=Sum("quantity"))["total"] or 0
             pct = (actual / total * 100) if total > 0 else 100
-            
-            if pct < 30: # Flag projects with very low progress
-                exceptions.append({
-                    "project": project,
-                    "reason": "Critical Low Progress",
-                    "severity": "high",
-                    "value": f"{round(pct, 1)}%"
-                })
+
+            if pct < 30:  # Flag projects with very low progress
+                exceptions.append(
+                    {
+                        "project": project,
+                        "reason": "Critical Low Progress",
+                        "severity": "high",
+                        "value": f"{round(pct, 1)}%",
+                    }
+                )
         return exceptions
 
     def _get_production_summary(self, projects):
         plans = ProductionPlan.objects.filter(project__in=projects, is_leaf=True)
         total_quantity = plans.aggregate(total=Sum("quantity"))["total"] or 0
-        actual_quantity = DailyActivityEntry.objects.filter(production_plan__in=plans).aggregate(actual=Sum("quantity"))["actual"] or 0
-        progress_pct = (actual_quantity / total_quantity * 100) if total_quantity > 0 else 0
-        
+        actual_quantity = (
+            DailyActivityEntry.objects.filter(production_plan__in=plans).aggregate(
+                actual=Sum("quantity")
+            )["actual"]
+            or 0
+        )
+        progress_pct = (
+            (actual_quantity / total_quantity * 100) if total_quantity > 0 else 0
+        )
+
         # Calculate U/MH (Simplified for dashboard)
-        total_hours = DailyActivityEntry.objects.filter(production_plan__in=plans).aggregate(hours=Sum("hours_on_activity"))["hours"] or 0
+        total_hours = (
+            DailyActivityEntry.objects.filter(production_plan__in=plans).aggregate(
+                hours=Sum("hours_on_activity")
+            )["hours"]
+            or 0
+        )
         umh = (actual_quantity / total_hours) if total_hours > 0 else 0
-        
+
         return {
             "progress_pct": round(progress_pct, 1),
             "total_quantity": total_quantity,
             "actual_quantity": actual_quantity,
             "total_hours": total_hours,
             "umh": round(umh, 2),
-            "status": "On Track" if progress_pct >= 50 else "Behind Schedule", # Placeholder logic
+            "status": "On Track"
+            if progress_pct >= 50
+            else "Behind Schedule",  # Placeholder logic
         }
 
     def _get_baseline_comparison(self, projects):
-        boq_items = BOQItem.objects.filter(project__in=projects).select_related(
-            "specification", 
-            "labour_specification", 
-            "labour_specification__crew",
-            "plant_specification", 
-            "preliminary_specification"
-        ).prefetch_related(
-            "specification__spec_components__material",
-            "plant_specification__components__plant_type",
+        boq_items = (
+            BOQItem.objects.filter(project__in=projects)
+            .select_related(
+                "specification",
+                "labour_specification",
+                "labour_specification__crew",
+                "plant_specification",
+                "preliminary_specification",
+            )
+            .prefetch_related(
+                "specification__spec_components__material",
+                "plant_specification__components__plant_type",
+            )
         )
-        
+
         # We must iterate because these are calculated properties, not DB fields
         original_cost = 0
         original_revenue = 0
-        
+
         for item in boq_items:
             qty = item.contract_quantity or 0
             rate = item.contract_rate or 0
             original_revenue += float(qty * rate)
-            
+
             # For cost, we'll use a simplified version of baseline_new_price or similar
             # Since baseline_new_price is a property, we call it here
             price = item.baseline_new_price or 0
             original_cost += float(qty * price)
-        
+
         # Adjusted (Includes Variations)
-        adjusted_cost = original_cost * 1.05 # Mocked 5% growth for now
-        adjusted_revenue = original_revenue * 1.08 # Mocked 8% growth for now
-        
+        adjusted_cost = original_cost * 1.05  # Mocked 5% growth for now
+        adjusted_revenue = original_revenue * 1.08  # Mocked 8% growth for now
+
         return {
             "original_cost": original_cost,
             "original_revenue": original_revenue,
@@ -561,27 +590,34 @@ class MasterDashboardDataMixin:
             "adjusted_revenue": adjusted_revenue,
             "revenue_growth": adjusted_revenue - original_revenue,
             "cost_growth": adjusted_cost - original_cost,
-            "growth_pct": round(((adjusted_revenue / original_revenue - 1) * 100), 1) if original_revenue > 0 else 0
+            "growth_pct": round(((adjusted_revenue / original_revenue - 1) * 100), 1)
+            if original_revenue > 0
+            else 0,
         }
 
     def _get_financial_performance(self, projects):
         # Placeholder for complex financial aggregation
         return {
-            "net_profit": 1250000, # Mock for testing
+            "net_profit": 1250000,  # Mock for testing
             "margin": 12.5,
             "variance": -2.4,
             "certified_revenue": 4500000,
             "pending_revenue": 850000,
             "remaining_revenue": 3200000,
             "margin_trend": [10.2, 11.5, 11.0, 12.8, 12.5],
-            "period_labels": ["Jan", "Feb", "Mar", "Apr", "May"]
+            "period_labels": ["Jan", "Feb", "Mar", "Apr", "May"],
         }
 
 
 class MasterProjectDashboardView(
-    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, MasterDashboardDataMixin, DetailView
+    SubscriptionRequiredMixin,
+    LoginRequiredMixin,
+    BreadcrumbMixin,
+    MasterDashboardDataMixin,
+    DetailView,
 ):
     """Command Center Dashboard for a single project."""
+
     model = Project
     template_name = "company/master_project_dashboard.html"
     context_object_name = "project"
@@ -596,16 +632,24 @@ class MasterProjectDashboardView(
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Business Dashboard", "url": reverse("project:company-dashboard")},
+            {
+                "title": "Business Dashboard",
+                "url": reverse("project:company-dashboard"),
+            },
             {"title": self.object.name, "url": None},
             {"title": "Master Dashboard", "url": None},
         ]
 
 
 class MasterPortfolioDashboardView(
-    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, MasterDashboardDataMixin, ListView
+    SubscriptionRequiredMixin,
+    LoginRequiredMixin,
+    BreadcrumbMixin,
+    MasterDashboardDataMixin,
+    ListView,
 ):
     """Executive Command Center for the entire portfolio."""
+
     model = Project
     template_name = "company/master_portfolio_dashboard.html"
     context_object_name = "projects"
@@ -623,6 +667,9 @@ class MasterPortfolioDashboardView(
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Business Dashboard", "url": reverse("project:company-dashboard")},
+            {
+                "title": "Business Dashboard",
+                "url": reverse("project:company-dashboard"),
+            },
             {"title": "Portfolio Master Dashboard", "url": None},
         ]

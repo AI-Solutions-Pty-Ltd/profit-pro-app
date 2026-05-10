@@ -2,68 +2,54 @@
 {% load humanize %}
 {% load static %}
 {% load heroicons %}
-
 {% block content %}
-<div class="min-h-screen bg-gray-50/50">
-
- 
-    <!-- Main Content Area -->
-    <div class="px-4 py-8 mx-auto space-y-10 max-w-7xl sm:px-6 lg:px-8">
-        
-        <!-- Action Bar -->
-        <div class="flex flex-col gap-6 justify-between md:flex-row md:items-end">
-            <div>
-                <h2 class="text-3xl font-black tracking-tight text-gray-900">{{ project.name }}</h2>
-                <p class="mt-1 text-xs text-gray-500">Project Command Center as of {% now "F d, Y" %}</p>
+    <div class="min-h-screen bg-gray-50/50">
+        <!-- Main Content Area -->
+        <div class="px-4 py-8 mx-auto space-y-10 max-w-7xl sm:px-6 lg:px-8">
+            <!-- Action Bar -->
+            <div class="flex flex-col gap-6 justify-between md:flex-row md:items-end">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight text-gray-900">{{ project.name }}</h2>
+                    <p class="mt-1 text-xs text-gray-500">Project Command Center as of {% now "F d, Y" %}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="p-2 text-gray-400 bg-white rounded-lg border border-gray-200 shadow-sm transition-all hover:text-indigo-600">
+                        {% heroicon_outline "printer" size="18" %}
+                    </button>
+                    <a href="{% url 'project:company-management' project.pk %}"
+                       class="px-4 py-2 text-xs font-bold tracking-widest text-gray-700 uppercase bg-white rounded-lg border border-gray-200 shadow-sm transition-all hover:bg-gray-50">
+                        Exit to Management
+                    </a>
+                </div>
             </div>
-
-            <div class="flex items-center space-x-3">
-                <button class="p-2 text-gray-400 bg-white rounded-lg border border-gray-200 shadow-sm transition-all hover:text-indigo-600">
-                    {% heroicon_outline "printer" size="18" %}
-                </button>
-                <a href="{% url 'project:company-management' project.pk %}" class="px-4 py-2 text-xs font-bold tracking-widest text-gray-700 uppercase bg-white rounded-lg border border-gray-200 shadow-sm transition-all hover:bg-gray-50">
-                    Exit to Management
-                </a>
-            </div>
+            <!-- Summary Stats Section -->
+            {% include "company/partials/master_dashboard/_summary_stats.html" %}
+            <!-- Production Section -->
+            <section id="production" class="scroll-mt-24">
+                {% include "company/partials/master_dashboard/_production_section.html" %}
+            </section>
+            <!-- Divider -->
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+            <!-- Baseline Section -->
+            <section id="baseline" class="scroll-mt-24">
+                {% include "company/partials/master_dashboard/_baseline_section.html" %}
+            </section>
+            <!-- Divider -->
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+            <!-- Revenue Section -->
+            <section id="revenue" class="scroll-mt-24">
+                {% include "company/partials/master_dashboard/_revenue_section.html" %}
+            </section>
+            <!-- Divider -->
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+            <!-- Profitability Section -->
+            <section id="profitability" class="pb-20 scroll-mt-24">
+                {% include "company/partials/master_dashboard/_profitability_section.html" %}
+            </section>
         </div>
-
-        <!-- Summary Stats Section -->
-        {% include "company/partials/master_dashboard/_summary_stats.html" %}
-        
-        <!-- Production Section -->
-        <section id="production" class="scroll-mt-24">
-            {% include "company/partials/master_dashboard/_production_section.html" %}
-        </section>
-
-        <!-- Divider -->
-        <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-
-        <!-- Baseline Section -->
-        <section id="baseline" class="scroll-mt-24">
-            {% include "company/partials/master_dashboard/_baseline_section.html" %}
-        </section>
-
-        <!-- Divider -->
-        <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-
-        <!-- Revenue Section -->
-        <section id="revenue" class="scroll-mt-24">
-            {% include "company/partials/master_dashboard/_revenue_section.html" %}
-        </section>
-
-        <!-- Divider -->
-        <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-
-        <!-- Profitability Section -->
-        <section id="profitability" class="pb-20 scroll-mt-24">
-            {% include "company/partials/master_dashboard/_profitability_section.html" %}
-        </section>
-
     </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
         const commonOptions = {
             responsive: true,
@@ -128,5 +114,5 @@
             });
         }
     });
-</script>
+    </script>
 {% endblock %}
