@@ -115,6 +115,7 @@
                         <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Daily Prod.</th>
                         <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Operator</th>
                         <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Site</th>
+                        <th class="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
                         <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
                             <span class="sr-only">Actions</span>
                         </th>
@@ -122,7 +123,8 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for ps in plant_specs %}
-                        <tr class="hover:bg-gray-50" data-plant-spec-id="{{ ps.id }}">
+                        <tr class="hover:bg-gray-50 {% if not ps.is_active %}opacity-60{% endif %}"
+                            data-plant-spec-id="{{ ps.id }}">
                             <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                                 <input type="text"
                                        class="inline-edit w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
@@ -213,6 +215,21 @@
                                        data-field="site_factor"
                                        value="{{ ps.site_factor }}">
                             </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-center text-sm">
+                                <button type="button"
+                                        class="ps-active-toggle inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {% if ps.is_active %}bg-emerald-50 text-emerald-700 ring-emerald-600/20{% else %}bg-gray-100 text-gray-600 ring-gray-500/10{% endif %}"
+                                        data-item-id="{{ ps.id }}"
+                                        data-active="{{ ps.is_active|yesno:'1,0' }}"
+                                        title="Click to toggle active/inactive">
+                                    <span class="ps-active-label">
+                                        {% if ps.is_active %}
+                                            Active
+                                        {% else %}
+                                            Inactive
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </td>
                             <td class="whitespace-nowrap px-3 py-3 text-right text-sm sm:pr-6">
                                 <button type="button"
                                         class="plant-spec-delete inline-flex items-center text-gray-400 hover:text-red-600"
@@ -225,7 +242,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">No plant specifications found.</td>
+                            <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">No plant specifications found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -233,6 +250,7 @@
         </div>
     </div>
     {% include "estimator/_pagination.html" %}
+    {% include "estimator/_spec_datalists.html" %}
     <script>
 (function() {
     const plantOptions = `<option value="">—</option>{% for p in plants %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}`;
@@ -242,6 +260,29 @@
         el.classList.add('ring-2', cls);
         setTimeout(() => el.classList.remove('ring-2', cls), 800);
     }
+
+    document.querySelectorAll('.ps-active-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.itemId;
+            const next = btn.dataset.active === '1' ? 0 : 1;
+            fetch(`/estimator/contractor/api/plant-spec/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field: 'is_active', value: next})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { flash(btn, false); return; }
+                btn.dataset.active = String(next);
+                const label = btn.querySelector('.ps-active-label');
+                if (label) label.textContent = next ? 'Active' : 'Inactive';
+                btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'ring-emerald-600/20', 'bg-gray-100', 'text-gray-600', 'ring-gray-500/10');
+                btn.classList.add(...(next ? ['bg-emerald-50', 'text-emerald-700', 'ring-emerald-600/20'] : ['bg-gray-100', 'text-gray-600', 'ring-gray-500/10']));
+                const row = btn.closest('tr');
+                if (row) row.classList.toggle('opacity-60', !next);
+            });
+        });
+    });
 
     document.querySelectorAll('.inline-edit').forEach(input => {
         let original = input.value;
