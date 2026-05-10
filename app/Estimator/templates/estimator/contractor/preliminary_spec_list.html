@@ -1,6 +1,6 @@
-{% extends "estimator/base_prelim_estimator.html" %}
+{% extends "estimator/contractor/base_contractor.html" %}
 {% load estimator_tags %}
-{% block title %}Preliminary Specs - Project Resource Estimator{% endblock %}
+{% block title %}Preliminary Specs - Contractor Library{% endblock %}
 {% block sub_content %}
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
@@ -8,22 +8,22 @@
             <p class="mt-1 text-sm text-gray-500">Preliminary specification definitions.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex gap-2">
+            <a href="{% url 'estimator:ctr_download_preliminary_spec_template' %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
             <form method="post" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="sync_system">
                 <button type="submit"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('This will sync from the contractor library. Existing specs will be overwritten. Continue?')">
+                        onclick="return confirm('This will sync from the system library. Existing rows linked to system data will be overwritten. Continue?')">
                     {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                    Sync with Contractor
+                    Sync from System
                 </button>
             </form>
-            <a href="{% url 'estimator:download_preliminary_spec_template' project_pk=project_pk %}"
-               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                Template
-            </a>
-            <a href="{% url 'estimator:preliminary_spec_upload' project_pk=project_pk %}"
+            <a href="{% url 'estimator:ctr_preliminary_spec_upload' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
@@ -36,7 +36,6 @@
             </button>
         </div>
     </div>
-    <!-- Add Spec Form -->
     <div id="prelim-spec-form"
          class="{% if not form.errors %}hidden{% endif %} mb-6">
         <div class="overflow-hidden bg-white shadow-sm rounded-lg">
@@ -55,24 +54,23 @@
                     {% endif %}
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
                         <div class="sm:col-span-1">
-                            <label for="id_section" class="block text-sm font-medium text-gray-700">Section</label>
+                            <label class="block text-sm font-medium text-gray-700">Section</label>
                             <div class="mt-1">{{ form.section }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_trade_name" class="block text-sm font-medium text-gray-700">Trade Name</label>
+                            <label class="block text-sm font-medium text-gray-700">Trade Name</label>
                             <div class="mt-1">{{ form.trade_name }}</div>
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <label class="block text-sm font-medium text-gray-700">Name</label>
                             <div class="mt-1">{{ form.name }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_unit" class="block text-sm font-medium text-gray-700">Unit</label>
+                            <label class="block text-sm font-medium text-gray-700">Unit</label>
                             <div class="mt-1">{{ form.unit }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_preliminary_type"
-                                   class="block text-sm font-medium text-gray-700">Preliminary Type</label>
+                            <label class="block text-sm font-medium text-gray-700">Preliminary Type</label>
                             <div class="mt-1">{{ form.preliminary_type }}</div>
                         </div>
                     </div>
@@ -96,34 +94,15 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col"
-                            class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
+                        <th class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
                             Section
                         </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Trade Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Unit
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Preliminary Type
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Amount
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
-                            Status
-                        </th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Trade Name</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Name</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Unit</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Preliminary Type</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</th>
+                        <th class="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
@@ -200,13 +179,11 @@
     </div>
     {% include "estimator/_spec_datalists.html" %}
     <script>
-function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
-
 document.querySelectorAll('.prelim-active-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
         const id = btn.dataset.itemId;
         const next = btn.dataset.active === '1' ? 0 : 1;
-        fetch(`/estimator/project/{{ project_pk }}/api/preliminary-spec/${id}/update/`, {
+        fetch(`/estimator/contractor/api/preliminary-spec/${id}/update/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({field: 'is_active', value: next})
@@ -236,7 +213,7 @@ document.querySelectorAll('.inline-edit').forEach(input => {
         if (input.value === original) return;
         const id = input.dataset.itemId;
         const field = input.dataset.field;
-        fetch(`/estimator/project/{{ project_pk }}/api/preliminary-spec/${id}/update/`, {
+        fetch(`/estimator/contractor/api/preliminary-spec/${id}/update/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({field, value: input.value})
@@ -250,7 +227,7 @@ document.querySelectorAll('.inline-edit').forEach(input => {
                 if (data.amount !== undefined) {
                     const row = input.closest('tr');
                     const cell = row && row.querySelector('.spec-amount');
-                    if (cell) cell.textContent = fmtCurrency(data.amount);
+                    if (cell) cell.textContent = 'R ' + parseFloat(data.amount).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 }
             } else {
                 input.classList.add('ring-2', 'ring-red-500');

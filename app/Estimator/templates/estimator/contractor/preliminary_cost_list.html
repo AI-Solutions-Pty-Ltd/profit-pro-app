@@ -1,29 +1,29 @@
-{% extends "estimator/base_baseline_costs.html" %}
+{% extends "estimator/contractor/base_contractor.html" %}
 {% load estimator_tags %}
-{% block title %}Preliminary Costs - Project Resource Estimator{% endblock %}
+{% block title %}Preliminary Costs - Contractor Library{% endblock %}
 {% block sub_content %}
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Preliminary Costs</h1>
-            <p class="mt-1 text-sm text-gray-500">Fixed and time-based preliminary cost items grouped by type.</p>
+            <p class="mt-1 text-sm text-gray-500">Fixed and time-based preliminary cost items.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex gap-2">
+            <a href="{% url 'estimator:ctr_download_preliminary_cost_template' %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
             <form method="post" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="sync_system">
                 <button type="submit"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('This will sync from the contractor library. Existing items will be overwritten. Continue?')">
+                        onclick="return confirm('This will sync from the system library. Existing rows linked to system data will be overwritten. Continue?')">
                     {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                    Sync with Contractor
+                    Sync from System
                 </button>
             </form>
-            <a href="{% url 'estimator:download_preliminary_cost_template' project_pk=project_pk %}"
-               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                Template
-            </a>
-            <a href="{% url 'estimator:preliminary_cost_upload' project_pk=project_pk %}"
+            <a href="{% url 'estimator:ctr_preliminary_cost_upload' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
@@ -36,7 +36,6 @@
             </button>
         </div>
     </div>
-    <!-- Add Preliminary Form -->
     <div id="prelim-form"
          class="{% if not form.errors %}hidden{% endif %} mb-6">
         <div class="overflow-hidden bg-white shadow-sm rounded-lg">
@@ -44,7 +43,6 @@
                 <h3 class="text-base font-semibold text-gray-900 mb-4">New Preliminary Cost</h3>
                 <form method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="action" value="add_preliminary">
                     {% if form.errors %}
                         <div class="rounded-md bg-red-50 p-4 mb-4">
                             <div class="text-sm text-red-700">
@@ -56,33 +54,31 @@
                     {% endif %}
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
                         <div class="sm:col-span-2">
-                            <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <label class="block text-sm font-medium text-gray-700">Name</label>
                             <div class="mt-1">{{ form.name }}</div>
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="id_preliminary_type"
-                                   class="block text-sm font-medium text-gray-700">Preliminary Type</label>
+                            <label class="block text-sm font-medium text-gray-700">Type</label>
                             <div class="mt-1">{{ form.preliminary_type }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_sum_value" class="block text-sm font-medium text-gray-700">Sum</label>
+                            <label class="block text-sm font-medium text-gray-700">Sum</label>
                             <div class="mt-1">{{ form.sum_value }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                            <label class="block text-sm font-medium text-gray-700">Amount</label>
                             <div class="mt-1">{{ form.amount }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_number_per_month"
-                                   class="block text-sm font-medium text-gray-700">Number/Month</label>
+                            <label class="block text-sm font-medium text-gray-700">Number/Month</label>
                             <div class="mt-1">{{ form.number_per_month }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_monthly_rate" class="block text-sm font-medium text-gray-700">Monthly Rate</label>
+                            <label class="block text-sm font-medium text-gray-700">Monthly Rate</label>
                             <div class="mt-1">{{ form.monthly_rate }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_months" class="block text-sm font-medium text-gray-700">Months</label>
+                            <label class="block text-sm font-medium text-gray-700">Months</label>
                             <div class="mt-1">{{ form.months }}</div>
                         </div>
                     </div>
@@ -106,32 +102,13 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col"
-                            class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
-                            Preliminary Type
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Sum
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Number/Month
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Monthly Rate
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Months
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 bg-amber-50 sm:pr-6">
+                        <th class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">Name</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Type</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Sum</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Number/Month</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Monthly Rate</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Months</th>
+                        <th class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 bg-amber-50 sm:pr-6">
                             Amount
                         </th>
                     </tr>
@@ -139,17 +116,17 @@
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for item in preliminaries %}
                         <tr class="hover:bg-gray-50" data-prelim-id="{{ item.id }}">
-                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-600/10 ring-inset">
-                                    {{ item.get_preliminary_type_display }}
-                                </span>
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
+                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                                 <input type="text"
-                                       class="inline-edit w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       class="inline-edit w-48 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ item.id }}"
                                        data-field="name"
                                        value="{{ item.name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-600/10 ring-inset">
+                                    {{ item.get_preliminary_type_display }}
+                                </span>
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -225,7 +202,7 @@ document.querySelectorAll('.inline-edit').forEach(input => {
         if (input.value === original) return;
         const id = input.dataset.itemId;
         const field = input.dataset.field;
-        fetch(`/estimator/project/{{ project_pk }}/api/preliminary-cost/${id}/update/`, {
+        fetch(`/estimator/contractor/api/preliminary-cost/${id}/update/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({field, value: input.value})

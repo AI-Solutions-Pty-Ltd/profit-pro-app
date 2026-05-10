@@ -73,6 +73,7 @@ class SystemSpecification(models.Model):
         blank=True,
         related_name="project_specs",
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "estimator_specification"
@@ -200,6 +201,7 @@ class SystemLabourSpecification(models.Model):
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "estimator_labourspecification"
@@ -266,6 +268,7 @@ class SystemPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -378,6 +381,7 @@ class SystemPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -403,6 +407,7 @@ class SystemMaterialSpec(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     unit = models.CharField(max_length=20, default="m3")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "System Material Spec"
@@ -460,8 +465,712 @@ class SystemMaterialSpecComponent(models.Model):
         return f"{self.spec.name} - {self.label}"
 
 
+class SystemItemLibraryEntry(models.Model):
+    """System-level item library entry — a pre-configured BoQ template row
+    that bundles a trade code, component, and the four spec FKs."""
+
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    accounts_code = models.CharField(max_length=50, blank=True)
+    component = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500)
+    unit = models.CharField(max_length=20, blank=True)
+    material_spec = models.ForeignKey(
+        SystemMaterialSpec,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    labour_spec = models.ForeignKey(
+        SystemLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    plant_spec = models.ForeignKey(
+        SystemPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    preliminary_spec = models.ForeignKey(
+        SystemPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "System Item Library Entry"
+        verbose_name_plural = "System Item Library Entries"
+        indexes = [
+            models.Index(fields=["trade_code", "component"]),
+            models.Index(fields=["trade_code", "description"]),
+        ]
+
+    def __str__(self):
+        return self.description or f"{self.component} ({self.unit})"
+
+
 # ═══════════════════════════════════════════════════════════════════
-# Project-Scoped Models (cloned from system library per project)
+# Contractor-Scoped Library Models (per Company; sync-from-System,
+# sync-to-Project)
+# ═══════════════════════════════════════════════════════════════════
+
+
+class ContractorTradeCode(models.Model):
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_trade_codes",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    prefix = models.CharField(max_length=20)
+    trade_name = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ["prefix"]
+        unique_together = [("company", "prefix")]
+
+    def __str__(self):
+        return self.trade_code
+
+    @property
+    def trade_code(self):
+        return f"{self.prefix}{self.trade_name}"
+
+
+class ContractorMaterial(models.Model):
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_materials",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    trade_name = models.CharField(max_length=200, blank=True)
+    material_code = models.CharField(max_length=100)
+    unit = models.CharField(max_length=20, blank=True)
+    market_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    material_variety = models.CharField(max_length=100, blank=True)
+    market_spec = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        ordering = ["material_code"]
+        unique_together = [("company", "material_code")]
+
+    def __str__(self):
+        return self.material_code
+
+
+class ContractorSpecification(models.Model):
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_specifications",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    section = models.CharField(max_length=100, blank=True)
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="specifications",
+    )
+    unit_label = models.CharField(max_length=20, default="m3")
+    name = models.CharField(max_length=100)
+    boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    contractor_spec = models.ForeignKey(
+        "ContractorMaterialSpec",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_specs",
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["section", "name"]
+        unique_together = [("company", "name")]
+
+    if TYPE_CHECKING:
+        spec_components: "Manager[ContractorSpecificationComponent]"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def components(self):
+        comps = []
+        for sc in self.spec_components.all():
+            comps.append(
+                {
+                    "name": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "market_rate": sc.material.market_rate if sc.material else 0,
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
+        return comps
+
+    @property
+    def rate_per_unit(self):
+        components = self.components
+        if components:
+            return calculate_rate_per_unit(components)
+        elif self.contractor_spec:
+            return self.contractor_spec.rate_per_unit
+        return Decimal("0")
+
+    @property
+    def baseline_boq_quantity(self):
+        return self.boq_quantity or Decimal("0")
+
+    def component_totals(self):
+        boq_qty = self.baseline_boq_quantity
+        results = []
+        for sc in self.spec_components.all():
+            results.append(
+                {
+                    "id": sc.pk,
+                    "label": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "material_id": sc.material_id,
+                    "material_code": sc.material.material_code if sc.material else "",
+                    "total_quantity": calculate_total_quantity(
+                        boq_qty, sc.qty_per_unit
+                    ),
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
+        return results
+
+
+class ContractorSpecificationComponent(models.Model):
+    specification = models.ForeignKey(
+        ContractorSpecification,
+        on_delete=models.CASCADE,
+        related_name="spec_components",
+    )
+    material = models.ForeignKey(
+        ContractorMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spec_components",
+    )
+    label = models.CharField(max_length=100)
+    qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order"]
+
+    def __str__(self):
+        return f"{self.specification.name} - {self.label}"
+
+
+class ContractorLabourCrew(models.Model):
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_labour_crews",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemLabourCrew,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    crew_type = models.CharField(max_length=100)
+    crew_size = models.IntegerField(default=0)
+    skilled = models.IntegerField(default=0)
+    semi_skilled = models.IntegerField(default=0)
+    general = models.IntegerField(default=0)
+    daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    skilled_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    semi_skilled_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    general_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["crew_type"]
+        unique_together = [("company", "crew_type")]
+        verbose_name = "Contractor Labour Crew"
+
+    def __str__(self):
+        return self.crew_type
+
+    @property
+    def crew_daily_cost(self):
+        return (
+            Decimal(str(self.skilled)) * self.skilled_rate
+            + Decimal(str(self.semi_skilled)) * self.semi_skilled_rate
+            + Decimal(str(self.general)) * self.general_rate
+        )
+
+
+class ContractorLabourSpecification(models.Model):
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_labour_specs",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    section = models.CharField(max_length=100, blank=True)
+    trade_name = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, blank=True)
+    crew = models.ForeignKey(
+        ContractorLabourCrew,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specs",
+    )
+    daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    team_mix = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["section", "name"]
+        unique_together = [("company", "name")]
+        verbose_name = "Contractor Labour Specification"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def daily_output(self):
+        return (
+            self.daily_production
+            * self.team_mix
+            * self.site_factor
+            * self.tools_factor
+            * self.leadership_factor
+        )
+
+    @property
+    def daily_cost(self):
+        if self.crew:
+            return self.crew.crew_daily_cost
+        return Decimal("0")
+
+    @property
+    def rate_per_unit(self):
+        output = self.daily_output
+        if output and output > 0:
+            return self.daily_cost / output
+        return Decimal("0")
+
+    @property
+    def total_cost(self):
+        return self.baseline_boq_quantity * self.rate_per_unit
+
+    @property
+    def baseline_boq_quantity(self):
+        return self.boq_quantity or Decimal("0")
+
+
+class ContractorPlantCost(models.Model):
+    """Contractor-scoped plant & equipment cost library."""
+
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_plant_costs",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemPlantCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    name = models.CharField(max_length=200)
+    hourly_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    hourly_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = [("company", "name")]
+        verbose_name = "Contractor Plant Cost"
+
+    def __str__(self):
+        return self.name
+
+
+class ContractorPlantSpecification(models.Model):
+    """Contractor-scoped plant specification library."""
+
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_plant_specs",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    section = models.CharField(max_length=100, blank=True)
+    trade_name = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, blank=True)
+    daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["section", "name"]
+        unique_together = [("company", "name")]
+        verbose_name = "Contractor Plant Specification"
+
+    if TYPE_CHECKING:
+        components: "Manager[ContractorPlantSpecificationComponent]"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def daily_output(self):
+        return self.daily_production * self.operator_factor * self.site_factor
+
+    @property
+    def rate_per_unit(self):
+        total = Decimal("0")
+        for comp in self.components.select_related("plant_type").all():
+            if comp.plant_type:
+                total += comp.plant_type.hourly_rate * comp.hours
+        return total
+
+    @property
+    def daily_cost(self):
+        return self.daily_output * self.rate_per_unit
+
+
+class ContractorPlantSpecificationComponent(models.Model):
+    """A single plant-type/hours entry attached to a contractor plant spec."""
+
+    specification = models.ForeignKey(
+        ContractorPlantSpecification,
+        on_delete=models.CASCADE,
+        related_name="components",
+    )
+    plant_type = models.ForeignKey(
+        ContractorPlantCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spec_components",
+    )
+    hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order"]
+
+    def __str__(self):
+        name = self.plant_type.name if self.plant_type else "—"
+        return f"{self.specification.name} · {name} ({self.hours}h)"
+
+
+class ContractorPreliminaryCost(models.Model):
+    """Contractor-scoped preliminaries cost — single table with type column."""
+
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_preliminary_costs",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemPreliminaryCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    name = models.CharField(max_length=200)
+    preliminary_type = models.CharField(
+        max_length=30, choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+    )
+    sum_value = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, help_text="Sum/lump sum value"
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    number_per_month = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, blank=True
+    )
+    monthly_rate = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, blank=True
+    )
+    months = models.DecimalField(max_digits=6, decimal_places=2, default=0, blank=True)
+
+    class Meta:
+        ordering = ["preliminary_type", "name"]
+        verbose_name = "Contractor Preliminary Cost"
+
+    def __str__(self):
+        return f"{self.get_preliminary_type_display()} - {self.name}"  # ty:ignore[unresolved-attribute]
+
+    @property
+    def is_time_based(self):
+        return self.preliminary_type.startswith("time_")
+
+    @property
+    def computed_amount(self):
+        if self.is_time_based:
+            return self.number_per_month * self.monthly_rate * self.months
+        return self.amount
+
+
+class ContractorPreliminarySpecification(models.Model):
+    """Contractor-scoped preliminary specification."""
+
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_preliminary_specs",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    section = models.CharField(max_length=100, blank=True)
+    trade_name = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, blank=True)
+    preliminary_type = models.CharField(
+        max_length=30,
+        choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
+        blank=True,
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["section", "name"]
+        unique_together = [("company", "name")]
+        verbose_name = "Contractor Preliminary Specification"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def amount(self):
+        if not self.preliminary_type:
+            return Decimal("0")
+        total = Decimal("0")
+        for cost in ContractorPreliminaryCost.objects.filter(
+            company_id=self.company_id,
+            preliminary_type=self.preliminary_type,
+        ):
+            total += cost.computed_amount
+        return total
+
+
+class ContractorMaterialSpec(models.Model):
+    """Reusable material specification library at contractor level."""
+
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_material_specs",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemMaterialSpec,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    name = models.CharField(max_length=100)
+    unit = models.CharField(max_length=20, default="m3")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Contractor Material Spec"
+        verbose_name_plural = "Contractor Material Specs"
+        ordering = ["name"]
+        unique_together = [("company", "name")]
+
+    if TYPE_CHECKING:
+        contractor_spec_components: "Manager[ContractorMaterialSpecComponent]"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def components(self):
+        comps = []
+        for sc in self.contractor_spec_components.select_related("material").all():
+            comps.append(
+                {
+                    "name": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "market_rate": sc.material.market_rate if sc.material else 0,
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
+        return comps
+
+    @property
+    def rate_per_unit(self):
+        return calculate_rate_per_unit(self.components)
+
+
+class ContractorMaterialSpecComponent(models.Model):
+    """Component of a contractor-level material specification."""
+
+    spec = models.ForeignKey(
+        ContractorMaterialSpec,
+        on_delete=models.CASCADE,
+        related_name="contractor_spec_components",
+    )
+    material = models.ForeignKey(
+        ContractorMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_spec_components",
+    )
+    label = models.CharField(max_length=100)
+    qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order"]
+
+    def __str__(self):
+        return f"{self.spec.name} - {self.label}"
+
+
+class ContractorItemLibraryEntry(models.Model):
+    """Contractor-scoped item library entry; cloned from System."""
+
+    company = models.ForeignKey(
+        "Project.Company",
+        on_delete=models.CASCADE,
+        related_name="estimator_library_entries",
+        limit_choices_to={"type": "CONTRACTOR"},
+    )
+    source = models.ForeignKey(
+        SystemItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_copies",
+    )
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    accounts_code = models.CharField(max_length=50, blank=True)
+    component = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500)
+    unit = models.CharField(max_length=20, blank=True)
+    material_spec = models.ForeignKey(
+        ContractorMaterialSpec,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    labour_spec = models.ForeignKey(
+        ContractorLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    plant_spec = models.ForeignKey(
+        ContractorPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    preliminary_spec = models.ForeignKey(
+        ContractorPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "Contractor Item Library Entry"
+        verbose_name_plural = "Contractor Item Library Entries"
+        indexes = [
+            models.Index(fields=["company", "trade_code", "component"]),
+            models.Index(fields=["company", "trade_code", "description"]),
+        ]
+
+    def __str__(self):
+        return self.description or f"{self.component} ({self.unit})"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Project-Scoped Models (cloned from contractor library per project)
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -545,6 +1254,7 @@ class ProjectSpecification(models.Model):
     )
     unit_label = models.CharField(max_length=20, default="m3")
     name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -698,6 +1408,7 @@ class ProjectLabourSpecification(models.Model):
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -793,6 +1504,7 @@ class ProjectPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -921,6 +1633,7 @@ class ProjectPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -941,6 +1654,85 @@ class ProjectPreliminarySpecification(models.Model):
         ):
             total += cost.computed_amount
         return total
+
+
+class ProjectItemLibraryEntry(models.Model):
+    """Project-scoped item library entry; cloned from System or Contractor."""
+
+    project = models.ForeignKey(
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_library_entries",
+    )
+    source_system = models.ForeignKey(
+        SystemItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    source_contractor = models.ForeignKey(
+        ContractorItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    accounts_code = models.CharField(max_length=50, blank=True)
+    component = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500)
+    unit = models.CharField(max_length=20, blank=True)
+    material_spec = models.ForeignKey(
+        ProjectSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    labour_spec = models.ForeignKey(
+        ProjectLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    plant_spec = models.ForeignKey(
+        ProjectPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    preliminary_spec = models.ForeignKey(
+        ProjectPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="library_entries",
+    )
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["display_order", "id"]
+        verbose_name = "Project Item Library Entry"
+        verbose_name_plural = "Project Item Library Entries"
+        indexes = [
+            models.Index(fields=["project", "trade_code", "component"]),
+            models.Index(fields=["project", "trade_code", "description"]),
+        ]
+
+    if TYPE_CHECKING:
+        boq_items: "Manager[BOQItem]"
+
+    def __str__(self):
+        return self.description or f"{self.component} ({self.unit})"
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1024,6 +1816,14 @@ class BOQItem(models.Model):
         blank=True,
         related_name="boq_items",
     )
+    library_entry = models.ForeignKey(
+        ProjectItemLibraryEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
+    )
+    component = models.CharField(max_length=200, blank=True)
     item_no = models.CharField(max_length=20, blank=True)
     pay_ref = models.CharField(max_length=50, blank=True)
     description = models.CharField(max_length=500, blank=True)
@@ -1115,7 +1915,7 @@ class BOQItem(models.Model):
 
     @property
     def new_materials_rate(self):
-        if self.specification:
+        if self.specification and self.specification.is_active:
             base = calculate_materials_rate(None, self.specification.rate_per_unit)
         elif self.material:
             base = self.material.market_rate
@@ -1127,7 +1927,7 @@ class BOQItem(models.Model):
 
     @property
     def new_labour_rate(self):
-        if self.labour_specification:
+        if self.labour_specification and self.labour_specification.is_active:
             base = self.labour_specification.rate_per_unit
             if base is None:
                 return None
@@ -1150,7 +1950,7 @@ class BOQItem(models.Model):
 
     @property
     def new_plant_rate(self):
-        if self.plant_specification:
+        if self.plant_specification and self.plant_specification.is_active:
             return self.plant_specification.rate_per_unit
         return None
 
@@ -1163,7 +1963,7 @@ class BOQItem(models.Model):
 
     @property
     def new_preliminary_rate(self):
-        if self.preliminary_specification:
+        if self.preliminary_specification and self.preliminary_specification.is_active:
             return self.preliminary_specification.amount
         return None
 

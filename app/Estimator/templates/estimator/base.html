@@ -62,6 +62,11 @@
                             {% heroicon_outline "currency-dollar" class="inline-block mr-1 w-4 h-4" %}
                             Baseline Resources Costs
                         </a>
+                        <a href="{% url 'estimator:item_library' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'item_library' or url_name == 'item_library_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "rectangle-stack" class="inline-block mr-1 w-4 h-4" %}
+                            Item Library
+                        </a>
                         <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'report_baseline_assessment' or url_name == 'report_progress_assessment' or url_name == 'report_forecast_assessment' or url_name == 'report_key_rates_assessment' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
                             {% heroicon_outline "exclamation-triangle" class="inline-block mr-1 w-4 h-4" %}
@@ -73,7 +78,9 @@
         </div>
         <!-- Main Content Area -->
         <div class="py-8">
-            {% block estimator_content %}{% endblock %}
+            {% block estimator_content %}
+                {% block sub_content %}{% endblock %}
+            {% endblock %}
         </div>
     </div>
 {% endblock %}

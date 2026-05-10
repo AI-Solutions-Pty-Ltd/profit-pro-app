@@ -1,6 +1,6 @@
-{% extends "estimator/system/base_system.html" %}
+{% extends "estimator/contractor/base_contractor.html" %}
 {% load estimator_tags %}
-{% block title %}Material Specs - System Library{% endblock %}
+{% block title %}Material Specs - Contractor Library{% endblock %}
 {% block sub_content %}
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
@@ -8,12 +8,22 @@
             <p class="mt-1 text-sm text-gray-500">Material specification definitions with trade codes and component breakdowns.</p>
         </div>
         <div class="mt-2 sm:mt-0 flex gap-2">
-            <a href="{% url 'estimator:sys_download_material_spec_template' %}"
+            <a href="{% url 'estimator:ctr_download_material_spec_template' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Template
             </a>
-            <a href="{% url 'estimator:sys_material_spec_upload' %}"
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="sync_system">
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
+                        onclick="return confirm('This will sync from the system library. Existing rows linked to system data will be overwritten. Continue?')">
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Sync from System
+                </button>
+            </form>
+            <a href="{% url 'estimator:ctr_material_spec_upload' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
@@ -141,7 +151,7 @@
                 </select>
             </div>
             {% if f_section or f_trade_code or f_name %}
-                <a href="{% url 'estimator:sys_material_specs' %}"
+                <a href="{% url 'estimator:ctr_material_specs' %}"
                    class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
                     {% heroicon_outline "x-mark" class="w-3.5 h-3.5 mr-1" %}
                     Clear
@@ -288,7 +298,7 @@
             if (el.value === original) return;
             const id = el.dataset.componentId;
             const field = el.dataset.field;
-            fetch(`/estimator/system/api/spec-component/${id}/update/`, {
+            fetch(`/estimator/contractor/api/spec-component/${id}/update/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({field, value: el.value})
@@ -306,7 +316,7 @@
         btn.addEventListener('click', () => {
             if (!confirm('Remove this component?')) return;
             const id = btn.dataset.componentId;
-            fetch(`/estimator/system/api/spec-component/${id}/delete/`, {
+            fetch(`/estimator/contractor/api/spec-component/${id}/delete/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: '{}'
@@ -344,7 +354,7 @@
         btn.addEventListener('click', () => {
             const specId = btn.dataset.specId;
             const next = btn.dataset.active === '1' ? 0 : 1;
-            fetch(`/estimator/system/api/spec/${specId}/update/`, {
+            fetch(`/estimator/contractor/api/spec/${specId}/update/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({field: 'is_active', value: next})
@@ -369,8 +379,8 @@
         btn.addEventListener('click', () => {
             const specId = btn.dataset.specId;
             const specName = btn.dataset.specName || 'this specification';
-            if (!confirm(`Delete "${specName}"? This will remove it from the system library.`)) return;
-            fetch(`/estimator/system/api/spec/${specId}/delete/`, {
+            if (!confirm(`Delete "${specName}"? This will remove it from the contractor library.`)) return;
+            fetch(`/estimator/contractor/api/spec/${specId}/delete/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: '{}'
@@ -389,7 +399,7 @@
         btn.addEventListener('click', () => {
             const specId = btn.dataset.specId;
             const specUnit = btn.dataset.specUnit || '';
-            fetch(`/estimator/system/api/spec/${specId}/components/add/`, {
+            fetch(`/estimator/contractor/api/spec/${specId}/components/add/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({material: '', label: '', qty_per_unit: 0})

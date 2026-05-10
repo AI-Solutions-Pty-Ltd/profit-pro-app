@@ -12,40 +12,39 @@
                 results
             </div>
             <div class="flex items-center space-x-2">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}"
-                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        {% heroicon_outline "chevron-left" class="w-4 h-4" %}
-                        Previous
-                    </a>
-                {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-gray-50 cursor-not-allowed">
-                        {% heroicon_outline "chevron-left" class="w-4 h-4" %}
-                        Previous
-                    </span>
-                {% endif %}
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                        <span class="inline-flex items-center px-3 py-1.5 border border-indigo-500 text-sm font-medium rounded-md text-white bg-indigo-600">{{ num }}</span>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <a href="?page={{ num }}{% if query_params %}&{{ query_params }}{% endif %}"
-                           class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            {{ num }}
-                        </a>
+                {% with current=page_obj.number total=page_obj.paginator.num_pages %}
+                    {# Page 1 (always shown) #}
+                    {% if current == 1 %}
+                        <span class="inline-flex items-center px-3 py-1.5 border border-indigo-500 text-sm font-medium rounded-md text-white bg-indigo-600">1</span>
+                    {% else %}
+                        <a href="?page=1{% if query_params %}&{{ query_params }}{% endif %}"
+                           class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">1</a>
                     {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}"
-                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Next
-                        {% heroicon_outline "chevron-right" class="w-4 h-4" %}
-                    </a>
-                {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-gray-50 cursor-not-allowed">
-                        Next
-                        {% heroicon_outline "chevron-right" class="w-4 h-4" %}
-                    </span>
-                {% endif %}
+                    {# Left ellipsis if there's a gap between 1 and the window #}
+                    {% if current|add:'-1' > 2 %}<span class="px-1 text-sm text-gray-400 select-none">…</span>{% endif %}
+                    {# Window: current ± 1 (excluding 1 and last, those are rendered separately) #}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num > 1 and num < total and num >= current|add:'-1' and num <= current|add:'1' %}
+                            {% if num == current %}
+                                <span class="inline-flex items-center px-3 py-1.5 border border-indigo-500 text-sm font-medium rounded-md text-white bg-indigo-600">{{ num }}</span>
+                            {% else %}
+                                <a href="?page={{ num }}{% if query_params %}&{{ query_params }}{% endif %}"
+                                   class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">{{ num }}</a>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {# Right ellipsis if there's a gap between the window and last #}
+                    {% if current|add:'1' < total|add:'-1' %}<span class="px-1 text-sm text-gray-400 select-none">…</span>{% endif %}
+                    {# Last page (always shown when total > 1) #}
+                    {% if total > 1 %}
+                        {% if current == total %}
+                            <span class="inline-flex items-center px-3 py-1.5 border border-indigo-500 text-sm font-medium rounded-md text-white bg-indigo-600">{{ total }}</span>
+                        {% else %}
+                            <a href="?page={{ total }}{% if query_params %}&{{ query_params }}{% endif %}"
+                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">{{ total }}</a>
+                        {% endif %}
+                    {% endif %}
+                {% endwith %}
             </div>
         </div>
     </div>

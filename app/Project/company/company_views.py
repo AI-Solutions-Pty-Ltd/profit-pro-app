@@ -39,50 +39,55 @@ class CompanyMetricsMixin:
     def get_metrics_context(self, projects: QuerySet[Project]) -> dict:
         """Calculate financial metrics for a given set of projects."""
         current_date = datetime.now()
-        total_baseline_revenue = 0
-        total_baseline_cost = 0
-        total_progress_revenue = 0
-        total_progress_cost = 0
-        total_forecast_revenue = 0
-        total_forecast_cost = 0
-        total_overheads = 0
 
-        for project in projects:
-            # Aggregating BOQ items for this project
-            boq_items = BOQItem.objects.filter(project=project)
-            for item in boq_items:
-                # Baseline
-                rev = float(item.contract_amount or 0)
-                cost = float(item.baseline_new_price or 0) * float(
-                    item.contract_quantity or 0
-                )
-                total_baseline_revenue += rev
-                total_baseline_cost += cost
+        # Baseline revenue and overheads are pure stored-field arithmetic —
+        # do them in a single SQL aggregate each.
+        baseline_rev_agg = BOQItem.objects.filter(project__in=projects).aggregate(
+            total=Sum(F("contract_quantity") * F("contract_rate"))
+        )
+        total_baseline_revenue = float(baseline_rev_agg["total"] or 0)
 
-                # Progress
-                p_rev = float(item.progress_amount or 0)
-                p_cost = float(item.baseline_new_price or 0) * float(
-                    item.progress_quantity or 0
-                )
-                total_progress_revenue += p_rev
-                total_progress_cost += p_cost
+        overheads_agg = OverheadCostTracker.objects.filter(
+            project__in=projects
+        ).aggregate(total=Sum(F("amount_of_days") * F("rate")))
+        total_overheads = float(overheads_agg["total"] or 0)
 
-                # Forecast
-                f_rev = float(item.forecast_amount or 0)
-                f_cost = float(item.baseline_new_price or 0) * float(
-                    item.forecast_quantity or 0
-                )
-                total_forecast_revenue += f_rev
-                total_forecast_cost += f_cost
+        # Cost / progress / forecast totals depend on `baseline_new_price`,
+        # a Python property that traverses spec FKs and component rates —
+        # we can't aggregate it in SQL. Pull every BoQ row in ONE query with
+        # the related specs prefetched, then sum in Python.
+        total_baseline_cost = 0.0
+        total_progress_revenue = 0.0
+        total_progress_cost = 0.0
+        total_forecast_revenue = 0.0
+        total_forecast_cost = 0.0
 
-            # Overheads
-            project_overheads = (
-                OverheadCostTracker.objects.filter(project=project).aggregate(
-                    total=Sum(F("amount_of_days") * F("rate"))
-                )["total"]
-                or 0
+        boq_items = (
+            BOQItem.objects.filter(project__in=projects)
+            .select_related(
+                "specification",
+                "labour_specification",
+                "plant_specification",
+                "preliminary_specification",
+                "material",
+                "project__estimator_assumptions",
             )
-            total_overheads += float(project_overheads)
+            .prefetch_related(
+                "specification__spec_components__material",
+                "plant_specification__components__plant_type",
+            )
+        )
+        for item in boq_items:
+            bnp = float(item.baseline_new_price or 0)
+            if not bnp:
+                continue
+            total_baseline_cost += bnp * float(item.contract_quantity or 0)
+            pq = float(item.progress_quantity or 0)
+            total_progress_revenue += bnp * pq
+            total_progress_cost += bnp * pq
+            fq = float(item.forecast_quantity or 0)
+            total_forecast_revenue += bnp * fq
+            total_forecast_cost += bnp * fq
 
         baseline_profit = total_baseline_revenue - total_baseline_cost
         progress_profit = total_progress_revenue - total_progress_cost
