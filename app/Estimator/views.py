@@ -4848,6 +4848,45 @@ class DeleteSystemSpecificationView(View):
         return JsonResponse({"ok": True})
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemSpecificationView(View):
+    """AJAX endpoint to update fields on a SystemSpecification (material spec)."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "name": "str",
+        "unit_label": "str",
+        "is_active": "bool",
+    }
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        item = get_object_or_404(SystemSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
 # ── System Labour Crews ───────────────────────────────────────────────
 
 
@@ -5010,6 +5049,7 @@ class UpdateSystemLabourSpecView(View):
         "site_factor": "decimal",
         "tools_factor": "decimal",
         "leadership_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -5030,6 +5070,8 @@ class UpdateSystemLabourSpecView(View):
                     ls.crew = None
                 else:
                     ls.crew = get_object_or_404(SystemLabourCrew, pk=int(value))
+            elif field_type == "bool":
+                setattr(ls, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(ls, field, str(value))
         except Exception:
@@ -5218,6 +5260,7 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -5237,6 +5280,8 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -5557,6 +5602,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
         "name": "str",
         "unit": "str",
         "preliminary_type": "str",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -5576,6 +5622,8 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -6151,6 +6199,46 @@ class DeleteContractorSpecificationView(View):
         return JsonResponse({"ok": True})
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateContractorSpecificationView(View):
+    """AJAX endpoint to update fields on a ContractorSpecification (material spec)."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "name": "str",
+        "unit_label": "str",
+        "is_active": "bool",
+    }
+
+    def post(self, request, pk):
+        company = _contractor_company_for(request)
+        if company is None:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        item = get_object_or_404(ContractorSpecification, pk=pk, company=company)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
 # ── Contractor Labour Crews ───────────────────────────────────────────
 
 
@@ -6345,6 +6433,7 @@ class UpdateContractorLabourSpecView(View):
         "site_factor": "decimal",
         "tools_factor": "decimal",
         "leadership_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -6368,6 +6457,8 @@ class UpdateContractorLabourSpecView(View):
                     ls.crew = get_object_or_404(
                         ContractorLabourCrew, pk=int(value), company=company
                     )
+            elif field_type == "bool":
+                setattr(ls, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(ls, field, str(value))
         except Exception:
@@ -6588,6 +6679,7 @@ class UpdateContractorPlantSpecView(View):
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -6610,6 +6702,8 @@ class UpdateContractorPlantSpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -6981,6 +7075,7 @@ class UpdateContractorPreliminarySpecView(View):
         "name": "str",
         "unit": "str",
         "preliminary_type": "str",
+        "is_active": "bool",
     }
 
     def post(self, request, pk):
@@ -7005,6 +7100,8 @@ class UpdateContractorPreliminarySpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
+            elif field_type == "bool":
+                setattr(item, field, bool(value) and value not in ("false", "0", 0))
             else:
                 setattr(item, field, str(value))
         except Exception:

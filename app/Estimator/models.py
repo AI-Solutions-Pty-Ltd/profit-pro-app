@@ -73,6 +73,7 @@ class SystemSpecification(models.Model):
         blank=True,
         related_name="project_specs",
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "estimator_specification"
@@ -200,6 +201,7 @@ class SystemLabourSpecification(models.Model):
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "estimator_labourspecification"
@@ -266,6 +268,7 @@ class SystemPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -378,6 +381,7 @@ class SystemPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -403,6 +407,7 @@ class SystemMaterialSpec(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     unit = models.CharField(max_length=20, default="m3")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "System Material Spec"
@@ -614,6 +619,7 @@ class ContractorSpecification(models.Model):
         blank=True,
         related_name="contractor_specs",
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -768,6 +774,7 @@ class ContractorLabourSpecification(models.Model):
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -861,6 +868,7 @@ class ContractorPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -991,6 +999,7 @@ class ContractorPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1031,6 +1040,7 @@ class ContractorMaterialSpec(models.Model):
     )
     name = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, default="m3")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Contractor Material Spec"

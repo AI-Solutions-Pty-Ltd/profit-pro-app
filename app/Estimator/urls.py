@@ -703,6 +703,11 @@ urlpatterns = [
         name="sys_delete_specification",
     ),
     path(
+        "system/api/spec/<int:pk>/update/",
+        views.UpdateSystemSpecificationView.as_view(),
+        name="sys_update_specification",
+    ),
+    path(
         "system/api/labour-crew/<int:pk>/update/",
         views.UpdateSystemLabourCrewView.as_view(),
         name="sys_update_labour_crew",
@@ -1023,6 +1028,11 @@ urlpatterns = [
         "contractor/api/spec/<int:pk>/delete/",
         views.DeleteContractorSpecificationView.as_view(),
         name="ctr_delete_specification",
+    ),
+    path(
+        "contractor/api/spec/<int:pk>/update/",
+        views.UpdateContractorSpecificationView.as_view(),
+        name="ctr_update_specification",
     ),
     path(
         "contractor/api/labour-crew/<int:pk>/update/",
