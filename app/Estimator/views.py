@@ -2708,7 +2708,21 @@ class BulkMarkupUpdateView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateMaterialView(View):
-    """AJAX endpoint to update market_rate on a ProjectMaterial."""
+    """AJAX endpoint to update pack_qty / pack_cost on a ProjectMaterial.
+
+    market_rate is auto-recomputed by the model save() and returned in the
+    response so the read-only Rate column updates without a page reload.
+    """
+
+    ALLOWED_FIELDS = {
+        "pack_qty",
+        "pack_cost",
+        "trade_name",
+        "material_code",
+        "unit",
+        "material_variety",
+        "market_spec",
+    }
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(ProjectMaterial, pk=pk, project_id=project_pk)
@@ -2720,17 +2734,25 @@ class UpdateMaterialView(View):
         field = data.get("field")
         value = data.get("value")
 
-        if field != "market_rate":
+        if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
 
         try:
-            item.market_rate = Decimal(str(value))
+            if field in ("pack_qty", "pack_cost"):
+                setattr(item, field, Decimal(str(value or 0)))
+            else:
+                setattr(item, field, str(value or ""))
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
         item.save()
         return JsonResponse(
-            {"ok": True, "market_rate": str(round(item.market_rate, 2))}
+            {
+                "ok": True,
+                "pack_qty": str(item.pack_qty),
+                "pack_cost": str(round(item.pack_cost, 2)),
+                "market_rate": str(round(item.market_rate, 4)),
+            }
         )
 
 
@@ -3984,14 +4006,16 @@ class MaterialCostUploadView(ProjectEstimatorMixin, FormView):
         ctx["columns"] = [
             ("Trade Name", "Trade group (e.g. CFR-Concrete)"),
             ("Material Code", "Unique material code (required)"),
-            ("Unit", "Unit of measurement (e.g. Bag, m3)"),
-            ("Market Rate", "Current market price"),
+            ("Unit", "Consumption unit (e.g. Bag, m3, brick, L)"),
+            ("Pack Qty", "Pack size that the price covers (e.g. 1000 for 1000 bricks)"),
+            ("Pack Cost", "Cost for the whole pack (e.g. 2800 for 1000 bricks)"),
             ("Material Variety", "Variety description"),
             ("Market Spec", "Market specification"),
         ]
         ctx["notes"] = [
             "Material Code is the unique key — existing materials with the same code will be updated.",
-            "Market Rate must be a numeric value.",
+            "Effective rate per unit is auto-computed as Pack Cost ÷ Pack Qty.",
+            "Pack Qty defaults to 1 if blank — older templates with a single 'Market Rate' column are still supported.",
         ]
         return ctx
 
@@ -4014,7 +4038,8 @@ class DownloadMaterialCostTemplateView(View):
                 "Trade Name",
                 "Material Code",
                 "Unit",
-                "Market Rate",
+                "Pack Qty",
+                "Pack Cost",
                 "Material Variety",
                 "Market Spec",
             ],
@@ -4566,7 +4591,8 @@ class SystemMaterialListView(SystemLibraryMixin, ListView):
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSystemMaterialView(View):
     ALLOWED_FIELDS = {
-        "market_rate",
+        "pack_qty",
+        "pack_cost",
         "trade_name",
         "material_code",
         "unit",
@@ -4582,9 +4608,22 @@ class UpdateSystemMaterialView(View):
         field, value = data.get("field"), data.get("value")
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": "Invalid field"}, status=400)
-        setattr(mat, field, value)
+        try:
+            if field in ("pack_qty", "pack_cost"):
+                setattr(mat, field, Decimal(str(value or 0)))
+            else:
+                setattr(mat, field, str(value or ""))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
         mat.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse(
+            {
+                "ok": True,
+                "pack_qty": str(mat.pack_qty),
+                "pack_cost": str(round(mat.pack_cost, 2)),
+                "market_rate": str(round(mat.market_rate, 4)),
+            }
+        )
 
 
 class SystemMaterialUploadView(SystemLibraryMixin, FormView):
@@ -4616,7 +4655,8 @@ class DownloadSystemMaterialTemplateView(SystemLibraryMixin, View):
                 "Trade Name",
                 "Material Code",
                 "Unit",
-                "Market Rate",
+                "Pack Qty",
+                "Pack Cost",
                 "Material Variety",
                 "Market Spec",
             ],
@@ -5894,7 +5934,8 @@ class ContractorMaterialListView(ContractorLibraryMixin, ListView):
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateContractorMaterialView(View):
     ALLOWED_FIELDS = {
-        "market_rate",
+        "pack_qty",
+        "pack_cost",
         "trade_name",
         "material_code",
         "unit",
@@ -5911,9 +5952,22 @@ class UpdateContractorMaterialView(View):
         field, value = data.get("field"), data.get("value")
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": "Invalid field"}, status=400)
-        setattr(mat, field, value)
+        try:
+            if field in ("pack_qty", "pack_cost"):
+                setattr(mat, field, Decimal(str(value or 0)))
+            else:
+                setattr(mat, field, str(value or ""))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
         mat.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse(
+            {
+                "ok": True,
+                "pack_qty": str(mat.pack_qty),
+                "pack_cost": str(round(mat.pack_cost, 2)),
+                "market_rate": str(round(mat.market_rate, 4)),
+            }
+        )
 
 
 class ContractorMaterialUploadView(ContractorLibraryMixin, FormView):
@@ -5949,7 +6003,8 @@ class DownloadContractorMaterialTemplateView(ContractorLibraryMixin, View):
                 "Trade Name",
                 "Material Code",
                 "Unit",
-                "Market Rate",
+                "Pack Qty",
+                "Pack Cost",
                 "Material Variety",
                 "Market Spec",
             ],
