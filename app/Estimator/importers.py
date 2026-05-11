@@ -210,14 +210,14 @@ class MaterialCostImporter:
     ]
 
     HEADER_ALIASES = {
-        "trade_name": ["trade name", "trade"],
+        "trade_name": ["trade name", "trade code", "trade"],
         "material_code": ["material code", "code", "material"],
         "unit": ["unit"],
         "pack_qty": ["pack qty", "pack qty.", "qty", "quantity", "pack quantity"],
         "pack_cost": ["pack cost", "cost", "pack price", "price"],
         "market_rate": ["market rate", "rate", "unit rate"],
         "material_variety": ["variety", "material variety"],
-        "market_spec": ["spec", "market spec", "specification"],
+        "market_spec": ["spec", "market spec", "market spec / strength", "specification"],
     }
 
     def __init__(self, file_path, project=None, company=None):
