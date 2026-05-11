@@ -6,74 +6,52 @@
     <div class="min-h-screen bg-gray-50/50">
         <!-- Main Content Area -->
         <div class="px-4 py-8 mx-auto space-y-10 max-w-7xl sm:px-6 lg:px-8">
-            {% comment %} <!-- Action Bar -->
-                                                <div class="flex flex-col gap-6 justify-between md:flex-row md:items-end">
-                                                    <div>
-                                            <h2 class="text-3xl font-black tracking-tight text-gray-900">Business Dashboard</h2>
-                                <p class="mt-1 text-xs text-gray-500">Financial overview as of {% now "F d, Y" %}</p>
+            <!-- Summary Stats Section -->
+            {% include "company/partials/master_dashboard/_summary_stats.html" %}
+            <!-- Trends Section -->
+            <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-center px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+                        <h3 class="text-xs font-bold tracking-widest text-indigo-700 uppercase">Gross Profit Trend (6 Months)</h3>
+                        {% heroicon_outline "chart-bar" size="16" class="text-indigo-400" %}
+                    </div>
+                    <div class="p-4 h-[300px]">
+                        <canvas id="grossProfitChart"></canvas>
+                    </div>
                 </div>
-                <div class="flex flex-col space-y-1">
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Go to project</label>
-                    <select class="bg-white border border-gray-300 rounded-md text-sm px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[200px]">
-                        <option>---------</option>
-                        {% for project in projects %}<option>{{ project.name }}</option>{% endfor %}
-                    </select>
+                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-center px-4 py-3 bg-purple-50 border-b border-purple-100">
+                        <h3 class="text-xs font-bold tracking-widest text-purple-700 uppercase">Net Profit Trend (6 Months)</h3>
+                        {% heroicon_outline "presentation-chart-line" size="16" class="text-purple-400" %}
+                    </div>
+                    <div class="p-4 h-[300px]">
+                        <canvas id="netProfitChart"></canvas>
+                    </div>
                 </div>
             </div>
-            <div class="flex justify-between items-center">
-                <button class="inline-flex items-center px-4 py-2 text-xs font-bold text-gray-600 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
-                    {% heroicon_outline "arrow-left" size="14" class="mr-2" %} Back to Portfolio
-                </button>
-                <button class="inline-flex items-center px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500">
-                    {% heroicon_outline "building-office" size="14" class="mr-2" %} View All Companies
-                </button>
-</div> {% endcomment %}
-<!-- Summary Stats Section -->
-{% include "company/partials/master_dashboard/_summary_stats.html" %}
-<!-- Trends Section -->
-<div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-    <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div class="flex justify-between items-center px-4 py-3 bg-indigo-50 border-b border-indigo-100">
-            <h3 class="text-xs font-bold tracking-widest text-indigo-700 uppercase">Gross Profit Trend (6 Months)</h3>
-            {% heroicon_outline "chart-bar" size="16" class="text-indigo-400" %}
-        </div>
-        <div class="p-4 h-[300px]">
-            <canvas id="grossProfitChart"></canvas>
-        </div>
-    </div>
-    <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div class="flex justify-between items-center px-4 py-3 bg-purple-50 border-b border-purple-100">
-            <h3 class="text-xs font-bold tracking-widest text-purple-700 uppercase">Net Profit Trend (6 Months)</h3>
-            {% heroicon_outline "presentation-chart-line" size="16" class="text-purple-400" %}
-        </div>
-        <div class="p-4 h-[300px]">
-            <canvas id="netProfitChart"></canvas>
+            <!-- Production Section -->
+            <section id="production" class="scroll-mt-24">
+                <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Totals</p>
+                {% include "company/partials/master_dashboard/_production_section.html" %}
+            </section>
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+            <!-- Baseline Section -->
+            <section id="baseline" class="scroll-mt-24">
+                <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Baseline</p>
+                {% include "company/partials/master_dashboard/_baseline_section.html" %}
+            </section>
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+            <!-- Financials Section -->
+            <section id="financials" class="pb-20 scroll-mt-24">
+                <div class="grid grid-cols-1 gap-12">
+                    {% include "company/partials/master_dashboard/_revenue_section.html" %}
+                    {% include "company/partials/master_dashboard/_profitability_section.html" %}
+                </div>
+            </section>
         </div>
     </div>
-</div>
-<!-- Production Section -->
-<section id="production" class="scroll-mt-24">
-    <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Totals</p>
-    {% include "company/partials/master_dashboard/_production_section.html" %}
-</section>
-<div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-<!-- Baseline Section -->
-<section id="baseline" class="scroll-mt-24">
-    <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Baseline</p>
-    {% include "company/partials/master_dashboard/_baseline_section.html" %}
-</section>
-<div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-<!-- Financials Section -->
-<section id="financials" class="pb-20 scroll-mt-24">
-    <div class="grid grid-cols-1 gap-12">
-        {% include "company/partials/master_dashboard/_revenue_section.html" %}
-        {% include "company/partials/master_dashboard/_profitability_section.html" %}
-    </div>
-</section>
-</div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
         const commonOptions = {
             responsive: true,
@@ -138,5 +116,5 @@
             });
         }
     });
-</script>
+    </script>
 {% endblock %}
