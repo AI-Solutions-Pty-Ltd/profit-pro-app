@@ -1846,46 +1846,38 @@ def get_activity_financial_summary(
     )
 
     # 4. Plant Subqueries to avoid Join Multiplication
-    plant_cost_subquery = (
-        ProjectPlantSpecificationComponent.objects.filter(
-            specification__boq_items__section=OuterRef("act_section"),
-            specification__boq_items__bill_no=OuterRef("act_bill"),
+    # We use a nested subquery to find all unique Plant Specification IDs for this group
+    # this avoids direct joins to BOQItem in the main subquery which cause multiplication.
+    relevant_specs = (
+        BOQItem.objects.filter(
+            project_id=project_id,
+            section=OuterRef(OuterRef("act_section")),
+            bill_no=OuterRef(OuterRef("act_bill")),
+            is_section_header=False,
         )
         .filter(
-            models.Q(
-                specification__boq_items__labour_specification__name=OuterRef(
-                    "act_name"
-                )
-            )
-            | models.Q(
-                specification__boq_items__plant_specification__name=OuterRef("act_name")
-            )
+            models.Q(labour_specification__name=OuterRef(OuterRef("act_name")))
+            | models.Q(plant_specification__name=OuterRef(OuterRef("act_name")))
         )
-        .distinct()
+        .values("plant_specification")
+    )
+
+    plant_cost_subquery = (
+        ProjectPlantSpecificationComponent.objects.filter(
+            specification_id__in=Subquery(relevant_specs)
+        )
         .order_by()
-        .values("specification__boq_items__section")
+        .values("specification__project_id")
         .annotate(total_rate=Sum("plant_type__hourly_rate"))
         .values("total_rate")
     )
 
     plant_count_subquery = (
         ProjectPlantSpecificationComponent.objects.filter(
-            specification__boq_items__section=OuterRef("act_section"),
-            specification__boq_items__bill_no=OuterRef("act_bill"),
+            specification_id__in=Subquery(relevant_specs)
         )
-        .filter(
-            models.Q(
-                specification__boq_items__labour_specification__name=OuterRef(
-                    "act_name"
-                )
-            )
-            | models.Q(
-                specification__boq_items__plant_specification__name=OuterRef("act_name")
-            )
-        )
-        .distinct()
         .order_by()
-        .values("specification__boq_items__section")
+        .values("specification__project_id")
         .annotate(cnt=Count("plant_type", distinct=True))
         .values("cnt")
     )
