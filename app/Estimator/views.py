@@ -400,6 +400,15 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             ProjectPreliminarySpecification
         )
 
+        # Item Library entries for the per-row picker (only those with an
+        # item_code set — others can't be picked by code).
+        context["library_entries_for_picker"] = list(
+            ProjectItemLibraryEntry.objects.filter(project=project)
+            .exclude(item_code="")
+            .order_by("item_code")
+            .values("id", "item_code", "description")
+        )
+
         # Current filter values
         context["f_section"] = self.request.GET.get("section", "")
         context["f_bill_no"] = self.request.GET.get("bill_no", "")
@@ -526,6 +535,73 @@ class SaveBoqRowToLibraryView(View):
                 "ok": True,
                 "created": result["created"],
                 "entry_id": result["entry_id"],
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class ApplyLibraryEntryToBoqView(View):
+    """AJAX: apply a ProjectItemLibraryEntry's spec FKs to a single BoQ row.
+
+    Overwrites library_entry + the four spec FKs. Trade code, component,
+    description, and unit on the row are left untouched.
+    """
+
+    def post(self, request, project_pk, pk):
+        from .services import apply_library_entry_to_boq_item
+
+        item = get_object_or_404(BOQItem, pk=pk, project_id=project_pk)
+        if item.is_section_header:
+            return JsonResponse(
+                {"error": "Section headers cannot use library entries"}, status=400
+            )
+        try:
+            data = json.loads(request.body or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        entry_id = data.get("entry_id")
+        if not entry_id:
+            return JsonResponse({"error": "entry_id required"}, status=400)
+        entry = get_object_or_404(
+            ProjectItemLibraryEntry, pk=entry_id, project_id=project_pk
+        )
+        apply_library_entry_to_boq_item(item, entry)
+
+        def fmt(val):
+            return None if val is None else str(round(val, 2))
+
+        labour_plant_name = ""
+        if item.labour_specification:
+            labour_plant_name = item.labour_specification.name
+        elif item.plant_specification:
+            labour_plant_name = item.plant_specification.name
+
+        return JsonResponse(
+            {
+                "ok": True,
+                "entry_id": entry.id,
+                "specs": {
+                    "specification": item.specification.name
+                    if item.specification
+                    else "",
+                    "labour_plant_specification": labour_plant_name,
+                    "preliminary_specification": (
+                        item.preliminary_specification.name
+                        if item.preliminary_specification
+                        else ""
+                    ),
+                },
+                "new_materials_rate": fmt(item.new_materials_rate),
+                "new_labour_rate": fmt(item.new_labour_rate),
+                "new_plant_rate": fmt(item.new_plant_rate),
+                "new_preliminary_rate": fmt(item.new_preliminary_rate),
+                "baseline_new_price": fmt(item.baseline_new_price),
+                "progress_amount": fmt(item.progress_amount),
+                "forecast_amount": fmt(item.forecast_amount),
+                "new_materials_amount": fmt(item.new_materials_amount),
+                "new_labour_amount": fmt(item.new_labour_amount),
+                "new_plant_amount": fmt(item.new_plant_amount),
+                "new_preliminary_amount": fmt(item.new_preliminary_amount),
             }
         )
 
@@ -7284,6 +7360,7 @@ _ITEM_LIBRARY_COLUMNS = [
     ("Preliminaries", "Name of an existing preliminary spec; left blank if none"),
     ("Item Description", "Required — the BoQ row description"),
     ("Unit", "Unit of measurement (e.g. m3, m2, t, SUM)"),
+    ("Item Code", "Optional — short identifier used to pick this entry on a BoQ row"),
 ]
 _ITEM_LIBRARY_HEADERS = [c[0] for c in _ITEM_LIBRARY_COLUMNS]
 
@@ -7328,6 +7405,10 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
         ctx["plant_specs"] = ProjectPlantSpecification.objects.filter(
             project=project
         ).order_by("name")
+        ctx["labour_plant_spec_names"] = sorted(
+            set(ctx["labour_specs"].values_list("name", flat=True))
+            | set(ctx["plant_specs"].values_list("name", flat=True))
+        )
         ctx["preliminary_specs"] = ProjectPreliminarySpecification.objects.filter(
             project=project
         ).order_by("name")
@@ -7472,6 +7553,10 @@ class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
                     company=company
                 ).order_by("name")
             )
+        ctx["labour_plant_spec_names"] = sorted(
+            set(ctx["labour_specs"].values_list("name", flat=True))
+            | set(ctx["plant_specs"].values_list("name", flat=True))
+        )
         ctx["f_trade_code"] = self.request.GET.get("trade_code", "")
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
@@ -7559,6 +7644,10 @@ class SystemItemLibraryListView(SystemLibraryMixin, ListView):
         ctx["material_specs"] = SystemMaterialSpec.objects.all().order_by("name")
         ctx["labour_specs"] = SystemLabourSpecification.objects.all().order_by("name")
         ctx["plant_specs"] = SystemPlantSpecification.objects.all().order_by("name")
+        ctx["labour_plant_spec_names"] = sorted(
+            set(ctx["labour_specs"].values_list("name", flat=True))
+            | set(ctx["plant_specs"].values_list("name", flat=True))
+        )
         ctx["preliminary_specs"] = (
             SystemPreliminarySpecification.objects.all().order_by("name")
         )
@@ -7606,7 +7695,13 @@ class DownloadSystemItemLibraryTemplateView(SystemLibraryMixin, View):
 # ─────────────────────────────────────────────────────────────────────
 
 
-_ITEM_LIBRARY_TEXT_FIELDS = {"accounts_code", "component", "description", "unit"}
+_ITEM_LIBRARY_TEXT_FIELDS = {
+    "item_code",
+    "accounts_code",
+    "component",
+    "description",
+    "unit",
+}
 _ITEM_LIBRARY_INT_FIELDS = {"display_order"}
 
 
@@ -7621,6 +7716,28 @@ def _apply_item_library_field(entry, field, value, fk_models):
             setattr(entry, field, int(value or 0))
         except (TypeError, ValueError):
             return JsonResponse({"error": "Invalid value"}, status=400)
+        return None
+    if field == "labour_plant_spec":
+        # Combined column: `value` is a spec name resolved against both
+        # the labour and plant tables. Whichever side matches wins; the
+        # other is cleared so we don't leave a stale pairing.
+        labour_model, labour_scope = fk_models.get("labour_spec", (None, {}))
+        plant_model, plant_scope = fk_models.get("plant_spec", (None, {}))
+        if value in (None, "", 0, "0"):
+            entry.labour_spec = None
+            entry.plant_spec = None
+            return None
+        name = str(value).strip()
+        entry.labour_spec = (
+            labour_model.objects.filter(name=name, **labour_scope).first()
+            if labour_model
+            else None
+        )
+        entry.plant_spec = (
+            plant_model.objects.filter(name=name, **plant_scope).first()
+            if plant_model
+            else None
+        )
         return None
     if field in fk_models:
         model_cls, scope_filter = fk_models[field]
