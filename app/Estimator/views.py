@@ -581,7 +581,9 @@ class ApplyLibraryEntryToBoqView(View):
                 "ok": True,
                 "entry_id": entry.id,
                 "specs": {
-                    "specification": item.specification.name if item.specification else "",
+                    "specification": item.specification.name
+                    if item.specification
+                    else "",
                     "labour_plant_specification": labour_plant_name,
                     "preliminary_specification": (
                         item.preliminary_specification.name
