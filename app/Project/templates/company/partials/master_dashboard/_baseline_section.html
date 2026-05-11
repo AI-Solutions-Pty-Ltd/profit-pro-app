@@ -1,0 +1,71 @@
+{% load humanize %}
+{% load heroicons %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <!-- Header matching Sedge Build style -->
+    <div class="bg-indigo-600 px-4 py-2 flex items-center justify-between text-white text-sm font-bold">
+        <div class="flex items-center">
+            {% heroicon_outline "shield-check" size="18" class="mr-2" %}
+            Baseline Comparison
+        </div>
+        <div class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest">
+            <span class="text-indigo-100">Scope Growth:</span>
+            <span class="bg-white/20 px-2 py-0.5 rounded {% if baseline_comparison.growth_pct > 0 %}text-rose-100{% else %}text-emerald-100{% endif %}">
+                {% if baseline_comparison.growth_pct > 0 %}+{% endif %}
+                {{ baseline_comparison.growth_pct }}%
+            </span>
+        </div>
+    </div>
+    <!-- Content Area -->
+    <div class="p-6 space-y-8">
+        <!-- Revenue Comparison -->
+        <div>
+            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                <span>Revenue Baseline</span>
+                <span class="text-indigo-600">Growth: R {{ baseline_comparison.revenue_growth|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="relative h-4 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
+                <div class="h-full bg-indigo-600 transition-all duration-1000"
+                     style="width: {% if baseline_comparison.adjusted_revenue > 0 %}{% widthratio baseline_comparison.original_revenue baseline_comparison.adjusted_revenue 100 %}{% else %}0{% endif %}%">
+                </div>
+                <div class="h-full bg-indigo-300 transition-all duration-1000"
+                     style="width: {% if baseline_comparison.adjusted_revenue > 0 %}{% widthratio baseline_comparison.revenue_growth baseline_comparison.adjusted_revenue 100 %}{% else %}0{% endif %}%">
+                </div>
+            </div>
+            <div class="flex justify-between mt-3 font-mono tabular-nums text-sm">
+                <div class="flex flex-col">
+                    <span class="text-[9px] uppercase tracking-tighter text-gray-400">Original</span>
+                    <span class="text-gray-600 font-bold">R {{ baseline_comparison.original_revenue|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[9px] uppercase tracking-tighter text-indigo-400">Adjusted</span>
+                    <span class="text-indigo-700 font-black">R {{ baseline_comparison.adjusted_revenue|floatformat:0|intcomma }}</span>
+                </div>
+            </div>
+        </div>
+        <!-- Cost Comparison -->
+        <div>
+            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                <span>Cost Baseline</span>
+                <span class="text-rose-600">Growth: R {{ baseline_comparison.cost_growth|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="relative h-4 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
+                <div class="h-full bg-rose-600 transition-all duration-1000"
+                     style="width: {% if baseline_comparison.adjusted_cost > 0 %}{% widthratio baseline_comparison.original_cost baseline_comparison.adjusted_cost 100 %}{% else %}0{% endif %}%">
+                </div>
+                <div class="h-full bg-rose-300 transition-all duration-1000"
+                     style="width: {% if baseline_comparison.adjusted_cost > 0 %}{% widthratio baseline_comparison.cost_growth baseline_comparison.adjusted_cost 100 %}{% else %}0{% endif %}%">
+                </div>
+            </div>
+            <div class="flex justify-between mt-3 font-mono tabular-nums text-sm">
+                <div class="flex flex-col">
+                    <span class="text-[9px] uppercase tracking-tighter text-gray-400">Original</span>
+                    <span class="text-gray-600 font-bold">R {{ baseline_comparison.original_cost|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[9px] uppercase tracking-tighter text-rose-400">Adjusted</span>
+                    <span class="text-rose-700 font-black">R {{ baseline_comparison.adjusted_cost|floatformat:0|intcomma }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

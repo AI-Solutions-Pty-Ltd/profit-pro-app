@@ -37,7 +37,7 @@ from ..production_models import (
     ProductionResource,
 )
 from ..utils.production_utils import (
-    get_project_activity_summary,
+    get_activity_financial_summary,
     get_project_performance_summary,
 )
 
@@ -521,7 +521,7 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
         project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
 
         # Fetch grouped activities using the centralized utility
-        activities = get_project_activity_summary(project.id)
+        activities = get_activity_financial_summary(project.id)
 
         if not activities.exists():
             messages.warning(
@@ -535,12 +535,17 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
         skipped_count = 0
 
         for item in activities:
-            # Match on section, bill, and activity name
+            # Normalize strings for matching to prevent "near-duplicate" drift
+            item_section = (item["act_section"] or "").strip()
+            item_bill = (item["act_bill"] or "").strip()
+            item_act = (item["act_name"] or "").strip()
+
+            # Match on normalized section, bill, and activity name
             plan = ProductionPlan.objects.filter(
                 project=project,
-                section=item["section"],
-                bill_no=item["bill_no"],
-                activity=item["act_name"],
+                section=item_section,
+                bill_no=item_bill,
+                activity=item_act,
                 is_archived=False,
             ).first()
 
@@ -561,9 +566,15 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
                     or plan.unit != new_unit
                     or plan.duration != new_duration
                     or plan.labour_activity_id != new_spec_id
+                    or plan.section != item_section
+                    or plan.bill_no != item_bill
+                    or plan.activity != item_act
                 )
 
                 if changed:
+                    plan.section = item_section
+                    plan.bill_no = item_bill
+                    plan.activity = item_act
                     plan.quantity = new_qty
                     plan.daily_rate = new_rate
                     plan.crew_count = new_crew_count
@@ -578,12 +589,12 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
                 else:
                     skipped_count += 1
             else:
-                # Create a fresh plan with the correct duration immediately
+                # Create a fresh plan with normalized strings
                 ProductionPlan.objects.create(
                     project=project,
-                    section=item["section"],
-                    bill_no=item["bill_no"],
-                    activity=item["act_name"],
+                    section=item_section,
+                    bill_no=item_bill,
+                    activity=item_act,
                     labour_activity_id=new_spec_id,
                     quantity=new_qty,
                     unit=new_unit,
@@ -1157,6 +1168,9 @@ class ProductionCashflowForecastView(
 
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
+        context["company"] = (
+            project.contractor
+        )  # Required for reports_nav.html and template rendering
 
         horizon = self.request.GET.get("horizon", "term").lower()
         if horizon not in ["month", "term", "half", "year"]:

@@ -1,0 +1,44 @@
+{% load humanize %}
+{% load heroicons %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <!-- Header matching Sedge Build style -->
+    <div class="bg-emerald-600 px-4 py-2 flex items-center justify-between text-white text-sm font-bold">
+        <div class="flex items-center">
+            {% heroicon_outline "banknotes" size="18" class="mr-2" %}
+            Revenue Performance
+        </div>
+    </div>
+    <!-- Revenue Grid -->
+    <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Certified Revenue -->
+        <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
+            <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Certified Revenue</p>
+            <h3 class="text-xl font-black text-emerald-900 font-mono">
+                R {{ financials.certified_revenue|default:0|floatformat:0|intcomma }}
+            </h3>
+            <div class="mt-4 h-1.5 w-full bg-emerald-100 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-500 w-[45%]"></div>
+            </div>
+            <p class="mt-2 text-[10px] text-emerald-600">45% of total contract value</p>
+        </div>
+        <!-- Pending Certification -->
+        <div class="bg-amber-50 border border-amber-100 rounded-lg p-4">
+            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Pending Certification</p>
+            <h3 class="text-xl font-black text-amber-900 font-mono">
+                R {{ financials.pending_revenue|default:0|floatformat:0|intcomma }}
+            </h3>
+            <div class="mt-4 flex items-center text-[10px] text-amber-600 font-bold">
+                {% heroicon_outline "exclamation-triangle" size="12" class="mr-1" %}
+                Requires approval
+            </div>
+        </div>
+        <!-- Remaining Forecast -->
+        <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+            <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Remaining Forecast</p>
+            <h3 class="text-xl font-black text-blue-900 font-mono">
+                R {{ financials.remaining_revenue|default:0|floatformat:0|intcomma }}
+            </h3>
+            <p class="mt-4 text-[10px] text-blue-500 italic">Expected completion in 4 months</p>
+        </div>
+    </div>
+</div>
