@@ -1495,6 +1495,7 @@ def sync_item_library_to_contractor(company):
 
         defaults = {
             "trade_code": trade_code,
+            "item_code": sysentry.item_code,
             "accounts_code": sysentry.accounts_code,
             "component": sysentry.component,
             "description": sysentry.description,
@@ -1583,6 +1584,7 @@ def sync_item_library_from_system(project):
 
         defaults = {
             "trade_code": trade_code,
+            "item_code": sysentry.item_code,
             "accounts_code": sysentry.accounts_code,
             "component": sysentry.component,
             "description": sysentry.description,
@@ -1676,6 +1678,7 @@ def sync_item_library_from_contractor(project):
 
         defaults = {
             "trade_code": trade_code,
+            "item_code": centry.item_code,
             "accounts_code": centry.accounts_code,
             "component": centry.component,
             "description": centry.description,
@@ -1862,3 +1865,26 @@ def save_boq_item_to_library(item):
     item.save(update_fields=["library_entry"])
 
     return {"created": created, "entry_id": entry.id, "skipped": False}
+
+
+def apply_library_entry_to_boq_item(item, entry):
+    """Overwrite a BOQItem's spec FKs from a ProjectItemLibraryEntry.
+
+    Sets library_entry + the four spec FKs (specification, labour_specification,
+    plant_specification, preliminary_specification). Trade code, component,
+    description, and unit on the BoQ row are left untouched.
+    """
+    item.library_entry = entry
+    item.specification = entry.material_spec
+    item.labour_specification = entry.labour_spec
+    item.plant_specification = entry.plant_spec
+    item.preliminary_specification = entry.preliminary_spec
+    item.save(
+        update_fields=[
+            "library_entry",
+            "specification",
+            "labour_specification",
+            "plant_specification",
+            "preliminary_specification",
+        ]
+    )

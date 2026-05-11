@@ -661,7 +661,7 @@
                             preliminaries
                         </th>
                         <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[280px] sticky left-0 z-20 shadow-[1px_0_0_#e5e7eb]">
-                            Details
+                            Description
                         </th>
                         <th class="bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[40px]">
                             Unit
@@ -766,7 +766,15 @@
                                 </td>
                                 <!-- Bill No -->
                                 <td class="px-1 py-1.5 text-gray-400 whitespace-normal break-words column-group-item-details col-bill-no w-[100px]">
-                                    {{ item.bill_no }}
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="min-w-0">{{ item.bill_no }}</span>
+                                        <button type="button"
+                                                class="library-picker-btn shrink-0 text-gray-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                data-item-id="{{ item.id }}"
+                                                title="Apply item from library">
+                                            {% heroicon_outline "book-open" class="w-3.5 h-3.5" %}
+                                        </button>
+                                    </div>
                                 </td>
                                 <!-- Trade Code (editable dropdown) -->
                                 <td class="px-1 py-0.5 column-group-item-details col-trade-code whitespace-normal w-[120px]">
@@ -949,6 +957,30 @@
         </div>
     </div>
     {% include "estimator/_pagination.html" %}
+    <!-- Item-code picker popover (single shared instance, repositioned per row) -->
+    <div id="library-picker-popover"
+         class="hidden fixed z-50 w-72 bg-white border border-gray-200 rounded-md shadow-lg p-2">
+        <input id="library-picker-search"
+               type="text"
+               placeholder="Search item code or description…"
+               class="w-full mb-2 px-2 py-1 text-xs border border-gray-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+        <ul id="library-picker-list"
+            class="max-h-64 overflow-y-auto text-xs divide-y divide-gray-100">
+            {% for entry in library_entries_for_picker %}
+                <li>
+                    <button type="button"
+                            class="library-picker-option w-full text-left px-2 py-1.5 hover:bg-indigo-50"
+                            data-entry-id="{{ entry.id }}"
+                            data-search="{{ entry.item_code|lower }} {{ entry.description|lower }}">
+                        <span class="font-mono font-semibold text-indigo-700">{{ entry.item_code }}</span>
+                        <span class="text-gray-500">— {{ entry.description }}</span>
+                    </button>
+                </li>
+            {% empty %}
+                <li class="px-2 py-3 text-center text-gray-400">No item codes defined yet. Set them in the Item Library.</li>
+            {% endfor %}
+        </ul>
+    </div>
     <!-- AJAX auto-save script for inline dropdowns, qty inputs, and markup inputs -->
     <script>
 (function() {
@@ -1183,6 +1215,93 @@
                 console.error('Network error:', err);
             });
         });
+    });
+
+    // ============ Item-code picker (apply library entry to BoQ row) ============
+    const libraryPicker = document.getElementById('library-picker-popover');
+    const librarySearch = document.getElementById('library-picker-search');
+    let activeLibraryItemId = null;
+
+    function hideLibraryPicker() {
+        libraryPicker.classList.add('hidden');
+        activeLibraryItemId = null;
+    }
+
+    function showLibraryPickerFor(btn) {
+        activeLibraryItemId = btn.dataset.itemId;
+        const rect = btn.getBoundingClientRect();
+        const popoverWidth = 288;
+        const maxLeft = window.innerWidth - popoverWidth - 8;
+        libraryPicker.style.top = (rect.bottom + 4) + 'px';
+        libraryPicker.style.left = Math.max(8, Math.min(rect.left, maxLeft)) + 'px';
+        librarySearch.value = '';
+        libraryPicker.querySelectorAll('.library-picker-option').forEach(opt => {
+            opt.parentElement.classList.remove('hidden');
+        });
+        libraryPicker.classList.remove('hidden');
+        librarySearch.focus();
+    }
+
+    document.querySelectorAll('.library-picker-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (activeLibraryItemId === btn.dataset.itemId) {
+                hideLibraryPicker();
+            } else {
+                showLibraryPickerFor(btn);
+            }
+        });
+    });
+
+    if (librarySearch) {
+        librarySearch.addEventListener('input', function() {
+            const q = this.value.trim().toLowerCase();
+            libraryPicker.querySelectorAll('.library-picker-option').forEach(opt => {
+                const hit = !q || opt.dataset.search.indexOf(q) !== -1;
+                opt.parentElement.classList.toggle('hidden', !hit);
+            });
+        });
+    }
+
+    libraryPicker.querySelectorAll('.library-picker-option').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+            if (!activeLibraryItemId) return;
+            const entryId = this.dataset.entryId;
+            const itemId = activeLibraryItemId;
+            hideLibraryPicker();
+            fetch(`/estimator/project/{{ project_pk }}/api/boq-item/${itemId}/apply-library-entry/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ entry_id: parseInt(entryId, 10) }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    window.location.reload();
+                } else {
+                    console.error('Apply library entry error:', data.error);
+                    alert(data.error || 'Failed to apply library entry.');
+                }
+            })
+            .catch(err => {
+                console.error('Network error:', err);
+                alert('Network error while applying library entry.');
+            });
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!libraryPicker.classList.contains('hidden')
+            && !libraryPicker.contains(e.target)
+            && !e.target.closest('.library-picker-btn')) {
+            hideLibraryPicker();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !libraryPicker.classList.contains('hidden')) {
+            hideLibraryPicker();
+        }
     });
 
     // ============ Qty input handlers (progress_quantity, forecast_quantity) ============

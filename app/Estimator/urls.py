@@ -231,6 +231,11 @@ urlpatterns = [
         views.SaveBoqRowToLibraryView.as_view(),
         name="save_boq_row_to_library",
     ),
+    path(
+        "project/<int:project_pk>/api/boq-item/<int:pk>/apply-library-entry/",
+        views.ApplyLibraryEntryToBoqView.as_view(),
+        name="apply_library_entry_to_boq",
+    ),
     # System specs
     path(
         "project/<int:project_pk>/system-specs/",

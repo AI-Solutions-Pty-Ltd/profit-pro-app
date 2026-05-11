@@ -227,9 +227,9 @@ class ProjectPreliminarySpecificationAdmin(admin.ModelAdmin):
 
 @admin.register(SystemItemLibraryEntry)
 class SystemItemLibraryEntryAdmin(admin.ModelAdmin):
-    list_display = ["trade_code", "component", "description", "unit"]
+    list_display = ["item_code", "trade_code", "component", "description", "unit"]
     list_filter = ["trade_code"]
-    search_fields = ["description", "component", "accounts_code"]
+    search_fields = ["item_code", "description", "component", "accounts_code"]
     raw_id_fields = [
         "trade_code",
         "material_spec",
@@ -241,9 +241,16 @@ class SystemItemLibraryEntryAdmin(admin.ModelAdmin):
 
 @admin.register(ContractorItemLibraryEntry)
 class ContractorItemLibraryEntryAdmin(admin.ModelAdmin):
-    list_display = ["company", "trade_code", "component", "description", "unit"]
+    list_display = [
+        "company",
+        "item_code",
+        "trade_code",
+        "component",
+        "description",
+        "unit",
+    ]
     list_filter = ["company", "trade_code"]
-    search_fields = ["description", "component", "accounts_code"]
+    search_fields = ["item_code", "description", "component", "accounts_code"]
     raw_id_fields = [
         "trade_code",
         "material_spec",
@@ -256,9 +263,16 @@ class ContractorItemLibraryEntryAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectItemLibraryEntry)
 class ProjectItemLibraryEntryAdmin(admin.ModelAdmin):
-    list_display = ["project", "trade_code", "component", "description", "unit"]
+    list_display = [
+        "project",
+        "item_code",
+        "trade_code",
+        "component",
+        "description",
+        "unit",
+    ]
     list_filter = ["project", "trade_code"]
-    search_fields = ["description", "component", "accounts_code"]
+    search_fields = ["item_code", "description", "component", "accounts_code"]
     raw_id_fields = [
         "trade_code",
         "material_spec",
