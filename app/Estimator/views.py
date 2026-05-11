@@ -566,7 +566,42 @@ class ApplyLibraryEntryToBoqView(View):
             ProjectItemLibraryEntry, pk=entry_id, project_id=project_pk
         )
         apply_library_entry_to_boq_item(item, entry)
-        return JsonResponse({"ok": True, "entry_id": entry.id})
+
+        def fmt(val):
+            return None if val is None else str(round(val, 2))
+
+        labour_plant_name = ""
+        if item.labour_specification:
+            labour_plant_name = item.labour_specification.name
+        elif item.plant_specification:
+            labour_plant_name = item.plant_specification.name
+
+        return JsonResponse(
+            {
+                "ok": True,
+                "entry_id": entry.id,
+                "specs": {
+                    "specification": item.specification.name if item.specification else "",
+                    "labour_plant_specification": labour_plant_name,
+                    "preliminary_specification": (
+                        item.preliminary_specification.name
+                        if item.preliminary_specification
+                        else ""
+                    ),
+                },
+                "new_materials_rate": fmt(item.new_materials_rate),
+                "new_labour_rate": fmt(item.new_labour_rate),
+                "new_plant_rate": fmt(item.new_plant_rate),
+                "new_preliminary_rate": fmt(item.new_preliminary_rate),
+                "baseline_new_price": fmt(item.baseline_new_price),
+                "progress_amount": fmt(item.progress_amount),
+                "forecast_amount": fmt(item.forecast_amount),
+                "new_materials_amount": fmt(item.new_materials_amount),
+                "new_labour_amount": fmt(item.new_labour_amount),
+                "new_plant_amount": fmt(item.new_plant_amount),
+                "new_preliminary_amount": fmt(item.new_preliminary_amount),
+            }
+        )
 
 
 class SpecificationListView(ProjectEstimatorMixin, TemplateView):

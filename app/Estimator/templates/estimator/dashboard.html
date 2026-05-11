@@ -1268,6 +1268,7 @@
             if (!activeLibraryItemId) return;
             const entryId = this.dataset.entryId;
             const itemId = activeLibraryItemId;
+            const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
             hideLibraryPicker();
             fetch(`/estimator/project/{{ project_pk }}/api/boq-item/${itemId}/apply-library-entry/`, {
                 method: 'POST',
@@ -1276,11 +1277,30 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (data.ok) {
-                    window.location.reload();
-                } else {
+                if (!data.ok) {
                     console.error('Apply library entry error:', data.error);
                     alert(data.error || 'Failed to apply library entry.');
+                    return;
+                }
+                if (row && data.specs) {
+                    Object.entries(data.specs).forEach(([field, name]) => {
+                        const sel = row.querySelector(`select[data-field="${field}"]`);
+                        if (sel) sel.value = name || '';
+                    });
+                }
+                if (row) {
+                    updateRowCells(row, data);
+                    const prevBoxShadow = row.style.boxShadow;
+                    const prevTransition = row.style.transition;
+                    row.style.transition = 'box-shadow 200ms ease-out';
+                    row.style.boxShadow =
+                        'inset 0 0 0 2px rgba(255,255,255,0.95), ' +
+                        '0 0 0 2px rgba(129,140,248,0.85), ' +
+                        '0 0 14px 4px rgba(129,140,248,0.55)';
+                    setTimeout(() => {
+                        row.style.boxShadow = prevBoxShadow;
+                        setTimeout(() => { row.style.transition = prevTransition; }, 220);
+                    }, 900);
                 }
             })
             .catch(err => {
