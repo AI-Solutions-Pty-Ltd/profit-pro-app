@@ -38,4 +38,14 @@ urlpatterns = [
         cvs.CompanyDashboardView.as_view(),
         name="company-dashboard",
     ),
+    path(
+        "<int:pk>/master-dashboard/",
+        cvs.MasterProjectDashboardView.as_view(),
+        name="master-project-dashboard",
+    ),
+    path(
+        "portfolio-master-dashboard/",
+        cvs.MasterPortfolioDashboardView.as_view(),
+        name="master-portfolio-dashboard",
+    ),
 ]

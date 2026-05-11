@@ -58,13 +58,13 @@
                                     <div class="truncate max-w-[180px]" title="{{ activity.act_name }}">{{ activity.act_name }}</div>
                                 </th>
                                 <th class="sticky left-[200px] z-10 bg-white group-hover:bg-indigo-50/50 border-r border-gray-100 text-gray-500 capitalize whitespace-nowrap font-normal">
-                                    {{ activity.section|default:"-" }}
+                                    {{ activity.act_section|default:"-" }}
                                 </th>
                                 <th class="sticky left-[300px] z-10 bg-white group-hover:bg-indigo-50/50 border-r border-gray-100 text-gray-500 whitespace-nowrap font-normal">
-                                    {{ activity.bill_no|default:"-" }}
+                                    {{ activity.act_bill|default:"-" }}
                                 </th>
                                 <td class="px-2 text-center whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2 py-1 text-xs font-bold font-mono text-indigo-700 bg-indigo-50 rounded-md ring-1 ring-inset ring-indigo-600/20">
+                                    <span class="inline-flex items-center px-2 py-1 font-mono text-xs font-bold text-indigo-700 bg-indigo-50 rounded-md ring-1 ring-inset ring-indigo-600/20">
                                         {{ activity.crew_count|floatformat:0 }}
                                     </span>
                                 </td>
@@ -118,7 +118,7 @@
                                     {{ activity.total_amount|currency }}
                                 </td>
                                 <th class="text-right whitespace-nowrap bg-white border-l border-gray-100 group-hover:bg-indigo-50/50">
-                                    <a href="{% url 'project:labor-activity-detail' project_pk=project_pk %}?act_name={{ activity.act_name|urlencode }}&section={{ activity.section|urlencode }}&bill_no={{ activity.bill_no|urlencode }}"
+                                    <a href="{% url 'project:labor-activity-detail' project_pk=project_pk %}?act_name={{ activity.act_name|urlencode }}&section={{ activity.act_section|urlencode }}&bill_no={{ activity.act_bill|urlencode }}"
                                        class="p-1 text-indigo-600 btn btn-ghost btn-xs hover:bg-indigo-100">
                                         {% heroicon_outline "chevron-right" class="w-4 h-4" %}
                                     </a>
