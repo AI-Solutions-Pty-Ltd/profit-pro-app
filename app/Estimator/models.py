@@ -17,6 +17,18 @@ from app.Estimator.calculations import (
     calculate_total_quantity,
 )
 
+
+def _compute_market_rate(pack_cost, pack_qty):
+    """Effective unit rate for a material from a pack quote (e.g. 2800 / 1000
+    bricks). Returns 0 when pack_qty is missing/zero to avoid div-by-zero.
+    """
+    cost = Decimal(pack_cost or 0)
+    qty = Decimal(pack_qty or 0)
+    if qty <= 0:
+        return Decimal("0")
+    return cost / qty
+
+
 # ═══════════════════════════════════════════════════════════════════
 # System-Level Library Models (admin-managed, importable)
 # ═══════════════════════════════════════════════════════════════════
@@ -42,7 +54,9 @@ class SystemMaterial(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
     material_code = models.CharField(max_length=100, unique=True)
     unit = models.CharField(max_length=20, blank=True)
-    market_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    market_rate = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
@@ -52,6 +66,10 @@ class SystemMaterial(models.Model):
 
     def __str__(self):
         return self.material_code
+
+    def save(self, *args, **kwargs):
+        self.market_rate = _compute_market_rate(self.pack_cost, self.pack_qty)
+        super().save(*args, **kwargs)
 
 
 class SystemSpecification(models.Model):
@@ -575,7 +593,9 @@ class ContractorMaterial(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
     material_code = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, blank=True)
-    market_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    market_rate = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
@@ -585,6 +605,10 @@ class ContractorMaterial(models.Model):
 
     def __str__(self):
         return self.material_code
+
+    def save(self, *args, **kwargs):
+        self.market_rate = _compute_market_rate(self.pack_cost, self.pack_qty)
+        super().save(*args, **kwargs)
 
 
 class ContractorSpecification(models.Model):
@@ -1219,7 +1243,9 @@ class ProjectMaterial(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
     material_code = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, blank=True)
-    market_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    market_rate = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
@@ -1229,6 +1255,10 @@ class ProjectMaterial(models.Model):
 
     def __str__(self):
         return self.material_code
+
+    def save(self, *args, **kwargs):
+        self.market_rate = _compute_market_rate(self.pack_cost, self.pack_qty)
+        super().save(*args, **kwargs)
 
 
 class ProjectSpecification(models.Model):
