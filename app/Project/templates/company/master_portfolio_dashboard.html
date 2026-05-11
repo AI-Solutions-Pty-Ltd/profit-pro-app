@@ -4,51 +4,14 @@
 {% load heroicons %}
 {% block content %}
     <div class="min-h-screen bg-gray-50/50">
-        <!-- White Premium Header -->
-        <div class="bg-white border-b border-gray-200 shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <!-- Left Nav -->
-                    <nav class="hidden md:flex space-x-6">
-                        <a href="/"
-                           class="text-xs font-semibold text-gray-600 hover:text-indigo-600 flex items-center">
-                            {% heroicon_outline "home" size="14" class="mr-1.5" %} Home
-                        </a>
-                        <a href="#"
-                           class="text-xs font-semibold text-gray-600 hover:text-indigo-600 flex items-center">
-                            {% heroicon_outline "chart-pie" size="14" class="mr-1.5" %} Project Dashboard
-                        </a>
-                    </nav>
-                    <!-- Center Brand -->
-                    <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-black tracking-tighter text-indigo-700">SEDGE BUILD</h1>
-                    </div>
-                    <!-- Right Nav -->
-                    <div class="flex items-center space-x-4">
-                        <span class="text-xs font-semibold text-gray-600">Profile</span>
-                        <a href="#"
-                           class="bg-indigo-600 text-white px-4 py-1.5 rounded-md text-xs font-bold shadow-sm hover:bg-indigo-500 transition-all">
-                            Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Breadcrumbs -->
-        <div class="bg-white border-b border-gray-100 px-4 py-2">
-            <div class="max-w-7xl mx-auto flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                {% heroicon_outline "home" size="12" %}
-                {% heroicon_outline "chevron-right" size="10" %}
-                <span class="text-gray-600">Business Dashboard</span>
-            </div>
-        </div>
+     
         <!-- Main Content Area -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-            <!-- Action Bar -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="px-4 py-8 mx-auto space-y-10 max-w-7xl sm:px-6 lg:px-8">
+            {% comment %} <!-- Action Bar -->
+            <div class="flex flex-col gap-6 justify-between md:flex-row md:items-end">
                 <div>
-                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Business Dashboard</h2>
-                    <p class="text-xs text-gray-500 mt-1">Financial overview as of {% now "F d, Y" %}</p>
+                    <h2 class="text-3xl font-black tracking-tight text-gray-900">Business Dashboard</h2>
+                    <p class="mt-1 text-xs text-gray-500">Financial overview as of {% now "F d, Y" %}</p>
                 </div>
                 <div class="flex flex-col space-y-1">
                     <label class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Go to project</label>
@@ -59,29 +22,29 @@
                 </div>
             </div>
             <div class="flex justify-between items-center">
-                <button class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm hover:bg-gray-50">
+                <button class="inline-flex items-center px-4 py-2 text-xs font-bold text-gray-600 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
                     {% heroicon_outline "arrow-left" size="14" class="mr-2" %} Back to Portfolio
                 </button>
-                <button class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-500">
+                <button class="inline-flex items-center px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500">
                     {% heroicon_outline "building-office" size="14" class="mr-2" %} View All Companies
                 </button>
-            </div>
+            </div> {% endcomment %}
             <!-- Summary Stats Section -->
             {% include "company/partials/master_dashboard/_summary_stats.html" %}
             <!-- Trends Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <div class="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-indigo-700">Gross Profit Trend (6 Months)</h3>
+            <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-center px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+                        <h3 class="text-xs font-bold tracking-widest text-indigo-700 uppercase">Gross Profit Trend (6 Months)</h3>
                         {% heroicon_outline "chart-bar" size="16" class="text-indigo-400" %}
                     </div>
                     <div class="p-4 h-[300px]">
                         <canvas id="grossProfitChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <div class="bg-purple-50 px-4 py-3 border-b border-purple-100 flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-purple-700">Net Profit Trend (6 Months)</h3>
+                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-center px-4 py-3 bg-purple-50 border-b border-purple-100">
+                        <h3 class="text-xs font-bold tracking-widest text-purple-700 uppercase">Net Profit Trend (6 Months)</h3>
                         {% heroicon_outline "presentation-chart-line" size="16" class="text-purple-400" %}
                     </div>
                     <div class="p-4 h-[300px]">
@@ -91,18 +54,18 @@
             </div>
             <!-- Production Section -->
             <section id="production" class="scroll-mt-24">
-                <p class="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-2">Portfolio Totals</p>
+                <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Totals</p>
                 {% include "company/partials/master_dashboard/_production_section.html" %}
             </section>
             <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
             <!-- Baseline Section -->
             <section id="baseline" class="scroll-mt-24">
-                <p class="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-2">Portfolio Baseline</p>
+                <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Baseline</p>
                 {% include "company/partials/master_dashboard/_baseline_section.html" %}
             </section>
             <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
             <!-- Financials Section -->
-            <section id="financials" class="scroll-mt-24 pb-20">
+            <section id="financials" class="pb-20 scroll-mt-24">
                 <div class="grid grid-cols-1 gap-12">
                     {% include "company/partials/master_dashboard/_revenue_section.html" %}
                     {% include "company/partials/master_dashboard/_profitability_section.html" %}

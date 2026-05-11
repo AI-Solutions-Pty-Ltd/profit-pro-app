@@ -1,52 +1,54 @@
 {% load humanize %}
 {% load heroicons %}
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+<div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
     <!-- Header matching Sedge Build style -->
-    <div class="bg-blue-600 px-4 py-2 flex items-center justify-between text-white text-sm font-bold">
+    <div class="flex justify-between items-center px-4 py-2 text-sm font-bold text-white bg-blue-600">
         <div class="flex items-center">
             {% heroicon_outline "cog-8-tooth" size="18" class="mr-2" %}
-            Production Performance
+            Productivity and Progress
         </div>
-        <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded bg-white/20">{{ production.status }}</span>
     </div>
     <!-- Production KPI Grid -->
-    <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 gap-4 p-4 md:grid-cols-5">
         <!-- Progress Gauge -->
-        <div class="bg-blue-50 border border-blue-100 rounded-lg p-6 flex flex-col items-center text-center">
-            <div class="relative w-20 h-20 mb-3">
+        <div class="flex flex-col items-center p-6 text-center bg-blue-50 rounded-lg border border-blue-100">
+           
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Overall Progress</p>
+             <div class="relative mb-3 w-10 h-10">
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="16" fill="none" class="stroke-current text-blue-100" stroke-width="3"></circle>
-                    <circle cx="18" cy="18" r="16" fill="none" class="stroke-current text-blue-500" stroke-width="3" stroke-dasharray="{{ production.progress_pct }}, 100" stroke-linecap="round"></circle>
+                    <circle cx="18" cy="18" r="16" fill="none" class="text-blue-100 stroke-current" stroke-width="3"></circle>
+                    <circle cx="18" cy="18" r="16" fill="none" class="text-blue-500 stroke-current" stroke-width="3" stroke-dasharray="{{ production.progress_pct }}, 100" stroke-linecap="round"></circle>
                 </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="text-sm font-black text-blue-900 font-mono">{{ production.progress_pct }}%</span>
+                <div class="flex absolute inset-0 justify-center items-center">
+                    <span class="font-mono text-sm font-black text-blue-900">{{ production.progress_pct }}%</span>
                 </div>
+                
             </div>
-            <p class="text-[9px] font-bold text-blue-600 uppercase tracking-widest">Overall Progress</p>
+            <p class="text-[10px] font-semibold text-gray-500">10 day behind schedule</p>
         </div>
-        <!-- U/MH Efficiency -->
-        <div class="bg-purple-50 border border-purple-100 rounded-lg p-6 flex flex-col items-center text-center">
-            <div class="bg-purple-500 rounded-lg p-2 mb-3 shadow-sm">
-                {% heroicon_outline "bolt" size="20" class="text-white" %}
+          <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Production Performance Index</p>
+                <p class="font-mono text-xl font-black text-gray-900">R 0</p>
+                <p class="text-[10px] text-gray-500">(0.0%)</p>
             </div>
-            <h3 class="text-2xl font-black text-purple-900 font-mono">{{ production.umh }}</h3>
-            <p class="text-[9px] font-bold text-purple-600 uppercase tracking-widest">Units per Man-Hour</p>
-        </div>
-        <!-- Total Hours -->
-        <div class="bg-amber-50 border border-amber-100 rounded-lg p-6 flex flex-col items-center text-center">
-            <div class="bg-amber-500 rounded-lg p-2 mb-3 shadow-sm">
-                {% heroicon_outline "clock" size="20" class="text-white" %}
+
+              <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Cost Performance Index</p>
+                <p class="font-mono text-xl font-black text-gray-900">R 0</p>
+                <p class="text-[10px] text-gray-500">(0.0%)</p>
             </div>
-            <h3 class="text-2xl font-black text-amber-900 font-mono">{{ production.total_hours|floatformat:0 }}h</h3>
-            <p class="text-[9px] font-bold text-amber-600 uppercase tracking-widest">Total Production Hours</p>
-        </div>
-        <!-- Actual Quantity -->
-        <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-6 flex flex-col items-center text-center">
-            <div class="bg-emerald-500 rounded-lg p-2 mb-3 shadow-sm">
-                {% heroicon_outline "cube" size="20" class="text-white" %}
+
+              <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Schedule Impact</p>
+                <p class="font-mono text-xl font-black text-gray-900">R 0</p>
+                <p class="text-[10px] text-gray-500">(0.0%)</p>
             </div>
-            <h3 class="text-2xl font-black text-emerald-900 font-mono">{{ production.actual_quantity|floatformat:0 }}</h3>
-            <p class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Units Produced</p>
-        </div>
+
+              <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Financial Impact</p>
+                <p class="font-mono text-xl font-black text-gray-900">R 0</p>
+                <p class="text-[10px] text-gray-500">(0.0%)</p>
+            </div>
+       
     </div>
 </div>

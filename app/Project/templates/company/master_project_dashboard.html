@@ -17,8 +17,8 @@
                         {% heroicon_outline "printer" size="18" %}
                     </button>
                     <a href="{% url 'project:company-management' project.pk %}"
-                       class="px-4 py-2 text-xs font-bold tracking-widest text-gray-700 uppercase bg-white rounded-lg border border-gray-200 shadow-sm transition-all hover:bg-gray-50">
-                        Exit to Management
+                       class="px-4 py-2 text-xs font-semibold text-white bg-indigo-500 rounded-lg border border-gray-200 shadow-sm transition-all hover:bg-gray-50">
+                        Go to Business Management
                     </a>
                 </div>
             </div>
@@ -29,23 +29,7 @@
                 {% include "company/partials/master_dashboard/_production_section.html" %}
             </section>
             <!-- Divider -->
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-            <!-- Baseline Section -->
-            <section id="baseline" class="scroll-mt-24">
-                {% include "company/partials/master_dashboard/_baseline_section.html" %}
-            </section>
-            <!-- Divider -->
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-            <!-- Revenue Section -->
-            <section id="revenue" class="scroll-mt-24">
-                {% include "company/partials/master_dashboard/_revenue_section.html" %}
-            </section>
-            <!-- Divider -->
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-            <!-- Profitability Section -->
-            <section id="profitability" class="pb-20 scroll-mt-24">
-                {% include "company/partials/master_dashboard/_profitability_section.html" %}
-            </section>
+           
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
