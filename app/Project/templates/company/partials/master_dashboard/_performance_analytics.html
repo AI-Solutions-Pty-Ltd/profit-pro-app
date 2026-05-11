@@ -1,0 +1,74 @@
+{% load humanize %}
+{% load heroicons %}
+
+<div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+    <!-- Header -->
+    <div class="flex justify-between items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600">
+        <div class="flex items-center">
+            {% heroicon_outline "presentation-chart-line" size="18" class="mr-2" %}
+            Performance Analytics
+        </div>
+        <div class="flex items-center space-x-2 text-[10px] font-normal uppercase tracking-widest text-indigo-100">
+            <span>Trailing 6 Months</span>
+        </div>
+    </div>
+
+    <!-- Analytics Grid -->
+    <div class="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
+        <!-- Net Profit Trend -->
+        <div class="space-y-4">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Net Profit Performance</h3>
+                    <p class="text-2xl font-black text-gray-900 font-mono">
+                        R {{ financials.net_profit|floatformat:0|intcomma }}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center px-2 py-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 rounded-md ring-1 ring-emerald-700/10">
+                        {% heroicon_outline "arrow-trending-up" size="12" class="mr-1" %}
+                        8.4%
+                    </span>
+                    <p class="mt-1 text-[9px] text-gray-400 uppercase tracking-tighter">vs prev. month</p>
+                </div>
+            </div>
+            <div class="relative h-64 rounded-xl border border-gray-50 bg-gray-50/30 p-4">
+                <canvas id="netProfitTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Productivity Trend (CPI & PPI) -->
+        <div class="space-y-4">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Combined Efficiency</h3>
+                    <div class="flex items-center space-x-4 mt-1">
+                        <div>
+                            <span class="text-[10px] font-bold text-emerald-600 uppercase">CPI</span>
+                            <p class="text-lg font-black text-gray-900 font-mono">{{ analytics.current_cpi }}</p>
+                        </div>
+                        <div class="h-8 border-r border-gray-200"></div>
+                        <div>
+                            <span class="text-[10px] font-bold text-amber-600 uppercase">PPI</span>
+                            <p class="text-lg font-black text-gray-900 font-mono">{{ analytics.current_ppi }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="flex items-center text-[10px] text-gray-500">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1"></span> CPI
+                        </span>
+                        <span class="flex items-center text-[10px] text-gray-500">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 mr-1"></span> PPI
+                        </span>
+                    </div>
+                    <p class="text-[9px] text-gray-400 uppercase tracking-tighter">Efficiency Target: 1.0</p>
+                </div>
+            </div>
+            <div class="relative h-64 rounded-xl border border-gray-50 bg-gray-50/30 p-4">
+                <canvas id="productivityTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
