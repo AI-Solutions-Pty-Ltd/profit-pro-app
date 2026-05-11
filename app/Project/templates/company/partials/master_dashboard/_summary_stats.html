@@ -21,8 +21,8 @@
                     <div class="p-1.5 bg-rose-500 rounded-lg">{% heroicon_outline "currency-dollar" size="16" class="text-white" %}</div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Cost overruns</p>
-                <p class="font-mono text-xl font-black text-rose-900"> 1</p>
-                 <p class="text-[9px] text-rose-600">Activities with cost overruns</p>
+                <p class="font-mono text-xl font-black text-rose-900">1</p>
+                <p class="text-[9px] text-rose-600">Activities with cost overruns</p>
             </div>
             <!-- Urgent Intervention -->
             <div class="p-4 text-center bg-red-50 rounded-lg border border-red-100">
@@ -31,12 +31,11 @@
                         {% heroicon_outline "exclamation-triangle" size="16" class="text-white" %}
                     </div>
                 </div>
-                <p class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-1">Schedule Overruns </p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-1">Schedule Overruns</p>
                 <p class="font-mono text-2xl font-black text-red-900">{{ exceptions|length|default:"4" }}</p>
-                 <p class="text-[9px] text-red-600">Activities with schedule overruns</p>
-                
+                <p class="text-[9px] text-red-600">Activities with schedule overruns</p>
             </div>
-             <!-- Compliance % -->
+            <!-- Compliance % -->
             <div class="p-4 text-center bg-emerald-50 rounded-lg border border-emerald-100">
                 <div class="flex justify-center mb-2">
                     <div class="p-1.5 bg-emerald-500 rounded-lg">{% heroicon_outline "shield-check" size="16" class="text-white" %}</div>
@@ -52,9 +51,8 @@
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-orange-600 mb-1">Safety</p>
                 <p class="font-mono text-2xl font-black text-orange-900">1</p>
-                   <p class="text-[9px] text-orange-600">Urgent Safety Matters</p>
+                <p class="text-[9px] text-orange-600">Urgent Safety Matters</p>
             </div>
-           
             <!-- Urgent Compliance -->
             <div class="p-4 text-center bg-indigo-50 rounded-lg border border-indigo-100">
                 <div class="flex justify-center mb-2">
@@ -62,7 +60,7 @@
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-1">Quality</p>
                 <p class="font-mono text-2xl font-black text-indigo-900">0</p>
-                   <p class="text-[9px] text-indigo-600">Urgent Quality Matters</p>
+                <p class="text-[9px] text-indigo-600">Urgent Quality Matters</p>
             </div>
         </div>
     </div>
@@ -70,7 +68,7 @@
     <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
         <div class="flex items-center px-4 py-2 text-sm font-bold text-white bg-emerald-600">
             {% heroicon_outline "document-chart-bar" size="18" class="mr-2" %}
-            Profitability 
+            Profitability
         </div>
         <div class="grid grid-cols-1 gap-4 p-4 md:grid-cols-5">
             <!-- Baseline Profit -->

@@ -9,15 +9,14 @@
     <div class="flex justify-between mb-3 item-center">
         <a href="{% url 'project:project-management' project.pk %}"
            class="inline-flex gap-2 items-center text-sm font-medium text-indigo-700 hover:text-indigo-900">
-              {% heroicon_outline "chevron-left" size="20" %}
+            {% heroicon_outline "chevron-left" size="20" %}
             Back to Project Management
         </a>
-          <a href="{% url 'project:company-management' project.pk %}"
-                   class="inline-flex items-center py-2 text-sm font-medium text-indigo-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                   
-                    <span class="ml-2">Business Management</span>
-                     {% heroicon_outline "chevron-right" size="20" %}
-                </a>
+        <a href="{% url 'project:company-management' project.pk %}"
+           class="inline-flex items-center py-2 text-sm font-medium text-indigo-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <span class="ml-2">Business Management</span>
+            {% heroicon_outline "chevron-right" size="20" %}
+        </a>
     </div>
     <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
