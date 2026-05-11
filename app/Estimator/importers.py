@@ -210,14 +210,19 @@ class MaterialCostImporter:
     ]
 
     HEADER_ALIASES = {
-        "trade_name": ["trade name", "trade"],
+        "trade_name": ["trade name", "trade code", "trade"],
         "material_code": ["material code", "code", "material"],
         "unit": ["unit"],
         "pack_qty": ["pack qty", "pack qty.", "qty", "quantity", "pack quantity"],
         "pack_cost": ["pack cost", "cost", "pack price", "price"],
         "market_rate": ["market rate", "rate", "unit rate"],
         "material_variety": ["variety", "material variety"],
-        "market_spec": ["spec", "market spec", "specification"],
+        "market_spec": [
+            "spec",
+            "market spec",
+            "market spec / strength",
+            "specification",
+        ],
     }
 
     def __init__(self, file_path, project=None, company=None):
@@ -1463,10 +1468,12 @@ class ItemLibraryImporter:
 
     Expected columns:
         Trade Code | Accounts Code | Component | Material Spec |
-        Labour & Plant Spec | Preliminaries | Item Description | Unit
+        Labour & Plant Spec | Preliminaries | Item Description | Unit |
+        Item Code
 
     The "Labour & Plant Spec" column resolves against both labour and
     plant specification tables — whichever names match are linked.
+    Item Code is optional, free-text.
     """
 
     SHEET_KEYWORDS = [
@@ -1570,6 +1577,7 @@ class ItemLibraryImporter:
             prelim_spec_name = _safe_str(row[5]) if ncols > 5 else ""
             description = _safe_str(row[6]) if ncols > 6 else ""
             unit = _safe_str(row[7]) if ncols > 7 else ""
+            item_code = _safe_str(row[8]) if ncols > 8 else ""
 
             if not description:
                 skipped += 1
@@ -1605,6 +1613,7 @@ class ItemLibraryImporter:
 
             defaults = {
                 "trade_code": trade_code,
+                "item_code": item_code,
                 "accounts_code": accounts_code,
                 "component": component,
                 "unit": unit,

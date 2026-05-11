@@ -494,6 +494,7 @@ class SystemItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
@@ -1146,6 +1147,7 @@ class ContractorItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
@@ -1715,6 +1717,7 @@ class ProjectItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
