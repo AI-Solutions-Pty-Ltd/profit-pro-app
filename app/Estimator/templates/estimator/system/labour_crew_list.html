@@ -151,7 +151,7 @@
                                        class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ crew.id }}"
                                        data-field="crew_size"
-                                       value="{{ crew.crew_size }}">
+                                       value="{{ crew.crew_size|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -159,7 +159,7 @@
                                        class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ crew.id }}"
                                        data-field="skilled"
-                                       value="{{ crew.skilled }}">
+                                       value="{{ crew.skilled|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -167,7 +167,7 @@
                                        class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ crew.id }}"
                                        data-field="semi_skilled"
-                                       value="{{ crew.semi_skilled }}">
+                                       value="{{ crew.semi_skilled|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -175,7 +175,7 @@
                                        class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ crew.id }}"
                                        data-field="general"
-                                       value="{{ crew.general }}">
+                                       value="{{ crew.general|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -183,7 +183,7 @@
                                        class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ crew.id }}"
                                        data-field="skilled_rate"
-                                       value="{{ crew.skilled_rate }}">
+                                       value="{{ crew.skilled_rate|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -191,7 +191,7 @@
                                        class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ crew.id }}"
                                        data-field="semi_skilled_rate"
-                                       value="{{ crew.semi_skilled_rate }}">
+                                       value="{{ crew.semi_skilled_rate|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -199,7 +199,7 @@
                                        class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ crew.id }}"
                                        data-field="general_rate"
-                                       value="{{ crew.general_rate }}">
+                                       value="{{ crew.general_rate|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-amber-700 text-right bg-amber-50/50 sm:pr-6 crew-daily-cost">
                                 {{ crew.crew_daily_cost|currency }}
@@ -236,7 +236,7 @@ document.querySelectorAll('.inline-edit-crew').forEach(input => {
                 const row = document.querySelector(`tr[data-crew-id="${id}"]`);
                 if (row) {
                     const costCell = row.querySelector('.crew-daily-cost');
-                    if (costCell) costCell.textContent = 'R ' + parseFloat(data.crew_daily_cost).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    if (costCell) costCell.textContent = 'R ' + parseFloat(data.crew_daily_cost).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2});
                 }
             } else {
                 input.classList.add('ring-2', 'ring-red-500');

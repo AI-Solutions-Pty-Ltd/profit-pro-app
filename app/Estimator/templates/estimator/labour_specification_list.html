@@ -239,8 +239,8 @@
         </div>
     </div>
     <script>
-function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
-function fmtQty(v) { return parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
+function fmtQty(v) { return parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
 
 document.querySelectorAll('.inline-edit-ls').forEach(input => {
     let original = input.value;

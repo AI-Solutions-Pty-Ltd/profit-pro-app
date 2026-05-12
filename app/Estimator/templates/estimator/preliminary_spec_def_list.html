@@ -200,7 +200,7 @@
     </div>
     {% include "estimator/_spec_datalists.html" %}
     <script>
-function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
 
 document.querySelectorAll('.prelim-active-toggle').forEach(btn => {
     btn.addEventListener('click', () => {

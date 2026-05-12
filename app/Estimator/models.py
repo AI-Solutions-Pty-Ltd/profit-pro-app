@@ -52,7 +52,7 @@ class SystemTradeCode(models.Model):
 
 class SystemMaterial(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
-    material_code = models.CharField(max_length=100, unique=True)
+    material_code = models.CharField(max_length=255, unique=True)
     unit = models.CharField(max_length=20, blank=True)
     pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
     pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -494,6 +494,7 @@ class SystemItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
@@ -591,7 +592,7 @@ class ContractorMaterial(models.Model):
         related_name="contractor_copies",
     )
     trade_name = models.CharField(max_length=200, blank=True)
-    material_code = models.CharField(max_length=100)
+    material_code = models.CharField(max_length=255)
     unit = models.CharField(max_length=20, blank=True)
     pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
     pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -1146,6 +1147,7 @@ class ContractorItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
@@ -1241,7 +1243,7 @@ class ProjectMaterial(models.Model):
         related_name="project_copies",
     )
     trade_name = models.CharField(max_length=200, blank=True)
-    material_code = models.CharField(max_length=100)
+    material_code = models.CharField(max_length=255)
     unit = models.CharField(max_length=20, blank=True)
     pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
     pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -1715,6 +1717,7 @@ class ProjectItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)

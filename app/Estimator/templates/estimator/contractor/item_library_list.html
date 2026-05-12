@@ -86,13 +86,13 @@
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Item Code</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Trade Code</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Component</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Description</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Unit</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Material</th>
-                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Labour</th>
-                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Plant</th>
+                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Labour &amp; Plant</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Prelim</th>
                         <th class="px-3 py-3 text-right font-semibold uppercase text-xs tracking-wider text-gray-500">Actions</th>
                     </tr>
@@ -100,6 +100,13 @@
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for e in entries %}
                         <tr class="hover:bg-gray-50" data-entry-id="{{ e.id }}">
+                            <td class="px-2 py-1.5 w-24">
+                                <input type="text"
+                                       class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                       data-entry-id="{{ e.id }}"
+                                       data-field="item_code"
+                                       value="{{ e.item_code }}">
+                            </td>
                             <td class="px-2 py-1.5">
                                 <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
                                         data-entry-id="{{ e.id }}"
@@ -153,32 +160,13 @@
                             <td class="px-2 py-1.5">
                                 <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
                                         data-entry-id="{{ e.id }}"
-                                        data-field="labour_spec">
+                                        data-field="labour_plant_spec">
                                     <option value="">—</option>
-                                    {% for s in labour_specs %}
-                                        {% if s.is_active or e.labour_spec_id == s.id %}
-                                            <option value="{{ s.id }}"
-                                                    {% if e.labour_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}
-                                                {% if not s.is_active %}(inactive){% endif %}
-                                            </option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </td>
-                            <td class="px-2 py-1.5">
-                                <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
-                                        data-entry-id="{{ e.id }}"
-                                        data-field="plant_spec">
-                                    <option value="">—</option>
-                                    {% for s in plant_specs %}
-                                        {% if s.is_active or e.plant_spec_id == s.id %}
-                                            <option value="{{ s.id }}"
-                                                    {% if e.plant_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}
-                                                {% if not s.is_active %}(inactive){% endif %}
-                                            </option>
-                                        {% endif %}
+                                    {% for name in labour_plant_spec_names %}
+                                        <option value="{{ name }}"
+                                                {% if e.labour_spec and e.labour_spec.name == name %}selected{% elif e.plant_spec and e.plant_spec.name == name %}selected{% endif %}>
+                                            {{ name }}
+                                        </option>
                                     {% endfor %}
                                 </select>
                             </td>
