@@ -40,7 +40,6 @@ from app.BillOfQuantities.views.ledger_views import (
     get_ledger_transactions_with_balance,
 )
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
 )
@@ -162,7 +161,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
             .first()
         )
         total_certified = (
-            last_completed_certificate.progressive_to_date
+            last_completed_certificate.grand_total_progressive_to_date
             if last_completed_certificate
             else Decimal(0)
         )
@@ -176,10 +175,11 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
             context["certified_percent"] = 0
 
         # Current claim (active certificate)
-        current_claim = 0
+        current_claim = Decimal(0)
         if active_payment_certificate:
-            current_claim = sum_queryset(
-                active_payment_certificate.actual_transactions.all(), "total_price"
+            current_claim = (
+                active_payment_certificate.work_current_claim_total
+                + active_payment_certificate.ledger_current_net_total
             )
         context["current_claim"] = current_claim
 

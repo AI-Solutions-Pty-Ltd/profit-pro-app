@@ -185,8 +185,6 @@ def generate_and_save_pdf(
             logger.info(
                 f"Full PDF generated successfully for certificate {payment_certificate.certificate_number}. Progressive to date: {payment_certificate.progressive_to_date}"
             )
-            with open("debug_progressive_to_date.txt", "a") as f:
-                f.write(f"Full PDF: {payment_certificate.progressive_to_date}\n")
 
         payment_certificate.save(update_fields=update_fields)
 
