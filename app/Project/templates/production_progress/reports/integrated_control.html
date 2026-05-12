@@ -8,20 +8,26 @@
 {% block extra_css %}
     <style>
     /* Override partial container shadow for seamless look */
-    .analytics-table-section {
+    .analytics-table-section, .gantt-container-section {
         border-radius: 0 !important;
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
         box-shadow: none !important;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
     }
     
-    #table-scroll-container {
-        flex: 1;
-        max-height: none !important;
+    #table-scroll-container, #gantt-wrapper {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important; /* Internal containers handle their own scroll */
+    }
+
+    #table-scroll-container, #gantt-chart-scroll {
+        overflow: auto !important;
     }
 
     /* Pulse animation for task focus */
@@ -34,31 +40,40 @@
         animation: task-pulse 2s ease-in-out;
     }
 
-    /* Fullscreen Mode - Simple Tailwind overrides */
-    .fullscreen-mode {
-        position: fixed !important;
-        inset: 0 !important;
-        z-index: 60 !important;
-        background: white !important;
-        height: 100vh !important;
-        width: 100vw !important;
+    /* Live Pulse Indicator */
+    .pulse-live {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        box-shadow: 0 0 0 rgba(34, 197, 94, 0.4);
+        animation: pulse-live 2s infinite;
+    }
+    @keyframes pulse-live {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
 
-    .fullscreen-mode #split-container {
-        height: calc(100vh - 72px) !important;
+    /* Fullscreen Edge-to-Edge Overrides */
+    body.fs-active main {
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
-
-    /* Hide standard nav/sidebar when in fullscreen */
-    .fullscreen-mode ~ * {
-        display: none !important;
+    body.fs-active #content {
+        padding: 0 !important;
+        margin: 0 !important;
     }
     </style>
 {% endblock extra_css %}
 {% block content %}
-    <div id="control-center-root" class="flex flex-col min-h-screen 0">
-        {% include "company/reports_nav.html" %}
+    <div id="control-center-root" class="flex flex-col min-h-screen">
+        <div id="reports-nav-tabs">{% include "company/reports_nav.html" %}</div>
         <!-- Premium Header -->
-        <div class="flex justify-between items-center px-6 py-4 mb-8 bg-white border-b border-gray-200 shrink-0">
+        <div id="report-header"
+             class="flex justify-between items-center px-6 py-4 mb-8 bg-white border-b border-gray-200 shrink-0">
             <div>
                 <a href="{% url 'project:company-management' project.pk %}"
                    class="inline-flex items-center py-2 text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 focus:outline-none">
@@ -67,29 +82,29 @@
                 </a>
                 <div class="flex gap-3 items-center">
                     <h2 class="text-xl font-black tracking-tight text-gray-900">Production Control Center</h2>
-                    <span class="font-bold tracking-widest uppercase badge badge-indigo badge-sm">Live View</span>
+                    <div class="flex gap-1.5 items-center px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">
+                        <span class="pulse-live"></span>
+                        <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-widest">Live System</span>
+                    </div>
+                    <div id="fs-badge"
+                         class="hidden gap-1.5 items-center px-2 py-0.5 bg-indigo-600 rounded-full">
+                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                        <span class="text-[9px] font-bold text-white uppercase tracking-widest">War Room Active</span>
+                    </div>
                 </div>
                 <p class="text-xs font-medium text-gray-500">Synchronized Timeline & Performance Analytics</p>
             </div>
             <div class="flex gap-2 items-center">
-                <div class="flex gap-2 items-center">
-                    <button id="fullscreen-toggle"
-                            class="gap-2 border border-gray-200 shadow-sm btn btn-sm btn-ghost"
-                            title="Toggle Fullscreen">
-                        <span id="fs-icon-maximize">{% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}</span>
-                        <span id="fs-icon-minimize" class="hidden">{% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}</span>
-                        <span class="text-xs">Fullscreen</span>
-                    </button>
-                    <button onclick="window.print()"
-                            class="gap-2 border border-gray-200 shadow-sm btn btn-sm btn-ghost">
-                        {% heroicon_outline "printer" class="w-4 h-4" %}
-                        <span class="text-xs">Export</span>
-                    </button>
-                </div>
+                <button onclick="window.print()"
+                        class="gap-2 border border-gray-200 shadow-sm btn btn-sm btn-ghost">
+                    {% heroicon_outline "printer" class="w-4 h-4" %}
+                    <span class="text-xs">Export</span>
+                </button>
             </div>
         </div>
         <!-- KPI Metric Grid -->
-        <div class="grid grid-cols-1 gap-4 px-6 mb-8 md:grid-cols-3 lg:grid-cols-5">
+        <div id="kpi-grid"
+             class="grid grid-cols-1 gap-4 px-6 mb-8 md:grid-cols-3 lg:grid-cols-5">
             <!-- Planned Finish -->
             <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
                 <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-lg shrink-0">
@@ -172,41 +187,91 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const root = document.getElementById('control-center-root');
+        const header = document.getElementById('report-header');
+        const kpis = document.getElementById('kpi-grid');
+        const reportsNav = document.getElementById('reports-nav-tabs');
         const splitTop = document.getElementById('split-top');
         const splitBottom = document.getElementById('split-bottom');
-        const fsToggle = document.getElementById('fullscreen-toggle');
-        const iconMax = document.getElementById('fs-icon-maximize');
-        const iconMin = document.getElementById('fs-icon-minimize');
 
-        function toggleFullscreen() {
-            root.classList.toggle('fullscreen-mode');
-            const isFS = root.classList.contains('fullscreen-mode');
+        // Main site elements to hide
+        const mainNav = document.querySelector('nav.sticky.top-0');
+        const siteFooter = document.querySelector('footer');
+
+        // Target Toggle Buttons & Icons
+        const ganttBtn = document.getElementById('gantt-fs-toggle');
+        const ganttMax = document.getElementById('gantt-fs-maximize');
+        const ganttMin = document.getElementById('gantt-fs-minimize');
+        
+        const tableBtn = document.getElementById('table-fs-toggle');
+        const tableMax = document.getElementById('table-fs-maximize');
+        const tableMin = document.getElementById('table-fs-minimize');
+
+        let activeFS = null; // 'gantt' | 'table' | null
+
+        const fsBadge = document.getElementById('fs-badge');
+
+        function toggleFullscreen(type) {
+            const isClosing = activeFS === type;
             
-            // UI Toggle logic
-            iconMax.classList.toggle('hidden', isFS);
-            iconMin.classList.toggle('hidden', !isFS);
+            // 1. Toggle visibility of dashboard elements
+            header.classList.toggle('hidden', !isClosing);
+            kpis.classList.toggle('hidden', !isClosing);
+            reportsNav.classList.toggle('hidden', !isClosing);
+            if (fsBadge) fsBadge.classList.toggle('hidden', isClosing);
+
+            // Highlight the active button
+            const ganttToggle = document.getElementById('gantt-fs-toggle');
+            const tableToggle = document.getElementById('table-fs-toggle');
+            if (ganttToggle) ganttToggle.classList.toggle('bg-indigo-100', !isClosing && type === 'gantt');
+            if (tableToggle) tableToggle.classList.toggle('bg-indigo-100', !isClosing && type === 'table');
             
-            if (isFS) {
-                splitBottom.classList.add('hidden');
-                splitTop.classList.remove('h-[60vh]');
-                splitTop.classList.add('h-full');
-            } else {
-                splitBottom.classList.remove('hidden');
-                splitTop.classList.add('h-[60vh]');
-                splitTop.classList.remove('h-full');
+            // 2. Toggle main site elements if they exist
+            if (mainNav) mainNav.classList.toggle('hidden', !isClosing);
+            if (siteFooter) siteFooter.classList.toggle('hidden', !isClosing);
+            
+            // 3. Prevent body scrolling and apply layout overrides
+            document.body.classList.toggle('overflow-hidden', !isClosing);
+            document.body.classList.toggle('fs-active', !isClosing);
+            
+            const fsClasses = ['fixed', 'inset-0', 'z-[150]', 'h-screen', 'max-h-screen', 'w-screen', 'bg-white', 'overflow-hidden'];
+            const stripClasses = ['border-0', 'shadow-none', 'rounded-none'];
+
+            // Inner containers to strip styles
+            const ganttContainer = document.getElementById('gantt-section-container');
+            const tableContainer = document.getElementById('table-section-container');
+
+            if (type === 'gantt') {
+                splitBottom.classList.toggle('hidden', !isClosing);
+                fsClasses.forEach(cls => splitTop.classList.toggle(cls, !isClosing));
+                if (ganttContainer) stripClasses.forEach(cls => ganttContainer.classList.toggle(cls, !isClosing));
+                
+                ganttMax.classList.toggle('hidden', !isClosing);
+                ganttMin.classList.toggle('hidden', isClosing);
+            } else if (type === 'table') {
+                splitTop.classList.toggle('hidden', !isClosing);
+                fsClasses.forEach(cls => splitBottom.classList.toggle(cls, !isClosing));
+                if (tableContainer) stripClasses.forEach(cls => tableContainer.classList.toggle(cls, !isClosing));
+                
+                tableMax.classList.toggle('hidden', !isClosing);
+                tableMin.classList.toggle('hidden', isClosing);
             }
-            
+
+            activeFS = isClosing ? null : type;
+
             // Trigger Gantt resize
-            window.dispatchEvent(new Event('resize'));
-            if (typeof render === 'function') render();
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+                if (typeof render === 'function') render();
+            }, 50); // Small delay to allow DOM styles to settle
         }
 
-        if (fsToggle) fsToggle.addEventListener('click', toggleFullscreen);
+        if (ganttBtn) ganttBtn.addEventListener('click', () => toggleFullscreen('gantt'));
+        if (tableBtn) tableBtn.addEventListener('click', () => toggleFullscreen('table'));
 
         // ESC key to exit fullscreen
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && root.classList.contains('fullscreen-mode')) {
-                toggleFullscreen();
+            if (e.key === 'Escape' && activeFS) {
+                toggleFullscreen(activeFS);
             }
         });
 

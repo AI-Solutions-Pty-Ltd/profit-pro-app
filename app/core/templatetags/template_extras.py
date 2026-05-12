@@ -45,6 +45,8 @@ def user_has_subscription(user: Account, subscriptions):
 @register.filter(name="useringroup")
 def user_in_group(user, group_names):
     """Check if a user is in a group."""
+    if user.is_superuser:
+        return True
     group_names = group_names.split(",")
     return user.groups.filter(name__in=group_names).exists()
 
