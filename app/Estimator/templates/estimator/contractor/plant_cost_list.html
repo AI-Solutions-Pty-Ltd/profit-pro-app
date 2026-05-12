@@ -111,7 +111,7 @@
                                        class="inline-edit w-24 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ plant.id }}"
                                        data-field="hourly_production"
-                                       value="{{ plant.hourly_production }}">
+                                       value="{{ plant.hourly_production|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right sm:pr-6">
                                 <input type="number"
@@ -119,7 +119,7 @@
                                        class="inline-edit w-24 text-right border-0 bg-transparent text-sm font-semibold text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ plant.id }}"
                                        data-field="hourly_rate"
-                                       value="{{ plant.hourly_rate }}">
+                                       value="{{ plant.hourly_rate|num }}">
                             </td>
                         </tr>
                     {% empty %}
