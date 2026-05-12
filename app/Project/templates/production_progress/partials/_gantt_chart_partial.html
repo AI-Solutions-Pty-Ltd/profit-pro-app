@@ -5,7 +5,7 @@
     }
 </style>
 <!-- Gantt Chart Container -->
-<div class="flex overflow-hidden flex-col h-full bg-white border border-gray-100 shadow-sm gantt-container-section"
+<div class="flex overflow-hidden flex-col mt-8 h-full bg-white border border-gray-100 shadow-sm gantt-container-section"
      id="gantt-section-container">
     <!-- Legend & Controls -->
     <div class="flex flex-wrap gap-4 justify-between items-center px-5 py-3 border-b border-gray-100 bg-gray-50/50">
@@ -49,43 +49,54 @@
                     {% heroicon_outline "plus" class="w-4 h-4" %}
                 </button>
             </div>
-            <!-- Hierarchy Controls -->
+           
+            <!-- Fullscreen Control -->
             <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
                 <button type="button"
-                        id="expand-all-btn"
-                        title="Expand All"
-                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
-                    {% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}
-                </button>
-                <button type="button"
-                        id="collapse-all-btn"
-                        title="Collapse All"
-                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
-                    {% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}
+                        id="gantt-fs-toggle"
+                        title="Toggle Fullscreen"
+                        class="p-1.5 text-gray-500 rounded-md transition-colors hover:bg-gray-50 hover:text-indigo-600">
+                    <span id="gantt-fs-maximize">{% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}</span>
+                    <span id="gantt-fs-minimize" class="hidden">{% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}</span>
                 </button>
             </div>
         </div>
     </div>
-    <!-- Gantt body: left label pane + right chart pane -->
+    <!-- Gantt body -->
     <div class="flex overflow-hidden flex-1 min-h-0" id="gantt-wrapper">
-        <!-- Label Column (fixed width, sticky-like via container flex) -->
+        <!-- LEFT: Label Column -->
         <div class="flex z-10 flex-col flex-shrink-0 w-80 bg-white border-r border-gray-100"
              id="gantt-labels-container">
-            <div class="h-[72px] border-b border-gray-100 flex items-center px-4 bg-gray-50/30">
+            <div class="h-[72px] border-b border-gray-100 flex justify-between items-center px-4 bg-gray-50/30">
                 <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Production Activity</h3>
+                <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <button type="button" id="expand-all-btn" title="Expand All" class="inline-flex items-center p-1.5 text-gray-500 rounded-md hover:bg-gray-50 transition-all">
+                        {% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}
+                    </button>
+                    <button type="button" id="collapse-all-btn" title="Collapse All" class="inline-flex items-center p-1.5 text-gray-500 rounded-md hover:bg-gray-50 transition-all">
+                        {% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}
+                    </button>
+                </div>
             </div>
-            <div id="gantt-label-rows" class="overflow-hidden flex-1"></div>
+            <div id="gantt-label-rows" class="overflow-hidden flex-1"> </div>
         </div>
-        <!-- Chart Area -->
-        <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300"
-             id="gantt-chart-scroll">
-            <canvas id="gantt-canvas" class="block"></canvas>
+        
+        <!-- RIGHT: Chart Column -->
+        <div class="flex flex-col flex-1 overflow-hidden" id="gantt-right-pane">
+            <!-- Sticky Timeline Header -->
+            <div id="gantt-header-container" class="overflow-hidden border-b border-gray-100 bg-gray-50/30" style="height: 72px;">
+                <canvas id="gantt-header-canvas" class="block"></canvas>
+            </div>
+            <!-- Scrollable Body -->
+            <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300" id="gantt-chart-scroll">
+                <canvas id="gantt-canvas" class="block"></canvas>
+            </div>
         </div>
     </div>
 </div>
+
 <!-- Tooltip -->
-<div id="gantt-tooltip"
-     class=" fixed z-[100] px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95">
+<div id="gantt-tooltip" class="fixed z-[100] px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95 hidden opacity-0">
     <div id="tooltip-title" class="mb-1 text-sm font-bold text-gray-900"></div>
     <div class="space-y-1">
         <div class="flex gap-4 justify-between">
@@ -102,61 +113,55 @@
         </div>
     </div>
 </div>
-<script>
-// ── Data from Django ──────────────────────────────────────────────────────────
-const GANTT_DATA = {{ gantt_data_json|safe }};
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-const ROW_H   = 56;   // px per row
-const HEAD_H  = 72;   // header height
-const PAD_Y   = 14;   // vertical padding inside row
-const BAR_H   = ROW_H - PAD_Y * 2;
-const LABEL_W = 320;  // w-80
+<script>
+// ── Config & Constants ────────────────────────────────────────────────────────
+const GANTT_DATA = {{ gantt_data_json|safe }};
+const ROW_H = 56;
+const HEAD_H = 72;
+const PAD_Y = 14;
+const BAR_H = ROW_H - (PAD_Y * 2);
+const MS_PER_DAY = 86400000;
 
 const ZOOM_LEVELS = [
-    { label: 'Week', ppd: 4,  tick: 86400000 * 7 },
-    { label: 'Day',  ppd: 18, tick: 86400000 },
+    { label: 'Week', ppd: 4,  tick: MS_PER_DAY * 7 },
+    { label: 'Day',  ppd: 18, tick: MS_PER_DAY },
 ];
-let zoomIdx = 0; // Default to Week
+let zoomIdx = 0; 
+
+// ── Elements ──────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('gantt-canvas');
+const headerCanvas = document.getElementById('gantt-header-canvas');
+const wrapper = document.getElementById('gantt-chart-scroll');
+const headerContainer = document.getElementById('gantt-header-container');
+const labelEl = document.getElementById('gantt-label-rows');
+const tooltip = document.getElementById('gantt-tooltip');
+const ctx = canvas.getContext('2d');
+const headerCtx = headerCanvas.getContext('2d');
 
 // ── State ─────────────────────────────────────────────────────────────────────
-const canvas  = document.getElementById('gantt-canvas');
-const ctx     = canvas ? canvas.getContext('2d') : null;
-const labelEl = document.getElementById('gantt-label-rows');
-const wrapper = document.getElementById('gantt-chart-scroll');
-const tooltip = document.getElementById('gantt-tooltip');
-
 let collapsedState = new Set();
-let highlightTaskId = null; // New state for integrated view
+let highlightTaskId = null;
+let chartStart, chartEnd, totalDays;
 
+// ── Initialization ────────────────────────────────────────────────────────────
 if (GANTT_DATA.length && canvas) {
-    // Parse dates
     GANTT_DATA.forEach(d => {
         d.startTs = new Date(d.start_date).getTime();
         d.endTs   = new Date(d.finish_date).getTime();
         d.forecastTs = d.forecast_finish_date ? new Date(d.forecast_finish_date).getTime() : d.endTs;
     });
 
-    // Initial Collapse: Hide everything below Bill level (depth 1)
-    GANTT_DATA.forEach(r => {
-        if (r.depth >= 1 && r.has_children) {
-            collapsedState.add(r.id);
-        }
-    });
+    // Default collapse depth
+    GANTT_DATA.forEach(r => { if (r.depth >= 1 && r.has_children) collapsedState.add(r.id); });
 
     const allStarts = GANTT_DATA.map(d => d.startTs);
     const allEnds   = GANTT_DATA.map(d => Math.max(d.endTs, d.forecastTs));
-    let chartStart  = Math.min(...allStarts);
-    let chartEnd    = Math.max(...allEnds);
+    chartStart = Math.min(...allStarts) - (MS_PER_DAY * 7);
+    chartEnd   = Math.max(...allEnds) + (MS_PER_DAY * 14);
+    totalDays  = (chartEnd - chartStart) / MS_PER_DAY;
 
-    // Add padding
-    const totalMs  = chartEnd - chartStart;
-    chartStart    -= totalMs * 0.05;
-    chartEnd      += totalMs * 0.1;
-
-    const MS_PER_DAY = 86400000;
-    const totalDays  = (chartEnd - chartStart) / MS_PER_DAY;
-
+    // ── Logic Helpers ─────────────────────────────────────────────────────────
     function isRowVisible(row) {
         let pid = row.parent_id;
         while (pid) {
@@ -167,468 +172,306 @@ if (GANTT_DATA.length && canvas) {
         }
         return true;
     }
-
-    function getVisibleRows() {
-        return GANTT_DATA.filter(isRowVisible);
-    }
-
-    function xForDate(ts) {
-        const ppd = ZOOM_LEVELS[zoomIdx].ppd;
-        return ((ts - chartStart) / MS_PER_DAY) * ppd;
-    }
-
-    function totalWidth() {
-        return totalDays * ZOOM_LEVELS[zoomIdx].ppd;
-    }
+    const getVisibleRows = () => GANTT_DATA.filter(isRowVisible);
+    const xForDate = (ts) => ((ts - chartStart) / MS_PER_DAY) * ZOOM_LEVELS[zoomIdx].ppd;
+    const totalWidth = () => totalDays * ZOOM_LEVELS[zoomIdx].ppd;
 
     function getBarColors(row) {
         const isDelayed = row.forecastTs > row.endTs + (1000 * 60 * 60);
-        
         if (row.has_children) return { fill: '#6366f1', stroke: '#4f46e5', type: 'parent' };
         if (isDelayed) return { fill: '#f43f5e', stroke: '#e11d48', type: 'delayed' };
         return { fill: '#e0f2fe', stroke: '#bae6fd', type: 'planned' };
     }
 
-    function drawRoundedRect(ctx, x, y, width, height, radius) {
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
+    function drawRoundedRect(c, x, y, w, h, r) {
+        c.beginPath();
+        c.moveTo(x+r, y); c.lineTo(x+w-r, y); c.quadraticCurveTo(x+w, y, x+w, y+r);
+        c.lineTo(x+w, y+h-r); c.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+        c.lineTo(x+r, y+h); c.quadraticCurveTo(x, y+h, x, y+h-r);
+        c.lineTo(x, y+r); c.quadraticCurveTo(x, y, x+r, y);
+        c.closePath();
     }
 
-    function render() {
-        const visibleRows = getVisibleRows();
-        const W = Math.max(wrapper.clientWidth, Math.ceil(totalWidth()));
-        const H = HEAD_H + visibleRows.length * ROW_H;
-
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = W * dpr;
-        canvas.height = H * dpr;
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
-        ctx.scale(dpr, dpr);
-
-        ctx.clearRect(0, 0, W, H);
-
-        // 1. Header Background Layer 1 (Month/Year)
-        ctx.fillStyle = '#f1f5f9';
-        ctx.fillRect(0, 0, W, 36);
-        
-        // 2. Header Background Layer 2 (Ticks)
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(0, 36, W, 36);
-
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(0, 36); ctx.lineTo(W, 36); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, HEAD_H); ctx.lineTo(W, HEAD_H); ctx.stroke();
-
-        const zoom = ZOOM_LEVELS[zoomIdx];
-        const ppd = zoom.ppd;
-        const tickMs = zoom.tick;
-
-        // Draw Layer 1: Month/Year Grouping (Sticky)
-        ctx.fillStyle = '#475569';
-        ctx.font = 'bold 11px Inter, sans-serif';
-        ctx.textAlign = 'left';
-        
-        let monthPtr = new Date(chartStart);
-        monthPtr.setHours(0,0,0,0);
-        monthPtr.setDate(1); // Start of month
-
-        const scrollLeft = wrapper.scrollLeft;
-
-        while(monthPtr.getTime() < chartEnd) {
-            const startX = xForDate(monthPtr.getTime());
-            const nextMonth = new Date(monthPtr);
-            nextMonth.setMonth(nextMonth.getMonth() + 1);
-            const endX = xForDate(nextMonth.getTime());
-            
-            const label = monthPtr.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-            const textW = ctx.measureText(label).width;
-            
-            // Calculate sticky position
-            // StartX + 12 (padding)
-            // But don't let it go past endX - textW - 12
-            const drawX = Math.min(
-                Math.max(startX + 12, scrollLeft + 12),
-                endX - textW - 12
-            );
-
-            // Only draw if within current month's bounds
-            if (drawX < endX - 10) {
-                ctx.fillText(label, drawX, 24);
-            }
-            
-            // Month divider
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(startX, 0); ctx.lineTo(startX, 36); ctx.stroke();
-            
-            monthPtr = nextMonth;
-        }
-
-        // Draw Layer 2: Ticks (Days/Weeks)
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '9px "JetBrains Mono", monospace';
-        ctx.textAlign = 'center';
-        
-        let cur = new Date(chartStart);
-        cur.setHours(0,0,0,0);
-        
-        // Decimation logic: how many ticks to skip
-        const sampleLabel = "Week 99";
-        const minSpace = ctx.measureText(sampleLabel).width + 10;
-        const skip = Math.max(1, Math.ceil(minSpace / (ppd * (tickMs / MS_PER_DAY))));
-
-        let i = 0;
-        while(cur.getTime() < chartEnd) {
-            const x = xForDate(cur.getTime());
-            if (x >= 0 && x <= W) {
-                // Only draw text if decimation allows
-                if (i % skip === 0) {
-                    let fmt = d => d.getDate();
-                    if (zoom.label === 'Week') fmt = d => 'Wk ' + getWeek(d);
-                    if (zoom.label === 'Hour') fmt = d => d.getHours() + ':00';
-                    
-                    const labelStr = fmt(cur);
-                    const labelW = ctx.measureText(labelStr).width;
-                    const tickCenterX = x + (ppd * (tickMs / MS_PER_DAY)) / 2;
-                    
-                    // Don't draw if it hits the next tick or exceeds spacing
-                    ctx.fillText(labelStr, tickCenterX, 58);
-                }
-                
-                // Vertical Grid Line
-                ctx.strokeStyle = '#f1f5f9';
-                ctx.lineWidth = 0.5;
-                ctx.beginPath(); ctx.moveTo(x, 36); ctx.lineTo(x, H); ctx.stroke();
-            }
-            cur = new Date(cur.getTime() + tickMs);
-            i++;
-        }
-
-        // 3. Draw Grid & Today Line
-        const todayX = xForDate(Date.now());
-
-        // 4. Draw Rows
-        visibleRows.forEach((row, i) => {
-            const y = HEAD_H + i * ROW_H;
-            
-            // Row background
-            if (i % 2 === 1) {
-                ctx.fillStyle = '#fafafa';
-                ctx.fillRect(0, y, W, ROW_H);
-            }
-            
-            // Selection Highlight
-            if (row.id === highlightTaskId) {
-                ctx.fillStyle = 'rgba(79, 70, 229, 0.08)';
-                ctx.fillRect(0, y, W, ROW_H);
-            }
-
-            ctx.strokeStyle = '#f8fafc';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(0, y + ROW_H); ctx.lineTo(W, y + ROW_H); ctx.stroke();
-
-            // Draw Bars
-            const xPlanStart = xForDate(row.startTs);
-            const xPlanEnd   = xForDate(row.endTs + MS_PER_DAY);
-            const xForeEnd   = xForDate(row.forecastTs + MS_PER_DAY);
-            
-            const barY = y + PAD_Y;
-            const colors = getBarColors(row);
-
-            if (row.has_children) {
-                // ── PARENT RENDERING (Sections/Bills) ────────────────────────
-                const planW = Math.max(xPlanEnd - xPlanStart, 6);
-                
-                // 1. Draw Planned Bar (Indigo)
-                ctx.fillStyle = '#6366f1';
-                drawRoundedRect(ctx, xPlanStart, barY, planW, BAR_H, 4);
-                ctx.fill();
-
-                // 2. Draw Forecast extension if delayed (Rose)
-                if (xForeEnd > xPlanEnd + 2) {
-                    const delayW = xForeEnd - xPlanEnd;
-                    ctx.fillStyle = '#fda4af'; // Light Rose
-                    drawRoundedRect(ctx, xPlanEnd, barY, delayW, BAR_H, 4);
-                    ctx.fill();
-                }
-
-                // 3. Draw Stripe Pattern over entire parent span
-                const totalW = Math.max(xForeEnd - xPlanStart, planW);
-                ctx.save();
-                drawRoundedRect(ctx, xPlanStart, barY, totalW, BAR_H, 4);
-                ctx.clip();
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                ctx.lineWidth = 4;
-                for(let sx = xPlanStart - 20; sx < xPlanStart + totalW + 20; sx += 10) {
-                    ctx.beginPath(); ctx.moveTo(sx, barY - 5); ctx.lineTo(sx + 20, barY + BAR_H + 5); ctx.stroke();
-                }
-                ctx.restore();
-
-            } else {
-                // ── ACTIVITY RENDERING ────────────────────────────────────────
-                // Draw Planned Ghost Bar (if different from forecast)
-                if (Math.abs(xForeEnd - xPlanEnd) > 2) {
-                    ctx.fillStyle = 'rgba(226, 232, 240, 0.5)';
-                    drawRoundedRect(ctx, xPlanStart, barY, xPlanEnd - xPlanStart, BAR_H, 4);
-                    ctx.fill();
-                }
-
-                // Draw Main Bar (Background: Planned/Light Blue)
-                const mainW = Math.max(xForeEnd - xPlanStart, 6);
-                ctx.fillStyle = '#e0f2fe'; // Sky 100
-                drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
-                ctx.fill();
-                
-                // If delayed, color the end part Rose
-                if (xForeEnd > xPlanEnd + 2) {
-                    ctx.save();
-                    const delayX = xPlanEnd;
-                    const delayW = xForeEnd - xPlanEnd;
-                    drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
-                    ctx.clip();
-                    ctx.fillStyle = '#f43f5e'; // Rose 500
-                    ctx.fillRect(delayX, barY, delayW, BAR_H);
-                    ctx.restore();
-                }
-
-                // Draw Progress Fill (Indigo 600)
-                if (row.progress_pct > 0 && !row.has_children) {
-                    const progW = mainW * (row.progress_pct / 100);
-                    ctx.save();
-                    drawRoundedRect(ctx, xPlanStart, barY, progW, BAR_H, 4);
-                    ctx.clip();
-                    ctx.fillStyle = '#4f46e5'; // Indigo 600
-                    ctx.fillRect(xPlanStart, barY, progW, BAR_H);
-                    ctx.restore();
-                }
-            }
-        });
-
-        // Draw Dependencies
-        const idxMap = {};
-        visibleRows.forEach((r, i) => idxMap[r.id] = i);
-        visibleRows.forEach((row, i) => {
-            if (!row.predecessors) return;
-            row.predecessors.forEach(predId => {
-                const fromIdx = idxMap[predId];
-                if (fromIdx === undefined) return;
-                
-                const fromRow = visibleRows[fromIdx];
-                const fx = xForDate(fromRow.forecastTs + MS_PER_DAY);
-                const fy = HEAD_H + fromIdx * ROW_H + ROW_H/2;
-                const tx = xForDate(row.startTs);
-                const ty = HEAD_H + i * ROW_H + ROW_H/2;
-
-                ctx.strokeStyle = '#cbd5e1';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([3, 2]);
-                ctx.beginPath();
-                ctx.moveTo(fx, fy);
-                ctx.bezierCurveTo(fx + 20, fy, tx - 20, ty, tx, ty);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            });
-        });
-
-        // Today line
-        if (todayX >= 0 && todayX <= W) {
-            ctx.save();
-            ctx.strokeStyle = '#ef4444';
-            ctx.setLineDash([4, 3]);
-            ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(todayX, HEAD_H); ctx.lineTo(todayX, H); ctx.stroke();
-            
-            // Draw Triangle Marker at top
-            ctx.fillStyle = '#ef4444';
-            ctx.setLineDash([]);
-            ctx.beginPath();
-            ctx.moveTo(todayX - 5, HEAD_H);
-            ctx.lineTo(todayX + 5, HEAD_H);
-            ctx.lineTo(todayX, HEAD_H + 8);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        }
-
-        buildLabels();
-    }
-
-    function buildLabels() {
-        labelEl.innerHTML = '';
-        const visibleRows = getVisibleRows();
-        visibleRows.forEach((row, i) => {
-            const div = document.createElement('div');
-            div.style.height = ROW_H + 'px';
-            div.className = `flex items-center px-4 border-b border-gray-50 text-[11px] transition-colors ${row.has_children ? 'font-bold text-gray-900 bg-gray-50/20' : 'text-gray-600'}`;
-            if (i % 2 === 1) div.style.backgroundColor = 'rgba(250, 250, 250, 0.5)';
-            if (row.id === highlightTaskId) div.classList.add('bg-indigo-50/50');
-            
-            // Indentation
-            const indent = document.createElement('div');
-            indent.style.width = (row.depth * 16) + 'px';
-            div.appendChild(indent);
-
-            // Chevron for parents
-            if (row.has_children) {
-                const chevron = document.createElement('span');
-                chevron.className = `mr-2 transition-transform ${collapsedState.has(row.id) ? '-rotate-90' : ''}`;
-                chevron.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>';
-                chevron.style.cursor = 'pointer';
-                chevron.onclick = (e) => {
-                    e.stopPropagation();
-                    if (collapsedState.has(row.id)) collapsedState.delete(row.id);
-                    else collapsedState.add(row.id);
-                    render();
-                };
-                div.appendChild(chevron);
-            } else {
-                const dot = document.createElement('div');
-                dot.className = 'w-1 h-1 bg-gray-300 rounded-full mr-3 ml-1';
-                div.appendChild(dot);
-            }
-
-            const text = document.createElement('span');
-            text.className = 'truncate';
-            text.textContent = row.activity;
-            div.appendChild(text);
-
-            labelEl.appendChild(div);
-        });
-    }
-
-    // Zoom
-    document.getElementById('zoom-in-btn').onclick = () => { if(zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label; render(); } };
-    document.getElementById('zoom-out-btn').onclick = () => { if(zoomIdx > 0) { zoomIdx--; document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label; render(); } };
-    
-    // Hierarchy
-    document.getElementById('expand-all-btn').onclick = () => { collapsedState.clear(); render(); };
-    document.getElementById('collapse-all-btn').onclick = () => { 
-        GANTT_DATA.forEach(r => { if(r.has_children) collapsedState.add(r.id); });
-        render(); 
-    };
-
-    // Tooltip
-    canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mouseY = e.clientY - rect.top;
-        const visibleRows = getVisibleRows();
-        const rowIdx = Math.floor((mouseY - HEAD_H) / ROW_H);
-
-        if (rowIdx >= 0 && rowIdx < visibleRows.length) {
-            const row = visibleRows[rowIdx];
-            const mouseX = e.clientX - rect.left;
-            const x1 = xForDate(row.startTs);
-            const x2 = xForDate(Math.max(row.endTs, row.forecastTs) + MS_PER_DAY);
-
-            if (mouseX >= x1 && mouseX <= x2) {
-                document.getElementById('tooltip-title').textContent = row.activity;
-                document.getElementById('tooltip-dates').textContent = `${row.start_date} → ${row.finish_date}`;
-                
-                const forecastEl = document.getElementById('tooltip-forecast');
-                const isDelayed = row.forecastTs > row.endTs + (1000 * 60 * 60); // More than 1 hour diff
-                
-                if (isDelayed) {
-                    forecastEl.textContent = row.forecast_finish_date || row.finish_date;
-                    document.getElementById('forecast-row').classList.remove('hidden');
-                } else {
-                    document.getElementById('forecast-row').classList.add('hidden');
-                }
-                
-                document.getElementById('tooltip-progress').textContent = `${row.progress_pct}%`;
-                
-                tooltip.style.left = (e.clientX + 16) + 'px';
-                tooltip.style.top = (e.clientY - 16) + 'px';
-                tooltip.style.opacity = '1';
-                tooltip.classList.remove('hidden');
-                return;
-            }
-        }
-        tooltip.classList.add('hidden');
-        tooltip.style.opacity = '0';
-    });
-
-    canvas.addEventListener('mouseleave', () => tooltip.classList.add('hidden'));
-
-    function getWeek(d) {
+    const getWeek = (d) => {
         const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
         date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
         const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
         return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    };
+
+    // ── Rendering ─────────────────────────────────────────────────────────────
+    function render() {
+        const visibleRows = getVisibleRows();
+        const W = totalWidth();
+        const H = visibleRows.length * ROW_H;
+        const dpr = window.devicePixelRatio || 1;
+
+        // Size Body
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Size Header
+        headerCanvas.width = W * dpr; headerCanvas.height = HEAD_H * dpr;
+        headerCanvas.style.width = W + 'px'; headerCanvas.style.height = HEAD_H + 'px';
+        headerCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // --- DRAW HEADER ---
+        headerCtx.clearRect(0, 0, W, HEAD_H);
+        headerCtx.fillStyle = '#f1f5f9'; headerCtx.fillRect(0, 0, W, 36);
+        headerCtx.fillStyle = '#f8fafc'; headerCtx.fillRect(0, 36, W, 36);
+        
+        // Months
+        headerCtx.fillStyle = '#475569'; headerCtx.font = 'bold 11px Inter, sans-serif';
+        let mPtr = new Date(chartStart); mPtr.setDate(1);
+        while(mPtr.getTime() < chartEnd) {
+            const sx = xForDate(mPtr.getTime());
+            const nm = new Date(mPtr); nm.setMonth(nm.getMonth()+1);
+            const ex = xForDate(nm.getTime());
+            const label = mPtr.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            headerCtx.textAlign = 'left';
+            headerCtx.fillText(label, sx + 12, 24);
+            headerCtx.strokeStyle = '#cbd5e1'; headerCtx.beginPath(); headerCtx.moveTo(sx, 0); headerCtx.lineTo(sx, 36); headerCtx.stroke();
+            mPtr = nm;
+        }
+
+        // Ticks & Grid Lines
+        headerCtx.fillStyle = '#94a3b8'; headerCtx.font = '9px monospace'; headerCtx.textAlign = 'center';
+        let tPtr = new Date(chartStart); tPtr.setHours(0,0,0,0);
+        const zoom = ZOOM_LEVELS[zoomIdx];
+        
+        // --- DRAW BODY GRID FIRST ---
+        ctx.clearRect(0, 0, W, H);
+        let gPtr = new Date(tPtr);
+        while(gPtr.getTime() < chartEnd) {
+            const gx = xForDate(gPtr.getTime());
+            if (gx >= 0 && gx <= W) {
+                ctx.strokeStyle = (gPtr.getDay() === 1) ? '#f1f5f9' : '#f8fafc';
+                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+            }
+            gPtr.setDate(gPtr.getDate() + 1);
+        }
+
+        // --- DRAW HEADER TICKS ---
+        while(tPtr.getTime() < chartEnd) {
+            const tx = xForDate(tPtr.getTime());
+            if (zoom.label === 'Week') {
+                if (tPtr.getDay() === 1) { // Monday
+                    headerCtx.fillText('Wk ' + getWeek(tPtr), tx + (zoom.ppd*7)/2, 58);
+                    headerCtx.strokeStyle = '#e2e8f0'; headerCtx.beginPath(); headerCtx.moveTo(tx, 36); headerCtx.lineTo(tx, 72); headerCtx.stroke();
+                }
+            } else {
+                headerCtx.fillText(tPtr.getDate(), tx + zoom.ppd/2, 58);
+                headerCtx.strokeStyle = '#f1f5f9'; headerCtx.beginPath(); headerCtx.moveTo(tx, 36); headerCtx.lineTo(tx, 72); headerCtx.stroke();
+            }
+            tPtr.setDate(tPtr.getDate() + 1);
+        }
+
+        // --- DRAW BODY BARS ---
+        visibleRows.forEach((row, i) => {
+            const y = i * ROW_H;
+            if (i % 2 === 1) { ctx.fillStyle = '#fafafa'; ctx.fillRect(0, y, W, ROW_H); }
+            if (row.id === highlightTaskId) { ctx.fillStyle = 'rgba(79, 70, 229, 0.08)'; ctx.fillRect(0, y, W, ROW_H); }
+            ctx.strokeStyle = '#f8fafc'; ctx.beginPath(); ctx.moveTo(0, y + ROW_H); ctx.lineTo(W, y + ROW_H); ctx.stroke();
+
+            const xS = xForDate(row.startTs);
+            const xE = xForDate(row.endTs + MS_PER_DAY);
+            const xF = xForDate(row.forecastTs + MS_PER_DAY);
+            const bY = y + PAD_Y;
+            const colors = getBarColors(row);
+
+            if (row.has_children) {
+                const pW = Math.max(xE - xS, 6);
+                ctx.fillStyle = '#6366f1'; drawRoundedRect(ctx, xS, bY, pW, BAR_H, 4); ctx.fill();
+                if (xF > xE + 2) { ctx.fillStyle = '#fda4af'; drawRoundedRect(ctx, xE, bY, xF-xE, BAR_H, 4); ctx.fill(); }
+                ctx.save(); drawRoundedRect(ctx, xS, bY, Math.max(xF-xS, pW), BAR_H, 4); ctx.clip();
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 4;
+                for(let sx = xS-20; sx < xS+5000; sx+=10) { ctx.beginPath(); ctx.moveTo(sx, bY-5); ctx.lineTo(sx+20, bY+BAR_H+5); ctx.stroke(); }
+                ctx.restore();
+            } else {
+                const mW = Math.max(xF - xS, 6);
+                ctx.fillStyle = '#e0f2fe'; drawRoundedRect(ctx, xS, bY, mW, BAR_H, 4); ctx.fill();
+                if (xF > xE + 2) { 
+                    ctx.save(); drawRoundedRect(ctx, xS, bY, mW, BAR_H, 4); ctx.clip();
+                    ctx.fillStyle = '#f43f5e'; ctx.fillRect(xE, bY, xF-xE, BAR_H); ctx.restore();
+                }
+                if (row.progress_pct > 0) {
+                    const pW = mW * (row.progress_pct/100);
+                    ctx.save(); drawRoundedRect(ctx, xS, bY, pW, BAR_H, 4); ctx.clip();
+                    ctx.fillStyle = '#4f46e5'; ctx.fillRect(xS, bY, pW, BAR_H); ctx.restore();
+                }
+            }
+        });
+
+        // Today Line
+        const todayX = xForDate(Date.now());
+        if (todayX >= 0 && todayX <= W) {
+            headerCtx.fillStyle = '#ef4444'; headerCtx.beginPath();
+            headerCtx.moveTo(todayX-5, 64); headerCtx.lineTo(todayX+5, 64); headerCtx.lineTo(todayX, 72); headerCtx.fill();
+            ctx.strokeStyle = '#ef4444'; ctx.setLineDash([4,3]); ctx.beginPath();
+            ctx.moveTo(todayX, 0); ctx.lineTo(todayX, H); ctx.stroke(); ctx.setLineDash([]);
+        }
+        // Update Expand/Collapse button states
+        const totalParents = GANTT_DATA.filter(r => r.has_children).length;
+        const currentCollapsed = collapsedState.size;
+        const expandBtn = document.getElementById('expand-all-btn');
+        const collapseBtn = document.getElementById('collapse-all-btn');
+        
+        if (expandBtn && collapseBtn) {
+            // Expand All Indicator
+            if (currentCollapsed > 0) {
+                expandBtn.classList.add('bg-indigo-50', 'text-indigo-600', 'ring-1', 'ring-indigo-200');
+                expandBtn.innerHTML = `{% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}<span class="ml-1 text-[9px] font-bold">${currentCollapsed}</span>`;
+            } else {
+                expandBtn.classList.remove('bg-indigo-50', 'text-indigo-600', 'ring-1', 'ring-indigo-200');
+                expandBtn.innerHTML = `{% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}`;
+            }
+
+            // Collapse All Indicator
+            const expandedCount = totalParents - currentCollapsed;
+            if (expandedCount > 0 && currentCollapsed === 0) {
+                collapseBtn.classList.add('bg-gray-50', 'text-gray-900');
+            } else {
+                collapseBtn.classList.remove('bg-gray-50', 'text-gray-900');
+            }
+        }
+
+        buildLabels(visibleRows);
     }
 
-    // Integrated View synchronization function
-    window.scrollToTask = function(taskId) {
-        // Find task index in visible rows
-        const visibleRows = getVisibleRows();
-        const rowIdx = visibleRows.findIndex(r => r.id === parseInt(taskId));
-        
-        if (rowIdx !== -1) {
-            highlightTaskId = parseInt(taskId);
-            const row = visibleRows[rowIdx];
+    function buildLabels(visibleRows) {
+        labelEl.innerHTML = '';
+        visibleRows.forEach((row, i) => {
+            const div = document.createElement('div');
+            div.style.height = ROW_H + 'px';
+            div.className = `flex items-center px-4 border-b border-gray-50 text-[11px] transition-all cursor-pointer group/label ${row.has_children ? 'font-bold text-gray-900 bg-gray-50/20' : 'text-gray-600'}`;
+            if (i % 2 === 1) div.style.backgroundColor = 'rgba(250, 250, 250, 0.5)';
+            if (row.id === highlightTaskId) div.classList.add('bg-indigo-50/50');
             
-            // Scroll vertical
-            const targetY = HEAD_H + rowIdx * ROW_H;
-            const wrapperCenter = wrapper.clientHeight / 2;
-            wrapper.scrollTop = Math.max(0, targetY - wrapperCenter + ROW_H/2);
+            // Toggle row state on click
+            div.onclick = (e) => {
+                if (row.has_children) {
+                    if (collapsedState.has(row.id)) collapsedState.delete(row.id);
+                    else collapsedState.add(row.id);
+                    render();
+                } else if (window.scrollToTask) {
+                    window.scrollToTask(row.id);
+                }
+            };
 
-            // Scroll horizontal
-            const targetX = xForDate(row.startTs);
-            const wrapperWidth = wrapper.clientWidth / 2;
-            wrapper.scrollLeft = Math.max(0, targetX - wrapperWidth);
-            
-            render();
-            
-            // Momentary highlight effect
-            setTimeout(() => {
-                highlightTaskId = null;
-                render();
-            }, 2000);
-        } else {
-            // Check if it's collapsed
-            const plan = GANTT_DATA.find(p => p.id === parseInt(taskId));
-            if (plan && plan.parent_id) {
-                // Auto-expand parent
-                collapsedState.delete(plan.parent_id);
-                render();
-                scrollToTask(taskId);
+            // Hierarchy Lines Container
+            const indentWrapper = document.createElement('div');
+            indentWrapper.className = 'flex items-center h-full mr-2';
+            for (let d = 0; d < row.depth; d++) {
+                const line = document.createElement('div');
+                line.className = 'w-4 h-full border-l border-gray-200/60 ml-2 first:ml-0';
+                indentWrapper.appendChild(line);
             }
+            div.appendChild(indentWrapper);
+
+            // Chevron/State Indicator
+            if (row.has_children) {
+                const isCollapsed = collapsedState.has(row.id);
+                const chevron = document.createElement('span');
+                chevron.className = `mr-2 flex items-center justify-center w-5 h-5 rounded transition-all ${isCollapsed ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400 group-hover/label:text-indigo-500'}`;
+                chevron.innerHTML = `<svg class="w-3.5 h-3.5 transform transition-transform ${isCollapsed ? '-rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>`;
+                div.appendChild(chevron);
+            } else {
+                const dot = document.createElement('div');
+                dot.className = 'w-1.5 h-1.5 bg-gray-300 rounded-full mr-3 ml-2 group-hover/label:bg-indigo-400 transition-colors';
+                div.appendChild(dot);
+            }
+
+            const textContainer = document.createElement('div');
+            textContainer.className = 'flex items-center flex-1 min-w-0';
+            
+            const text = document.createElement('span');
+            text.className = 'truncate';
+            text.textContent = row.activity;
+            textContainer.appendChild(text);
+
+            // Collapsed Count Indicator
+            if (row.has_children && collapsedState.has(row.id)) {
+                let count = 0;
+                let found = false;
+                for(let r of GANTT_DATA) {
+                    if (found) {
+                        if (r.depth <= row.depth) break;
+                        if (r.parent_id === row.id) count++; 
+                    }
+                    if (r.id === row.id) found = true;
+                }
+                
+                if (count > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'ml-2 px-1.5 py-0.5 bg-gray-100 text-[9px] font-bold text-gray-500 rounded-md border border-gray-200';
+                    badge.textContent = `+${count}`;
+                    textContainer.appendChild(badge);
+                }
+            }
+            
+            div.appendChild(textContainer);
+            labelEl.appendChild(div);
+        });
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────────
+    wrapper.addEventListener('scroll', () => {
+        labelEl.scrollTop = wrapper.scrollTop;
+        headerContainer.scrollLeft = wrapper.scrollLeft;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const rowIdx = Math.floor(y / ROW_H);
+        const visibleRows = getVisibleRows();
+
+        if (rowIdx >= 0 && rowIdx < visibleRows.length) {
+            const row = visibleRows[rowIdx];
+            const x1 = xForDate(row.startTs);
+            const x2 = xForDate(Math.max(row.endTs, row.forecastTs) + MS_PER_DAY);
+
+            if (x >= x1 && x <= x2) {
+                document.getElementById('tooltip-title').textContent = row.activity;
+                document.getElementById('tooltip-dates').textContent = `${row.start_date} → ${row.finish_date}`;
+                const isDelayed = row.forecastTs > row.endTs + (1000 * 60 * 60);
+                if (isDelayed) {
+                    document.getElementById('tooltip-forecast').textContent = row.forecast_finish_date || row.finish_date;
+                    document.getElementById('forecast-row').classList.remove('hidden');
+                } else { document.getElementById('forecast-row').classList.add('hidden'); }
+                document.getElementById('tooltip-progress').textContent = `${row.progress_pct}%`;
+                tooltip.style.left = (e.clientX + 16) + 'px'; tooltip.style.top = (e.clientY - 16) + 'px';
+                tooltip.style.opacity = '1'; tooltip.classList.remove('hidden');
+                return;
+            }
+        }
+        tooltip.classList.add('hidden'); tooltip.style.opacity = '0';
+    });
+    canvas.addEventListener('mouseleave', () => tooltip.classList.add('hidden'));
+
+    document.getElementById('zoom-in-btn').onclick = () => { if(zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label; render(); } };
+    document.getElementById('zoom-out-btn').onclick = () => { if(zoomIdx > 0) { zoomIdx--; document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label; render(); } };
+    document.getElementById('expand-all-btn').onclick = () => { collapsedState.clear(); render(); };
+    document.getElementById('collapse-all-btn').onclick = () => { GANTT_DATA.forEach(r => { if(r.has_children) collapsedState.add(r.id); }); render(); };
+
+    window.scrollToTask = function(taskId) {
+        const rows = getVisibleRows();
+        const idx = rows.findIndex(r => r.id === parseInt(taskId));
+        if (idx !== -1) {
+            highlightTaskId = parseInt(taskId);
+            wrapper.scrollTop = Math.max(0, (idx * ROW_H) - (wrapper.clientHeight/2) + ROW_H/2);
+            wrapper.scrollLeft = Math.max(0, xForDate(rows[idx].startTs) - (wrapper.clientWidth/2));
+            render();
+            setTimeout(() => { highlightTaskId = null; render(); }, 2000);
+        } else {
+            const p = GANTT_DATA.find(x => x.id === parseInt(taskId));
+            if (p && p.parent_id) { collapsedState.delete(p.parent_id); render(); scrollToTask(taskId); }
         }
     };
 
     render();
     window.addEventListener('resize', render);
-    document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label;
-
-    // ── Vertical Scroll Synchronization & Sticky Header Update ────────────────
-    let lastScrollLeft = wrapper.scrollLeft;
-    wrapper.addEventListener('scroll', function() {
-        labelEl.scrollTop = wrapper.scrollTop;
-        
-        // Only re-render if we scrolled horizontally (for sticky headers)
-        if (wrapper.scrollLeft !== lastScrollLeft) {
-            lastScrollLeft = wrapper.scrollLeft;
-            render();
-        }
-    });
-
-    // Forward mousewheel from labels to chart
-    labelEl.addEventListener('wheel', function(e) {
-        wrapper.scrollTop += e.deltaY;
-        e.preventDefault();
-    }, { passive: false });
-
-    // Sync labels scrollTop initially
-    labelEl.scrollTop = wrapper.scrollTop;
 }
 </script>
