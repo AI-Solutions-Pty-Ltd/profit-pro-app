@@ -125,129 +125,133 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="w-8 py-3.5 pl-4 pr-2 sm:pl-6">
-                                <input type="checkbox" id="select-all"
+                                <input type="checkbox"
+                                       id="select-all"
                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
                             </th>
                             <th scope="col"
                                 class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                                 Crew Type
                             </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Crew Size
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Skilled
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Semi-Skilled
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            General
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Skilled Rate
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Semi-Skilled Rate
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            General Rate
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 bg-amber-50 sm:pr-6">
-                            Daily Cost
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {% for crew in crews %}
-                        <tr class="hover:bg-gray-50 bulk-row" data-crew-id="{{ crew.id }}"
-                            data-search="{{ crew.crew_type|lower }}">
-                            <td class="py-3 pl-4 pr-2 sm:pl-6">
-                                <input type="checkbox" name="ids" value="{{ crew.id }}"
-                                       class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
-                            </td>
-                            <td class="whitespace-nowrap py-3 px-3 text-sm font-medium text-gray-900">
-                                <input type="text"
-                                       class="inline-edit-crew w-32 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="crew_type"
-                                       value="{{ crew.crew_type }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="1"
-                                       class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="crew_size"
-                                       value="{{ crew.crew_size|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="1"
-                                       class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="skilled"
-                                       value="{{ crew.skilled|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="1"
-                                       class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="semi_skilled"
-                                       value="{{ crew.semi_skilled|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="1"
-                                       class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="general"
-                                       value="{{ crew.general|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="0.01"
-                                       class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="skilled_rate"
-                                       value="{{ crew.skilled_rate|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="0.01"
-                                       class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="semi_skilled_rate"
-                                       value="{{ crew.semi_skilled_rate|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="0.01"
-                                       class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ crew.id }}"
-                                       data-field="general_rate"
-                                       value="{{ crew.general_rate|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-amber-700 text-right bg-amber-50/50 sm:pr-6 crew-daily-cost">
-                                {{ crew.crew_daily_cost|currency }}
-                            </td>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Crew Size
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Skilled
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Semi-Skilled
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                General
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Skilled Rate
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Semi-Skilled Rate
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                General Rate
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 bg-amber-50 sm:pr-6">
+                                Daily Cost
+                            </th>
                         </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">No labour crews found.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        {% for crew in crews %}
+                            <tr class="hover:bg-gray-50 bulk-row"
+                                data-crew-id="{{ crew.id }}"
+                                data-search="{{ crew.crew_type|lower }}">
+                                <td class="py-3 pl-4 pr-2 sm:pl-6">
+                                    <input type="checkbox"
+                                           name="ids"
+                                           value="{{ crew.id }}"
+                                           class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                </td>
+                                <td class="whitespace-nowrap py-3 px-3 text-sm font-medium text-gray-900">
+                                    <input type="text"
+                                           class="inline-edit-crew w-32 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="crew_type"
+                                           value="{{ crew.crew_type }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="1"
+                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="crew_size"
+                                           value="{{ crew.crew_size|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="1"
+                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="skilled"
+                                           value="{{ crew.skilled|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="1"
+                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="semi_skilled"
+                                           value="{{ crew.semi_skilled|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="1"
+                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="general"
+                                           value="{{ crew.general|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="0.01"
+                                           class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="skilled_rate"
+                                           value="{{ crew.skilled_rate|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="0.01"
+                                           class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="semi_skilled_rate"
+                                           value="{{ crew.semi_skilled_rate|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="0.01"
+                                           class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ crew.id }}"
+                                           data-field="general_rate"
+                                           value="{{ crew.general_rate|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-amber-700 text-right bg-amber-50/50 sm:pr-6 crew-daily-cost">
+                                    {{ crew.crew_daily_cost|currency }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">No labour crews found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </form>

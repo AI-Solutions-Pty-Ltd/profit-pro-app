@@ -3858,9 +3858,9 @@ class PreliminaryCostListView(ProjectEstimatorMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", PreliminaryCostForm())
-        context["preliminary_types"] = (
-            ProjectPreliminaryCost._meta.get_field("preliminary_type").choices
-        )
+        context["preliminary_types"] = ProjectPreliminaryCost._meta.get_field(
+            "preliminary_type"
+        ).choices
         context["f_q"] = self.request.GET.get("q", "")
         context["f_preliminary_type"] = self.request.GET.get("preliminary_type", "")
         return context
