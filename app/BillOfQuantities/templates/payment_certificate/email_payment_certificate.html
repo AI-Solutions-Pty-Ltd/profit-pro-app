@@ -109,18 +109,18 @@
                 <h3 style="margin-top: 0; color: #111827;">Payment Summary</h3>
                 <div class="info-row">
                     <span class="label">Progressive to Date:</span>
-                    <span class="value">R {{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</span>
+                    <span class="value">R {{ payment_certificate.grand_total_progressive_to_date|floatformat:2|intcomma }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Progressive Previous:</span>
-                    <span class="value">R {{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</span>
+                    <span class="value">R {{ payment_certificate.grand_total_progressive_previous|floatformat:2|intcomma }}</span>
                 </div>
                 <div class="info-row"
                      style="border-top: 2px solid #e5e7eb;
                             padding-top: 10px;
                             margin-top: 10px">
                     <span class="label">Total Payable This Claim:</span>
-                    <span class="amount">R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</span>
+                    <span class="amount">R {{ payment_certificate.total_submitted|floatformat:2|intcomma }}</span>
                 </div>
             </div>
             {% if payment_certificate.notes %}
