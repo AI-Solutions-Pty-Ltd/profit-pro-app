@@ -198,7 +198,7 @@
                                                    class="inline-edit-spec w-16 text-right border-0 bg-transparent text-xs p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                                    data-item-id="{{ comp.id }}"
                                                    data-field="qty_per_unit"
-                                                   value="{{ comp.qty_per_unit }}">
+                                                   value="{{ comp.qty_per_unit|num }}">
                                             /{{ row.spec.unit_label }}
                                         </span>
                                     </div>
@@ -252,7 +252,7 @@ document.querySelectorAll('.inline-edit-spec').forEach(input => {
                 const row = document.querySelector(`tr[data-spec-id="${data.spec_id}"]`);
                 if (row) {
                     const rateCell = row.querySelector('.spec-rate');
-                    if (rateCell) rateCell.textContent = 'R ' + parseFloat(data.spec_rate_per_unit).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    if (rateCell) rateCell.textContent = 'R ' + parseFloat(data.spec_rate_per_unit).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2});
                 }
             } else {
                 input.classList.add('ring-2', 'ring-red-500');

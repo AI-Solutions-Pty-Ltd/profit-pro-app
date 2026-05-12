@@ -23,6 +23,7 @@ from app.Project.models import Project
 from .calculations import (
     calculate_pct_of_total,
     calculate_variance,
+    format_num,
 )
 from .forms import (
     ContractorLabourCrewForm,
@@ -568,7 +569,7 @@ class ApplyLibraryEntryToBoqView(View):
         apply_library_entry_to_boq_item(item, entry)
 
         def fmt(val):
-            return None if val is None else str(round(val, 2))
+            return None if val is None else format_num(val)
 
         labour_plant_name = ""
         if item.labour_specification:
@@ -2637,7 +2638,7 @@ class UpdateBoqItemView(View):
         def fmt(val):
             if val is None:
                 return None
-            return str(round(val, 2))
+            return format_num(val)
 
         return JsonResponse(
             {
@@ -2825,9 +2826,9 @@ class UpdateMaterialView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "pack_qty": str(item.pack_qty),
-                "pack_cost": str(round(item.pack_cost, 2)),
-                "market_rate": str(round(item.market_rate, 4)),
+                "pack_qty": format_num(item.pack_qty),
+                "pack_cost": format_num(item.pack_cost),
+                "market_rate": format_num(item.market_rate),
             }
         )
 
@@ -2877,11 +2878,11 @@ class UpdateSpecComponentView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "qty_per_unit": str(round(item.qty_per_unit, 4)),
+                "qty_per_unit": format_num(item.qty_per_unit),
                 "label": item.label,
                 "material_id": item.material_id,
                 "spec_id": spec.id,
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -2936,9 +2937,9 @@ class AddSpecComponentView(View):
                     "id": comp.id,
                     "material_id": comp.material_id,
                     "label": comp.label,
-                    "qty_per_unit": str(comp.qty_per_unit),
+                    "qty_per_unit": format_num(comp.qty_per_unit),
                 },
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -2958,7 +2959,7 @@ class DeleteSpecComponentView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -3090,9 +3091,9 @@ class UpdateSystemSpecComponentView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "qty_per_unit": str(round(item.qty_per_unit, 4)),
+                "qty_per_unit": format_num(item.qty_per_unit),
                 "spec_id": spec.id,
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -3218,7 +3219,7 @@ class UpdateLabourSpecView(View):
         def fmt(val):
             if val is None:
                 return None
-            return str(round(val, 2))
+            return format_num(val)
 
         return JsonResponse(
             {
@@ -3275,7 +3276,7 @@ class UpdateLabourCrewView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "crew_daily_cost": str(round(item.crew_daily_cost, 2)),
+                "crew_daily_cost": format_num(item.crew_daily_cost),
             }
         )
 
@@ -4694,9 +4695,9 @@ class UpdateSystemMaterialView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "pack_qty": str(mat.pack_qty),
-                "pack_cost": str(round(mat.pack_cost, 2)),
-                "market_rate": str(round(mat.market_rate, 4)),
+                "pack_qty": format_num(mat.pack_qty),
+                "pack_cost": format_num(mat.pack_cost),
+                "market_rate": format_num(mat.market_rate),
             }
         )
 
@@ -4914,11 +4915,11 @@ class UpdateSysSpecComponentView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "qty_per_unit": str(round(comp.qty_per_unit, 4)),
+                "qty_per_unit": format_num(comp.qty_per_unit),
                 "label": comp.label,
                 "material_id": comp.material_id,
                 "spec_id": spec.id,
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -4973,9 +4974,9 @@ class AddSysSpecComponentView(View):
                     "id": comp.id,
                     "material_id": comp.material_id,
                     "label": comp.label,
-                    "qty_per_unit": str(comp.qty_per_unit),
+                    "qty_per_unit": format_num(comp.qty_per_unit),
                 },
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -4993,7 +4994,7 @@ class DeleteSysSpecComponentView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -6037,9 +6038,9 @@ class UpdateContractorMaterialView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "pack_qty": str(mat.pack_qty),
-                "pack_cost": str(round(mat.pack_cost, 2)),
-                "market_rate": str(round(mat.market_rate, 4)),
+                "pack_qty": format_num(mat.pack_qty),
+                "pack_cost": format_num(mat.pack_cost),
+                "market_rate": format_num(mat.market_rate),
             }
         )
 
@@ -6278,11 +6279,11 @@ class UpdateCtrSpecComponentView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "qty_per_unit": str(round(comp.qty_per_unit, 4)),
+                "qty_per_unit": format_num(comp.qty_per_unit),
                 "label": comp.label,
                 "material_id": comp.material_id,
                 "spec_id": spec.id,
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -6340,9 +6341,9 @@ class AddCtrSpecComponentView(View):
                     "id": comp.id,
                     "material_id": comp.material_id,
                     "label": comp.label,
-                    "qty_per_unit": str(comp.qty_per_unit),
+                    "qty_per_unit": format_num(comp.qty_per_unit),
                 },
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 
@@ -6363,7 +6364,7 @@ class DeleteCtrSpecComponentView(View):
         return JsonResponse(
             {
                 "ok": True,
-                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+                "spec_rate_per_unit": format_num(spec.rate_per_unit),
             }
         )
 

@@ -157,7 +157,7 @@
                                        class="inline-edit w-20 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ mat.id }}"
                                        data-field="pack_qty"
-                                       value="{{ mat.pack_qty }}">
+                                       value="{{ mat.pack_qty|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -165,7 +165,7 @@
                                        class="inline-edit w-24 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ mat.id }}"
                                        data-field="pack_cost"
-                                       value="{{ mat.pack_cost }}">
+                                       value="{{ mat.pack_cost|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right tabular-nums computed-rate"
                                 data-mat-id="{{ mat.id }}">{{ mat.market_rate }}</td>

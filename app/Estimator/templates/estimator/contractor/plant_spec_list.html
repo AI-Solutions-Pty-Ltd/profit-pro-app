@@ -197,7 +197,7 @@
                                        class="inline-edit w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ ps.id }}"
                                        data-field="daily_production"
-                                       value="{{ ps.daily_production }}">
+                                       value="{{ ps.daily_production|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"

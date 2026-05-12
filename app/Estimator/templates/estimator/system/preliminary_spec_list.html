@@ -217,7 +217,7 @@ document.querySelectorAll('.inline-edit').forEach(input => {
                 if (data.amount !== undefined) {
                     const row = input.closest('tr');
                     const cell = row && row.querySelector('.spec-amount');
-                    if (cell) cell.textContent = 'R ' + parseFloat(data.amount).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    if (cell) cell.textContent = 'R ' + parseFloat(data.amount).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2});
                 }
             } else {
                 input.classList.add('ring-2', 'ring-red-500');

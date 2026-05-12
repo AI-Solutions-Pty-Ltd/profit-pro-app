@@ -214,7 +214,7 @@
                                                    class="mat-comp-edit w-20 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500"
                                                    data-component-id="{{ comp.id }}"
                                                    data-field="qty_per_unit"
-                                                   value="{{ comp.qty_per_unit }}">
+                                                   value="{{ comp.qty_per_unit|num }}">
                                             <span class="text-gray-400 text-[10px]">/ {{ spec.unit_label }}</span>
                                             <button type="button"
                                                     class="mat-comp-delete text-gray-400 hover:text-red-500 ml-0.5"
