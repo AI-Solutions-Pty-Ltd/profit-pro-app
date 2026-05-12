@@ -2868,8 +2868,7 @@ class UpdateSpecComponentView(View):
                     if material is None:
                         return JsonResponse({"error": "Material not found"}, status=404)
                     item.material = material
-                    if not item.label:
-                        item.label = material.material_code
+                    item.label = material.material_code
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
@@ -4906,8 +4905,7 @@ class UpdateSysSpecComponentView(View):
                     if material is None:
                         return JsonResponse({"error": "Material not found"}, status=404)
                     comp.material = material
-                    if not comp.label:
-                        comp.label = material.material_code
+                    comp.label = material.material_code
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
@@ -6271,8 +6269,7 @@ class UpdateCtrSpecComponentView(View):
                     if material is None:
                         return JsonResponse({"error": "Material not found"}, status=404)
                     comp.material = material
-                    if not comp.label:
-                        comp.label = material.material_code
+                    comp.label = material.material_code
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
