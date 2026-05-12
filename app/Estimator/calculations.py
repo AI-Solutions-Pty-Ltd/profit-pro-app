@@ -29,6 +29,25 @@ Usage:
 from decimal import Decimal
 
 
+def format_num(value, with_commas=False):
+    """Format a number for display: round to ≤2dp and strip trailing zeros.
+
+    1 → '1', 1.5 → '1.5', 1.23 → '1.23', 1.234567 → '1.23', 1.0000 → '1'.
+    Used by both template filters and JSON API responses so UI display and
+    AJAX-updated cells stay consistent.
+    """
+    if value is None or value == "":
+        return ""
+    try:
+        fmt = ",.2f" if with_commas else ".2f"
+        s = f"{round(float(value), 2):{fmt}}"
+    except (ValueError, TypeError):
+        return ""
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return s
+
+
 def calculate_rate_per_unit(components):
     """
     Calculate the blended rate per unit from material components.

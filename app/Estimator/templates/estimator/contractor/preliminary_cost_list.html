@@ -134,7 +134,7 @@
                                        class="inline-edit w-24 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                        data-item-id="{{ item.id }}"
                                        data-field="sum_value"
-                                       value="{{ item.sum_value }}">
+                                       value="{{ item.sum_value|num }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 {% if item.is_time_based %}
@@ -143,7 +143,7 @@
                                            class="inline-edit w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ item.id }}"
                                            data-field="number_per_month"
-                                           value="{{ item.number_per_month }}">
+                                           value="{{ item.number_per_month|num }}">
                                 {% else %}
                                     <span class="text-gray-300">-</span>
                                 {% endif %}
@@ -155,7 +155,7 @@
                                            class="inline-edit w-24 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ item.id }}"
                                            data-field="monthly_rate"
-                                           value="{{ item.monthly_rate }}">
+                                           value="{{ item.monthly_rate|num }}">
                                 {% else %}
                                     <span class="text-gray-300">-</span>
                                 {% endif %}
@@ -167,7 +167,7 @@
                                            class="inline-edit w-16 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ item.id }}"
                                            data-field="months"
-                                           value="{{ item.months }}">
+                                           value="{{ item.months|num }}">
                                 {% else %}
                                     <span class="text-gray-300">-</span>
                                 {% endif %}
@@ -181,7 +181,7 @@
                                            class="inline-edit w-24 text-right border-0 bg-transparent text-sm font-semibold text-amber-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ item.id }}"
                                            data-field="amount"
-                                           value="{{ item.amount }}">
+                                           value="{{ item.amount|num }}">
                                 {% endif %}
                             </td>
                         </tr>
@@ -217,7 +217,7 @@ document.querySelectorAll('.inline-edit').forEach(input => {
                 if (row) {
                     const amountCell = row.querySelector('.prelim-amount');
                     if (amountCell && !amountCell.querySelector('input')) {
-                        amountCell.textContent = 'R ' + parseFloat(data.computed_amount).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        amountCell.textContent = 'R ' + parseFloat(data.computed_amount).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2});
                     }
                 }
             } else {
