@@ -1874,13 +1874,16 @@ def autofill_boq_from_library(project):
     }
 
 
-def save_boq_item_to_library(item):
+def save_boq_item_to_library(item, item_code=None):
     """Upsert a single BOQItem's spec mapping into the project Item Library.
 
     Match key (case-insensitive, trimmed): (component, trade_code_id, description).
     If an entry exists, its spec FKs are overwritten; otherwise a new entry is
     created. The BOQItem's `library_entry` back-link is updated to point at
     whichever entry is now authoritative.
+
+    `item_code` (optional): when provided, set/overwrite the entry's item_code.
+    Passing None leaves any existing code untouched; passing "" clears it.
 
     Returns the dict {"created": bool, "entry_id": int}.
     """
@@ -1890,6 +1893,7 @@ def save_boq_item_to_library(item):
     component = (item.component or "").strip()
     description = (item.description or "").strip()
     trade_code_id = item.trade_code_id
+    normalized_code = item_code.strip() if isinstance(item_code, str) else None
 
     existing = (
         ProjectItemLibraryEntry.objects.filter(
@@ -1909,6 +1913,7 @@ def save_boq_item_to_library(item):
             component=component,
             description=description,
             unit=item.unit or "",
+            item_code=normalized_code or "",
             material_spec=item.specification,
             labour_spec=item.labour_specification,
             plant_spec=item.plant_specification,
@@ -1921,15 +1926,17 @@ def save_boq_item_to_library(item):
         existing.labour_spec = item.labour_specification
         existing.plant_spec = item.plant_specification
         existing.preliminary_spec = item.preliminary_specification
-        existing.save(
-            update_fields=[
-                "unit",
-                "material_spec",
-                "labour_spec",
-                "plant_spec",
-                "preliminary_spec",
-            ]
-        )
+        update_fields = [
+            "unit",
+            "material_spec",
+            "labour_spec",
+            "plant_spec",
+            "preliminary_spec",
+        ]
+        if normalized_code is not None:
+            existing.item_code = normalized_code
+            update_fields.append("item_code")
+        existing.save(update_fields=update_fields)
         entry = existing
         created = False
 

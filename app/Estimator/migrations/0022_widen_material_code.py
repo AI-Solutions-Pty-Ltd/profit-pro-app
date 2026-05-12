@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0021_contractoritemlibraryentry_item_code_and_more'),
+        ("estimator", "0021_contractoritemlibraryentry_item_code_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='contractormaterial',
-            name='material_code',
+            model_name="contractormaterial",
+            name="material_code",
             field=models.CharField(max_length=255),
         ),
         migrations.AlterField(
-            model_name='projectmaterial',
-            name='material_code',
+            model_name="projectmaterial",
+            name="material_code",
             field=models.CharField(max_length=255),
         ),
         migrations.AlterField(
-            model_name='systemmaterial',
-            name='material_code',
+            model_name="systemmaterial",
+            name="material_code",
             field=models.CharField(max_length=255, unique=True),
         ),
     ]

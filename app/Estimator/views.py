@@ -254,6 +254,7 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 "plant_specification",
                 "preliminary_specification",
                 "material",
+                "library_entry",
                 "project__estimator_assumptions",
             )
             .prefetch_related(
@@ -530,7 +531,11 @@ class SaveBoqRowToLibraryView(View):
             return JsonResponse(
                 {"error": "Section headers cannot be saved to library"}, status=400
             )
-        result = save_boq_item_to_library(item)
+        try:
+            data = json.loads(request.body) if request.body else {}
+        except json.JSONDecodeError:
+            data = {}
+        result = save_boq_item_to_library(item, item_code=data.get("item_code"))
         return JsonResponse(
             {
                 "ok": True,
