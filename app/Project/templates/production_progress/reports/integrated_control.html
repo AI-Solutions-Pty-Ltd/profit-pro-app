@@ -70,11 +70,10 @@
 {% endblock extra_css %}
 {% block content %}
     <div id="control-center-root" class="flex flex-col min-h-screen">
-        <div id="reports-nav-tabs">
-            {% include "company/reports_nav.html" %}
-        </div>
+        <div id="reports-nav-tabs">{% include "company/reports_nav.html" %}</div>
         <!-- Premium Header -->
-        <div id="report-header" class="flex justify-between items-center px-6 py-4 mb-8 bg-white border-b border-gray-200 shrink-0">
+        <div id="report-header"
+             class="flex justify-between items-center px-6 py-4 mb-8 bg-white border-b border-gray-200 shrink-0">
             <div>
                 <a href="{% url 'project:company-management' project.pk %}"
                    class="inline-flex items-center py-2 text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 focus:outline-none">
@@ -87,7 +86,8 @@
                         <span class="pulse-live"></span>
                         <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-widest">Live System</span>
                     </div>
-                    <div id="fs-badge" class="hidden gap-1.5 items-center px-2 py-0.5 bg-indigo-600 rounded-full">
+                    <div id="fs-badge"
+                         class="hidden gap-1.5 items-center px-2 py-0.5 bg-indigo-600 rounded-full">
                         <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
                         <span class="text-[9px] font-bold text-white uppercase tracking-widest">War Room Active</span>
                     </div>
@@ -103,7 +103,8 @@
             </div>
         </div>
         <!-- KPI Metric Grid -->
-        <div id="kpi-grid" class="grid grid-cols-1 gap-4 px-6 mb-8 md:grid-cols-3 lg:grid-cols-5">
+        <div id="kpi-grid"
+             class="grid grid-cols-1 gap-4 px-6 mb-8 md:grid-cols-3 lg:grid-cols-5">
             <!-- Planned Finish -->
             <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
                 <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-lg shrink-0">

@@ -49,7 +49,6 @@
                     {% heroicon_outline "plus" class="w-4 h-4" %}
                 </button>
             </div>
-           
             <!-- Fullscreen Control -->
             <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
                 <button type="button"
@@ -70,33 +69,40 @@
             <div class="h-[72px] border-b border-gray-100 flex justify-between items-center px-4 bg-gray-50/30">
                 <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Production Activity</h3>
                 <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <button type="button" id="expand-all-btn" title="Expand All" class="inline-flex items-center p-1.5 text-gray-500 rounded-md hover:bg-gray-50 transition-all">
+                    <button type="button"
+                            id="expand-all-btn"
+                            title="Expand All"
+                            class="inline-flex items-center p-1.5 text-gray-500 rounded-md transition-all hover:bg-gray-50">
                         {% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}
                     </button>
-                    <button type="button" id="collapse-all-btn" title="Collapse All" class="inline-flex items-center p-1.5 text-gray-500 rounded-md hover:bg-gray-50 transition-all">
+                    <button type="button"
+                            id="collapse-all-btn"
+                            title="Collapse All"
+                            class="inline-flex items-center p-1.5 text-gray-500 rounded-md transition-all hover:bg-gray-50">
                         {% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}
                     </button>
                 </div>
             </div>
-            <div id="gantt-label-rows" class="overflow-hidden flex-1"> </div>
+            <div id="gantt-label-rows" class="overflow-hidden flex-1"></div>
         </div>
-        
         <!-- RIGHT: Chart Column -->
-        <div class="flex flex-col flex-1 overflow-hidden" id="gantt-right-pane">
+        <div class="flex overflow-hidden flex-col flex-1" id="gantt-right-pane">
             <!-- Sticky Timeline Header -->
-            <div id="gantt-header-container" class="overflow-hidden border-b border-gray-100 bg-gray-50/30" style="height: 72px;">
+            <div id="gantt-header-container"
+                 class="overflow-hidden border-b border-gray-100 bg-gray-50/30 h-[72px]">
                 <canvas id="gantt-header-canvas" class="block"></canvas>
             </div>
             <!-- Scrollable Body -->
-            <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300" id="gantt-chart-scroll">
+            <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300"
+                 id="gantt-chart-scroll">
                 <canvas id="gantt-canvas" class="block"></canvas>
             </div>
         </div>
     </div>
 </div>
-
 <!-- Tooltip -->
-<div id="gantt-tooltip" class="fixed z-[100] px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95 hidden opacity-0">
+<div id="gantt-tooltip"
+     class="fixed z-[100] px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95 hidden opacity-0">
     <div id="tooltip-title" class="mb-1 text-sm font-bold text-gray-900"></div>
     <div class="space-y-1">
         <div class="flex gap-4 justify-between">
@@ -113,7 +119,6 @@
         </div>
     </div>
 </div>
-
 <script>
 // ── Config & Constants ────────────────────────────────────────────────────────
 const GANTT_DATA = {{ gantt_data_json|safe }};
