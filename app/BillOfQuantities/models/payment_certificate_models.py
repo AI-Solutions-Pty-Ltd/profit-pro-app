@@ -278,9 +278,10 @@ class PaymentCertificate(BaseModel):
 
     @property
     def total_submitted(self) -> Decimal:
-        total = Decimal(0)
+        """Total amount submitted for payment (Work Items + Ledger Adjustments)."""
+        total = Decimal("0.00")
         total += self.items_submitted
-        # leaving space for other categories to be added at a later stage
+        total += self.ledger_current_net_total
         return total
 
     @property
@@ -290,9 +291,10 @@ class PaymentCertificate(BaseModel):
 
     @property
     def total_claimed(self) -> Decimal:
-        total = Decimal(0)
+        """Total amount claimed for payment (Work Items + Ledger Adjustments)."""
+        total = Decimal("0.00")
         total += self.items_claimed
-        # leaving space for other categories to be added at a later stage
+        total += self.ledger_current_net_total
         return total
 
     # wholistic properties
@@ -316,6 +318,67 @@ class PaymentCertificate(BaseModel):
         # For progressive to date, we include all transactions in current certificate
         # regardless of approval status (for reporting purposes)
         return self.progressive_previous + self.current_claim_total
+
+    @property
+    def ledger_current_net_total(self) -> Decimal:
+        """Calculate the net total of all ledger adjustments for this certificate."""
+        total = Decimal("0.00")
+        # Models: AdvancePayment, Retention, MaterialsOnSite, Escalation, SpecialItemTransaction
+        for attr in [
+            "advancepayment_transactions",
+            "retention_transactions",
+            "materialsonsite_transactions",
+            "escalation_transactions",
+            "specialitemtransaction_transactions",
+        ]:
+            if hasattr(self, attr):
+                items = getattr(self, attr).all()
+                for item in items:
+                    total += item.signed_amount
+        return total
+
+    @property
+    def ledger_progressive_previous(self) -> Decimal:
+        """Calculate net total of ledger adjustments from previous approved certificates."""
+        total = Decimal("0.00")
+        previous_certs = self.previous_certificates
+        from .ledger_models import (
+            AdvancePayment,
+            Escalation,
+            MaterialsOnSite,
+            Retention,
+            SpecialItemTransaction,
+        )
+
+        models_to_sum = [
+            AdvancePayment,
+            Retention,
+            MaterialsOnSite,
+            Escalation,
+            SpecialItemTransaction,
+        ]
+        for model in models_to_sum:
+            transactions = model.objects.filter(
+                payment_certificate__in=previous_certs,
+            )
+            for item in transactions:
+                total += item.signed_amount
+        return total
+
+    @property
+    def ledger_progressive_to_date(self) -> Decimal:
+        """Calculate progressive net total of ledger adjustments up to this certificate."""
+        return self.ledger_progressive_previous + self.ledger_current_net_total
+
+    @property
+    def grand_total_progressive_previous(self) -> Decimal:
+        """Total project value certified up to (but not including) this certificate (Work Items + Ledger Adjustments)."""
+        return self.work_progressive_previous + self.ledger_progressive_previous
+
+    @property
+    def grand_total_progressive_to_date(self) -> Decimal:
+        """The total project value certified to date (Work Items + Ledger Adjustments)."""
+        return self.work_progressive_to_date + self.ledger_progressive_to_date
 
     # add properties
 

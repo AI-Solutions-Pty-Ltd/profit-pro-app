@@ -4,10 +4,10 @@
     <table class="w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Summary Item</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Amount</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Amount</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Summary Item</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Previous Amount</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Current Amount</th>
+                <th class="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Total Amount</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -16,11 +16,11 @@
                 {% if current != 0 or prev != 0 %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Advance Payments</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
                             R {{ current|floatformat:2|intcomma }}
                         </td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                             R {{ prev|varadd:current|floatformat:2|intcomma }}
                         </td>
                     </tr>
@@ -31,11 +31,11 @@
                 {% if current != 0 or prev != 0 %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Retention</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
                             R {{ current|floatformat:2|intcomma }}
                         </td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                             R {{ prev|varadd:current|floatformat:2|intcomma }}
                         </td>
                     </tr>
@@ -46,11 +46,11 @@
                 {% if current != 0 or prev != 0 %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Materials on Site</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
                             R {{ current|floatformat:2|intcomma }}
                         </td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                             R {{ prev|varadd:current|floatformat:2|intcomma }}
                         </td>
                     </tr>
@@ -61,11 +61,11 @@
                 {% if current != 0 or prev != 0 %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Escalation</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
                             R {{ current|floatformat:2|intcomma }}
                         </td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                             R {{ prev|varadd:current|floatformat:2|intcomma }}
                         </td>
                     </tr>
@@ -78,11 +78,11 @@
                         {% if current != 0 or prev != 0 %}
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-2 text-sm text-gray-900">{{ item_type }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                                <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">R {{ prev|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-2 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
                                     R {{ current|floatformat:2|intcomma }}
                                 </td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                <td class="px-4 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                                     R {{ prev|varadd:current|floatformat:2|intcomma }}
                                 </td>
                             </tr>
@@ -91,34 +91,50 @@
                 {% endfor %}
             {% endwith %}
         </tbody>
-        <tfoot class="bg-gray-50">
+        <tfoot class="bg-gray-50 divide-y divide-gray-200">
+            <!-- Ledger Subtotal -->
             <tr>
-                <td colspan="2"
-                    class="px-4 py-3 text-right text-sm font-bold text-gray-900">Total Net Amount Now Certified:</td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-indigo-600 text-right">
-                    {% with all_totals=payment_certificate.get_all_ledger_totals %}
-                        {% with current_total=all_totals.advance_payments|varadd:all_totals.retention|varadd:all_totals.materials_on_site|varadd:all_totals.escalation|varadd:all_totals.special_items %}
-                            R {{ current_total|floatformat:2|intcomma }}
-                        {% endwith %}
-                    {% endwith %}
+                <td colspan="2" class="px-4 py-3 text-xs font-bold tracking-widest text-right text-gray-500 uppercase">
+                    Subtotal Ledger Adjustments
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                    {% with all_totals=payment_certificate.get_all_ledger_totals %}
-                        {% with current_total=all_totals.advance_payments|varadd:all_totals.retention|varadd:all_totals.materials_on_site|varadd:all_totals.escalation|varadd:all_totals.special_items %}
-                            {% with prev_total=payment_certificate.previous_advance_payment_total|varadd:payment_certificate.previous_retention_total|varadd:payment_certificate.previous_materials_on_site_total|varadd:payment_certificate.previous_escalation_total|varadd:payment_certificate.previous_special_item_total %}
-                                {% with grand_total=current_total|varadd:prev_total %}R {{ grand_total|floatformat:2|intcomma }}{% endwith %}
-                            {% endwith %}
-                        {% endwith %}
-                    {% endwith %}
+                <td class="px-4 py-3 text-sm font-bold text-right text-indigo-600 whitespace-nowrap">
+                    R {{ payment_certificate.ledger_current_net_total|floatformat:2|intcomma }}
+                </td>
+                <td class="px-4 py-3 text-sm font-bold text-right text-gray-900 whitespace-nowrap">
+                    R {{ payment_certificate.ledger_progressive_to_date|floatformat:2|intcomma }}
+                </td>
+            </tr>
+            <!-- Work Subtotal -->
+            <tr>
+                <td colspan="2" class="px-4 py-3 text-xs font-bold tracking-widest text-right text-gray-500 uppercase">
+                    Subtotal Work Progress
+                </td>
+                <td class="px-4 py-3 text-sm font-bold text-right text-indigo-600 whitespace-nowrap">
+                    R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
+                </td>
+                <td class="px-4 py-3 text-sm font-bold text-right text-gray-900 whitespace-nowrap">
+                    R {{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}
+                </td>
+            </tr>
+            <!-- Grand Total -->
+            <tr class="bg-blue-50">
+                <td colspan="2" class="px-4 py-4 text-sm font-black tracking-widest text-right text-indigo-600 uppercase">
+                    Grand Total Certified
+                </td>
+                <td class="px-4 py-4 font-mono text-lg font-black tabular-nums text-right text-indigo-600 whitespace-nowrap">
+                    R {{ payment_certificate.current_claim_total|varadd:payment_certificate.ledger_current_net_total|floatformat:2|intcomma }}
+                </td>
+                <td class="px-4 py-4 font-mono text-lg font-black tabular-nums text-right text-indigo-600 whitespace-nowrap">
+                    R {{ payment_certificate.grand_total_progressive_to_date|floatformat:2|intcomma }}
                 </td>
             </tr>
         </tfoot>
     </table>
 </div>
 <!-- Notes -->
-<div class="mt-4 p-4 bg-blue-50 rounded-lg">
+<div class="p-4 mt-4 bg-blue-50 rounded-lg">
     <div class="flex">
-        <div class="flex-shrink-0">{% heroicon_outline "information-circle" class="h-5 w-5 text-blue-400" %}</div>
+        <div class="flex-shrink-0">{% heroicon_outline "information-circle" class="w-5 h-5 text-blue-400" %}</div>
         <div class="ml-3">
             <h3 class="text-sm font-medium text-blue-800">Special Items Summary</h3>
             <div class="mt-2 text-sm text-blue-700">
