@@ -40,7 +40,6 @@ from app.BillOfQuantities.views.ledger_views import (
     get_ledger_transactions_with_balance,
 )
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
 )

@@ -394,7 +394,11 @@
                                         {{ line_item.budgeted_quantity|default:""|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        {% if line_item.is_work %}{{ line_item.claimed_to_date|floatformat:2|intcomma }}{% else %}{{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}{% endif %}
+                                        {% if line_item.is_work %}
+                                            {{ line_item.claimed_to_date|floatformat:2|intcomma }}
+                                        {% else %}
+                                            {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
+                                        {% endif %}
                                     </td>
                                     {% if line_item.budgeted_quantity %}
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
@@ -494,7 +498,11 @@
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        {% if line_item.is_work %}{{ line_item.claimed_to_date|floatformat:2|intcomma }}{% else %}{{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}{% endif %}
+                                        {% if line_item.is_work %}
+                                            {{ line_item.claimed_to_date|floatformat:2|intcomma }}
+                                        {% else %}
+                                            {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
+                                        {% endif %}
                                     </td>
                                     {% if line_item.budgeted_quantity %}
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
