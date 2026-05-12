@@ -151,6 +151,37 @@ def _spec_datalist_context(qs, unit_field="unit"):
     }
 
 
+def _handle_bulk_action(request, queryset, *, allow_toggle_active=False):
+    """Handle bulk_delete / bulk_activate / bulk_deactivate POSTs.
+
+    Returns True if the request was a bulk action (caller should redirect),
+    False otherwise.
+    """
+    action = request.POST.get("action", "")
+    if not action.startswith("bulk_"):
+        return False
+    ids = [i for i in request.POST.getlist("ids") if i]
+    if not ids:
+        messages.warning(request, "No items selected.")
+        return True
+    qs = queryset.filter(pk__in=ids)
+    if action == "bulk_delete":
+        count = qs.count()
+        qs.delete()
+        messages.success(request, f"Deleted {count} item(s).")
+        return True
+    if allow_toggle_active and action == "bulk_activate":
+        count = qs.update(is_active=True)
+        messages.success(request, f"Activated {count} item(s).")
+        return True
+    if allow_toggle_active and action == "bulk_deactivate":
+        count = qs.update(is_active=False)
+        messages.success(request, f"Deactivated {count} item(s).")
+        return True
+    messages.error(request, f"Unknown bulk action: {action}")
+    return True
+
+
 def _flash_sync_result(request, result, entity_label):
     """Flash a success/error message for a project-side contractor sync."""
     if result.get("skipped_no_contractor"):
@@ -843,6 +874,17 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
+        if _handle_bulk_action(
+            request,
+            ProjectSpecification.objects.filter(project=project),
+            allow_toggle_active=True,
+        ):
+            return redirect(
+                reverse(
+                    "estimator:material_specs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         if action == "sync_system":
             from .services import sync_material_specs_from_contractor
 
@@ -921,6 +963,13 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
 
+        if _handle_bulk_action(
+            request, ProjectMaterial.objects.filter(project=self.get_project())
+        ):
+            return redirect(
+                reverse("estimator:materials", kwargs={"project_pk": project_pk})
+            )
+
         if action == "sync_system":
             from .services import sync_materials_from_contractor
 
@@ -959,6 +1008,13 @@ class LabourCostListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
+
+        if _handle_bulk_action(
+            request, ProjectLabourCrew.objects.filter(project=self.get_project())
+        ):
+            return redirect(
+                reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
+            )
 
         if action == "sync_system":
             from .services import sync_labour_costs_from_contractor
@@ -1114,6 +1170,18 @@ class TradeCodeListView(ProjectEstimatorMixin, ListView):
 
     def get_queryset(self):
         return ProjectTradeCode.objects.filter(project=self.get_project())
+
+    def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        if _handle_bulk_action(
+            request, ProjectTradeCode.objects.filter(project=self.get_project())
+        ):
+            return redirect(
+                reverse("estimator:trade_codes", kwargs={"project_pk": project_pk})
+            )
+        return redirect(
+            reverse("estimator:trade_codes", kwargs={"project_pk": project_pk})
+        )
 
 
 class ExcelImportView(ProjectEstimatorMixin, FormView):
@@ -3375,6 +3443,17 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
+        if _handle_bulk_action(
+            request,
+            ProjectLabourSpecification.objects.filter(project=project),
+            allow_toggle_active=True,
+        ):
+            return redirect(
+                reverse(
+                    "estimator:labour_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         if action == "sync_system":
             from .services import sync_labour_specs_from_contractor
 
@@ -3420,6 +3499,13 @@ class PlantCostListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
+
+        if _handle_bulk_action(
+            request, ProjectPlantCost.objects.filter(project=self.get_project())
+        ):
+            return redirect(
+                reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
+            )
 
         if action == "sync_system":
             from .services import sync_plant_costs_from_contractor
@@ -3527,6 +3613,17 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
+        if _handle_bulk_action(
+            request,
+            ProjectPlantSpecification.objects.filter(project=project),
+            allow_toggle_active=True,
+        ):
+            return redirect(
+                reverse(
+                    "estimator:plant_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         if action == "sync_system":
             from .services import sync_plant_specs_from_contractor
 
@@ -3772,6 +3869,16 @@ class PreliminaryCostListView(ProjectEstimatorMixin, ListView):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
 
+        if _handle_bulk_action(
+            request, ProjectPreliminaryCost.objects.filter(project=self.get_project())
+        ):
+            return redirect(
+                reverse(
+                    "estimator:preliminary_costs",
+                    kwargs={"project_pk": project_pk},
+                )
+            )
+
         if action == "sync_system":
             from .services import sync_preliminary_costs_from_contractor
 
@@ -3875,6 +3982,17 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
+        if _handle_bulk_action(
+            request,
+            ProjectPreliminarySpecification.objects.filter(project=project),
+            allow_toggle_active=True,
+        ):
+            return redirect(
+                reverse(
+                    "estimator:preliminary_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         if action == "sync_system":
             from .services import sync_preliminary_specs_from_contractor
 
