@@ -1,4 +1,5 @@
 {% extends "estimator/base_baseline_costs.html" %}
+{% load estimator_tags %}
 {% block title %}Trade Codes - Project Resource Estimator{% endblock %}
 {% block sub_content %}
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
@@ -17,6 +18,19 @@
                 {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Template
             </a>
+        </div>
+    </div>
+    <!-- Search -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <div class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[220px]">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Search</label>
+                <input type="text"
+                       id="cost-search"
+                       placeholder="Prefix or trade name…"
+                       autocomplete="off"
+                       class="block w-full rounded-md border-0 py-1.5 px-2 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+            </div>
         </div>
     </div>
     <div class="overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
@@ -40,7 +54,8 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for tc in trade_codes %}
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50 cost-row"
+                            data-search="{{ tc.prefix|lower }} {{ tc.trade_name|lower }} {{ tc.trade_code|lower }}">
                             <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm sm:pl-6">
                                 <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">{{ tc.prefix }}</span>
                             </td>
@@ -56,4 +71,17 @@
             </table>
         </div>
     </div>
+    <script>
+(function () {
+    const search = document.getElementById('cost-search');
+    if (!search) return;
+    const apply = () => {
+        const q = search.value.trim().toLowerCase();
+        document.querySelectorAll('tr.cost-row').forEach(row => {
+            row.style.display = !q || (row.dataset.search || '').includes(q) ? '' : 'none';
+        });
+    };
+    search.addEventListener('input', apply);
+})();
+    </script>
 {% endblock %}

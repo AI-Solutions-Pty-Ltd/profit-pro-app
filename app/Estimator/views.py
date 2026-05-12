@@ -887,11 +887,34 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
     context_object_name = "materials"
 
     def get_queryset(self):
-        return ProjectMaterial.objects.filter(project=self.get_project())
+        qs = ProjectMaterial.objects.filter(project=self.get_project())
+        unit = self.request.GET.get("unit", "").strip()
+        if unit:
+            qs = qs.filter(unit=unit)
+        trade_name = self.request.GET.get("trade_name", "").strip()
+        if trade_name:
+            qs = qs.filter(trade_name=trade_name)
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", MaterialForm())
+        project_materials = ProjectMaterial.objects.filter(project=self.get_project())
+        context["units"] = (
+            project_materials.exclude(unit="")
+            .values_list("unit", flat=True)
+            .distinct()
+            .order_by("unit")
+        )
+        context["trade_names"] = (
+            project_materials.exclude(trade_name="")
+            .values_list("trade_name", flat=True)
+            .distinct()
+            .order_by("trade_name")
+        )
+        context["f_q"] = self.request.GET.get("q", "")
+        context["f_unit"] = self.request.GET.get("unit", "")
+        context["f_trade_name"] = self.request.GET.get("trade_name", "")
         return context
 
     def post(self, request, *args, **kwargs):
@@ -3729,11 +3752,20 @@ class PreliminaryCostListView(ProjectEstimatorMixin, ListView):
     context_object_name = "preliminaries"
 
     def get_queryset(self):
-        return ProjectPreliminaryCost.objects.filter(project=self.get_project())
+        qs = ProjectPreliminaryCost.objects.filter(project=self.get_project())
+        ptype = self.request.GET.get("preliminary_type", "").strip()
+        if ptype:
+            qs = qs.filter(preliminary_type=ptype)
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", PreliminaryCostForm())
+        context["preliminary_types"] = (
+            ProjectPreliminaryCost._meta.get_field("preliminary_type").choices
+        )
+        context["f_q"] = self.request.GET.get("q", "")
+        context["f_preliminary_type"] = self.request.GET.get("preliminary_type", "")
         return context
 
     def post(self, request, *args, **kwargs):

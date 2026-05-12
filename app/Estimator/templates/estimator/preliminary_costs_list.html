@@ -101,6 +101,39 @@
             </div>
         </div>
     </div>
+    <!-- Filters / Search -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <form method="get" id="filter-form" class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[220px]">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Search</label>
+                <input type="text"
+                       id="cost-search"
+                       name="q"
+                       value="{{ f_q }}"
+                       placeholder="Name…"
+                       autocomplete="off"
+                       class="block w-full rounded-md border-0 py-1.5 px-2 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+            </div>
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Preliminary Type</label>
+                <select name="preliminary_type"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All Types</option>
+                    {% for value, label in preliminary_types %}
+                        <option value="{{ value }}" {% if f_preliminary_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if f_q or f_preliminary_type %}
+                <a href="{% url 'estimator:preliminary_costs' project_pk=project_pk %}"
+                   class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
+                    {% heroicon_outline "x-mark" class="w-3.5 h-3.5 mr-1" %}
+                    Clear
+                </a>
+            {% endif %}
+        </form>
+    </div>
     <div class="overflow-hidden bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -138,7 +171,8 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for item in preliminaries %}
-                        <tr class="hover:bg-gray-50" data-prelim-id="{{ item.id }}">
+                        <tr class="hover:bg-gray-50 cost-row" data-prelim-id="{{ item.id }}"
+                            data-search="{{ item.name|lower }} {{ item.get_preliminary_type_display|lower }}">
                             <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                                 <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-600/10 ring-inset">
                                     {{ item.get_preliminary_type_display }}
@@ -218,6 +252,18 @@
         </div>
     </div>
     <script>
+(function () {
+    const search = document.getElementById('cost-search');
+    if (!search) return;
+    const apply = () => {
+        const q = search.value.trim().toLowerCase();
+        document.querySelectorAll('tr.cost-row').forEach(row => {
+            row.style.display = !q || (row.dataset.search || '').includes(q) ? '' : 'none';
+        });
+    };
+    search.addEventListener('input', apply);
+    if (search.value) apply();
+})();
 document.querySelectorAll('.inline-edit').forEach(input => {
     let original = input.value;
     input.addEventListener('focus', () => { original = input.value; });
