@@ -86,6 +86,18 @@ MIDDLEWARE = [
     "app.core.middleware.timer_middleware.RequestTimerMiddleware",
 ]
 
+# django-silk performance profiling — opt-in via env var.
+# When ENABLE_SILK=1, /silk/ is mounted (staff-only) and every request is recorded.
+ENABLE_SILK = os.getenv("ENABLE_SILK") == "1"
+if ENABLE_SILK:
+    INSTALLED_APPS = INSTALLED_APPS + ["silk"]
+    MIDDLEWARE = ["silk.middleware.SilkyMiddleware"] + MIDDLEWARE
+    SILKY_AUTHENTICATION = True
+    SILKY_AUTHORISATION = True
+    SILKY_PERMISSIONS = lambda user: user.is_staff  # noqa: E731
+    SILKY_META = True
+    SILKY_PYTHON_PROFILER = True
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",

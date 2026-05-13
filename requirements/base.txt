@@ -33,3 +33,6 @@ openpyxl
 # image tools
 Pillow
 python-magic
+
+# performance profiling (gated by ENABLE_SILK env var)
+django-silk

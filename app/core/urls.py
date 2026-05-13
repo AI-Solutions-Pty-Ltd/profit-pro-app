@@ -62,6 +62,11 @@ if os.getenv("DJANGO_SETTINGS_MODULE") == "settings.local":
         path("__reload__/", include("django_browser_reload.urls")),
     ]
 
+if getattr(settings, "ENABLE_SILK", False):
+    urlpatterns += [
+        path("silk/", include("silk.urls", namespace="silk")),
+    ]
+
 # Custom error handlers
 handler404 = "app.core.views.custom_404"
 handler500 = "app.core.views.custom_500"
