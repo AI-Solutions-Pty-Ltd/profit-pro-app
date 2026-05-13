@@ -529,13 +529,29 @@ class SyncBoqView(ProjectEstimatorMixin, View):
 
 
 class AutofillBoqFromLibraryView(ProjectEstimatorMixin, View):
-    """Bulk-fill BoQ rows that have no specs from matching Item Library entries."""
+    """Bulk-fill BoQ rows from matching Item Library entries.
+
+    POST `mode=reset_and_rerun` first clears specs on every previously
+    auto-filled row, then runs the fill. Any other value (or missing) only
+    fills rows that currently have no specs.
+    """
 
     def post(self, request, project_pk):
-        from .services import autofill_boq_from_library
+        from .services import (
+            autofill_boq_from_library,
+            reset_boq_autofill_trackers,
+        )
 
-        result = autofill_boq_from_library(self.get_project())
-        parts = [f"{result['filled']} filled"]
+        project = self.get_project()
+        reset_count = 0
+        if request.POST.get("mode") == "reset_and_rerun":
+            reset_count = reset_boq_autofill_trackers(project)
+
+        result = autofill_boq_from_library(project)
+        parts = []
+        if reset_count:
+            parts.append(f"{reset_count} reset")
+        parts.append(f"{result['filled']} filled")
         if result["skipped_already_set"]:
             parts.append(f"{result['skipped_already_set']} already had specs")
         if result["ambiguous"]:
@@ -7960,6 +7976,23 @@ class DeleteItemLibraryEntryView(ProjectEstimatorMixin, View):
         )
 
 
+class BulkDeleteItemLibraryEntriesView(ProjectEstimatorMixin, View):
+    def post(self, request, project_pk):
+        ids = request.POST.getlist("entry_ids")
+        count, _ = ProjectItemLibraryEntry.objects.filter(
+            pk__in=ids, project_id=project_pk
+        ).delete()
+        if count:
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
+        else:
+            messages.info(request, "No entries selected.")
+        return redirect(
+            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        )
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateContractorItemLibraryEntryView(View):
     def post(self, request, pk):
@@ -8008,6 +8041,22 @@ class DeleteContractorItemLibraryEntryView(ContractorLibraryMixin, View):
         return redirect(reverse("estimator:ctr_item_library"))
 
 
+class BulkDeleteContractorItemLibraryEntriesView(ContractorLibraryMixin, View):
+    def post(self, request):
+        company = self.get_company()
+        ids = request.POST.getlist("entry_ids")
+        count, _ = ContractorItemLibraryEntry.objects.filter(
+            pk__in=ids, company=company
+        ).delete()
+        if count:
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
+        else:
+            messages.info(request, "No entries selected.")
+        return redirect(reverse("estimator:ctr_item_library"))
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSystemItemLibraryEntryView(View):
     def post(self, request, pk):
@@ -8049,4 +8098,17 @@ class DeleteSystemItemLibraryEntryView(SystemLibraryMixin, View):
         entry = get_object_or_404(SystemItemLibraryEntry, pk=pk)
         entry.delete()
         messages.success(request, "Library entry deleted.")
+        return redirect(reverse("estimator:sys_item_library"))
+
+
+class BulkDeleteSystemItemLibraryEntriesView(SystemLibraryMixin, View):
+    def post(self, request):
+        ids = request.POST.getlist("entry_ids")
+        count, _ = SystemItemLibraryEntry.objects.filter(pk__in=ids).delete()
+        if count:
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
+        else:
+            messages.info(request, "No entries selected.")
         return redirect(reverse("estimator:sys_item_library"))
