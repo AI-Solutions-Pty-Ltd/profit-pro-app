@@ -7826,6 +7826,21 @@ class DeleteItemLibraryEntryView(ProjectEstimatorMixin, View):
         )
 
 
+class BulkDeleteItemLibraryEntriesView(ProjectEstimatorMixin, View):
+    def post(self, request, project_pk):
+        ids = request.POST.getlist("entry_ids")
+        count, _ = ProjectItemLibraryEntry.objects.filter(
+            pk__in=ids, project_id=project_pk
+        ).delete()
+        if count:
+            messages.success(request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}.")
+        else:
+            messages.info(request, "No entries selected.")
+        return redirect(
+            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        )
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateContractorItemLibraryEntryView(View):
     def post(self, request, pk):
@@ -7874,6 +7889,20 @@ class DeleteContractorItemLibraryEntryView(ContractorLibraryMixin, View):
         return redirect(reverse("estimator:ctr_item_library"))
 
 
+class BulkDeleteContractorItemLibraryEntriesView(ContractorLibraryMixin, View):
+    def post(self, request):
+        company = self.get_company()
+        ids = request.POST.getlist("entry_ids")
+        count, _ = ContractorItemLibraryEntry.objects.filter(
+            pk__in=ids, company=company
+        ).delete()
+        if count:
+            messages.success(request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}.")
+        else:
+            messages.info(request, "No entries selected.")
+        return redirect(reverse("estimator:ctr_item_library"))
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSystemItemLibraryEntryView(View):
     def post(self, request, pk):
@@ -7915,4 +7944,15 @@ class DeleteSystemItemLibraryEntryView(SystemLibraryMixin, View):
         entry = get_object_or_404(SystemItemLibraryEntry, pk=pk)
         entry.delete()
         messages.success(request, "Library entry deleted.")
+        return redirect(reverse("estimator:sys_item_library"))
+
+
+class BulkDeleteSystemItemLibraryEntriesView(SystemLibraryMixin, View):
+    def post(self, request):
+        ids = request.POST.getlist("entry_ids")
+        count, _ = SystemItemLibraryEntry.objects.filter(pk__in=ids).delete()
+        if count:
+            messages.success(request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}.")
+        else:
+            messages.info(request, "No entries selected.")
         return redirect(reverse("estimator:sys_item_library"))
