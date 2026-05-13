@@ -7833,7 +7833,9 @@ class BulkDeleteItemLibraryEntriesView(ProjectEstimatorMixin, View):
             pk__in=ids, project_id=project_pk
         ).delete()
         if count:
-            messages.success(request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}.")
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
         else:
             messages.info(request, "No entries selected.")
         return redirect(
@@ -7897,7 +7899,9 @@ class BulkDeleteContractorItemLibraryEntriesView(ContractorLibraryMixin, View):
             pk__in=ids, company=company
         ).delete()
         if count:
-            messages.success(request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}.")
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
         else:
             messages.info(request, "No entries selected.")
         return redirect(reverse("estimator:ctr_item_library"))
@@ -7952,7 +7956,9 @@ class BulkDeleteSystemItemLibraryEntriesView(SystemLibraryMixin, View):
         ids = request.POST.getlist("entry_ids")
         count, _ = SystemItemLibraryEntry.objects.filter(pk__in=ids).delete()
         if count:
-            messages.success(request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}.")
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
         else:
             messages.info(request, "No entries selected.")
         return redirect(reverse("estimator:sys_item_library"))
