@@ -27,16 +27,12 @@
                 </svg>
                 Labor Activities
             </a>
-            <form method="post"
-                  action="{% url 'estimator:autofill_boq_from_library' project_pk=project_pk %}">
-                {% csrf_token %}
-                <button type="submit"
-                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('Autofill specs on every BoQ row that is missing them, using matching Item Library entries?')">
-                    {% heroicon_outline "sparkles" class="mr-1.5 -ml-0.5 w-5 h-5" %}
-                    Autofill from Library
-                </button>
-            </form>
+            <button id="autofill-open-btn"
+                    type="button"
+                    class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50">
+                {% heroicon_outline "sparkles" class="mr-1.5 -ml-0.5 w-5 h-5" %}
+                Autofill from Library
+            </button>
             <form method="post"
                   action="{% url 'estimator:sync_boq' project_pk=project_pk %}">
                 {% csrf_token %}
@@ -44,6 +40,40 @@
                         class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500">
                     {% heroicon_outline "arrow-path" class="mr-1.5 -ml-0.5 w-5 h-5" %}
                     Sync from Baseline BoQ
+                </button>
+            </form>
+        </div>
+    </div>
+    <!-- Autofill choice modal -->
+    <div id="autofill-modal"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h2 class="text-lg font-semibold text-gray-900">Autofill specs on every BoQ row?</h2>
+            <p class="mt-2 text-sm text-gray-600">
+                <strong>Autofill missing</strong> fills only rows that have no specs yet.
+                <strong>Reset &amp; re-run all</strong> clears specs on every previously auto-filled row
+                first, then re-applies — manually-edited rows are left alone.
+            </p>
+            <form method="post"
+                  action="{% url 'estimator:autofill_boq_from_library' project_pk=project_pk %}"
+                  class="mt-5 flex justify-end gap-2">
+                {% csrf_token %}
+                <button id="autofill-cancel-btn"
+                        type="button"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit"
+                        name="mode"
+                        value="missing_only"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50">
+                    Autofill missing
+                </button>
+                <button type="submit"
+                        name="mode"
+                        value="reset_and_rerun"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-md shadow-sm hover:bg-amber-500">
+                    Reset &amp; re-run all
                 </button>
             </form>
         </div>
@@ -1036,6 +1066,18 @@
         const cls = ok ? 'ring-green-400' : 'ring-red-400';
         el.classList.add(cls);
         setTimeout(() => el.classList.remove(cls), ok ? 800 : 1500);
+    }
+
+    // ============ Autofill Choice Modal ============
+    const autofillOpenBtn = document.getElementById('autofill-open-btn');
+    const autofillModal = document.getElementById('autofill-modal');
+    const autofillCancelBtn = document.getElementById('autofill-cancel-btn');
+    if (autofillOpenBtn && autofillModal) {
+        autofillOpenBtn.addEventListener('click', () => autofillModal.classList.remove('hidden'));
+        autofillCancelBtn.addEventListener('click', () => autofillModal.classList.add('hidden'));
+        autofillModal.addEventListener('click', (e) => {
+            if (e.target === autofillModal) autofillModal.classList.add('hidden');
+        });
     }
 
     // ============ Column Groups Visibility Toggle ============
