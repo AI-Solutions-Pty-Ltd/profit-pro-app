@@ -498,13 +498,29 @@ class SyncBoqView(ProjectEstimatorMixin, View):
 
 
 class AutofillBoqFromLibraryView(ProjectEstimatorMixin, View):
-    """Bulk-fill BoQ rows that have no specs from matching Item Library entries."""
+    """Bulk-fill BoQ rows from matching Item Library entries.
+
+    POST `mode=reset_and_rerun` first clears specs on every previously
+    auto-filled row, then runs the fill. Any other value (or missing) only
+    fills rows that currently have no specs.
+    """
 
     def post(self, request, project_pk):
-        from .services import autofill_boq_from_library
+        from .services import (
+            autofill_boq_from_library,
+            reset_boq_autofill_trackers,
+        )
 
-        result = autofill_boq_from_library(self.get_project())
-        parts = [f"{result['filled']} filled"]
+        project = self.get_project()
+        reset_count = 0
+        if request.POST.get("mode") == "reset_and_rerun":
+            reset_count = reset_boq_autofill_trackers(project)
+
+        result = autofill_boq_from_library(project)
+        parts = []
+        if reset_count:
+            parts.append(f"{reset_count} reset")
+        parts.append(f"{result['filled']} filled")
         if result["skipped_already_set"]:
             parts.append(f"{result['skipped_already_set']} already had specs")
         if result["ambiguous"]:

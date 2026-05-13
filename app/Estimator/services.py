@@ -1784,40 +1784,25 @@ def autofill_boq_from_library(project):
     """Fill spec FKs on Output BoQ rows from matching Item Library entries.
 
     For each non-header BoQ row in `project` that has none of the four spec
-    FKs set, find a matching ProjectItemLibraryEntry and copy its spec FKs
-    over plus the back-link.
+    FKs set, find the library entry whose description matches the row's
+    description (case-insensitive, trimmed). If exactly one entry matches,
+    copy its spec FKs over plus the back-link. Multiple entries sharing
+    the same description count as ambiguous and are skipped.
 
-    Match ladder (case-insensitive, trimmed):
-      1. component + trade_code + description all match
-      2. component + trade_code match (must be unique)
-      3. description match (must be unique)
-
-    Rows already carrying any spec are left untouched. Ambiguous tier-2 or
-    tier-3 hits are reported, not picked at random.
+    Rows already carrying any spec are left untouched — use the
+    "Reset autofill" action first if you want to overwrite them.
     """
 
     def norm(s):
         return (s or "").strip().lower()
 
-    library = list(
-        ProjectItemLibraryEntry.objects.filter(project=project).select_related(
-            "trade_code"
-        )
-    )
-
-    by_full = {}
-    by_ct = {}
     by_desc = {}
-    for e in library:
-        by_full[(norm(e.component), e.trade_code_id, norm(e.description))] = e
-        by_ct.setdefault((norm(e.component), e.trade_code_id), []).append(e)
+    for e in ProjectItemLibraryEntry.objects.filter(project=project):
         by_desc.setdefault(norm(e.description), []).append(e)
 
     filled = skipped_already_set = no_match = ambiguous = 0
 
-    for item in BOQItem.objects.filter(
-        project=project, is_section_header=False
-    ).select_related("trade_code"):
+    for item in BOQItem.objects.filter(project=project, is_section_header=False):
         if (
             item.specification_id
             or item.labour_specification_id
@@ -1827,28 +1812,15 @@ def autofill_boq_from_library(project):
             skipped_already_set += 1
             continue
 
-        comp = norm(item.component)
-        desc = norm(item.description)
-        tc_id = item.trade_code_id
-
-        match = by_full.get((comp, tc_id, desc))
-        if match is None:
-            ct_matches = by_ct.get((comp, tc_id), [])
-            if len(ct_matches) == 1:
-                match = ct_matches[0]
-            elif len(ct_matches) > 1:
-                ambiguous += 1
-                continue
-            else:
-                desc_matches = by_desc.get(desc, [])
-                if len(desc_matches) == 1:
-                    match = desc_matches[0]
-                elif len(desc_matches) > 1:
-                    ambiguous += 1
-                    continue
-                else:
-                    no_match += 1
-                    continue
+        desc_matches = by_desc.get(norm(item.description), [])
+        if len(desc_matches) == 1:
+            match = desc_matches[0]
+        elif len(desc_matches) > 1:
+            ambiguous += 1
+            continue
+        else:
+            no_match += 1
+            continue
 
         item.library_entry = match
         item.specification = match.material_spec
@@ -1872,6 +1844,26 @@ def autofill_boq_from_library(project):
         "no_match": no_match,
         "ambiguous": ambiguous,
     }
+
+
+def reset_boq_autofill_trackers(project):
+    """Clear library_entry + the four spec FKs on rows that were previously
+    auto-filled (i.e. carry a library_entry back-link). Manually-edited rows
+    that have specs but no library_entry are left untouched.
+
+    Returns the number of rows reset.
+    """
+    return BOQItem.objects.filter(
+        project=project,
+        is_section_header=False,
+        library_entry__isnull=False,
+    ).update(
+        library_entry=None,
+        specification=None,
+        labour_specification=None,
+        plant_specification=None,
+        preliminary_specification=None,
+    )
 
 
 def save_boq_item_to_library(item, item_code=None):
