@@ -1,4 +1,5 @@
 {% extends "estimator/base.html" %}
+{% load estimator_tags %}
 {% block title %}Reports - Project Resource Estimator{% endblock %}
 {% block estimator_content %}
     <div class="mb-8">
@@ -56,24 +57,24 @@
                             <div>
                                 <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                                 <div class="text-2xl font-bold font-mono tabular-nums {% if summary.variance_pct > 0 %}text-rose-600{% elif summary.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                    {{ summary.variance_pct|default:"0.00"|floatformat:2 }}%
+                                    {{ summary.variance_pct|default:"0.00"|qty }}%
                                 </div>
                             </div>
                         </div>
                         <div class="space-y-2">
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-500">Contract Amount</span>
-                                <span class="font-mono tabular-nums text-gray-900">{{ summary.amount_a|default:"0.00"|floatformat:2 }}</span>
+                                <span class="font-mono tabular-nums text-gray-900">{{ summary.amount_a|default:"0.00"|qty }}</span>
                             </div>
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-500">Resource Baseline</span>
-                                <span class="font-mono tabular-nums text-gray-900">{{ summary.amount_b|default:"0.00"|floatformat:2 }}</span>
+                                <span class="font-mono tabular-nums text-gray-900">{{ summary.amount_b|default:"0.00"|qty }}</span>
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-gray-50">
                                 <span class="text-xs font-bold tracking-tight text-gray-700 uppercase">Risk Variance</span>
                                 <span class="text-sm font-bold font-mono tabular-nums {% if summary.variance > 0 %}text-rose-600{% elif summary.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
                                     {% if summary.variance > 0 %}+{% endif %}
-                                    {{ summary.variance|default:"0.00"|floatformat:2 }}
+                                    {{ summary.variance|default:"0.00"|qty }}
                                 </span>
                             </div>
                         </div>
@@ -97,7 +98,7 @@
                 <div class="p-4">
                     <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
                     <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
-                        {{ mat_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                        {{ mat_summary.baseline.amount|default:"0.00"|qty }}
                     </div>
                 </div>
             </div>
@@ -113,19 +114,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if mat_summary.progress.variance_pct > 0 %}text-rose-600{% elif mat_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ mat_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ mat_summary.progress.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Progress Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ mat_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ mat_summary.progress.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if mat_summary.progress.variance > 0 %}text-rose-600{% elif mat_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ mat_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                                {{ mat_summary.progress.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>
@@ -143,19 +144,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if mat_summary.forecast.variance_pct > 0 %}text-rose-600{% elif mat_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ mat_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ mat_summary.forecast.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Forecast Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ mat_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ mat_summary.forecast.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if mat_summary.forecast.variance > 0 %}text-rose-600{% elif mat_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ mat_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                                {{ mat_summary.forecast.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>
@@ -201,7 +202,7 @@
                 <div class="p-4">
                     <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
                     <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
-                        {{ lab_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                        {{ lab_summary.baseline.amount|default:"0.00"|qty }}
                     </div>
                 </div>
             </div>
@@ -217,19 +218,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if lab_summary.progress.variance_pct > 0 %}text-rose-600{% elif lab_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ lab_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ lab_summary.progress.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Progress Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ lab_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ lab_summary.progress.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if lab_summary.progress.variance > 0 %}text-rose-600{% elif lab_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ lab_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                                {{ lab_summary.progress.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>
@@ -247,19 +248,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if lab_summary.forecast.variance_pct > 0 %}text-rose-600{% elif lab_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ lab_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ lab_summary.forecast.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Forecast Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ lab_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ lab_summary.forecast.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if lab_summary.forecast.variance > 0 %}text-rose-600{% elif lab_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ lab_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                                {{ lab_summary.forecast.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>
@@ -305,7 +306,7 @@
                 <div class="p-4">
                     <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
                     <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
-                        {{ plt_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                        {{ plt_summary.baseline.amount|default:"0.00"|qty }}
                     </div>
                 </div>
             </div>
@@ -321,19 +322,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if plt_summary.progress.variance_pct > 0 %}text-rose-600{% elif plt_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ plt_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ plt_summary.progress.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Progress Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ plt_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ plt_summary.progress.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if plt_summary.progress.variance > 0 %}text-rose-600{% elif plt_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ plt_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                                {{ plt_summary.progress.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>
@@ -351,19 +352,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if plt_summary.forecast.variance_pct > 0 %}text-rose-600{% elif plt_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ plt_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ plt_summary.forecast.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Forecast Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ plt_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ plt_summary.forecast.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if plt_summary.forecast.variance > 0 %}text-rose-600{% elif plt_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ plt_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                                {{ plt_summary.forecast.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>
@@ -410,7 +411,7 @@
                 <div class="p-4">
                     <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Baseline Total</div>
                     <div class="font-mono text-xl font-bold tabular-nums text-gray-900">
-                        {{ pre_summary.baseline.amount|default:"0.00"|floatformat:2 }}
+                        {{ pre_summary.baseline.amount|default:"0.00"|qty }}
                     </div>
                 </div>
             </div>
@@ -426,19 +427,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if pre_summary.progress.variance_pct > 0 %}text-rose-600{% elif pre_summary.progress.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ pre_summary.progress.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ pre_summary.progress.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Progress Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ pre_summary.progress.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ pre_summary.progress.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if pre_summary.progress.variance > 0 %}text-rose-600{% elif pre_summary.progress.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ pre_summary.progress.variance|default:"0.00"|floatformat:2 }}
+                                {{ pre_summary.progress.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>
@@ -456,19 +457,19 @@
                         <div>
                             <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Variance %</div>
                             <div class="text-xl font-bold font-mono tabular-nums {% if pre_summary.forecast.variance_pct > 0 %}text-rose-600{% elif pre_summary.forecast.variance_pct < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ pre_summary.forecast.variance_pct|default:"0.00"|floatformat:2 }}%
+                                {{ pre_summary.forecast.variance_pct|default:"0.00"|qty }}%
                             </div>
                         </div>
                     </div>
                     <div class="pt-2 space-y-1.5 border-t border-gray-50">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Forecast Amt</span>
-                            <span class="font-mono tabular-nums text-gray-900">{{ pre_summary.forecast.amount_b|default:"0.00"|floatformat:2 }}</span>
+                            <span class="font-mono tabular-nums text-gray-900">{{ pre_summary.forecast.amount_b|default:"0.00"|qty }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-gray-500">Variance</span>
                             <span class="font-mono tabular-nums {% if pre_summary.forecast.variance > 0 %}text-rose-600{% elif pre_summary.forecast.variance < 0 %}text-emerald-600{% else %}text-gray-900{% endif %}">
-                                {{ pre_summary.forecast.variance|default:"0.00"|floatformat:2 }}
+                                {{ pre_summary.forecast.variance|default:"0.00"|qty }}
                             </span>
                         </div>
                     </div>

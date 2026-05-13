@@ -96,6 +96,7 @@ class ProductionPlan(BaseModel):
         max_digits=5,
         decimal_places=2,
         default=1,
+        blank=True,
         help_text="Number of crews/resources assigned (multiplier)",
     )
     duration = models.IntegerField(default=0, help_text="Duration in days")
@@ -131,16 +132,20 @@ class ProductionPlan(BaseModel):
     def save(self, *args, **kwargs):
         if self.is_leaf:
             if self.start_date:
-                if self.duration and (
-                    not self.finish_date
-                    or kwargs.get("update_fields") is None
-                    or "duration" in kwargs.get("update_fields", [])
+                if self.finish_date and (
+                    not self.duration
+                    or (
+                        kwargs.get("update_fields") is None
+                        and (self.finish_date - self.start_date).days != self.duration
+                    )
+                    or "finish_date" in kwargs.get("update_fields", [])
                 ):
+                    # Dates are the driver if finish_date is provided and either duration is missing,
+                    # or we're doing a full save and they're inconsistent, or finish_date was explicitly updated.
+                    self.duration = (self.finish_date - self.start_date).days
+                elif self.duration:
                     # Duration is the driver
                     self.finish_date = self.start_date + timedelta(days=self.duration)
-                elif self.finish_date:
-                    # Dates are the driver
-                    self.duration = (self.finish_date - self.start_date).days
 
         # 2. Track changes for propagation
         is_new = self.pk is None
@@ -444,6 +449,72 @@ class ProductionPlan(BaseModel):
 
         return manual_cost + spec_cost
 
+    def get_plant_allocations(self):
+        """Returns a list of granular plant allocations for this plan based on duration."""
+        allocations = []
+        unique_specs = {}
+
+        if self.plant_specification:
+            unique_specs[self.plant_specification.name] = self.plant_specification
+        else:
+            # Fallback: Pull from related BOQItems
+            from app.Estimator.models import BOQItem, ProjectPlantSpecification
+
+            spec_ids = list(
+                BOQItem.objects.filter(
+                    project=self.project,
+                    section=self.section,
+                    bill_no=self.bill_no,
+                    labour_specification=self.labour_activity,
+                    plant_specification__isnull=False,
+                )
+                .values_list("plant_specification", flat=True)
+                .distinct()
+            )
+
+            if spec_ids:
+                specs = ProjectPlantSpecification.objects.filter(
+                    pk__in=spec_ids
+                ).prefetch_related("components__plant_type")
+                for spec in specs:
+                    # Get all type names from components
+                    type_names = [
+                        c.plant_type.name for c in spec.components.all() if c.plant_type
+                    ]
+                    name = (
+                        ", ".join(sorted(set(type_names))) if type_names else spec.name
+                    )
+                    if name not in unique_specs:
+                        unique_specs[name] = spec
+
+        # Expand unique specs into components
+        duration = Decimal(str(self.duration or 0))
+        for display_name, spec in unique_specs.items():
+            for comp in spec.components.all():
+                if not comp.plant_type:
+                    continue
+
+                hours_per_day = comp.hours
+                total_hours = hours_per_day * duration
+                rate = comp.plant_type.hourly_rate or Decimal("0")
+                total_cost = total_hours * rate
+
+                allocations.append(
+                    {
+                        "id": comp.plant_type_id,
+                        "name": comp.plant_type.name,
+                        "hours_per_day": hours_per_day,
+                        "total_hours": total_hours,
+                        "rate": rate,
+                        "total_cost": total_cost,
+                        "source_name": spec.name,
+                        "display_name": display_name,
+                        "is_fallback": not self.plant_specification,
+                    }
+                )
+
+        return allocations
+
     @staticmethod
     def calculate_boq_driven_plant_rows(
         project, section, bill_no, activity, labour_activity_id=None
@@ -541,8 +612,19 @@ class ProductionPlan(BaseModel):
                 child.total_plant_cost for child in self.children.filter(deleted=False)
             )
 
-        # We now only use BoQ driven plant costs (Estimator-based)
-        return sum(row["total_cost"] for row in self.get_boq_driven_plant_rows())
+        # Manual resources cost (legacy/fallback)
+        manual_cost = (
+            self.resources.filter(resource_type="PLANT").aggregate(
+                total=models.Sum("total_cost")
+            )["total"]
+            or 0
+        )
+
+        # Specification-based plant cost (Standard)
+        allocs = self.get_plant_allocations()
+        spec_cost = sum(a["total_cost"] for a in allocs)
+
+        return manual_cost + spec_cost
 
     @property
     def total_other_cost(self):
@@ -659,7 +741,7 @@ class ProductionResource(BaseModel):
             self.name = self.plant_type.name
             self.rate = self.plant_type.hourly_rate
 
-        self.total_cost = (self.number or 0) * (self.rate or 0)
+        self.total_cost = (self.number or 0) * (self.rate or 0) * (self.days or 1)
         super().save(*args, **kwargs)
 
 

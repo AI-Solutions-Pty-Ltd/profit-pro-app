@@ -28,7 +28,7 @@ from app.Estimator.models import (
 from app.Project.models import Project
 
 from ..utils.production_utils import (
-    get_project_activity_summary,
+    get_activity_financial_summary,
 )
 
 
@@ -51,7 +51,7 @@ class LaborActivityListView(
         self.f_activity = self.request.GET.get("activity", "")
 
         # Use the centralized activity summary utility
-        return get_project_activity_summary(
+        return get_activity_financial_summary(
             project_id=self.kwargs["project_pk"],
             f_section=self.f_section,
             f_bill=self.f_bill,
@@ -95,7 +95,7 @@ class LaborActivityListView(
 
         # Map plant types in bulk to avoid N+1 queries
         # Fetch plant mapping data for tooltips
-        # We must use logic consistent with get_project_activity_summary's subqueries
+        # We must use logic consistent with get_activity_financial_summary's subqueries
         from app.Estimator.models import ProjectPlantSpecificationComponent
 
         # Map plant types in bulk using normalized keys to ensure matches
@@ -148,8 +148,8 @@ class LaborActivityListView(
                 activity["labour_specification__crew__crew_type"] = "No Crew"
 
             # Normalize lookup key to match the mapping logic above
-            s_key = str(activity["section"] or "").strip()
-            b_key = str(activity["bill_no"] or "").strip()
+            s_key = str(activity["act_section"] or "").strip()
+            b_key = str(activity["act_bill"] or "").strip()
             n_key = str(activity["act_name"] or "").strip()
 
             key = (s_key, b_key, n_key)
@@ -375,7 +375,7 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
         project_id = self.kwargs.get("project_pk")
 
         # Use centralized utility
-        activities = get_project_activity_summary(project_id)
+        activities = get_activity_financial_summary(project_id)
 
         # Bulk fetch plant details for mapping
         all_plants = (
@@ -419,8 +419,8 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
 
         data = []
         for item in activities:
-            key = (item["section"], item["bill_no"], item["act_name"])
-            label = f"[{item['section']}][{item['bill_no']}] {item['act_name']}"
+            key = (item["act_section"], item["act_bill"], item["act_name"])
+            label = f"[{item['act_section']}][{item['act_bill']}] {item['act_name']}"
 
             # Calculate daily output using factors if it's a labour item
             daily_output = item["daily_production_base"] or 0
@@ -430,8 +430,8 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                     "id": item["labour_spec_id"],
                     "label": label,
                     "activity_name": item["act_name"],
-                    "section": item["section"],
-                    "bill_no": item["bill_no"],
+                    "section": item["act_section"],
+                    "bill_no": item["act_bill"],
                     "unit": item["act_unit"],
                     "quantity": str(item["total_tracker"] or 0),
                     "daily_production": str(item["daily_production_base"] or 0),

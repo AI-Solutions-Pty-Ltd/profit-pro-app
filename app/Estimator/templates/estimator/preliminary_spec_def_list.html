@@ -91,96 +91,159 @@
             </div>
         </div>
     </div>
-    <div class="overflow-hidden bg-white shadow-sm rounded-lg">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col"
-                            class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
-                            Section
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Trade Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Unit
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Preliminary Type
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
-                            Amount
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {% for spec in preliminary_specs %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                                <input type="text"
-                                       class="inline-edit w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ spec.id }}"
-                                       data-field="section"
-                                       value="{{ spec.section }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                <input type="text"
-                                       class="inline-edit w-28 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ spec.id }}"
-                                       data-field="trade_name"
-                                       value="{{ spec.trade_name }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
-                                <input type="text"
-                                       class="inline-edit w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ spec.id }}"
-                                       data-field="name"
-                                       value="{{ spec.name }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                <input type="text"
-                                       class="inline-edit w-12 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ spec.id }}"
-                                       data-field="unit"
-                                       value="{{ spec.unit }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                <select class="inline-edit border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                        data-item-id="{{ spec.id }}"
-                                        data-field="preliminary_type">
-                                    <option value="" {% if not spec.preliminary_type %}selected{% endif %}>—</option>
-                                    {% for value, label in preliminary_type_choices %}
-                                        <option value="{{ value }}"
-                                                {% if spec.preliminary_type == value %}selected{% endif %}>
-                                            {{ label }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right sm:pr-6 spec-amount tabular-nums">
-                                {{ spec.amount|currency }}
-                            </td>
-                        </tr>
-                    {% empty %}
+    <form method="post" id="bulk-form">
+        {% csrf_token %}
+        {% include "estimator/_bulk_toolbar.html" with allow_active=True %}
+        <div class="overflow-hidden bg-white shadow-sm rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">No preliminary specifications found.</td>
+                            <th scope="col" class="w-8 py-3.5 pl-4 pr-2 sm:pl-6">
+                                <input type="checkbox"
+                                       id="select-all"
+                                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Section
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Trade Name
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Name
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Unit
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Preliminary Type
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Amount
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
+                                Status
+                            </th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        {% for spec in preliminary_specs %}
+                            <tr class="bulk-row hover:bg-gray-50 {% if not spec.is_active %}opacity-60{% endif %}">
+                                <td class="py-3 pl-4 pr-2 sm:pl-6">
+                                    <input type="checkbox"
+                                           name="ids"
+                                           value="{{ spec.id }}"
+                                           class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                </td>
+                                <td class="whitespace-nowrap py-3 px-3 text-sm text-gray-500">
+                                    <input type="text"
+                                           class="inline-edit w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ spec.id }}"
+                                           data-field="section"
+                                           value="{{ spec.section }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                    <input type="text"
+                                           class="inline-edit w-28 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ spec.id }}"
+                                           data-field="trade_name"
+                                           value="{{ spec.trade_name }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
+                                    <input type="text"
+                                           class="inline-edit w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ spec.id }}"
+                                           data-field="name"
+                                           value="{{ spec.name }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                    <input type="text"
+                                           class="inline-edit w-12 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ spec.id }}"
+                                           data-field="unit"
+                                           value="{{ spec.unit }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                    <select class="inline-edit border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                            data-item-id="{{ spec.id }}"
+                                            data-field="preliminary_type">
+                                        <option value="" {% if not spec.preliminary_type %}selected{% endif %}>—</option>
+                                        {% for value, label in preliminary_type_choices %}
+                                            <option value="{{ value }}"
+                                                    {% if spec.preliminary_type == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right spec-amount tabular-nums">
+                                    {{ spec.amount|currency }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-center text-sm sm:pr-6">
+                                    <button type="button"
+                                            class="prelim-active-toggle inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {% if spec.is_active %}bg-emerald-50 text-emerald-700 ring-emerald-600/20{% else %}bg-gray-100 text-gray-600 ring-gray-500/10{% endif %}"
+                                            data-item-id="{{ spec.id }}"
+                                            data-active="{{ spec.is_active|yesno:'1,0' }}"
+                                            title="Click to toggle active/inactive">
+                                        <span class="prelim-active-label">
+                                            {% if spec.is_active %}
+                                                Active
+                                            {% else %}
+                                                Inactive
+                                            {% endif %}
+                                        </span>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center text-sm text-gray-500">No preliminary specifications found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    </form>
+    {% include "estimator/_bulk_script.html" %}
+    {% include "estimator/_spec_datalists.html" %}
     <script>
-function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
+
+document.querySelectorAll('.prelim-active-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.dataset.itemId;
+        const next = btn.dataset.active === '1' ? 0 : 1;
+        fetch(`/estimator/project/{{ project_pk }}/api/preliminary-spec/${id}/update/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({field: 'is_active', value: next})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) {
+                btn.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => btn.classList.remove('ring-2', 'ring-red-500'), 800);
+                return;
+            }
+            btn.dataset.active = String(next);
+            const label = btn.querySelector('.prelim-active-label');
+            if (label) label.textContent = next ? 'Active' : 'Inactive';
+            btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'ring-emerald-600/20', 'bg-gray-100', 'text-gray-600', 'ring-gray-500/10');
+            btn.classList.add(...(next ? ['bg-emerald-50', 'text-emerald-700', 'ring-emerald-600/20'] : ['bg-gray-100', 'text-gray-600', 'ring-gray-500/10']));
+            const row = btn.closest('tr');
+            if (row) row.classList.toggle('opacity-60', !next);
+        });
+    });
+});
 
 document.querySelectorAll('.inline-edit').forEach(input => {
     let original = input.value;

@@ -231,6 +231,11 @@ urlpatterns = [
         views.SaveBoqRowToLibraryView.as_view(),
         name="save_boq_row_to_library",
     ),
+    path(
+        "project/<int:project_pk>/api/boq-item/<int:pk>/apply-library-entry/",
+        views.ApplyLibraryEntryToBoqView.as_view(),
+        name="apply_library_entry_to_boq",
+    ),
     # System specs
     path(
         "project/<int:project_pk>/system-specs/",
@@ -277,6 +282,11 @@ urlpatterns = [
         "project/<int:project_pk>/api/spec/<int:pk>/delete/",
         views.DeleteSpecificationView.as_view(),
         name="delete_specification",
+    ),
+    path(
+        "project/<int:project_pk>/api/spec/<int:pk>/update/",
+        views.UpdateSpecificationView.as_view(),
+        name="update_specification",
     ),
     path(
         "project/<int:project_pk>/api/labour-spec/<int:pk>/update/",
@@ -698,6 +708,11 @@ urlpatterns = [
         name="sys_delete_specification",
     ),
     path(
+        "system/api/spec/<int:pk>/update/",
+        views.UpdateSystemSpecificationView.as_view(),
+        name="sys_update_specification",
+    ),
+    path(
         "system/api/labour-crew/<int:pk>/update/",
         views.UpdateSystemLabourCrewView.as_view(),
         name="sys_update_labour_crew",
@@ -1018,6 +1033,11 @@ urlpatterns = [
         "contractor/api/spec/<int:pk>/delete/",
         views.DeleteContractorSpecificationView.as_view(),
         name="ctr_delete_specification",
+    ),
+    path(
+        "contractor/api/spec/<int:pk>/update/",
+        views.UpdateContractorSpecificationView.as_view(),
+        name="ctr_update_specification",
     ),
     path(
         "contractor/api/labour-crew/<int:pk>/update/",

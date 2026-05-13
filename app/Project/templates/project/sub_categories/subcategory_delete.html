@@ -47,9 +47,9 @@
     const subcategoryDeleteModal = document.getElementById('deleteSubCategoryModal')
     const subcategoryDeleteForm = subcategoryDeleteModal.querySelector("#deleteForm")
 
-    function openDeleteSubcategoryModal(id, name, projectCount) {
+    function openDeleteSubcategoryModal(id, name, projectCount, categoryId) {
         project_pk = {{project.pk}}
-        category_pk = {{category.pk}}
+        category_pk = categoryId
         subcategoryDeleteModal.classList.remove('hidden');
         subcategoryDeleteModal.querySelector('#delete_subcategory_name').textContent = name;
         subcategoryDeleteForm.action = `/project/${project_pk}/categories/${category_pk}/subcategories/${id}/delete/`;

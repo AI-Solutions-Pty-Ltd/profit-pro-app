@@ -73,7 +73,8 @@ def initialize_project_estimator(project):
             trade_name=cm.trade_name,
             material_code=cm.material_code,
             unit=cm.unit,
-            market_rate=cm.market_rate,
+            pack_qty=cm.pack_qty,
+            pack_cost=cm.pack_cost,
             material_variety=cm.material_variety,
             market_spec=cm.market_spec,
         )
@@ -99,9 +100,9 @@ def initialize_project_estimator(project):
     results["labour_crews"] = len(crew_map)
 
     # ── Labour Specifications ──
-    lspec_count = 0
+    lspec_map = {}
     for cls in ContractorLabourSpecification.objects.filter(company=company):
-        ProjectLabourSpecification.objects.create(
+        pls = ProjectLabourSpecification.objects.create(
             project=project,
             section=cls.section,
             trade_name=cls.trade_name,
@@ -116,8 +117,8 @@ def initialize_project_estimator(project):
             tools_factor=cls.tools_factor,
             leadership_factor=cls.leadership_factor,
         )
-        lspec_count += 1
-    results["labour_specs"] = lspec_count
+        lspec_map[cls.pk] = pls
+    results["labour_specs"] = len(lspec_map)
 
     # ── Plant Costs ──
     plant_map = {}
@@ -132,7 +133,7 @@ def initialize_project_estimator(project):
     results["plant_costs"] = len(plant_map)
 
     # ── Plant Specifications ──
-    pspec_count = 0
+    pspec_map = {}
     for cps in ContractorPlantSpecification.objects.filter(
         company=company
     ).prefetch_related("components"):
@@ -155,8 +156,8 @@ def initialize_project_estimator(project):
                 hours=comp.hours,
                 sort_order=comp.sort_order,
             )
-        pspec_count += 1
-    results["plant_specs"] = pspec_count
+        pspec_map[cps.pk] = pps
+    results["plant_specs"] = len(pspec_map)
 
     # ── Preliminary Costs ──
     prelim_count = 0
@@ -175,9 +176,9 @@ def initialize_project_estimator(project):
     results["preliminary_costs"] = prelim_count
 
     # ── Preliminary Specifications ──
-    prelim_spec_count = 0
+    prelim_spec_map = {}
     for cps in ContractorPreliminarySpecification.objects.filter(company=company):
-        ProjectPreliminarySpecification.objects.create(
+        pps = ProjectPreliminarySpecification.objects.create(
             project=project,
             section=cps.section,
             trade_name=cps.trade_name,
@@ -185,11 +186,11 @@ def initialize_project_estimator(project):
             unit=cps.unit,
             preliminary_type=cps.preliminary_type,
         )
-        prelim_spec_count += 1
-    results["preliminary_specs"] = prelim_spec_count
+        prelim_spec_map[cps.pk] = pps
+    results["preliminary_specs"] = len(prelim_spec_map)
 
     # ── Material Specifications (with components) ──
-    spec_count = 0
+    spec_map = {}
     for cs in (
         ContractorSpecification.objects.filter(company=company)
         .select_related("trade_code")
@@ -214,8 +215,43 @@ def initialize_project_estimator(project):
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,
             )
-        spec_count += 1
-    results["specifications"] = spec_count
+        spec_map[cs.pk] = ps
+    results["specifications"] = len(spec_map)
+
+    # ── Item Library Entries ──
+    lib_count = 0
+    for centry in ContractorItemLibraryEntry.objects.filter(
+        company=company
+    ).select_related(
+        "trade_code", "material_spec", "labour_spec", "plant_spec", "preliminary_spec"
+    ):
+        ProjectItemLibraryEntry.objects.create(
+            project=project,
+            source_contractor=centry,
+            trade_code=tc_map.get(centry.trade_code_id)
+            if centry.trade_code_id
+            else None,
+            item_code=centry.item_code,
+            accounts_code=centry.accounts_code,
+            component=centry.component,
+            description=centry.description,
+            unit=centry.unit,
+            material_spec=spec_map.get(centry.material_spec_id)
+            if centry.material_spec_id
+            else None,
+            labour_spec=lspec_map.get(centry.labour_spec_id)
+            if centry.labour_spec_id
+            else None,
+            plant_spec=pspec_map.get(centry.plant_spec_id)
+            if centry.plant_spec_id
+            else None,
+            preliminary_spec=prelim_spec_map.get(centry.preliminary_spec_id)
+            if centry.preliminary_spec_id
+            else None,
+            display_order=centry.display_order,
+        )
+        lib_count += 1
+    results["item_library_entries"] = lib_count
 
     results["status"] = "initialized"
     return results
@@ -228,6 +264,7 @@ def clone_from_project(target_project, source_project):
     Returns a dict of counts per entity type.
     """
     # Clear existing library data on target (not BoQ items)
+    ProjectItemLibraryEntry.objects.filter(project=target_project).delete()
     ProjectSpecificationComponent.objects.filter(
         specification__project=target_project
     ).delete()
@@ -264,7 +301,8 @@ def clone_from_project(target_project, source_project):
             trade_name=sm.trade_name,
             material_code=sm.material_code,
             unit=sm.unit,
-            market_rate=sm.market_rate,
+            pack_qty=sm.pack_qty,
+            pack_cost=sm.pack_cost,
             material_variety=sm.material_variety,
             market_spec=sm.market_spec,
         )
@@ -291,11 +329,11 @@ def clone_from_project(target_project, source_project):
     results["labour_crews"] = len(crew_map)
 
     # ── Labour Specifications ──
-    lspec_count = 0
+    lspec_map = {}
     for sls in ProjectLabourSpecification.objects.filter(
         project=source_project
     ).select_related("crew"):
-        ProjectLabourSpecification.objects.create(
+        pls = ProjectLabourSpecification.objects.create(
             project=target_project,
             source=sls.source,
             section=sls.section,
@@ -309,11 +347,11 @@ def clone_from_project(target_project, source_project):
             tools_factor=sls.tools_factor,
             leadership_factor=sls.leadership_factor,
         )
-        lspec_count += 1
-    results["labour_specs"] = lspec_count
+        lspec_map[sls.pk] = pls
+    results["labour_specs"] = len(lspec_map)
 
     # ── Specifications + Components ──
-    spec_count = 0
+    spec_map = {}
     for ss in ProjectSpecification.objects.filter(
         project=source_project
     ).prefetch_related("spec_components"):
@@ -337,8 +375,8 @@ def clone_from_project(target_project, source_project):
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,
             )
-        spec_count += 1
-    results["specifications"] = spec_count
+        spec_map[ss.pk] = ps
+    results["specifications"] = len(spec_map)
 
     # ── Plant Costs ──
     plant_map = {}
@@ -354,7 +392,7 @@ def clone_from_project(target_project, source_project):
     results["plant_costs"] = len(plant_map)
 
     # ── Plant Specifications ──
-    pspec_count = 0
+    pspec_map = {}
     for sps in ProjectPlantSpecification.objects.filter(
         project=source_project
     ).prefetch_related("components"):
@@ -378,8 +416,8 @@ def clone_from_project(target_project, source_project):
                 hours=comp.hours,
                 sort_order=comp.sort_order,
             )
-        pspec_count += 1
-    results["plant_specs"] = pspec_count
+        pspec_map[sps.pk] = pps
+    results["plant_specs"] = len(pspec_map)
 
     # ── Preliminary Costs ──
     prelim_count = 0
@@ -399,9 +437,9 @@ def clone_from_project(target_project, source_project):
     results["preliminary_costs"] = prelim_count
 
     # ── Preliminary Specifications ──
-    prelim_spec_count = 0
+    prelim_spec_map = {}
     for sps in ProjectPreliminarySpecification.objects.filter(project=source_project):
-        ProjectPreliminarySpecification.objects.create(
+        pps = ProjectPreliminarySpecification.objects.create(
             project=target_project,
             source=sps.source,
             section=sps.section,
@@ -410,8 +448,44 @@ def clone_from_project(target_project, source_project):
             unit=sps.unit,
             preliminary_type=sps.preliminary_type,
         )
-        prelim_spec_count += 1
-    results["preliminary_specs"] = prelim_spec_count
+        prelim_spec_map[sps.pk] = pps
+    results["preliminary_specs"] = len(prelim_spec_map)
+
+    # ── Item Library Entries ──
+    lib_count = 0
+    for sentry in ProjectItemLibraryEntry.objects.filter(
+        project=source_project
+    ).select_related(
+        "trade_code", "material_spec", "labour_spec", "plant_spec", "preliminary_spec"
+    ):
+        ProjectItemLibraryEntry.objects.create(
+            project=target_project,
+            source_system=sentry.source_system,
+            source_contractor=sentry.source_contractor,
+            trade_code=tc_map.get(sentry.trade_code_id)
+            if sentry.trade_code_id
+            else None,
+            item_code=sentry.item_code,
+            accounts_code=sentry.accounts_code,
+            component=sentry.component,
+            description=sentry.description,
+            unit=sentry.unit,
+            material_spec=spec_map.get(sentry.material_spec_id)
+            if sentry.material_spec_id
+            else None,
+            labour_spec=lspec_map.get(sentry.labour_spec_id)
+            if sentry.labour_spec_id
+            else None,
+            plant_spec=pspec_map.get(sentry.plant_spec_id)
+            if sentry.plant_spec_id
+            else None,
+            preliminary_spec=prelim_spec_map.get(sentry.preliminary_spec_id)
+            if sentry.preliminary_spec_id
+            else None,
+            display_order=sentry.display_order,
+        )
+        lib_count += 1
+    results["item_library_entries"] = lib_count
 
     results["status"] = "cloned"
     return results
@@ -445,7 +519,8 @@ def pull_from_library(project):
     ).select_related("source"):
         pm.trade_name = pm.source.trade_name
         pm.unit = pm.source.unit
-        pm.market_rate = pm.source.market_rate
+        pm.pack_qty = pm.source.pack_qty
+        pm.pack_cost = pm.source.pack_cost
         pm.material_variety = pm.source.material_variety
         pm.market_spec = pm.source.market_spec
         pm.save()
@@ -538,7 +613,8 @@ def sync_materials_from_contractor(project):
         defaults = {
             "trade_name": cm.trade_name,
             "unit": cm.unit,
-            "market_rate": cm.market_rate,
+            "pack_qty": cm.pack_qty,
+            "pack_cost": cm.pack_cost,
             "material_variety": cm.material_variety,
             "market_spec": cm.market_spec,
         }
@@ -954,7 +1030,8 @@ def sync_materials_to_contractor(company):
     ).select_related("source"):
         cm.trade_name = cm.source.trade_name
         cm.unit = cm.source.unit
-        cm.market_rate = cm.source.market_rate
+        cm.pack_qty = cm.source.pack_qty
+        cm.pack_cost = cm.source.pack_cost
         cm.material_variety = cm.source.material_variety
         cm.market_spec = cm.source.market_spec
         cm.save()
@@ -971,7 +1048,8 @@ def sync_materials_to_contractor(company):
             "source": sm,
             "trade_name": sm.trade_name,
             "unit": sm.unit,
-            "market_rate": sm.market_rate,
+            "pack_qty": sm.pack_qty,
+            "pack_cost": sm.pack_cost,
             "material_variety": sm.material_variety,
             "market_spec": sm.market_spec,
         }
@@ -1489,6 +1567,7 @@ def sync_item_library_to_contractor(company):
 
         defaults = {
             "trade_code": trade_code,
+            "item_code": sysentry.item_code,
             "accounts_code": sysentry.accounts_code,
             "component": sysentry.component,
             "description": sysentry.description,
@@ -1577,6 +1656,7 @@ def sync_item_library_from_system(project):
 
         defaults = {
             "trade_code": trade_code,
+            "item_code": sysentry.item_code,
             "accounts_code": sysentry.accounts_code,
             "component": sysentry.component,
             "description": sysentry.description,
@@ -1670,6 +1750,7 @@ def sync_item_library_from_contractor(project):
 
         defaults = {
             "trade_code": trade_code,
+            "item_code": centry.item_code,
             "accounts_code": centry.accounts_code,
             "component": centry.component,
             "description": centry.description,
@@ -1793,13 +1874,16 @@ def autofill_boq_from_library(project):
     }
 
 
-def save_boq_item_to_library(item):
+def save_boq_item_to_library(item, item_code=None):
     """Upsert a single BOQItem's spec mapping into the project Item Library.
 
     Match key (case-insensitive, trimmed): (component, trade_code_id, description).
     If an entry exists, its spec FKs are overwritten; otherwise a new entry is
     created. The BOQItem's `library_entry` back-link is updated to point at
     whichever entry is now authoritative.
+
+    `item_code` (optional): when provided, set/overwrite the entry's item_code.
+    Passing None leaves any existing code untouched; passing "" clears it.
 
     Returns the dict {"created": bool, "entry_id": int}.
     """
@@ -1809,6 +1893,7 @@ def save_boq_item_to_library(item):
     component = (item.component or "").strip()
     description = (item.description or "").strip()
     trade_code_id = item.trade_code_id
+    normalized_code = item_code.strip() if isinstance(item_code, str) else None
 
     existing = (
         ProjectItemLibraryEntry.objects.filter(
@@ -1828,6 +1913,7 @@ def save_boq_item_to_library(item):
             component=component,
             description=description,
             unit=item.unit or "",
+            item_code=normalized_code or "",
             material_spec=item.specification,
             labour_spec=item.labour_specification,
             plant_spec=item.plant_specification,
@@ -1840,15 +1926,17 @@ def save_boq_item_to_library(item):
         existing.labour_spec = item.labour_specification
         existing.plant_spec = item.plant_specification
         existing.preliminary_spec = item.preliminary_specification
-        existing.save(
-            update_fields=[
-                "unit",
-                "material_spec",
-                "labour_spec",
-                "plant_spec",
-                "preliminary_spec",
-            ]
-        )
+        update_fields = [
+            "unit",
+            "material_spec",
+            "labour_spec",
+            "plant_spec",
+            "preliminary_spec",
+        ]
+        if normalized_code is not None:
+            existing.item_code = normalized_code
+            update_fields.append("item_code")
+        existing.save(update_fields=update_fields)
         entry = existing
         created = False
 
@@ -1856,3 +1944,26 @@ def save_boq_item_to_library(item):
     item.save(update_fields=["library_entry"])
 
     return {"created": created, "entry_id": entry.id, "skipped": False}
+
+
+def apply_library_entry_to_boq_item(item, entry):
+    """Overwrite a BOQItem's spec FKs from a ProjectItemLibraryEntry.
+
+    Sets library_entry + the four spec FKs (specification, labour_specification,
+    plant_specification, preliminary_specification). Trade code, component,
+    description, and unit on the BoQ row are left untouched.
+    """
+    item.library_entry = entry
+    item.specification = entry.material_spec
+    item.labour_specification = entry.labour_spec
+    item.plant_specification = entry.plant_spec
+    item.preliminary_specification = entry.preliminary_spec
+    item.save(
+        update_fields=[
+            "library_entry",
+            "specification",
+            "labour_specification",
+            "plant_specification",
+            "preliminary_specification",
+        ]
+    )

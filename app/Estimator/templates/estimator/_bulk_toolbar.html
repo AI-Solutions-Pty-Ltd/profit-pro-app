@@ -1,0 +1,32 @@
+<div id="bulk-toolbar"
+     class="hidden bg-indigo-50 ring-1 ring-inset ring-indigo-200 rounded-lg p-3 mb-3 flex items-center justify-between">
+    <div class="text-sm font-medium text-indigo-700">
+        <span id="bulk-count">0</span> selected
+    </div>
+    <div class="flex gap-2">
+        {% if allow_active %}
+            <button type="submit"
+                    name="action"
+                    value="bulk_activate"
+                    class="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-inset ring-emerald-300 hover:bg-emerald-50">
+                {% heroicon_outline "check-circle" class="w-4 h-4 mr-1 -ml-0.5" %}
+                Activate
+            </button>
+            <button type="submit"
+                    name="action"
+                    value="bulk_deactivate"
+                    class="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "no-symbol" class="w-4 h-4 mr-1 -ml-0.5" %}
+                Deactivate
+            </button>
+        {% endif %}
+        <button type="submit"
+                name="action"
+                value="bulk_delete"
+                onclick="return confirm('Delete the selected item(s)? This cannot be undone.')"
+                class="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50">
+            {% heroicon_outline "trash" class="w-4 h-4 mr-1 -ml-0.5" %}
+            Delete
+        </button>
+    </div>
+</div>

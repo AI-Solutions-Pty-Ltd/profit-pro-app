@@ -187,7 +187,15 @@ class TradeCodeImporter:
 class MaterialCostImporter:
     """Import Material costs from Excel.
 
-    Expected columns: Trade Name | Material Code | Unit | Market Rate | Variety | Spec
+    New layout (preferred):
+        Trade Name | Material Code | Unit | Pack Qty | Pack Cost | Variety | Spec
+
+    Legacy layout (still accepted — pack_qty defaults to 1):
+        Trade Name | Material Code | Unit | Market Rate | Variety | Spec
+
+    Column positions are resolved by header row 1 (case-insensitive). If the
+    header doesn't include "Pack Qty"/"Pack Cost" the importer falls back to
+    "Market Rate" with pack_qty=1.
     """
 
     SHEET_KEYWORDS = [
@@ -201,32 +209,100 @@ class MaterialCostImporter:
         "material code",
     ]
 
+    HEADER_ALIASES = {
+        "trade_name": ["trade name", "trade code", "trade"],
+        "material_code": ["material code", "code", "material"],
+        "unit": ["unit"],
+        "pack_qty": ["pack qty", "pack qty.", "qty", "quantity", "pack quantity"],
+        "pack_cost": ["pack cost", "cost", "pack price", "price"],
+        "market_rate": ["market rate", "rate", "unit rate"],
+        "material_variety": ["variety", "material variety"],
+        "market_spec": [
+            "spec",
+            "market spec",
+            "market spec / strength",
+            "specification",
+        ],
+    }
+
     def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
         self.company = company
+
+    def _resolve_columns(self, header_row):
+        """Return {field_name: column_index} from a header row."""
+        normalized = [(_safe_str(c) or "").strip().lower() for c in header_row]
+        col_map = {}
+        for field, aliases in self.HEADER_ALIASES.items():
+            for alias in aliases:
+                if alias in normalized:
+                    col_map[field] = normalized.index(alias)
+                    break
+        return col_map
+
+    @staticmethod
+    def _cell(row, idx):
+        if idx is None:
+            return None
+        return row[idx] if idx < len(row) else None
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
         ws = _find_sheet(wb, self.SHEET_KEYWORDS)
         created = updated = 0
 
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            ncols = len(row) if row else 0
-            trade_name = _safe_str(row[0]) if ncols > 0 else ""
-            mat_code = _safe_str(row[1]) if ncols > 1 else ""
-            unit = _safe_str(row[2]) if ncols > 2 else ""
-            rate = row[3] if ncols > 3 else None
-            variety = _safe_str(row[4]) if ncols > 4 else ""
-            spec = _safe_str(row[5]) if ncols > 5 else ""
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            wb.close()
+            return {"created": 0, "updated": 0}
 
+        col_map = self._resolve_columns(rows[0])
+        # Fall back to fixed positions for older templates that don't have
+        # recognisable headers (Trade Name | Material Code | Unit | Market Rate
+        # | Variety | Spec).
+        if not col_map.get("material_code"):
+            col_map = {
+                "trade_name": 0,
+                "material_code": 1,
+                "unit": 2,
+                "market_rate": 3,
+                "material_variety": 4,
+                "market_spec": 5,
+            }
+
+        for row in rows[1:]:
+            if not row:
+                continue
+            mat_code = _safe_str(self._cell(row, col_map.get("material_code")))
             if not mat_code:
                 continue
+
+            trade_name = _safe_str(self._cell(row, col_map.get("trade_name")))
+            unit = _safe_str(self._cell(row, col_map.get("unit")))
+            variety = _safe_str(self._cell(row, col_map.get("material_variety")))
+            spec = _safe_str(self._cell(row, col_map.get("market_spec")))
+
+            pack_qty_raw = self._cell(row, col_map.get("pack_qty"))
+            pack_cost_raw = self._cell(row, col_map.get("pack_cost"))
+            market_rate_raw = self._cell(row, col_map.get("market_rate"))
+
+            if pack_qty_raw is not None or pack_cost_raw is not None:
+                pack_qty = _safe_decimal(pack_qty_raw) or Decimal("1")
+                pack_cost = _safe_decimal(pack_cost_raw) or Decimal("0")
+            else:
+                # Legacy template: a single Market Rate column.
+                pack_qty = Decimal("1")
+                pack_cost = _safe_decimal(market_rate_raw) or Decimal("0")
+
+            if pack_qty <= 0:
+                pack_qty = Decimal("1")
 
             defaults = {
                 "trade_name": trade_name,
                 "unit": unit,
-                "market_rate": _safe_decimal(rate) or Decimal("0"),
+                "pack_qty": pack_qty,
+                "pack_cost": pack_cost,
                 "material_variety": variety,
                 "market_spec": spec,
             }
@@ -1392,10 +1468,12 @@ class ItemLibraryImporter:
 
     Expected columns:
         Trade Code | Accounts Code | Component | Material Spec |
-        Labour & Plant Spec | Preliminaries | Item Description | Unit
+        Labour & Plant Spec | Preliminaries | Item Description | Unit |
+        Item Code
 
     The "Labour & Plant Spec" column resolves against both labour and
     plant specification tables — whichever names match are linked.
+    Item Code is optional, free-text.
     """
 
     SHEET_KEYWORDS = [
@@ -1499,6 +1577,7 @@ class ItemLibraryImporter:
             prelim_spec_name = _safe_str(row[5]) if ncols > 5 else ""
             description = _safe_str(row[6]) if ncols > 6 else ""
             unit = _safe_str(row[7]) if ncols > 7 else ""
+            item_code = _safe_str(row[8]) if ncols > 8 else ""
 
             if not description:
                 skipped += 1
@@ -1534,6 +1613,7 @@ class ItemLibraryImporter:
 
             defaults = {
                 "trade_code": trade_code,
+                "item_code": item_code,
                 "accounts_code": accounts_code,
                 "component": component,
                 "unit": unit,

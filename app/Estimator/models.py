@@ -17,6 +17,18 @@ from app.Estimator.calculations import (
     calculate_total_quantity,
 )
 
+
+def _compute_market_rate(pack_cost, pack_qty):
+    """Effective unit rate for a material from a pack quote (e.g. 2800 / 1000
+    bricks). Returns 0 when pack_qty is missing/zero to avoid div-by-zero.
+    """
+    cost = Decimal(pack_cost or 0)
+    qty = Decimal(pack_qty or 0)
+    if qty <= 0:
+        return Decimal("0")
+    return cost / qty
+
+
 # ═══════════════════════════════════════════════════════════════════
 # System-Level Library Models (admin-managed, importable)
 # ═══════════════════════════════════════════════════════════════════
@@ -40,9 +52,11 @@ class SystemTradeCode(models.Model):
 
 class SystemMaterial(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
-    material_code = models.CharField(max_length=100, unique=True)
+    material_code = models.CharField(max_length=255, unique=True)
     unit = models.CharField(max_length=20, blank=True)
-    market_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    market_rate = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
@@ -52,6 +66,10 @@ class SystemMaterial(models.Model):
 
     def __str__(self):
         return self.material_code
+
+    def save(self, *args, **kwargs):
+        self.market_rate = _compute_market_rate(self.pack_cost, self.pack_qty)
+        super().save(*args, **kwargs)
 
 
 class SystemSpecification(models.Model):
@@ -73,6 +91,7 @@ class SystemSpecification(models.Model):
         blank=True,
         related_name="project_specs",
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "estimator_specification"
@@ -200,6 +219,7 @@ class SystemLabourSpecification(models.Model):
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "estimator_labourspecification"
@@ -266,6 +286,7 @@ class SystemPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -378,6 +399,7 @@ class SystemPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -403,6 +425,7 @@ class SystemMaterialSpec(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     unit = models.CharField(max_length=20, default="m3")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "System Material Spec"
@@ -471,6 +494,7 @@ class SystemItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
@@ -568,9 +592,11 @@ class ContractorMaterial(models.Model):
         related_name="contractor_copies",
     )
     trade_name = models.CharField(max_length=200, blank=True)
-    material_code = models.CharField(max_length=100)
+    material_code = models.CharField(max_length=255)
     unit = models.CharField(max_length=20, blank=True)
-    market_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    market_rate = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
@@ -580,6 +606,10 @@ class ContractorMaterial(models.Model):
 
     def __str__(self):
         return self.material_code
+
+    def save(self, *args, **kwargs):
+        self.market_rate = _compute_market_rate(self.pack_cost, self.pack_qty)
+        super().save(*args, **kwargs)
 
 
 class ContractorSpecification(models.Model):
@@ -614,6 +644,7 @@ class ContractorSpecification(models.Model):
         blank=True,
         related_name="contractor_specs",
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -768,6 +799,7 @@ class ContractorLabourSpecification(models.Model):
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -861,6 +893,7 @@ class ContractorPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -991,6 +1024,7 @@ class ContractorPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1031,6 +1065,7 @@ class ContractorMaterialSpec(models.Model):
     )
     name = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, default="m3")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Contractor Material Spec"
@@ -1112,6 +1147,7 @@ class ContractorItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
@@ -1207,9 +1243,11 @@ class ProjectMaterial(models.Model):
         related_name="project_copies",
     )
     trade_name = models.CharField(max_length=200, blank=True)
-    material_code = models.CharField(max_length=100)
+    material_code = models.CharField(max_length=255)
     unit = models.CharField(max_length=20, blank=True)
-    market_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pack_qty = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    pack_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    market_rate = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
@@ -1219,6 +1257,10 @@ class ProjectMaterial(models.Model):
 
     def __str__(self):
         return self.material_code
+
+    def save(self, *args, **kwargs):
+        self.market_rate = _compute_market_rate(self.pack_cost, self.pack_qty)
+        super().save(*args, **kwargs)
 
 
 class ProjectSpecification(models.Model):
@@ -1244,6 +1286,7 @@ class ProjectSpecification(models.Model):
     )
     unit_label = models.CharField(max_length=20, default="m3")
     name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1397,6 +1440,7 @@ class ProjectLabourSpecification(models.Model):
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1492,6 +1536,7 @@ class ProjectPlantSpecification(models.Model):
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1620,6 +1665,7 @@ class ProjectPreliminarySpecification(models.Model):
         choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
         blank=True,
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["section", "name"]
@@ -1671,6 +1717,7 @@ class ProjectItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    item_code = models.CharField(max_length=50, blank=True)
     accounts_code = models.CharField(max_length=50, blank=True)
     component = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=500)
@@ -1901,7 +1948,7 @@ class BOQItem(models.Model):
 
     @property
     def new_materials_rate(self):
-        if self.specification:
+        if self.specification and self.specification.is_active:
             base = calculate_materials_rate(None, self.specification.rate_per_unit)
         elif self.material:
             base = self.material.market_rate
@@ -1913,7 +1960,7 @@ class BOQItem(models.Model):
 
     @property
     def new_labour_rate(self):
-        if self.labour_specification:
+        if self.labour_specification and self.labour_specification.is_active:
             base = self.labour_specification.rate_per_unit
             if base is None:
                 return None
@@ -1936,7 +1983,7 @@ class BOQItem(models.Model):
 
     @property
     def new_plant_rate(self):
-        if self.plant_specification:
+        if self.plant_specification and self.plant_specification.is_active:
             return self.plant_specification.rate_per_unit
         return None
 
@@ -1949,7 +1996,7 @@ class BOQItem(models.Model):
 
     @property
     def new_preliminary_rate(self):
-        if self.preliminary_specification:
+        if self.preliminary_specification and self.preliminary_specification.is_active:
             return self.preliminary_specification.amount
         return None
 
