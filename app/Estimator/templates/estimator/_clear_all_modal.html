@@ -19,7 +19,9 @@
                     <div class="flex-1 min-w-0">
                         <h3 class="text-base font-semibold text-gray-900">Clear all {{ clear_sheet_label }}?</h3>
                         <p class="mt-1 text-sm text-gray-600">
-                            This will permanently delete every entry in <strong>{{ clear_sheet_label }}</strong>{% if clear_scope %} for <strong>{{ clear_scope }}</strong>{% endif %}.
+                            This will permanently delete every entry in <strong>{{ clear_sheet_label }}</strong>
+                            {% if clear_scope %}for <strong>{{ clear_scope }}</strong>{% endif %}
+                            .
                             This cannot be undone.
                         </p>
                         <label class="block text-xs font-medium text-gray-700 mt-4 mb-1">
