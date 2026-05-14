@@ -30,6 +30,7 @@
                 {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
             </a>
+            {% include "estimator/_clear_all_modal.html" with clear_sheet_label="Item Library" %}
         </div>
     </div>
     <form method="get"
@@ -71,11 +72,41 @@
             {% endfor %}
         </div>
     {% endif %}
+    <form id="bulk-delete-form"
+          method="post"
+          action="{% url 'estimator:sys_item_library_bulk_delete' %}">
+        {% csrf_token %}
+    </form>
+    <div id="bulk-action-bar"
+         class="hidden mb-3 flex items-center justify-between rounded-md bg-indigo-50 px-4 py-2 ring-1 ring-inset ring-indigo-200">
+        <p class="text-sm text-indigo-900">
+            <span id="bulk-selected-count">0</span> selected
+        </p>
+        <div class="flex gap-2">
+            <button type="button"
+                    id="bulk-clear-btn"
+                    class="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Clear
+            </button>
+            <button type="submit"
+                    form="bulk-delete-form"
+                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-500"
+                    onclick="return confirm('Delete the selected entries? This cannot be undone.');">
+                {% heroicon_outline "trash" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Delete selected
+            </button>
+        </div>
+    </div>
     <div class="overflow-hidden bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-3 py-3 text-left w-10">
+                            <input type="checkbox"
+                                   id="select-all-checkbox"
+                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Item Code</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Trade Code</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Component</th>
@@ -90,6 +121,13 @@
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for e in entries %}
                         <tr class="hover:bg-gray-50" data-entry-id="{{ e.id }}">
+                            <td class="px-3 py-1.5 w-10">
+                                <input type="checkbox"
+                                       class="row-select-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                       form="bulk-delete-form"
+                                       name="entry_ids"
+                                       value="{{ e.id }}">
+                            </td>
                             <td class="px-2 py-1.5 w-24">
                                 <input type="text"
                                        class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
@@ -190,7 +228,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">
+                            <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">
                                 No entries yet. Click <em>Add Item</em> or upload an Excel sheet to populate the master library.
                             </td>
                         </tr>
@@ -254,6 +292,37 @@
                 el.addEventListener('change', () => saveField(el));
                 el.addEventListener('blur', () => saveField(el));
             });
+
+            // ============ Bulk select / delete ============
+            const selectAll = document.getElementById('select-all-checkbox');
+            const rowBoxes = document.querySelectorAll('.row-select-checkbox');
+            const bar = document.getElementById('bulk-action-bar');
+            const countEl = document.getElementById('bulk-selected-count');
+            const clearBtn = document.getElementById('bulk-clear-btn');
+
+            function refreshBar() {
+                const selected = document.querySelectorAll('.row-select-checkbox:checked');
+                countEl.textContent = selected.length;
+                bar.classList.toggle('hidden', selected.length === 0);
+                if (selectAll) {
+                    selectAll.checked = selected.length > 0 && selected.length === rowBoxes.length;
+                    selectAll.indeterminate = selected.length > 0 && selected.length < rowBoxes.length;
+                }
+            }
+
+            if (selectAll) {
+                selectAll.addEventListener('change', () => {
+                    rowBoxes.forEach((cb) => { cb.checked = selectAll.checked; });
+                    refreshBar();
+                });
+            }
+            rowBoxes.forEach((cb) => cb.addEventListener('change', refreshBar));
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    rowBoxes.forEach((cb) => { cb.checked = false; });
+                    refreshBar();
+                });
+            }
         })();
     </script>
 {% endblock %}
