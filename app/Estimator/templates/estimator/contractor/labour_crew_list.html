@@ -59,10 +59,6 @@
                             <div class="mt-1">{{ form.crew_type }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_crew_size" class="block text-sm font-medium text-gray-700">Crew Size</label>
-                            <div class="mt-1">{{ form.crew_size }}</div>
-                        </div>
-                        <div class="sm:col-span-1">
                             <label for="id_skilled" class="block text-sm font-medium text-gray-700">Skilled</label>
                             <div class="mt-1">{{ form.skilled }}</div>
                         </div>
@@ -187,13 +183,10 @@
                                            data-field="crew_type"
                                            value="{{ crew.crew_type }}">
                                 </td>
-                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                    <input type="number"
-                                           step="1"
-                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                           data-item-id="{{ crew.id }}"
-                                           data-field="crew_size"
-                                           value="{{ crew.crew_size|num }}">
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500 text-right tabular-nums crew-size-display"
+                                    data-crew-id="{{ crew.id }}"
+                                    title="Auto-computed: skilled + semi-skilled + general">
+                                    {{ crew.crew_size|num }}
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                     <input type="number"
@@ -281,6 +274,8 @@ document.querySelectorAll('.inline-edit-crew').forEach(input => {
                 if (row) {
                     const costCell = row.querySelector('.crew-daily-cost');
                     if (costCell) costCell.textContent = 'R ' + parseFloat(data.crew_daily_cost).toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+                    const sizeCell = row.querySelector('.crew-size-display');
+                    if (sizeCell && data.crew_size !== undefined) sizeCell.textContent = data.crew_size;
                 }
             } else {
                 input.classList.add('ring-2', 'ring-red-500');

@@ -3380,7 +3380,6 @@ class UpdateLabourCrewView(View):
 
     ALLOWED_FIELDS = {
         "crew_type": "str",
-        "crew_size": "int",
         "skilled": "int",
         "semi_skilled": "int",
         "general": "int",
@@ -3417,6 +3416,7 @@ class UpdateLabourCrewView(View):
         return JsonResponse(
             {
                 "ok": True,
+                "crew_size": item.crew_size,
                 "crew_daily_cost": format_num(item.crew_daily_cost),
             }
         )
@@ -4366,7 +4366,10 @@ class LabourCostUploadView(ProjectEstimatorMixin, FormView):
         ctx["download_url_name"] = "estimator:download_labour_cost_template"
         ctx["columns"] = [
             ("Crew Type", "Unique crew identifier (required)"),
-            ("Crew Size", "Total crew members"),
+            (
+                "Crew Size",
+                "Ignored on import — auto-computed as Skilled + Semi Skilled + General",
+            ),
             ("Skilled", "Number of skilled workers"),
             ("Semi Skilled", "Number of semi-skilled workers"),
             ("General", "Number of general workers"),
@@ -4376,6 +4379,7 @@ class LabourCostUploadView(ProjectEstimatorMixin, FormView):
         ]
         ctx["notes"] = [
             "Crew Type is the unique key — existing crews with the same type will be updated.",
+            "Crew Size is auto-computed from Skilled + Semi Skilled + General; the column is kept for backwards compatibility but its value is ignored.",
             "Worker counts must be whole numbers. Rates must be numeric.",
         ]
         return ctx
@@ -5357,7 +5361,6 @@ class SystemLabourCrewListView(SystemLibraryMixin, ListView):
 class UpdateSystemLabourCrewView(View):
     ALLOWED_FIELDS = {
         "crew_type",
-        "crew_size",
         "skilled",
         "semi_skilled",
         "general",
@@ -5377,7 +5380,13 @@ class UpdateSystemLabourCrewView(View):
             return JsonResponse({"error": "Invalid field"}, status=400)
         setattr(crew, field, value)
         crew.save()
-        return JsonResponse({"ok": True, "crew_daily_cost": str(crew.crew_daily_cost)})
+        return JsonResponse(
+            {
+                "ok": True,
+                "crew_size": crew.crew_size,
+                "crew_daily_cost": str(crew.crew_daily_cost),
+            }
+        )
 
 
 class SystemLabourCrewUploadView(SystemLibraryMixin, FormView):
@@ -6850,7 +6859,6 @@ class ContractorLabourCrewListView(ContractorLibraryMixin, ListView):
 class UpdateContractorLabourCrewView(View):
     ALLOWED_FIELDS = {
         "crew_type",
-        "crew_size",
         "skilled",
         "semi_skilled",
         "general",
@@ -6871,7 +6879,13 @@ class UpdateContractorLabourCrewView(View):
             return JsonResponse({"error": "Invalid field"}, status=400)
         setattr(crew, field, value)
         crew.save()
-        return JsonResponse({"ok": True, "crew_daily_cost": str(crew.crew_daily_cost)})
+        return JsonResponse(
+            {
+                "ok": True,
+                "crew_size": crew.crew_size,
+                "crew_daily_cost": str(crew.crew_daily_cost),
+            }
+        )
 
 
 class ContractorLabourCrewUploadView(ContractorLibraryMixin, FormView):
