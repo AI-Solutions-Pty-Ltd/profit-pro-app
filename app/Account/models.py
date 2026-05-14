@@ -9,6 +9,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q, QuerySet
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -157,6 +158,9 @@ class Account(AbstractUser, BaseModel):
     # Email verification fields
     email_verified = models.BooleanField(default=False)
     email_verified_at = models.DateTimeField(null=True, blank=True)
+    subscription_expires_at = models.DateTimeField(
+        null=True, blank=True, help_text="Expiry date for demo/trial subscriptions"
+    )
 
     objects = UserManager()
 
@@ -225,11 +229,16 @@ class Account(AbstractUser, BaseModel):
         if not normalized_required_tiers:
             return True
 
-        if (
-            self.is_superuser
-            or self.subscription == Subscription.ADMINISTRATION
-            or str(Subscription.FREE_TIER) in normalized_required_tiers
-        ):
+        if self.is_superuser or self.subscription == Subscription.ADMINISTRATION:
+            return True
+
+        if self.subscription == Subscription.DEMO_TIER:
+            if self.is_subscription_expired:
+                return False
+            # Demo tier bypasses requirement checks if not expired
+            return True
+
+        if str(Subscription.FREE_TIER) in normalized_required_tiers:
             return True
 
         current_tier = str(self.subscription)
@@ -328,3 +337,30 @@ class Account(AbstractUser, BaseModel):
         except ValueError:
             subscription_tier = Subscription.FREE_TIER
         return SubscriptionConfig.get_all_limits(subscription_tier)
+
+    @property
+    def is_subscription_expired(self) -> bool:
+        """Check if the current subscription has expired."""
+        if not self.subscription_expires_at:
+            return False
+        return timezone.now() > self.subscription_expires_at
+
+    @property
+    def demo_time_left_str(self) -> str:
+        """Return a human-readable string of time left for demo."""
+        if not self.subscription_expires_at:
+            return "No expiry set"
+
+        if self.is_subscription_expired:
+            return "Expired"
+
+        delta = self.subscription_expires_at - timezone.now()
+        days = delta.days
+        hours = delta.seconds // 3600
+
+        if days > 0:
+            return f"{days} day{'s' if days > 1 else ''} remaining"
+        elif hours > 0:
+            return f"{hours} hour{'s' if hours > 1 else ''} remaining"
+        else:
+            return "Expires very soon"

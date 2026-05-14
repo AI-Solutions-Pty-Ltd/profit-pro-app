@@ -522,6 +522,10 @@ class MasterDashboardDataMixin:
         return exceptions
 
     def _get_production_summary(self, projects):
+        from app.Project.production_progress.utils.production_utils import (
+            get_premium_productivity_report_data,
+        )
+
         plans = ProductionPlan.objects.filter(project__in=projects, is_leaf=True)
         total_quantity = plans.aggregate(total=Sum("quantity"))["total"] or 0
         actual_quantity = (
@@ -543,15 +547,42 @@ class MasterDashboardDataMixin:
         )
         umh = (actual_quantity / total_hours) if total_hours > 0 else 0
 
+        # Calculate Overruns
+        cost_overruns = 0
+        schedule_overruns = 0
+        is_portfolio = projects.count() > 1
+
+        for project in projects:
+            report_data = get_premium_productivity_report_data(project.id)
+            summary = report_data.get("summary", {})
+
+            if is_portfolio:
+                # Portfolio Mode: Count Projects
+                if summary.get("cpi", 1.0) < 1.0:
+                    cost_overruns += 1
+                if summary.get("days_impact", 0) > 0:
+                    schedule_overruns += 1
+            else:
+                # Project Mode: Count Activities
+                for section in report_data.get("sections", []):
+                    for bill in section.get("bills", []):
+                        for plan in bill.get("plans", []):
+                            if plan.get("cpi", 1.0) < 1.0:
+                                cost_overruns += 1
+                            if plan.get("days_affected", 0) > 0:
+                                schedule_overruns += 1
+
         return {
             "progress_pct": round(progress_pct, 1),
+            "plan_count": plans.count(),
             "total_quantity": total_quantity,
             "actual_quantity": actual_quantity,
             "total_hours": total_hours,
             "umh": round(umh, 2),
-            "status": "On Track"
-            if progress_pct >= 50
-            else "Behind Schedule",  # Placeholder logic
+            "cost_overruns": cost_overruns,
+            "schedule_overruns": schedule_overruns,
+            "overrun_type": "Projects" if is_portfolio else "Activities",
+            "status": "On Track" if progress_pct >= 50 else "Behind Schedule",
         }
 
     def _get_baseline_comparison(self, projects):

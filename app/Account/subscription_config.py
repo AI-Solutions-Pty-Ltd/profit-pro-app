@@ -20,9 +20,10 @@ class Subscription(models.TextChoices):
     BUSINESS_MANAGEMENT = "BUSINESS_MANAGEMENT", "Business Management Module"
     PAYMENTS_AND_INVOICES = "PAYMENTS_AND_INVOICES", "Payments and Invoices"
     PROFIT_AND_LOSS = "PROFIT_AND_LOSS", "Profit and Loss"
-    SITE_MANAGEMENT = "SITE_MANAGEMENT", "Site Management"
+    SITE_MANAGEMENT = "SITE_MANAGEMENT", "Project Management"
     PROJECT_ESTIMATOR = "PROJECT_ESTIMATOR", "Project Estimator"
     ADMINISTRATION = "ADMINISTRATION", "Administration"
+    DEMO_TIER = "DEMO_TIER", "Demo"
 
 
 class SubscriptionConfig:
@@ -58,6 +59,11 @@ class SubscriptionConfig:
             max_users_per_project=100,
         ),
         Subscription.ADMINISTRATION: SubscriptionLimits(
+            parent=Subscription.BUSINESS_MANAGEMENT,
+            max_projects=50,
+            max_users_per_project=100,
+        ),
+        Subscription.DEMO_TIER: SubscriptionLimits(
             parent=Subscription.BUSINESS_MANAGEMENT,
             max_projects=50,
             max_users_per_project=100,

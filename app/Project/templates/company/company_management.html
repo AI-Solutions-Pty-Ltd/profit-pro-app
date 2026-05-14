@@ -54,12 +54,14 @@
                 </div>
             </div>
             <div class="space-y-2">
-                {% comment %} <a href="{% url 'project:master-project-dashboard' company.pk %}" data-tip="Master Command Center" class="flex justify-between items-center px-3 py-2.5 w-full bg-emerald-50 rounded-lg border border-emerald-200 transition-colors tooltip hover:bg-emerald-100 group/btn">
+                <a href="{% url 'project:master-project-dashboard' company.pk %}"
+                   data-tip="Master Command Center"
+                   class="flex justify-between items-center px-3 py-2.5 w-full bg-emerald-50 rounded-lg border border-emerald-200 transition-colors tooltip hover:bg-emerald-100 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "command-line" class="mr-2 w-4 h-4 text-emerald-500" %}
                         <span class="text-sm font-bold text-emerald-700">Master Command Center</span>
                     </div>
-                </a> {% endcomment %}
+                </a>
                 <a href="{% url 'project:production-planning' company.pk %}"
                    data-tip="Production Planning"
                    class="flex justify-between items-center px-3 py-2.5 w-full bg-white rounded-lg border border-blue-200 transition-colors tooltip hover:bg-blue-50 group/btn">
