@@ -12,8 +12,8 @@
                 <div class="flex justify-center mb-2">
                     <div class="p-1.5 bg-blue-500 rounded-lg">{% heroicon_outline "briefcase" size="16" class="text-white" %}</div>
                 </div>
-                <p class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-1">Total Activities</p>
-                <p class="font-mono text-2xl font-black text-blue-900">{{ projects_count|default:"0" }}</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-1">Total Active Number</p>
+                <p class="font-mono text-2xl font-black text-blue-900">{{ production.plan_count|default:"0" }}</p>
             </div>
             <!-- Profits -->
             <div class="p-4 text-center bg-rose-50 rounded-lg border border-rose-100">
@@ -21,7 +21,7 @@
                     <div class="p-1.5 bg-rose-500 rounded-lg">{% heroicon_outline "currency-dollar" size="16" class="text-white" %}</div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Cost overruns</p>
-                <p class="font-mono text-xl font-black text-rose-900">1</p>
+                <p class="font-mono text-xl font-black text-rose-900">{{ production.cost_overruns|default:"0" }}</p>
                 <p class="text-[9px] text-rose-600">Activities with cost overruns</p>
             </div>
             <!-- Urgent Intervention -->
@@ -32,7 +32,7 @@
                     </div>
                 </div>
                 <p class="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-1">Schedule Overruns</p>
-                <p class="font-mono text-2xl font-black text-red-900">{{ exceptions|length|default:"4" }}</p>
+                <p class="font-mono text-2xl font-black text-red-900">{{ production.schedule_overruns|default:"0" }}</p>
                 <p class="text-[9px] text-red-600">Activities with schedule overruns</p>
             </div>
             <!-- Compliance % -->
