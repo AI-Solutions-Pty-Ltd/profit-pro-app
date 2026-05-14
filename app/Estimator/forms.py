@@ -166,7 +166,6 @@ class LabourCrewForm(forms.ModelForm):
         model = ProjectLabourCrew
         fields = [
             "crew_type",
-            "crew_size",
             "skilled",
             "semi_skilled",
             "general",
@@ -177,7 +176,6 @@ class LabourCrewForm(forms.ModelForm):
         widgets = {
             field: forms.NumberInput(attrs={"class": TAILWIND_INPUT, "step": "0.01"})
             for field in [
-                "crew_size",
                 "skilled",
                 "semi_skilled",
                 "general",
@@ -335,7 +333,6 @@ class SystemLabourCrewForm(forms.ModelForm):
         model = SystemLabourCrew
         fields = [
             "crew_type",
-            "crew_size",
             "skilled",
             "semi_skilled",
             "general",
@@ -347,7 +344,6 @@ class SystemLabourCrewForm(forms.ModelForm):
         widgets = {
             field: forms.NumberInput(attrs={"class": TAILWIND_INPUT, "step": "0.01"})
             for field in [
-                "crew_size",
                 "skilled",
                 "semi_skilled",
                 "general",
@@ -866,7 +862,6 @@ class ContractorLabourCrewForm(forms.ModelForm):
         model = ContractorLabourCrew
         fields = [
             "crew_type",
-            "crew_size",
             "skilled",
             "semi_skilled",
             "general",
@@ -878,7 +873,6 @@ class ContractorLabourCrewForm(forms.ModelForm):
         widgets = {
             field: forms.NumberInput(attrs={"class": TAILWIND_INPUT, "step": "0.01"})
             for field in [
-                "crew_size",
                 "skilled",
                 "semi_skilled",
                 "general",

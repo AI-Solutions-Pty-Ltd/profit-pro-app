@@ -175,7 +175,7 @@ class SystemSpecificationComponent(models.Model):
 
 class SystemLabourCrew(models.Model):
     crew_type = models.CharField(max_length=100, unique=True)
-    crew_size = models.IntegerField(default=0)
+    crew_size = models.IntegerField(default=0, editable=False)
     skilled = models.IntegerField(default=0)
     semi_skilled = models.IntegerField(default=0)
     general = models.IntegerField(default=0)
@@ -191,6 +191,12 @@ class SystemLabourCrew(models.Model):
 
     def __str__(self):
         return self.crew_type
+
+    def save(self, *args, **kwargs):
+        self.crew_size = (
+            (self.skilled or 0) + (self.semi_skilled or 0) + (self.general or 0)
+        )
+        super().save(*args, **kwargs)
 
     @property
     def crew_daily_cost(self):
@@ -742,7 +748,7 @@ class ContractorLabourCrew(models.Model):
         related_name="contractor_copies",
     )
     crew_type = models.CharField(max_length=100)
-    crew_size = models.IntegerField(default=0)
+    crew_size = models.IntegerField(default=0, editable=False)
     skilled = models.IntegerField(default=0)
     semi_skilled = models.IntegerField(default=0)
     general = models.IntegerField(default=0)
@@ -758,6 +764,12 @@ class ContractorLabourCrew(models.Model):
 
     def __str__(self):
         return self.crew_type
+
+    def save(self, *args, **kwargs):
+        self.crew_size = (
+            (self.skilled or 0) + (self.semi_skilled or 0) + (self.general or 0)
+        )
+        super().save(*args, **kwargs)
 
     @property
     def crew_daily_cost(self):
@@ -1385,7 +1397,7 @@ class ProjectLabourCrew(models.Model):
         related_name="project_copies",
     )
     crew_type = models.CharField(max_length=100)
-    crew_size = models.IntegerField(default=0)
+    crew_size = models.IntegerField(default=0, editable=False)
     skilled = models.IntegerField(default=0)
     semi_skilled = models.IntegerField(default=0)
     general = models.IntegerField(default=0)
@@ -1401,6 +1413,12 @@ class ProjectLabourCrew(models.Model):
 
     def __str__(self):
         return self.crew_type
+
+    def save(self, *args, **kwargs):
+        self.crew_size = (
+            (self.skilled or 0) + (self.semi_skilled or 0) + (self.general or 0)
+        )
+        super().save(*args, **kwargs)
 
     @property
     def crew_daily_cost(self):
