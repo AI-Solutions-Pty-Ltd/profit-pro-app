@@ -1,0 +1,79 @@
+<button type="button"
+        data-clear-modal-open
+        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50">
+    {% heroicon_outline "trash" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+    Clear All
+</button>
+<div id="clear-all-modal"
+     data-clear-expected="{{ clear_sheet_label }}"
+     class="hidden fixed inset-0 z-50 bg-gray-900/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <form method="post" data-clear-form>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="clear_all">
+            <div class="p-6">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                        {% heroicon_outline "exclamation-triangle" class="w-6 h-6 text-red-600" %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-semibold text-gray-900">Clear all {{ clear_sheet_label }}?</h3>
+                        <p class="mt-1 text-sm text-gray-600">
+                            This will permanently delete every entry in <strong>{{ clear_sheet_label }}</strong>
+                            {% if clear_scope %}for <strong>{{ clear_scope }}</strong>{% endif %}
+                            .
+                            This cannot be undone.
+                        </p>
+                        <label class="block text-xs font-medium text-gray-700 mt-4 mb-1">
+                            Type <span class="font-mono font-semibold text-gray-900">{{ clear_sheet_label }}</span> to confirm
+                        </label>
+                        <input type="text"
+                               data-clear-input
+                               autocomplete="off"
+                               class="block w-full rounded-md border-0 py-1.5 px-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-red-600">
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-3 flex justify-end gap-2 rounded-b-lg">
+                <button type="button"
+                        data-clear-modal-close
+                        class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit"
+                        data-clear-submit
+                        disabled
+                        class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed">
+                    Clear All
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function () {
+    const modal = document.getElementById('clear-all-modal');
+    if (!modal) return;
+    const input = modal.querySelector('[data-clear-input]');
+    const submit = modal.querySelector('[data-clear-submit]');
+    const expected = (modal.dataset.clearExpected || '').trim().toLowerCase();
+    const openBtns = document.querySelectorAll('[data-clear-modal-open]');
+    const closeBtns = modal.querySelectorAll('[data-clear-modal-close]');
+    function open() {
+        input.value = '';
+        submit.disabled = true;
+        modal.classList.remove('hidden');
+        setTimeout(() => input.focus(), 50);
+    }
+    function close() { modal.classList.add('hidden'); }
+    openBtns.forEach(b => b.addEventListener('click', open));
+    closeBtns.forEach(b => b.addEventListener('click', close));
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+    });
+    input.addEventListener('input', () => {
+        submit.disabled = input.value.trim().toLowerCase() !== expected;
+    });
+})();
+</script>

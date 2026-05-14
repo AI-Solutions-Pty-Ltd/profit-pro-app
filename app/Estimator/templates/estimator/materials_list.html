@@ -34,6 +34,7 @@
                 {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
                 Add Material
             </button>
+            {% include "estimator/_clear_all_modal.html" with clear_sheet_label="Material Costs" %}
         </div>
     </div>
     <!-- Add Material Form -->
@@ -103,85 +104,147 @@
             </div>
         </div>
     </div>
-    <div class="overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col"
-                            class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
-                            Trade Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Material Code
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Unit
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Pack Qty
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Pack Cost
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Rate / unit
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Material Variety
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
-                            Market Spec
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {% for mat in materials %}
-                        <tr class="hover:bg-gray-50" data-mat-id="{{ mat.id }}">
-                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">{{ mat.trade_name|default:"-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
-                                <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-700/10 ring-inset">
-                                    {{ mat.material_code }}
-                                </span>
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.unit }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="0.0001"
-                                       class="inline-edit w-20 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ mat.id }}"
-                                       data-field="pack_qty"
-                                       value="{{ mat.pack_qty|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
-                                <input type="number"
-                                       step="0.01"
-                                       class="inline-edit w-24 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ mat.id }}"
-                                       data-field="pack_cost"
-                                       value="{{ mat.pack_cost|num }}">
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right tabular-nums computed-rate"
-                                data-mat-id="{{ mat.id }}">{{ mat.market_rate|num }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.material_variety }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:pr-6">{{ mat.market_spec }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-sm text-gray-500">No materials found.</td>
-                        </tr>
+    <!-- Filters / Search -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <form method="get" id="filter-form" class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[220px]">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Search</label>
+                <input type="text"
+                       id="cost-search"
+                       name="q"
+                       value="{{ f_q }}"
+                       placeholder="Trade name, material code, variety, spec…"
+                       autocomplete="off"
+                       class="block w-full rounded-md border-0 py-1.5 px-2 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+            </div>
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Trade Name</label>
+                <select name="trade_name"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All Trades</option>
+                    {% for tn in trade_names %}
+                        <option value="{{ tn }}" {% if f_trade_name == tn %}selected{% endif %}>{{ tn }}</option>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </select>
+            </div>
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Unit</label>
+                <select name="unit"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All Units</option>
+                    {% for u in units %}
+                        <option value="{{ u }}" {% if f_unit == u %}selected{% endif %}>{{ u }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if f_q or f_unit or f_trade_name %}
+                <a href="{% url 'estimator:materials' project_pk=project_pk %}"
+                   class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
+                    {% heroicon_outline "x-mark" class="w-3.5 h-3.5 mr-1" %}
+                    Clear
+                </a>
+            {% endif %}
+        </form>
     </div>
+    <form method="post" id="bulk-form">
+        {% csrf_token %}
+        {% include "estimator/_bulk_toolbar.html" %}
+        <div class="overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="w-8 py-3.5 pl-4 pr-2 sm:pl-6">
+                                <input type="checkbox"
+                                       id="select-all"
+                                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Trade Name
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Material Code
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Unit
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Pack Qty
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Pack Cost
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Rate / unit
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Material Variety
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
+                                Market Spec
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        {% for mat in materials %}
+                            <tr class="hover:bg-gray-50 bulk-row"
+                                data-mat-id="{{ mat.id }}"
+                                data-search="{{ mat.trade_name|lower }} {{ mat.material_code|lower }} {{ mat.unit|lower }} {{ mat.material_variety|lower }} {{ mat.market_spec|lower }}">
+                                <td class="py-3 pl-4 pr-2 sm:pl-6">
+                                    <input type="checkbox"
+                                           name="ids"
+                                           value="{{ mat.id }}"
+                                           class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                </td>
+                                <td class="whitespace-nowrap py-3 px-3 text-sm text-gray-500">{{ mat.trade_name|default:"-" }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
+                                    <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-700/10 ring-inset">
+                                        {{ mat.material_code }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.unit }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="0.0001"
+                                           class="inline-edit w-20 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ mat.id }}"
+                                           data-field="pack_qty"
+                                           value="{{ mat.pack_qty|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                    <input type="number"
+                                           step="0.01"
+                                           class="inline-edit w-24 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           data-item-id="{{ mat.id }}"
+                                           data-field="pack_cost"
+                                           value="{{ mat.pack_cost|num }}">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right tabular-nums computed-rate"
+                                    data-mat-id="{{ mat.id }}">{{ mat.market_rate|num }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.material_variety }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:pr-6">{{ mat.market_spec }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">No materials found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+    {% include "estimator/_bulk_script.html" %}
     <script>
 document.querySelectorAll('.inline-edit').forEach(input => {
     let original = input.value;
