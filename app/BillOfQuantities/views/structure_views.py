@@ -2,7 +2,6 @@
 
 import pandas as pd
 from django.contrib import messages
-from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import (
@@ -15,11 +14,10 @@ from django.views.generic.edit import FormView
 
 from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.forms import (
-    LineItemExcelUploadForm,
     StructureExcelUploadForm,
     StructureForm,
 )
-from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
+from app.BillOfQuantities.models import Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
@@ -266,7 +264,6 @@ class StructureExcelUploadView(
             self.request, f"Successfully uploaded {created_count} line item(s)!"
         )
         return redirect(self.get_success_url())
-
 
     def get_success_url(self):
         """Redirect to project's structure list."""

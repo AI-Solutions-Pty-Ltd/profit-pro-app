@@ -1,11 +1,13 @@
 """Tests for the Demo Tier and subscription expiration logic."""
 
-import pytest
-from django.utils import timezone
 from datetime import timedelta
 
-from app.Account.tests.factories import AccountFactory
+import pytest
+from django.utils import timezone
+
 from app.Account.subscription_config import Subscription
+from app.Account.tests.factories import AccountFactory
+
 
 @pytest.mark.django_db
 class TestDemoTier:
@@ -15,10 +17,9 @@ class TestDemoTier:
         """Test that Demo Tier grants access before expiration."""
         expiry = timezone.now() + timedelta(days=7)
         user = AccountFactory(
-            subscription=Subscription.DEMO_TIER,
-            subscription_expires_at=expiry
+            subscription=Subscription.DEMO_TIER, subscription_expires_at=expiry
         )
-        
+
         # Should have access to business management (parent of demo)
         assert user.has_subscription_tier([Subscription.BUSINESS_MANAGEMENT]) is True
         assert user.is_subscription_expired is False
@@ -27,10 +28,9 @@ class TestDemoTier:
         """Test that Demo Tier blocks access after expiration."""
         expiry = timezone.now() - timedelta(days=1)
         user = AccountFactory(
-            subscription=Subscription.DEMO_TIER,
-            subscription_expires_at=expiry
+            subscription=Subscription.DEMO_TIER, subscription_expires_at=expiry
         )
-        
+
         # Should NOT have access even to business management
         assert user.has_subscription_tier([Subscription.BUSINESS_MANAGEMENT]) is False
         assert user.is_subscription_expired is True

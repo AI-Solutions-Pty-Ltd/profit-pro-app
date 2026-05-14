@@ -514,7 +514,6 @@ class ProjectSetupView(ProjectMixin, DetailView):
             except Exception as e:
                 messages.error(request, f"Error loading demo data: {e}")
 
-
         return HttpResponseRedirect(
             reverse("project:project-setup", kwargs={"pk": project.pk})
         )

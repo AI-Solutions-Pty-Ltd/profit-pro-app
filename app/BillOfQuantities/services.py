@@ -2,8 +2,10 @@
 
 import pandas as pd
 from django.db import transaction
-from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
+
 from app.BillOfQuantities.forms import LineItemExcelUploadForm
+from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
+
 
 def clean_pd_data(value):
     """Clean pandas data: handle NaN, nan, and empty strings."""
@@ -11,14 +13,15 @@ def clean_pd_data(value):
         return ""
     return str(value).strip()
 
+
 def import_boq_from_excel(project, excel_file):
     """
     Process Excel file and create structures, bills, and line items for a project.
-    
+
     Args:
         project: The Project instance
         excel_file: A file-like object or path to the Excel file
-        
+
     Returns:
         tuple: (success_count, errors_list)
     """
@@ -28,7 +31,9 @@ def import_boq_from_excel(project, excel_file):
         sheet_names = excel_file_obj.sheet_names
 
         if len(sheet_names) > 1:
-            return 0, [f"Excel file must contain only one sheet. Found {len(sheet_names)} sheets."]
+            return 0, [
+                f"Excel file must contain only one sheet. Found {len(sheet_names)} sheets."
+            ]
 
         # Read the single sheet
         df = pd.read_excel(excel_file_obj, sheet_name=0)
@@ -37,8 +42,16 @@ def import_boq_from_excel(project, excel_file):
 
     # Validate required columns
     columns = [
-        "Structure", "Bill No.", "Package", "Item No.", "Pay Ref",
-        "Description", "Unit", "Contract Quantity", "Contract Rate", "Contract Amount"
+        "Structure",
+        "Bill No.",
+        "Package",
+        "Item No.",
+        "Pay Ref",
+        "Description",
+        "Unit",
+        "Contract Quantity",
+        "Contract Rate",
+        "Contract Amount",
     ]
     for column in columns:
         if column not in df.columns:
@@ -76,7 +89,9 @@ def import_boq_from_excel(project, excel_file):
                 "payment_reference": payment_reference,
                 "description": description,
                 "unit_measurement": unit_measurement,
-                "budgeted_quantity": round(float(budgeted_quantity), 2) if budgeted_quantity else 0,
+                "budgeted_quantity": round(float(budgeted_quantity), 2)
+                if budgeted_quantity
+                else 0,
                 "unit_price": round(float(unit_price), 2) if unit_price else 0.0,
                 "total_price": round(float(total_price), 2) if total_price else 0.0,
             }
@@ -110,5 +125,5 @@ def import_boq_from_excel(project, excel_file):
         for idx, line_item_form in enumerate(valid_forms):
             line_item_form.save(row_index=idx)
             created_count += 1
-            
+
     return created_count, []

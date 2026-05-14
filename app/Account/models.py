@@ -229,10 +229,7 @@ class Account(AbstractUser, BaseModel):
         if not normalized_required_tiers:
             return True
 
-        if (
-            self.is_superuser
-            or self.subscription == Subscription.ADMINISTRATION
-        ):
+        if self.is_superuser or self.subscription == Subscription.ADMINISTRATION:
             return True
 
         if self.subscription == Subscription.DEMO_TIER:
