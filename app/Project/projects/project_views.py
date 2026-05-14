@@ -496,6 +496,25 @@ class ProjectSetupView(ProjectMixin, DetailView):
                     "BOQ file uploaded. Our team will format it and upload it into the system.",
                 )
 
+        elif action == "load_demo_boq":
+            from app.BillOfQuantities.services import import_boq_from_excel
+
+            demo_file_path = "Project Upload by WBS_ Demo.xlsx"
+            try:
+                created_count, errors = import_boq_from_excel(project, demo_file_path)
+                if errors:
+                    messages.error(
+                        request, f"Failed to load demo data: {'; '.join(errors)}"
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"Demo project populated successfully with {created_count} line items!",
+                    )
+            except Exception as e:
+                messages.error(request, f"Error loading demo data: {e}")
+
+
         return HttpResponseRedirect(
             reverse("project:project-setup", kwargs={"pk": project.pk})
         )

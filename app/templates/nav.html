@@ -1,5 +1,29 @@
 {% load template_extras %}
 <nav class="sticky top-0 z-50 bg-white">
+    {% if user.is_authenticated and user.subscription == "DEMO_TIER" %}
+        <!-- Demo Ribbon -->
+        <div class="bg-indigo-600 text-white text-[10px] sm:text-xs font-bold py-1.5 px-4 flex justify-between items-center z-[60] border-b border-indigo-500 shadow-lg">
+            <div class="flex items-center gap-2">
+                <span class="flex h-2 w-2 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-300 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                <span class="tracking-widest">DEMO ACCOUNT ACTIVE</span>
+            </div>
+            <div class="flex items-center gap-3 sm:gap-6">
+                <div class="flex items-center gap-1 sm:gap-2">
+                    {% heroicon_outline "clock" size="14" class="text-indigo-200" %}
+                    <span class="hidden sm:inline text-indigo-100">Time Remaining:</span>
+                    <span class="font-mono">{{ user.demo_time_left_str }}</span>
+                </div>
+                <a href="https://sedgepro.co.za/#prelaunch-promotion" target="_blank" 
+                   class="bg-white text-indigo-600 px-3 py-1 rounded-md hover:bg-gray-50 transition-all shadow-sm flex items-center gap-1 text-[9px] sm:text-xs uppercase tracking-wider font-black">
+                    {% heroicon_outline "shopping-cart" size="12" %}
+                    Buy Now
+                </a>
+            </div>
+        </div>
+    {% endif %}
     <div class="bg-white border-b border-gray-200 {{ breadcrumbs|yesno:'mb-4' }}">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
