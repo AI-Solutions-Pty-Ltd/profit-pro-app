@@ -1068,6 +1068,45 @@
         setTimeout(() => el.classList.remove(cls), ok ? 800 : 1500);
     }
 
+    // Position a popover next to a trigger so it stays in the viewport.
+    // Flips above the trigger when there is not enough room below, and
+    // clamps max-height to the available space so long lists scroll
+    // rather than overflowing the screen.
+    function positionPopoverNearTrigger(trigger, popover, options) {
+        options = options || {};
+        const margin = options.margin || 8;
+        const minHeight = options.minHeight || 200;
+        const alignRight = options.alignRight !== false;
+
+        popover.style.position = 'fixed';
+        popover.style.maxHeight = 'none';
+        popover.style.top = '0px';
+        popover.style.left = '0px';
+
+        const trigRect = trigger.getBoundingClientRect();
+        const popWidth = popover.offsetWidth;
+
+        const spaceBelow = window.innerHeight - trigRect.bottom - margin;
+        const spaceAbove = trigRect.top - margin;
+
+        let top, maxHeight;
+        if (spaceBelow >= minHeight || spaceBelow >= spaceAbove) {
+            top = trigRect.bottom + margin;
+            maxHeight = Math.max(minHeight, spaceBelow);
+        } else {
+            maxHeight = Math.max(minHeight, spaceAbove);
+            top = Math.max(margin, trigRect.top - maxHeight - margin);
+        }
+
+        let left = alignRight ? (trigRect.right - popWidth) : trigRect.left;
+        left = Math.max(margin, Math.min(left, window.innerWidth - popWidth - margin));
+
+        popover.style.top = top + 'px';
+        popover.style.left = left + 'px';
+        popover.style.maxHeight = maxHeight + 'px';
+        popover.style.overflowY = 'auto';
+    }
+
     // ============ Autofill Choice Modal ============
     const autofillOpenBtn = document.getElementById('autofill-open-btn');
     const autofillModal = document.getElementById('autofill-modal');
@@ -1093,10 +1132,7 @@
             columnGroupsModal.classList.toggle('hidden');
             columnDetailsModal.classList.add('hidden');
             if (!columnGroupsModal.classList.contains('hidden')) {
-                columnGroupsModal.style.position = 'fixed';
-                const rect = columnGroupsBtn.getBoundingClientRect();
-                columnGroupsModal.style.top = (rect.bottom + 8) + 'px';
-                columnGroupsModal.style.left = (rect.right - 320) + 'px';
+                positionPopoverNearTrigger(columnGroupsBtn, columnGroupsModal);
             }
         });
     }
@@ -1107,10 +1143,7 @@
             columnDetailsModal.classList.toggle('hidden');
             columnGroupsModal.classList.add('hidden');
             if (!columnDetailsModal.classList.contains('hidden')) {
-                columnDetailsModal.style.position = 'fixed';
-                const rect = columnDetailsBtn.getBoundingClientRect();
-                columnDetailsModal.style.top = (rect.bottom + 8) + 'px';
-                columnDetailsModal.style.left = (rect.right - 380) + 'px';
+                positionPopoverNearTrigger(columnDetailsBtn, columnDetailsModal);
             }
         });
     }
@@ -1332,16 +1365,12 @@
 
     function showLibraryPickerFor(btn) {
         activeLibraryItemId = btn.dataset.itemId;
-        const rect = btn.getBoundingClientRect();
-        const popoverWidth = 288;
-        const maxLeft = window.innerWidth - popoverWidth - 8;
-        libraryPicker.style.top = (rect.bottom + 4) + 'px';
-        libraryPicker.style.left = Math.max(8, Math.min(rect.left, maxLeft)) + 'px';
         librarySearch.value = '';
         libraryPicker.querySelectorAll('.library-picker-option').forEach(opt => {
             opt.parentElement.classList.remove('hidden');
         });
         libraryPicker.classList.remove('hidden');
+        positionPopoverNearTrigger(btn, libraryPicker, { alignRight: false, minHeight: 240 });
         librarySearch.focus();
     }
 
