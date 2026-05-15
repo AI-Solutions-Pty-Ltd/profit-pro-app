@@ -25,12 +25,12 @@
                     {% comment %} <a href="{% url 'project:master-portfolio-dashboard' %}" class="inline-flex items-center p-2 font-medium text-blue-600 bg-white rounded-md border border-blue-600 shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         {% heroicon_outline "squares-plus" size="16" class="mr-1.5" %} Portfolio CC
                     </a> {% endcomment %}
-                    {% if company.contractor %}
+                    {% comment %} {% if company.contractor %}
                         <a href="{% url 'project:business-setup' company.contractor.pk %}"
                            class="inline-flex items-center p-2 font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                             {% heroicon_outline "cog-6-tooth" size="16" class="mr-1.5" %} Business Setup
                         </a>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                     <a href="{% url 'project:project-management' company.pk %}"
                        class="inline-flex items-center p-2 font-medium text-purple-600 bg-white rounded-md border border-purple-600 shadow-sm transition-colors hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
                         {% heroicon_outline "folder-open" size="16" class="mr-1.5" %} Project Management
@@ -61,7 +61,7 @@
                         {% heroicon_outline "command-line" class="mr-2 w-4 h-4 text-emerald-500" %}
                         <span class="text-sm font-bold text-emerald-700">Master Command Center</span>
                     </div>
-                </a>
+                </a> {% endcomment %}
                 <a href="{% url 'project:production-planning' company.pk %}"
                    data-tip="Production Planning"
                    class="flex justify-between items-center px-3 py-2.5 w-full bg-white rounded-lg border border-blue-200 transition-colors tooltip hover:bg-blue-50 group/btn">
@@ -118,18 +118,7 @@
                         <span class="text-sm font-medium text-indigo-700">Daily Logs</span>
                     </div>
                 </a>
-                {% comment %} <a href="{% url 'site_management:skill-type-list' company.pk %}" class="flex justify-between items-center px-3 py-2.5 bg-white rounded-lg border border-violet-200 transition-colors hover:bg-violet-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "wrench" class="mr-2 w-4 h-4 text-violet-500" %}
-                        <span class="text-sm font-medium text-violet-700">Skill Rates</span>
-                    </div>
-                </a>
-                <a href="{% url 'site_management:plant-type-list' company.pk %}" class="flex justify-between items-center px-3 py-2 rounded-md border border-violet-200 transition-colors hover:bg-violet-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "tag" class="mr-2 w-4 h-4 text-violet-500" %}
-                        <span class="text-sm font-medium text-violet-700">Plant Rates</span>
-                    </div>
-                </a> {% endcomment %}
+            
             </div>
         </div>
         <!-- Row 2: Payments and Invoices -->
@@ -302,6 +291,15 @@
                         <span class="text-sm font-medium text-cyan-700">Baseline Resources Costs</span>
                     </div>
                 </a>
+                <a href="{% url 'estimator:ctr_trade_codes' %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-orange-200 transition-colors bg-white/70 hover:bg-orange-50 group/btn">
+                    <div class="flex items-center">
+                            {% heroicon_outline "briefcase" class="mr-2 w-4 h-4 text-orange-500" %}
+                        <span class="text-sm font-medium text-orange-700">Contractor Library</span>
+                    </div>
+                </a>
+                
+
             </div>
         </div>
         <!-- Materials Management -->
