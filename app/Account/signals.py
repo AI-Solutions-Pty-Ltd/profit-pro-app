@@ -31,6 +31,9 @@ def assign_default_group(sender, instance, created, **kwargs):
             instance.groups.add(contractor_group)
 
         # Set demo expiry if on demo tier
-        if instance.subscription == Subscription.DEMO_TIER and not instance.subscription_expires_at:
+        if (
+            instance.subscription == Subscription.DEMO_TIER
+            and not instance.subscription_expires_at
+        ):
             instance.subscription_expires_at = timezone.now() + timedelta(days=7)
             instance.save(update_fields=["subscription_expires_at"])

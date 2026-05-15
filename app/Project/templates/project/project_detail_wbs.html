@@ -5,7 +5,7 @@
 {% load humanize %}
 {% block content %}
     <!-- Project Card -->
-      <div class="overflow-hidden mb-4 bg-white rounded-lg shadow-sm">
+    <div class="overflow-hidden mb-4 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 bg-gray-50">
             <div class="flex justify-between items-center">
                 <a href="{% url 'project:portfolio-dashboard' %}"
@@ -13,9 +13,8 @@
                     {% heroicon_outline "chevron-left" %}
                     Back to Projects
                 </a>
-                 <a href="{% url 'project:project-setup' project.pk %}"
+                <a href="{% url 'project:project-setup' project.pk %}"
                    class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
-                     
                     Setup
                     {% heroicon_outline "chevron-right" %}
                 </a>
@@ -23,7 +22,6 @@
         </div>
     </div>
     <div class="overflow-hidden mb-4 bg-white rounded-lg shadow-md">
-        
         <!-- Header -->
         <div class="p-6 mb-4 bg-gray-50 border-b border-gray-200">
             <div class="flex gap-3 items-center">

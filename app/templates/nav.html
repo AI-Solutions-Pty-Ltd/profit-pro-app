@@ -66,8 +66,7 @@
                             {% endif %}
                             {% comment %} {% if user.contractor_company  or user.subscription == 'DEMO_TIER' %}
                                 <!-- 4c. Contractor Library -->
-                                <a href="{% url 'estimator:ctr_trade_codes' %}"
-                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                <a href="{% url 'estimator:ctr_trade_codes' %}" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
                                     {% heroicon_outline "archive-box" class="mr-1 w-4 h-4" %}
                                     Contractor Library
                                 </a>

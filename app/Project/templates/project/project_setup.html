@@ -77,8 +77,7 @@
                             </a>
                         </div>
                     {% endif %}
-                    {% comment %} {% if not project.line_items.exists %} {% endcomment %}
-                    <!-- Upload WBS CSV -->
+                  {% if not project.line_items.exists %}
                     <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200 transition-all duration-200 hover:border-emerald-300 hover:shadow-md">
                         <h3 class="mb-1 text-sm font-semibold text-emerald-900">Upload BOQ (CSV)</h3>
                         <p class="mb-3 text-xs text-emerald-700">
@@ -110,8 +109,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    {% comment %} {% endif %} {% endcomment %}
-                    {% if not boq_documents and user.subscription != 'DEMO_TIER'%}
+                 {% endif %} 
+                    {% if not boq_documents and user.subscription != 'DEMO_TIER' %}
                         <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
                             <h3 class="mb-1 text-sm font-semibold text-gray-900">Attach BOQ (Optional)</h3>
                             <p class="mb-3 text-xs text-gray-600">
@@ -177,18 +176,17 @@
                             {% endif %}
                         </div>
                     {% endif %}
- <div class="p-4 bg-purple-50 rounded-lg border border-purple-200 transition-all duration-200 hover:border-purple-300 hover:shadow-md">
+                    {% if not project.signatories.exists %}
+                        <div class="p-4 bg-purple-50 rounded-lg border border-purple-200 transition-all duration-200 hover:border-purple-300 hover:shadow-md">
                             <h3 class="mb-1 text-sm font-semibold text-purple-900">Allocate Signatory</h3>
                             <p class="mb-3 text-xs text-purple-700">Assign payment certificate signatory</p>
-                           <a href="{% url 'project:signatory-invite' project.pk %}"
+                            <a href="{% url 'project:signatory-invite' project.pk %}"
                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-purple-600 bg-white rounded-md border border-purple-600 shadow-sm transition-colors hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
                                 {% heroicon_outline "user" size="16" %}
                                 <span class="ml-2">Allocate Signatory</span>
                             </a>
                         </div>
-                    
-                       
-                  
+                    {% endif %}
                 </div>
             </div>
         </div>
