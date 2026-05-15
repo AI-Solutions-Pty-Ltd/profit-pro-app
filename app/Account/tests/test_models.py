@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from app.Account.models import Account, Suburb, Town
+from app.Account.subscription_config import Subscription
 from app.Account.tests.factories import (
     AccountFactory,
     SuburbFactory,
@@ -303,3 +304,36 @@ class TestAccountModel:
         """Test that username is not used."""
         account = AccountFactory.create()
         assert account.username is None
+
+
+class TestAccountSubscription:
+    """Test cases for Account subscription defaults and expiry."""
+
+    def test_default_subscription_is_demo(self):
+        """Test that a new account defaults to DEMO_TIER."""
+        account = AccountFactory.create(email="newdemo@example.com")
+        assert account.subscription == Subscription.DEMO_TIER
+
+    def test_demo_expiry_is_set_on_creation(self):
+        """Test that a new DEMO_TIER account has an expiry date set (7 days)."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        account = AccountFactory.create(email="expirytest@example.com")
+        assert account.subscription_expires_at is not None
+
+        # Verify it's approximately 7 days in the future
+        expected_expiry = timezone.now() + timedelta(days=7)
+        # Allow for a few seconds difference due to processing time
+        assert abs((account.subscription_expires_at - expected_expiry).total_seconds()) < 10
+
+    def test_non_demo_tier_creation_no_expiry(self):
+        """Test that non-DEMO_TIER accounts do not get an auto-expiry date."""
+        # Note: Since default is now DEMO_TIER, we explicitly set it to something else
+        account = AccountFactory.create(
+            email="nodemo@example.com",
+            subscription=Subscription.BUSINESS_MANAGEMENT
+        )
+        # It shouldn't have an expiry set automatically by the signal
+        # Unless it was already set in the factory or elsewhere
+        assert account.subscription_expires_at is None

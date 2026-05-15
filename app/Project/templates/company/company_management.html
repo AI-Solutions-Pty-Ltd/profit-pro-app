@@ -42,7 +42,7 @@
     </div>
     <!-- Company Management Section -->
     <!-- Business Management Menu -->
-    <div class="grid grid-cols-1 gap-2 mb-4 lg:grid-cols-4">
+    <div class="grid grid-cols-1 gap-2 mb-4 lg:grid-cols-3">
         <!-- Row 1: Payments and Invoices -->
         <div class="relative p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
             <div class="flex items-center mb-4 transition-opacity group/header hover:opacity-80">
@@ -54,14 +54,14 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="{% url 'project:master-project-dashboard' company.pk %}"
+                {% comment %} <a href="{% url 'project:master-project-dashboard' company.pk %}"
                    data-tip="Master Command Center"
                    class="flex justify-between items-center px-3 py-2.5 w-full bg-emerald-50 rounded-lg border border-emerald-200 transition-colors tooltip hover:bg-emerald-100 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "command-line" class="mr-2 w-4 h-4 text-emerald-500" %}
                         <span class="text-sm font-bold text-emerald-700">Master Command Center</span>
                     </div>
-                </a>
+                </a> {% endcomment %}
                 <a href="{% url 'project:production-planning' company.pk %}"
                    data-tip="Production Planning"
                    class="flex justify-between items-center px-3 py-2.5 w-full bg-white rounded-lg border border-blue-200 transition-colors tooltip hover:bg-blue-50 group/btn">
@@ -305,7 +305,7 @@
             </div>
         </div>
         <!-- Materials Management -->
-        <div class="relative p-5 bg-gradient-to-br from-cyan-50 to-sky-50 rounded-xl border border-cyan-200 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
+        {% comment %} <div class="relative p-5 bg-gradient-to-br from-cyan-50 to-sky-50 rounded-xl border border-cyan-200 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
             <div class="flex items-center mb-4 transition-opacity group/header hover:opacity-80">
                 <div class="flex justify-center items-center mr-3 w-12 h-12 bg-cyan-500 rounded-lg transition-transform group-hover/header:rotate-12">
                     {% heroicon_outline "cog-6-tooth" class="w-6 h-6 text-white" %}
@@ -365,7 +365,7 @@
                     </div>
                 </a>
             </div>
-        </div>
+        </div> {% endcomment %}
     </div>
     <!-- Row 2 -->
     <!-- Site Management -->
@@ -379,6 +379,10 @@
             </div>
         </div>
         <!-- Site Management Buttons -->
+          <!-- Site Management Buttons -->
+         <div class="relative">
+             <div class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 text-center group/overlay"></div>
+       
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <a href="{% url 'site_management:materials-log-list' company.pk %}"
                class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-blue-200 transition-all duration-200 group hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5">
@@ -461,6 +465,7 @@
                 <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-amber-700">Overhead Log</span>
             </a>
         </div>
+    </div>
     </div>
     <!-- Footer -->
     <div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">

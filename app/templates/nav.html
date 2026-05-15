@@ -3,17 +3,17 @@
     {% if user.is_authenticated and user.subscription == "DEMO_TIER" %}
         <!-- Demo Ribbon -->
         <div class="bg-indigo-600 text-white text-[10px] sm:text-xs font-bold py-1.5 px-4 flex justify-between items-center z-[60] border-b border-indigo-500 shadow-lg">
-            <div class="flex items-center gap-2">
-                <span class="flex h-2 w-2 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-300 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            <div class="flex gap-2 items-center">
+                <span class="flex relative w-2 h-2">
+                    <span class="inline-flex absolute w-full h-full bg-indigo-300 rounded-full opacity-75 animate-ping"></span>
+                    <span class="inline-flex relative w-2 h-2 bg-white rounded-full"></span>
                 </span>
                 <span class="tracking-widest">DEMO ACCOUNT ACTIVE</span>
             </div>
-            <div class="flex items-center gap-3 sm:gap-6">
-                <div class="flex items-center gap-1 sm:gap-2">
+            <div class="flex gap-3 items-center sm:gap-6">
+                <div class="flex gap-1 items-center sm:gap-2">
                     {% heroicon_outline "clock" size="14" class="text-indigo-200" %}
-                    <span class="hidden sm:inline text-indigo-100">Time Remaining:</span>
+                    <span class="hidden text-indigo-100 sm:inline">Time Remaining:</span>
                     <span class="font-mono">{{ user.demo_time_left_str }}</span>
                 </div>
                 <a href="https://sedgepro.co.za/#prelaunch-promotion"
@@ -26,66 +26,66 @@
         </div>
     {% endif %}
     <div class="bg-white border-b border-gray-200 {{ breadcrumbs|yesno:'mb-4' }}">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo/Brand -->
-                <div class="flex-shrink-0 flex items-center">
+                <div class="flex flex-shrink-0 items-center">
                     <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">{{ SITE_NAME|default:"Profit Pro" }}</a>
                 </div>
                 <!-- Navigation Links -->
                 <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4 font-sm">
+                    <div class="flex items-baseline ml-10 space-x-4 font-sm">
                         {% if user.is_authenticated %}
                             <!-- 1. Home Page -->
                             <a href="{% url 'home' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                                {% heroicon_outline "home" class="w-4 h-4 mr-1" %}
+                               class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                {% heroicon_outline "home" class="mr-1 w-4 h-4" %}
                                 Home
                             </a>
                             <!-- 2. Portfolio Dashboard with Reports Dropdown -->
                             <div class="relative group" id="portfolio-nav-container">
                                 <a href="{% url 'project:portfolio-dashboard' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                                    {% heroicon_outline "chart-pie" class="w-4 h-4 mr-1" %}
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "chart-pie" class="mr-1 w-4 h-4" %}
                                     Project Dashboard
                                 </a>
                             </div>
                             <!-- 4. Project List -->
                             <a href="{% url 'project:project-list' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                                {% heroicon_outline "building-office-2" class="w-4 h-4 mr-1" %}
+                               class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                {% heroicon_outline "building-office-2" class="mr-1 w-4 h-4" %}
                                 Project List
                             </a>
                             {% if user.is_staff %}
                                 <!-- 4b. System Library (staff only) -->
                                 <a href="{% url 'estimator:sys_trade_codes' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                                    {% heroicon_outline "server-stack" class="w-4 h-4 mr-1" %}
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "server-stack" class="mr-1 w-4 h-4" %}
                                     System Library
                                 </a>
                             {% endif %}
                             {% if user.contractor_company %}
                                 <!-- 4c. Contractor Library -->
                                 <a href="{% url 'estimator:ctr_trade_codes' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                                    {% heroicon_outline "archive-box" class="w-4 h-4 mr-1" %}
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "archive-box" class="mr-1 w-4 h-4" %}
                                     Contractor Library
                                 </a>
                             {% endif %}
                             {% if request.user|userhassubscription:"BUSINESS_MANAGEMENT" %}
                                 <!-- 3. Companies (only if user has companies) -->
                                 <a href="{% url 'project:company-dashboard' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                                    {% heroicon_outline "building-office" class="w-4 h-4 mr-1" %}
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "building-office" class="mr-1 w-4 h-4" %}
                                     Business Dashboard
                                 </a>
                             {% endif %}
                             <!-- 5. Consultant Clients (only for consultant group) -->
                             {% if user|useringroup:"consultant" %}
                                 <a href="{% url 'client:consultant:client-list' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
-                                    {% heroicon_outline "building-office-2" class="w-4 h-4 mr-1" %}
-                                    My Clients
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "building-office-2" class="mr-1 w-4 h-4" %}
+                                    Approvals
                                 </a>
                             {% endif %}
                         {% endif %}
@@ -93,24 +93,24 @@
                 </div>
                 <!-- User Actions -->
                 <div class="hidden md:block">
-                    <div class="ml-4 flex items-center md:ml-6 space-x-4">
+                    <div class="flex items-center ml-4 space-x-4 md:ml-6">
                         {% if user.is_authenticated %}
                             <a href="{{ user.detail_url }}"
-                               class="inline-flex items-center text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600"
                                title="View Profile">Profile</a>
                             <form method="post" action="{% url 'users:auth:logout' %}">
                                 {% csrf_token %}
                                 <button type="submit"
-                                        class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md transition-colors hover:bg-indigo-700"
                                         onclick="return confirm('Are you sure you want to logout?')">Logout</button>
                             </form>
                         {% else %}
                             <a href="{% url 'users:auth:login' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                               class="px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
                                 Login
                             </a>
                             <a href="{% url 'users:auth:register' %}"
-                               class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-indigo-700 transition-all shadow-md">
+                               class="px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-full shadow-md transition-all hover:bg-indigo-700">
                                 Sign Up
                             </a>
                         {% endif %}
@@ -119,9 +119,9 @@
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
                     <button type="button"
-                            class="bg-gray-100 inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600">
+                            class="inline-flex justify-center items-center p-2 text-gray-700 bg-gray-100 rounded-md hover:text-indigo-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                         <span class="sr-only">Open main menu</span>
-                        {% heroicon_outline name="bars-3" class="h-6 w-6" %}
+                        {% heroicon_outline name="bars-3" class="w-6 h-6" %}
                     </button>
                 </div>
             </div>

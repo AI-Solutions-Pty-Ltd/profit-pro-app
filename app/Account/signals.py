@@ -1,8 +1,11 @@
 """Account model signals"""
 
+from datetime import timedelta
+
 from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from app.Account.models import Account
 from app.Account.subscription_config import Subscription
@@ -11,7 +14,7 @@ from app.Account.subscription_config import Subscription
 @receiver(post_save, sender=Account)
 def assign_default_group(sender, instance, created, **kwargs):
     """
-    Assign default 'contractor' group to newly created users if they have no groups.
+    Assign default 'contractor' group and set demo expiry for newly created users.
 
     Args:
         sender: The model class (Account)
@@ -27,5 +30,7 @@ def assign_default_group(sender, instance, created, **kwargs):
             # Add user to the contractor group
             instance.groups.add(contractor_group)
 
-    if instance.subscription is None:
-        instance.subscription = Subscription.FREE_TIER
+        # Set demo expiry if on demo tier
+        if instance.subscription == Subscription.DEMO_TIER and not instance.subscription_expires_at:
+            instance.subscription_expires_at = timezone.now() + timedelta(days=7)
+            instance.save(update_fields=["subscription_expires_at"])
