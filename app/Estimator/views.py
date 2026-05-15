@@ -6217,6 +6217,14 @@ class ContractorLibraryMixin(LoginRequiredMixin, ContextMixin):
         if not request.user.is_authenticated:
             return super().dispatch(request, *args, **kwargs)
         if self.get_company() is None:
+            from app.Account.subscription_config import Subscription
+
+            if request.user.subscription in [
+                Subscription.DEMO_TIER,
+                Subscription.FREE_TIER,
+            ]:
+                return super().dispatch(request, *args, **kwargs)
+
             return HttpResponseForbidden(
                 "You must be linked to a Contractor company to use the Contractor "
                 "Library."

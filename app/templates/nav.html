@@ -64,7 +64,7 @@
                                     System Library
                                 </a>
                             {% endif %}
-                            {% if user.contractor_company %}
+                            {% if user.contractor_company  or user.subscription == 'DEMO_TIER' %}
                                 <!-- 4c. Contractor Library -->
                                 <a href="{% url 'estimator:ctr_trade_codes' %}"
                                    class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
