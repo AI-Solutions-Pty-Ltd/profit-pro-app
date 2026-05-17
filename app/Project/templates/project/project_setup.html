@@ -77,41 +77,40 @@
                             </a>
                         </div>
                     {% endif %}
-                    {% comment %} {% if not project.line_items.exists %} {% endcomment %}
-                    <!-- Upload WBS CSV -->
-                    <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200 transition-all duration-200 hover:border-emerald-300 hover:shadow-md">
-                        <h3 class="mb-1 text-sm font-semibold text-emerald-900">Upload BOQ (CSV)</h3>
-                        <p class="mb-3 text-xs text-emerald-700">
-                            Import your project BOQ from a CSV file to populate structures, bills, and line items
-                        </p>
-                        <div class="flex flex-col space-y-3">
-                            {% if user.subscription == "DEMO_TIER" %}
-                                <form method="post" class="w-full">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="load_demo_boq">
-                                    <button type="submit"
-                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-emerald-600 bg-white rounded-md border border-emerald-600 shadow-sm transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                                        <div class="flex items-center">
-                                            {% heroicon_outline "arrow-up-tray" size="16" %}
-                                            <span>Upload BOQ (CSV)</span>
-                                        </div>
-                                        <span class="inline-flex items-center ml-3 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase bg-emerald-600 rounded-full shadow-sm ">
-                                            Demo
-                                        </span>
-                                    </button>
-                                </form>
-                            {% endif %}
-                            {% if user.subscription != "DEMO_TIER" %}
-                                <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-emerald-600 bg-white rounded-md border border-emerald-600 shadow-sm transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                                    {% heroicon_outline "arrow-up-tray" size="16" %}
-                                    <span class="ml-2">Upload BOQ (CSV)</span>
-                                </a>
-                            {% endif %}
+                    {% if not project.line_items.exists %}
+                        <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200 transition-all duration-200 hover:border-emerald-300 hover:shadow-md">
+                            <h3 class="mb-1 text-sm font-semibold text-emerald-900">Upload BOQ (CSV)</h3>
+                            <p class="mb-3 text-xs text-emerald-700">
+                                Import your project BOQ from a CSV file to populate structures, bills, and line items
+                            </p>
+                            <div class="flex flex-col space-y-3">
+                                {% if user.subscription == "DEMO_TIER" %}
+                                    <form method="post" class="w-full">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="load_demo_boq">
+                                        <button type="submit"
+                                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-emerald-600 bg-white rounded-md border border-emerald-600 shadow-sm transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                            <div class="flex items-center">
+                                                {% heroicon_outline "arrow-up-tray" size="16" %}
+                                                <span>Upload BOQ (CSV)</span>
+                                            </div>
+                                            <span class="inline-flex items-center ml-3 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase bg-emerald-600 rounded-full shadow-sm ">
+                                                Demo
+                                            </span>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if user.subscription != "DEMO_TIER" %}
+                                    <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-emerald-600 bg-white rounded-md border border-emerald-600 shadow-sm transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                        {% heroicon_outline "arrow-up-tray" size="16" %}
+                                        <span class="ml-2">Upload BOQ (CSV)</span>
+                                    </a>
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
-                    {% comment %} {% endif %} {% endcomment %}
-                    {% if not boq_documents %}
+                    {% endif %}
+                    {% if not boq_documents and user.subscription != 'DEMO_TIER' %}
                         <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
                             <h3 class="mb-1 text-sm font-semibold text-gray-900">Attach BOQ (Optional)</h3>
                             <p class="mb-3 text-xs text-gray-600">
@@ -175,6 +174,17 @@
                                     </ul>
                                 </div>
                             {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if not project.signatories.exists %}
+                        <div class="p-4 bg-purple-50 rounded-lg border border-purple-200 transition-all duration-200 hover:border-purple-300 hover:shadow-md">
+                            <h3 class="mb-1 text-sm font-semibold text-purple-900">Allocate Signatory</h3>
+                            <p class="mb-3 text-xs text-purple-700">Assign payment certificate signatory</p>
+                            <a href="{% url 'project:signatory-invite' project.pk %}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-purple-600 bg-white rounded-md border border-purple-600 shadow-sm transition-colors hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                {% heroicon_outline "user" size="16" %}
+                                <span class="ml-2">Allocate Signatory</span>
+                            </a>
                         </div>
                     {% endif %}
                 </div>

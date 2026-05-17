@@ -3,6 +3,7 @@
 from django import forms
 
 from app.Project.models import (
+    Drawing,
     ProjectDocument,
 )
 
@@ -125,3 +126,110 @@ class ProjectDocumentForm(forms.ModelForm):
             self.fields["project_category"].required = False
             self.fields["area"].required = False
             self.fields["project_discipline"].required = False
+
+
+class DrawingForm(forms.ModelForm):
+    """Form for managing project drawings."""
+
+    class Meta:
+        model = Drawing
+        fields = [
+            "drawing_number",
+            "name",
+            "revision_number",
+            "discipline",
+            "parent",
+            "category",
+            "sub_category",
+            "file",
+            "notes",
+        ]
+        widgets = {
+            "drawing_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "e.g., ARCH-101",
+                }
+            ),
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "e.g., Ground Floor Plan",
+                }
+            ),
+            "revision_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "e.g., A or 01",
+                }
+            ),
+            "discipline": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "parent": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "category": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "sub_category": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "file": forms.FileInput(
+                attrs={
+                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
+                    "accept": ".pdf,.dwg,.dxf,.jpg,.jpeg,.png",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "rows": 3,
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        from app.Project.projects.projects_models import (
+            Category,
+            Discipline,
+            SubCategory,
+        )
+
+        project = kwargs.pop("project", None)
+        super().__init__(*args, **kwargs)
+
+        if project:
+            # Filter all hierarchy fields by project
+            self.fields["discipline"].queryset = Discipline.objects.filter(
+                project=project, deleted=False
+            ).order_by("name")
+            self.fields["category"].queryset = Category.objects.filter(
+                project=project, deleted=False
+            ).order_by("name")
+            self.fields["sub_category"].queryset = SubCategory.objects.filter(
+                project=project, deleted=False
+            ).order_by("name")
+            self.fields["parent"].queryset = Drawing.objects.filter(
+                project=project, deleted=False
+            ).order_by("drawing_number")
+
+            # Exclude current instance from parent choices if editing
+            if self.instance and self.instance.pk:
+                self.fields["parent"].queryset = self.fields["parent"].queryset.exclude(
+                    pk=self.instance.pk
+                )
+
+        # Make some fields optional if they aren't strictly required
+        self.fields["parent"].required = False
+        self.fields["category"].required = False
+        self.fields["sub_category"].required = False
+        self.fields["notes"].required = False

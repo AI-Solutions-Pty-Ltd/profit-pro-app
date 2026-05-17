@@ -8,113 +8,17 @@
         <div class="px-4 py-8 mx-auto space-y-10 max-w-7xl sm:px-6 lg:px-8">
             <!-- Summary Stats Section -->
             {% include "company/partials/master_dashboard/_summary_stats.html" %}
-            <!-- Trends Section -->
-            <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center px-4 py-3 bg-indigo-50 border-b border-indigo-100">
-                        <h3 class="text-xs font-bold tracking-widest text-indigo-700 uppercase">Gross Profit Trend (6 Months)</h3>
-                        {% heroicon_outline "chart-bar" size="16" class="text-indigo-400" %}
-                    </div>
-                    <div class="p-4 h-[300px]">
-                        <canvas id="grossProfitChart"></canvas>
-                    </div>
-                </div>
-                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
-                    <div class="flex justify-between items-center px-4 py-3 bg-purple-50 border-b border-purple-100">
-                        <h3 class="text-xs font-bold tracking-widest text-purple-700 uppercase">Net Profit Trend (6 Months)</h3>
-                        {% heroicon_outline "presentation-chart-line" size="16" class="text-purple-400" %}
-                    </div>
-                    <div class="p-4 h-[300px]">
-                        <canvas id="netProfitChart"></canvas>
-                    </div>
-                </div>
-            </div>
             <!-- Production Section -->
             <section id="production" class="scroll-mt-24">
                 <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Totals</p>
                 {% include "company/partials/master_dashboard/_production_section.html" %}
             </section>
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-            <!-- Baseline Section -->
-            <section id="baseline" class="scroll-mt-24">
-                <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Baseline</p>
-                {% include "company/partials/master_dashboard/_baseline_section.html" %}
-            </section>
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-            <!-- Financials Section -->
-            <section id="financials" class="pb-20 scroll-mt-24">
-                <div class="grid grid-cols-1 gap-12">
-                    {% include "company/partials/master_dashboard/_revenue_section.html" %}
-                    {% include "company/partials/master_dashboard/_profitability_section.html" %}
-                </div>
+            <!-- Trends Section -->
+            <section id="analytics" class="scroll-mt-24">
+                <p class="mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Performance Trends</p>
+                {% include "company/partials/master_dashboard/_dashboard_charts.html" %}
             </section>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const commonOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#f3f4f6' },
-                    ticks: { font: { size: 9 }, color: '#9ca3af' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 9 }, color: '#9ca3af' }
-                }
-            }
-        };
-
-        // Gross Profit Chart
-        const grossCtx = document.getElementById('grossProfitChart');
-        if (grossCtx) {
-            new Chart(grossCtx, {
-                type: 'line',
-                data: {
-                    labels: {{ financials.period_labels|safe|default:"['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']" }},
-                    datasets: [{
-                        data: {{ financials.revenue_trend|safe|default:"[10, 25, 22, 18, 15, 20]" }},
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#4f46e5'
-                    }]
-                },
-                options: commonOptions
-            });
-        }
-
-        // Net Profit Chart
-        const netCtx = document.getElementById('netProfitChart');
-        if (netCtx) {
-            new Chart(netCtx, {
-                type: 'line',
-                data: {
-                    labels: {{ financials.period_labels|safe|default:"['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']" }},
-                    datasets: [{
-                        data: {{ financials.profit_trend|safe|default:"[5, 15, 10, 18, 12, 22]" }},
-                        borderColor: '#9333ea',
-                        backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#9333ea'
-                    }]
-                },
-                options: commonOptions
-            });
-        }
-    });
-    </script>
 {% endblock %}

@@ -1116,19 +1116,28 @@ def get_project_performance_summary(project_id):
 
 
 def get_project_productivity_report_data(
-    project_id, history_horizon="3m", forecast_horizon="3m"
+    project_ids, history_horizon="3m", forecast_horizon="3m"
 ):
     """
     Generates comprehensive data for the Productivity & Cost Report.
-    Includes monthly accumulation, multi-horizon forecasts, and activity projections.
+    Includes monthly aggregation, multi-horizon forecasts, and activity projections.
+    Supports multi-project aggregation for Portfolio Dashboards.
     """
     from datetime import timedelta
 
     from dateutil.relativedelta import relativedelta
 
-    summary = get_project_performance_summary(project_id)
-    plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
-    entries = DailyActivityEntry.objects.filter(project_id=project_id)
+    from app.Estimator.models import BOQItem
+
+    # Handle single project ID or list
+    if not isinstance(project_ids, (list, tuple)):
+        project_ids = [project_ids]
+
+    summary = get_project_performance_summary(
+        project_ids[0]
+    )  # Use first for base summary if needed
+    plans = ProductionPlan.objects.filter(project_id__in=project_ids, is_archived=False)
+    entries = DailyActivityEntry.objects.filter(project_id__in=project_ids)
 
     if not entries.exists() and not plans.exists():
         return {"summary": summary, "charts": {}, "forecasts": {}, "activities": []}
@@ -1172,6 +1181,8 @@ def get_project_productivity_report_data(
             "actual_qty": Decimal("0"),
             "planned_cost": Decimal("0"),
             "actual_cost": Decimal("0"),
+            "planned_revenue": Decimal("0"),
+            "actual_revenue": Decimal("0"),
             "actual_hours": Decimal("0"),
         }
         curr += relativedelta(months=1)
@@ -1182,13 +1193,26 @@ def get_project_productivity_report_data(
 
     # Fill Planned (Distributed linearly across duration)
     for plan in plans:
+        # Get Contract Rate for Revenue
+        boq_item = BOQItem.objects.filter(
+            project_id=plan.project_id,
+            labour_specification=plan.labour_activity,
+            section=plan.section,
+            bill_no=plan.bill_no,
+        ).first()
+        contract_rate = boq_item.contract_rate if boq_item else Decimal("0")
+
         if plan.start_date and plan.finish_date:
             duration_days = (plan.finish_date - plan.start_date).days + 1
+            if duration_days <= 0:
+                continue
+
             daily_qty = plan.quantity / Decimal(duration_days)
             total_p_cost = (
                 plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
             )
             daily_cost = total_p_cost / Decimal(duration_days)
+            daily_rev = daily_qty * contract_rate
 
             p_curr = plan.start_date
             while p_curr <= plan.finish_date:
@@ -1199,10 +1223,21 @@ def get_project_productivity_report_data(
                     if month_key in monthly_data:
                         monthly_data[month_key]["planned_qty"] += daily_qty
                         monthly_data[month_key]["planned_cost"] += daily_cost
+                        monthly_data[month_key]["planned_revenue"] += daily_rev
                 p_curr += timedelta(days=1)
 
     # Fill Actuals
     for entry in entries:
+        # Get Contract Rate for Revenue (per entry/plan)
+        boq_item = BOQItem.objects.filter(
+            project_id=entry.project_id,
+            labour_specification=entry.production_plan.labour_activity,
+            section=entry.production_plan.section,
+            bill_no=entry.production_plan.bill_no,
+        ).first()
+        contract_rate = boq_item.contract_rate if boq_item else Decimal("0")
+        actual_rev = entry.quantity * contract_rate
+
         if entry.date < start_date:
             running_a_prod += entry.quantity
         else:
@@ -1210,6 +1245,7 @@ def get_project_productivity_report_data(
             if month_key in monthly_data:
                 monthly_data[month_key]["actual_qty"] += entry.quantity
                 monthly_data[month_key]["actual_cost"] += entry.total_cost
+                monthly_data[month_key]["actual_revenue"] += actual_rev
                 monthly_data[month_key]["actual_hours"] += entry.man_hours
 
     # 2. Build Chart Series
@@ -1225,11 +1261,15 @@ def get_project_productivity_report_data(
     cum_prod_actual = []
     cum_cost_planned = []
     cum_cost_actual = []
+    cum_profit_planned = []
+    cum_profit_actual = []
 
     running_p_prod = Decimal("0")
     running_a_prod = Decimal("0")
     running_p_cost = Decimal("0")
     running_a_cost = Decimal("0")
+    running_p_rev = Decimal("0")
+    running_a_rev = Decimal("0")
 
     forecast_start_idx = 0
     found_forecast = False
@@ -1245,8 +1285,11 @@ def get_project_productivity_report_data(
         # S-Curve Cumulative
         running_p_prod += data["planned_qty"]
         running_p_cost += data["planned_cost"]
+        running_p_rev += data["planned_revenue"]
+
         cum_prod_planned.append(float(running_p_prod))
         cum_cost_planned.append(float(running_p_cost))
+        cum_profit_planned.append(float(running_p_rev - running_p_cost))
 
         # Handle Actuals vs Forecast
         is_past = m_key <= today.strftime("%Y-%m")
@@ -1255,8 +1298,11 @@ def get_project_productivity_report_data(
             cost_actual.append(float(data["actual_cost"]))
             running_a_prod += data["actual_qty"]
             running_a_cost += data["actual_cost"]
+            running_a_rev += data["actual_revenue"]
+
             cum_prod_actual.append(float(running_a_prod))
             cum_cost_actual.append(float(running_a_cost))
+            cum_profit_actual.append(float(running_a_rev - running_a_cost))
 
             hours = data["actual_hours"]
             productivity_actual.append(
@@ -1272,6 +1318,7 @@ def get_project_productivity_report_data(
             cost_actual.append(None)
             cum_prod_actual.append(None)
             cum_cost_actual.append(None)
+            cum_profit_actual.append(None)
             productivity_actual.append(None)
 
     # 3. Multi-Horizon Forecasts
@@ -1353,6 +1400,8 @@ def get_project_productivity_report_data(
             "cum_prod_actual": cum_prod_actual,
             "cum_cost_planned": cum_cost_planned,
             "cum_cost_actual": cum_cost_actual,
+            "cum_profit_planned": cum_profit_planned,
+            "cum_profit_actual": cum_profit_actual,
             "forecast_start_index": forecast_start_idx,
         },
         "forecasts": forecasts,
@@ -1396,8 +1445,10 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
 
     daily_planned_qty = defaultdict(Decimal)
     daily_planned_cost = defaultdict(Decimal)
+    daily_planned_revenue = defaultdict(Decimal)
     daily_actual_qty = defaultdict(Decimal)
     daily_actual_cost = defaultdict(Decimal)
+    daily_actual_revenue = defaultdict(Decimal)
 
     # Define date filters based on horizon
     date_filter = {}
@@ -1458,6 +1509,17 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
             else (budgeted_cost / plan.quantity if plan.quantity > 0 else Decimal("0"))
         )
 
+        # Get Contract Rate for Revenue
+        from app.Estimator.models import BOQItem
+
+        boq_item = BOQItem.objects.filter(
+            project_id=project_id,
+            labour_specification=plan.labour_activity,
+            section=plan.section,
+            bill_no=plan.bill_no,
+        ).first()
+        contract_rate = boq_item.contract_rate if boq_item else Decimal("0")
+
         # 2. S-Curve Data Aggregation (Within Window)
         # Planned
         if plan.start_date and plan.finish_date:
@@ -1465,12 +1527,14 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
             if plan_days > 0:
                 day_qty = plan.quantity / Decimal(plan_days)
                 day_cost = budgeted_cost / Decimal(plan_days)
+                day_rev = day_qty * contract_rate
 
                 curr_p = max(plan.start_date, start_window)
                 end_p = min(plan.finish_date, end_window)
                 while curr_p <= end_p:
                     daily_planned_qty[curr_p] += day_qty
                     daily_planned_cost[curr_p] += day_cost
+                    daily_planned_revenue[curr_p] += day_rev
                     curr_p += timedelta(days=1)
 
         # Actual (Within Window)
@@ -1482,6 +1546,7 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
         for entry in window_entries:
             daily_actual_qty[entry.date] += entry.quantity
             daily_actual_cost[entry.date] += entry.total_cost
+            daily_actual_revenue[entry.date] += entry.quantity * contract_rate
 
         # Actual Values for Table
         actual_prod_rate = (
@@ -1648,34 +1713,49 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
     # 3. Finalize S-Curve Data
     labels = []
     planned_qty_series = []
-    actual_qty_series = []
     planned_cost_series = []
+    planned_profit_series = []
+    actual_qty_series = []
     actual_cost_series = []
+    actual_profit_series = []
 
     cum_planned_qty = Decimal("0")
     cum_planned_cost = Decimal("0")
+    cum_planned_rev = Decimal("0")
     cum_actual_qty = Decimal("0")
     cum_actual_cost = Decimal("0")
+    cum_actual_rev = Decimal("0")
 
     for d in date_range:
         labels.append(d.strftime("%d %b"))
         cum_planned_qty += daily_planned_qty[d]
         cum_planned_cost += daily_planned_cost[d]
+        cum_planned_rev += daily_planned_revenue[d]
 
         planned_qty_series.append(float(cum_planned_qty))
         planned_cost_series.append(float(cum_planned_cost))
+        planned_profit_series.append(float(cum_planned_rev - cum_planned_cost))
 
         if d <= today:
             cum_actual_qty += daily_actual_qty[d]
             cum_actual_cost += daily_actual_cost[d]
+            cum_actual_rev += daily_actual_revenue[d]
             actual_qty_series.append(float(cum_actual_qty))
             actual_cost_series.append(float(cum_actual_cost))
+            actual_profit_series.append(float(cum_actual_rev - cum_actual_cost))
         else:
             actual_qty_series.append(None)
             actual_cost_series.append(None)
+            actual_profit_series.append(None)
 
     charts_json = {
         "labels": labels,
+        "cum_prod_planned": planned_qty_series,
+        "cum_prod_actual": actual_qty_series,
+        "cum_cost_planned": planned_cost_series,
+        "cum_cost_actual": actual_cost_series,
+        "cum_profit_planned": planned_profit_series,
+        "cum_profit_actual": actual_profit_series,
         "datasets": [
             {
                 "label": "Planned Qty",
@@ -1714,6 +1794,24 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
                 "tension": 0.4,
                 "fill": False,
                 "borderWidth": 2,
+            },
+            {
+                "label": "Planned Profit",
+                "data": planned_profit_series,
+                "borderColor": "#10b981",  # emerald-500
+                "borderWidth": 2,
+                "yAxisID": "y1",
+                "tension": 0.4,
+                "fill": False,
+            },
+            {
+                "label": "Actual Profit",
+                "data": actual_profit_series,
+                "borderColor": "#059669",  # emerald-600
+                "borderWidth": 3,
+                "yAxisID": "y1",
+                "tension": 0.4,
+                "fill": False,
             },
         ],
         "today_index": date_range.index(today) if today in date_range else -1,

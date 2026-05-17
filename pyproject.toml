@@ -93,6 +93,7 @@ ignore = "H037"
 extend_exclude = """
 ./documentation,
 ./htmlcov,
+./graphify-out,
 ./app/theme/templates,
 ./app/Account/templates/auth/email_verification_email.html,
 ./app/Account/templates/auth/email_verification_thank_you.html,

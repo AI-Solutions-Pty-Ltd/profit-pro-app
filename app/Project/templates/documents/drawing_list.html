@@ -1,0 +1,123 @@
+{% extends "base_full.html" %}
+{% load heroicons %}
+{% block title %}
+    Drawings - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Project Drawings</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                        Back
+                    </a>
+                    <a href="{% url 'project:drawing-create' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                        Add Drawing
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Drawings List -->
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        {% if drawings %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drawing No.</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Revision</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discipline</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WBS (L1/L2)</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for drawing in drawings %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded flex items-center justify-center">
+                                            {% heroicon_outline "document-magnifying-glass" class="h-5 w-5 text-blue-600" %}
+                                        </div>
+                                        <div class="ml-3">
+                                            <span class="text-sm font-bold text-gray-900">{{ drawing.drawing_number }}</span>
+                                            {% if drawing.parent %}
+                                                <div class="text-xs text-gray-400">Sub-drawing of {{ drawing.parent.drawing_number }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900">{{ drawing.name }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        Rev: <span class="font-medium text-indigo-600">{{ drawing.revision_number }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if drawing.discipline %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                            {{ drawing.discipline.name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    <div class="flex flex-col space-y-1">
+                                        {% if drawing.category %}
+                                            <span class="text-xs bg-gray-100 px-2 py-0.5 rounded">{{ drawing.category.name }}</span>
+                                        {% endif %}
+                                        {% if drawing.sub_category %}
+                                            <span class="text-xs bg-gray-50 px-2 py-0.5 rounded text-gray-400">{{ drawing.sub_category.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    {% if drawing.file %}
+                                        <a href="{{ drawing.file.url }}"
+                                           target="_blank"
+                                           class="text-indigo-600 hover:text-indigo-900 mr-3"
+                                           title="Download">
+                                            {% heroicon_outline "arrow-down-tray" class="w-5 h-5 inline" %}
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'project:drawing-update' project.pk drawing.pk %}"
+                                       class="text-blue-600 hover:text-blue-900 mr-3"
+                                       title="Edit">{% heroicon_outline "pencil" class="w-5 h-5 inline" %}</a>
+                                    <a href="{% url 'project:drawing-delete' project.pk drawing.pk %}"
+                                       class="text-red-600 hover:text-red-900"
+                                       title="Delete">{% heroicon_outline "trash" class="w-5 h-5 inline" %}</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div class="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    {% heroicon_outline "document-duplicate" class="h-8 w-8 text-gray-400" %}
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">No drawings found</h3>
+                <p class="mt-1 text-sm text-gray-500 max-w-xs">Start building your drawing register for this project.</p>
+                <div class="mt-6">
+                    <a href="{% url 'project:drawing-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
+                        Add First Drawing
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock content %}
