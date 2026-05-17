@@ -14,6 +14,7 @@ from .models import (
     ContractualComplianceDialog,
     ContractualComplianceDialogFile,
     Discipline,
+    Drawing,
     FinalAccountCompliance,
     FinalAccountComplianceDialog,
     FinalAccountComplianceDialogFile,
@@ -153,6 +154,36 @@ class ProjectDocumentAdmin(SoftDeleteAdmin):
     list_filter = ["deleted", "created_at", "category", "project"]
     search_fields = ["title", "notes", "project__name"]
     readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(Drawing)
+class DrawingAdmin(SoftDeleteAdmin):
+    list_display = [
+        "drawing_number",
+        "name",
+        "revision_number",
+        "project",
+        "discipline",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = [
+        "deleted",
+        "created_at",
+        "project",
+        "discipline",
+        "category",
+        "sub_category",
+    ]
+    search_fields = ["drawing_number", "name", "project__name", "notes"]
+    readonly_fields = ["created_at", "updated_at"]
+    autocomplete_fields = [
+        "project",
+        "discipline",
+        "parent",
+        "category",
+        "sub_category",
+    ]
 
 
 @admin.register(Portfolio)

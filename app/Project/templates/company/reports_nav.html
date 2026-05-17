@@ -1,4 +1,4 @@
-<nav class="flex overflow-hidden gap-x-2 mb-4 text-xs border-gray-300"
+<nav class="flex overflow-hidden gap-x-2 justify-around mb-4 w-full text-xs border-gray-300"
      aria-label="Dashboard tabs">
     {% if project %}
         {% url 'project:productivity-report' project.pk as url_prod %}
@@ -26,11 +26,10 @@
         {% else %}
             {% url 'project:master-project-dashboard' company.pk as url_master %}
         {% endif %}
-        <a href="{{ url_master }}"
-           class="border-b-2 {% if tab == 'master_dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% comment %} <a href="{{ url_master }}" class="border-b-2 {% if tab == 'master_dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "command-line" class="inline mr-2 w-5 h-5" %}
             Dashboard
-        </a>
+        </a> {% endcomment %}
         <a href="{{ url_prod }}"
            class="border-b-2 {% if tab == 'productivity_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "calculator" class="inline mr-2 w-5 h-5" %}

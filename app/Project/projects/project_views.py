@@ -511,6 +511,9 @@ class ProjectSetupView(ProjectMixin, DetailView):
                         request,
                         f"Demo project populated successfully with {created_count} line items!",
                     )
+                    return HttpResponseRedirect(
+                        reverse("project:project-wbs-detail", kwargs={"pk": project.pk})
+                    )
             except Exception as e:
                 messages.error(request, f"Error loading demo data: {e}")
 

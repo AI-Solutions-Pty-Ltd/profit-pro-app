@@ -126,7 +126,7 @@
                             {% endif %}
                             <!-- Drawings -->
                             {% if request.user|projectroles:project|userhasrole:'DRAWINGS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'DRAWINGS' %}"
+                                <a href="{% url 'project:drawing-list' project.pk %}"
                                    class="flex justify-between items-center px-3 py-2 w-full bg-green-50 rounded-lg border border-green-200 transition-colors hover:bg-green-100 group/btn">
                                     <span class="text-sm font-medium text-green-700">Drawings</span>
                                     {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}

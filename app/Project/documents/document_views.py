@@ -12,8 +12,8 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.documents.document_forms import ProjectDocumentForm
-from app.Project.models import ProjectDocument, Role
+from app.Project.documents.document_forms import DrawingForm, ProjectDocumentForm
+from app.Project.models import Drawing, ProjectDocument, Role
 
 
 class DocumentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
@@ -337,3 +337,159 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
                 "category": self.get_category(),
             },
         )
+
+
+# ============================================================================
+# Drawing Views
+# ============================================================================
+
+
+class DrawingMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+    """Mixin for drawing views."""
+
+    roles = [Role.ADMIN, Role.USER]
+    project_slug = "project_pk"
+
+    def get_queryset(self) -> QuerySet[Drawing]:
+        """Filter drawings by project."""
+        return Drawing.objects.filter(
+            project=self.get_project(),
+            deleted=False,
+        ).order_by("drawing_number")
+
+
+class DrawingListView(DrawingMixin, ListView):
+    """List all drawings for a project."""
+
+    model = Drawing
+    template_name = "documents/drawing_list.html"
+    context_object_name = "drawings"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {"title": "Drawings", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        # Group drawings by parent for hierarchy display if needed
+        # Or just provide a flat list for now
+        return context
+
+
+class DrawingCreateView(DrawingMixin, CreateView):
+    """Create a new drawing."""
+
+    model = Drawing
+    form_class = DrawingForm
+    template_name = "documents/drawing_form.html"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {
+                "title": "Drawings",
+                "url": reverse(
+                    "project:drawing-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {"title": "Add Drawing", "url": None},
+        ]
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.project = self.get_project()
+        messages.success(
+            self.request,
+            f"Drawing '{form.instance.drawing_number}' has been created successfully.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "project:drawing-list",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+
+
+class DrawingUpdateView(DrawingMixin, UpdateView):
+    """Update an existing drawing."""
+
+    model = Drawing
+    form_class = DrawingForm
+    template_name = "documents/drawing_form.html"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {
+                "title": "Drawings",
+                "url": reverse(
+                    "project:drawing-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {"title": f"Edit: {self.object.drawing_number}", "url": None},
+        ]
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Drawing '{form.instance.drawing_number}' has been updated successfully.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "project:drawing-list",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+
+
+class DrawingDeleteView(DrawingMixin, DeleteView):
+    """Delete a drawing."""
+
+    model = Drawing
+    template_name = "documents/drawing_confirm_delete.html"
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "project:drawing-list",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.soft_delete()
+        messages.success(
+            self.request,
+            f"Drawing '{self.object.drawing_number}' has been deleted successfully.",
+        )
+        return redirect(self.get_success_url())
