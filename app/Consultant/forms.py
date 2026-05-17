@@ -2,6 +2,7 @@ from django import forms
 
 from app.Account.models import Account
 from app.BillOfQuantities.models import PaymentCertificate
+from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Project.models import Company
 
 
@@ -36,10 +37,12 @@ class ProjectClientForm(forms.Form):
 
     client = forms.ModelChoiceField(
         queryset=Company.objects.none(),
-        widget=forms.Select(
+        widget=SearchableSelectWidget(
             attrs={
                 "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-            }
+            },
+            create_url=True,
+            resource_type="client",
         ),
         required=False,
         help_text="Select a client company to associate with this project.",

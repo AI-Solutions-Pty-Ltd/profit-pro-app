@@ -218,7 +218,12 @@ __marimo__/
 staticfiles/
 media
 .VSCodeCounter
-.agents/rules/
+
 .DS_Store
-.agents/rules/
+
 test_db.sqlite3
+
+.agent/
+.agents/
+.agents/rules/
+graphify-out/

@@ -1,3 +1,4 @@
+from app.Account.models import Account
 from app.core.dynamic_quick_create import registry
 from app.Project.forms.entity_forms import (
     LabourEntityForm,
@@ -6,7 +7,14 @@ from app.Project.forms.entity_forms import (
     PlantEntityForm,
     SubcontractorEntityForm,
 )
+from app.Project.forms.forms import (
+    ClientQuickCreateForm,
+    ContractorQuickCreateForm,
+    LeadConsultantQuickCreateForm,
+    UserQuickCreateForm,
+)
 from app.Project.forms.unit_forms import UnitOfMeasureForm
+from app.Project.models import Company
 from app.Project.models.entity_definitions import (
     LabourEntity,
     MaterialEntity,
@@ -64,4 +72,37 @@ registry.register(
     form_class=SubcontractorEntityForm,
     title="New Subcontractor Definition",
     needs_project=True,
+)
+
+# Register Allocation Resources
+registry.register(
+    resource_type="client",
+    model=Company,
+    form_class=ClientQuickCreateForm,
+    title="Create New Client Company",
+    needs_project=False,
+)
+
+registry.register(
+    resource_type="contractor",
+    model=Company,
+    form_class=ContractorQuickCreateForm,
+    title="Create New Contractor Company",
+    needs_project=False,
+)
+
+registry.register(
+    resource_type="lead_consultant",
+    model=Company,
+    form_class=LeadConsultantQuickCreateForm,
+    title="Create New Lead Consultant",
+    needs_project=False,
+)
+
+registry.register(
+    resource_type="signatory_user",
+    model=Account,
+    form_class=UserQuickCreateForm,
+    title="Create New User",
+    needs_project=False,
 )

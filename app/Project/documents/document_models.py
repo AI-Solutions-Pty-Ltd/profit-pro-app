@@ -7,6 +7,7 @@ from app.core.Utilities.models import BaseModel
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    SubCategory,
 )
 
 
@@ -127,3 +128,113 @@ class ProjectDocument(BaseModel):
         if self.file and self.file.name:
             return self.file.name.split("/")[-1]
         return self.pk
+
+
+class Drawing(BaseModel):
+    """
+    Dedicated model for project drawings.
+
+    Supports nested hierarchy, revision tracking, and integration
+    with project disciplines and WBS levels.
+    """
+
+    def upload_to(self, filename: str) -> str:
+        """Generate upload path for drawing files."""
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"project_drawings/{self.project.pk}/{self.discipline}/{base_filename}"
+
+    project = models.ForeignKey(
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="drawings",
+        help_text="Project this drawing belongs to",
+    )
+    drawing_number = models.CharField(
+        max_length=100,
+        help_text="Unique identifier for the drawing",
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text="Title or name of the drawing",
+    )
+    revision_number = models.CharField(
+        max_length=50,
+        help_text="Current revision number (e.g., A, 01, Rev 1)",
+    )
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="drawings",
+        help_text="Professional discipline this drawing belongs to",
+    )
+
+    # Hierarchy/Nesting
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children",
+        help_text="Parent drawing for nested hierarchy",
+    )
+
+    # Link to WBS Levels
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="drawings",
+        help_text="Project category (Level 1)",
+    )
+    sub_category = models.ForeignKey(
+        SubCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="drawings",
+        help_text="Project sub-category (Level 2)",
+    )
+
+    file = models.FileField(
+        upload_to=upload_to,
+        help_text="The uploaded drawing file (PDF, CAD, etc.)",
+    )
+    notes = models.TextField(
+        blank=True,
+        default="",
+        help_text="Additional notes about the drawing",
+    )
+
+    class Meta:
+        verbose_name = "Drawing"
+        verbose_name_plural = "Drawings"
+        ordering = ["drawing_number"]
+        indexes = [
+            models.Index(fields=["project", "drawing_number"]),
+            models.Index(fields=["discipline"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.drawing_number}: {self.name} (Rev {self.revision_number})"
+
+    @property
+    def level(self) -> int:
+        """Calculate the depth level in the drawing hierarchy."""
+        level = 0
+        curr = self.parent
+        while curr:
+            level += 1
+            curr = curr.parent
+        return level
+
+    @property
+    def filename(self) -> str:
+        """Return just the filename without the path."""
+        if self.file and self.file.name:
+            return self.file.name.split("/")[-1]
+        return str(self.pk)

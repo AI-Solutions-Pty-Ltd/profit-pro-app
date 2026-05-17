@@ -266,8 +266,8 @@ class StructureExcelUploadView(
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        """Redirect to project's structure list."""
+        """Redirect to project's WBS detail view."""
         return reverse(
-            "project:project-management",
+            "project:project-wbs-detail",
             kwargs={"pk": self.get_project().pk},
         )
