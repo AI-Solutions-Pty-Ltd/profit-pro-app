@@ -62,7 +62,9 @@ def _setup_trade_code(form, queryset):
     field.required = True
     field.label = "Trade"
     field.empty_label = "Select a trade…"
-    field.label_from_instance = lambda obj: obj.trade_name or str(obj)
+    field.label_from_instance = (  # ty:ignore[invalid-assignment]
+        lambda obj: obj.trade_name or str(obj)
+    )
 
 
 class MaterialForm(forms.ModelForm):

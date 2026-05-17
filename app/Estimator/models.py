@@ -239,15 +239,15 @@ class SystemLabourSpecification(models.Model):
         ordering = ["section", "name"]
         verbose_name = "System Labour Specification"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def daily_output(self):
@@ -322,15 +322,15 @@ class SystemPlantSpecification(models.Model):
     if TYPE_CHECKING:
         components: "Manager[SystemPlantSpecificationComponent]"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def daily_output(self):
@@ -446,15 +446,15 @@ class SystemPreliminarySpecification(models.Model):
         ordering = ["section", "name"]
         verbose_name = "System Preliminary Specification"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def amount(self):
@@ -867,15 +867,15 @@ class ContractorLabourSpecification(models.Model):
         unique_together = [("company", "name")]
         verbose_name = "Contractor Labour Specification"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def daily_output(self):
@@ -978,15 +978,15 @@ class ContractorPlantSpecification(models.Model):
     if TYPE_CHECKING:
         components: "Manager[ContractorPlantSpecificationComponent]"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def daily_output(self):
@@ -1120,15 +1120,15 @@ class ContractorPreliminarySpecification(models.Model):
         unique_together = [("company", "name")]
         verbose_name = "Contractor Preliminary Specification"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def amount(self):
@@ -1559,15 +1559,15 @@ class ProjectLabourSpecification(models.Model):
     if TYPE_CHECKING:
         boq_items: "Manager[BOQItem]"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def daily_output(self):
@@ -1669,15 +1669,15 @@ class ProjectPlantSpecification(models.Model):
     if TYPE_CHECKING:
         components: "Manager[ProjectPlantSpecificationComponent]"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def daily_output(self):
@@ -1809,15 +1809,15 @@ class ProjectPreliminarySpecification(models.Model):
         unique_together = [("project", "name")]
         verbose_name = "Project Preliminary Specification"
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         # Keep the legacy free-text trade_name mirrored from the FK so
         # existing list/report/filter code keeps working.
         if self.trade_code_id:
             self.trade_name = self.trade_code.trade_name
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
     @property
     def amount(self):
