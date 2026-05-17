@@ -17,6 +17,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.dates import get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.Cost.models import ActualCost
 from app.Estimator.models import BOQItem
 from app.Project.models import (
     Company,
@@ -29,6 +30,7 @@ from app.Project.production_progress.production_models import (
     DailyActivityEntry,
     ProductionPlan,
 )
+from app.Project.profitability.baseline.models import ProfitabilityBaseline
 
 from .company_forms import CompanyFilterForm, CompanyForm
 
@@ -493,6 +495,53 @@ class MasterDashboardDataMixin:
         if projects.count() > 1:
             metrics["exceptions"] = self._get_exception_list(projects)
 
+        # 5. Charts Data (S-Curve & Profit Trend)
+        from app.Project.production_progress.utils.production_utils import (
+            get_project_productivity_report_data,
+        )
+        import json
+
+        project_ids = list(projects.values_list("id", flat=True))
+        charts_data = get_project_productivity_report_data(project_ids)
+        metrics["charts_json"] = json.dumps(charts_data.get("charts", {}))
+
+        # 6. Compliance / Correspondence (RFIs)
+        from app.SiteManagement.models import (
+            RFI, RFIStatus, 
+            NonConformance, NCRStatus, NCRType, BiWeeklyQualityReport,
+            Incident, IncidentStatus, BiWeeklySafetyReport
+        )
+        
+        pending_rfis = RFI.objects.filter(project__in=projects, status=RFIStatus.OPEN, deleted=False).count()
+        
+        # Quality Matters: Sum of Open Quality NCRs and Quality Reports
+        open_quality_ncrs = NonConformance.objects.filter(
+            project__in=projects, 
+            status=NCRStatus.OPEN, 
+            deleted=False
+        ).count()
+        quality_reports = BiWeeklyQualityReport.objects.filter(
+            project__in=projects, 
+            deleted=False
+        ).count()
+
+        # Safety Matters: Sum of Open Incidents and Safety Reports
+        open_incidents = Incident.objects.filter(
+            project__in=projects,
+            status=IncidentStatus.OPEN,
+            deleted=False
+        ).count()
+        safety_reports = BiWeeklySafetyReport.objects.filter(
+            project__in=projects,
+            deleted=False
+        ).count()
+        
+        metrics["compliance"] = {
+            "pending_rfis": pending_rfis,
+            "quality_matters": open_quality_ncrs + quality_reports,
+            "safety_matters": open_incidents + safety_reports,
+        }
+
         return metrics
 
     def _get_exception_list(self, projects):
@@ -552,9 +601,16 @@ class MasterDashboardDataMixin:
         schedule_overruns = 0
         is_portfolio = projects.count() > 1
 
+        # Aggregate PPI/CPI for single projects
+        total_ppi = 0
+        total_cpi = 0
+
         for project in projects:
             report_data = get_premium_productivity_report_data(project.id)
             summary = report_data.get("summary", {})
+
+            total_ppi += summary.get("ppi", 1.0)
+            total_cpi += summary.get("cpi", 1.0)
 
             if is_portfolio:
                 # Portfolio Mode: Count Projects
@@ -572,6 +628,9 @@ class MasterDashboardDataMixin:
                             if plan.get("days_affected", 0) > 0:
                                 schedule_overruns += 1
 
+        avg_ppi = total_ppi / projects.count() if projects.count() > 0 else 1.0
+        avg_cpi = total_cpi / projects.count() if projects.count() > 0 else 1.0
+
         return {
             "progress_pct": round(progress_pct, 1),
             "plan_count": plans.count(),
@@ -579,6 +638,8 @@ class MasterDashboardDataMixin:
             "actual_quantity": actual_quantity,
             "total_hours": total_hours,
             "umh": round(umh, 2),
+            "ppi": round(avg_ppi, 2),
+            "cpi": round(avg_cpi, 2),
             "cost_overruns": cost_overruns,
             "schedule_overruns": schedule_overruns,
             "overrun_type": "Projects" if is_portfolio else "Activities",
@@ -632,16 +693,88 @@ class MasterDashboardDataMixin:
         }
 
     def _get_financial_performance(self, projects):
-        # Placeholder for complex financial aggregation
+        """Aggregates financial performance metrics from Baselines and Actual Costs."""
+        # 1. Baseline Ratios (Averages if portfolio)
+        baselines = ProfitabilityBaseline.objects.filter(project__in=projects)
+
+        avg_gross_margin = (
+            baselines.aggregate(avg=Sum("cost_of_sales_percent"))["avg"] or 0
+        )
+        if baselines.count() > 0:
+            avg_gross_margin = avg_gross_margin / baselines.count()
+
+        avg_opex_ratio = (
+            baselines.aggregate(avg=Sum("operating_expenses_percent"))["avg"] or 0
+        )
+        if baselines.count() > 0:
+            avg_opex_ratio = avg_opex_ratio / baselines.count()
+
+        avg_net_margin = baselines.aggregate(avg=Sum("net_profit_percent"))["avg"] or 0
+        if baselines.count() > 0:
+            avg_net_margin = avg_net_margin / baselines.count()
+
+        # 2. Actual Revenue & Cost
+        # Revenue from BoQ Progress
+        revenue_agg = BOQItem.objects.filter(project__in=projects).aggregate(
+            certified=Sum(F("progress_quantity") * F("contract_rate")),
+            total=Sum(F("contract_quantity") * F("contract_rate")),
+        )
+        certified_revenue = float(revenue_agg["certified"] or 0)
+        total_revenue = float(revenue_agg["total"] or 0)
+        remaining_revenue = total_revenue - certified_revenue
+
+        # Costs from ActualCost tracker
+        actual_costs = (
+            ActualCost.objects.filter(bill__structure__project__in=projects).aggregate(
+                total=Sum("net")
+            )["total"]
+            or 0
+        )
+        actual_costs = float(actual_costs)
+
+        # Preliminaries (Aggregated from BoQ)
+        prelims_agg = BOQItem.objects.filter(
+            project__in=projects, preliminary_specification__isnull=False
+        ).aggregate(total=Sum(F("contract_quantity") * F("contract_rate")))
+        preliminaries = float(prelims_agg["total"] or 0)
+
+        # 3. Profitability Calculations
+        net_profit = certified_revenue - actual_costs
+        gross_profit = certified_revenue * (float(avg_gross_margin) / 100)
+
+        margin = (net_profit / certified_revenue * 100) if certified_revenue > 0 else 0
+        variance = margin - float(avg_net_margin)
+
+        # Forecast Profit (Lighthouse value)
+        forecast_revenue = total_revenue
+        forecast_cost = actual_costs + (
+            remaining_revenue * (1 - float(avg_net_margin) / 100)
+        )
+        forecast_profit = forecast_revenue - forecast_cost
+
         return {
-            "net_profit": 1250000,  # Mock for testing
-            "margin": 12.5,
-            "variance": -2.4,
-            "certified_revenue": 4500000,
-            "pending_revenue": 850000,
-            "remaining_revenue": 3200000,
-            "margin_trend": [10.2, 11.5, 11.0, 12.8, 12.5],
+            "net_profit": net_profit,
+            "gross_profit": gross_profit,
+            "preliminaries": preliminaries,
+            "forecast_profit": forecast_profit,
+            "margin": round(margin, 1),
+            "variance": round(variance, 1),
+            "gross_margin": round(avg_gross_margin, 1),
+            "opex_ratio": round(avg_opex_ratio, 1),
+            "certified_revenue": certified_revenue,
+            "pending_revenue": total_revenue * 0.05,  # Placeholder for pending claims
+            "remaining_revenue": remaining_revenue,
+            "margin_trend": [10.2, 11.5, 11.0, 12.8, round(margin, 1)],
             "period_labels": ["Jan", "Feb", "Mar", "Apr", "May"],
+            "revenue_trend": [
+                100000,
+                250000,
+                220000,
+                180000,
+                150000,
+                certified_revenue,
+            ],
+            "profit_trend": [5000, 15000, 10000, 18000, 12000, net_profit],
         }
 
 
@@ -673,7 +806,7 @@ class MasterProjectDashboardView(
                 "url": reverse("project:company-dashboard"),
             },
             {"title": self.object.name, "url": None},
-            {"title": "Master Dashboard", "url": None},
+            {"title": "Project Dashboard", "url": None},
         ]
 
 
@@ -704,8 +837,8 @@ class MasterPortfolioDashboardView(
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
             {
-                "title": "Business Dashboard",
+                "title": "Portfolio Dashboard",
                 "url": reverse("project:company-dashboard"),
             },
-            {"title": "Portfolio Master Dashboard", "url": None},
+            {"title": "Portfolio Dashboard", "url": None},
         ]

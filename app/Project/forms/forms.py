@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelChoiceField
 
 from app.Account.models import Account
+from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Project.models import (
     AdministrativeCompliance,
     Company,
@@ -26,10 +27,12 @@ class ProjectContractorForm(forms.ModelForm):
         model = Project
         fields = ["contractor"]
         widgets = {
-            "contractor": forms.Select(
+            "contractor": SearchableSelectWidget(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
+                },
+                create_url=True,
+                resource_type="contractor",
             ),
         }
         labels = {
@@ -79,10 +82,12 @@ class ProjectLeadConsultantForm(forms.ModelForm):
         model = Project
         fields = ["lead_consultant"]
         widgets = {
-            "lead_consultant": forms.Select(
+            "lead_consultant": SearchableSelectWidget(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
+                },
+                create_url=True,
+                resource_type="lead_consultant",
             ),
         }
         labels = {
@@ -212,10 +217,12 @@ class SignatoryForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "user": forms.Select(
+            "user": SearchableSelectWidget(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
+                },
+                create_url=True,
+                resource_type="signatory_user",
             ),
         }
         labels = {
@@ -867,3 +874,132 @@ class ProjectUserCreateForm(forms.Form):
                 "A user with this email address already exists in the system."
             )
         return email
+
+
+class ClientQuickCreateForm(forms.ModelForm):
+    """Quick create form for client companies."""
+
+    class Meta:
+        model = Company
+        fields = ["name", "registration_number"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Company Name",
+                }
+            ),
+            "registration_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Registration Number",
+                }
+            ),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = Company.Type.CLIENT
+        if commit:
+            instance.save()
+        return instance
+
+
+class ContractorQuickCreateForm(forms.ModelForm):
+    """Quick create form for contractor companies."""
+
+    class Meta:
+        model = Company
+        fields = ["name", "registration_number"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Company Name",
+                }
+            ),
+            "registration_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Registration Number",
+                }
+            ),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = Company.Type.CONTRACTOR
+        if commit:
+            instance.save()
+        return instance
+
+
+class LeadConsultantQuickCreateForm(forms.ModelForm):
+    """Quick create form for lead consultant companies."""
+
+    class Meta:
+        model = Company
+        fields = ["name", "registration_number"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Company Name",
+                }
+            ),
+            "registration_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Registration Number",
+                }
+            ),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = Company.Type.LEAD_CONSULTANT
+        if commit:
+            instance.save()
+        return instance
+
+
+class UserQuickCreateForm(forms.ModelForm):
+    """Quick create form for users."""
+
+    class Meta:
+        model = Account
+        fields = ["email", "first_name", "last_name", "primary_contact"]
+        widgets = {
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "email@example.com",
+                }
+            ),
+            "first_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "First Name",
+                }
+            ),
+            "last_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Last Name",
+                }
+            ),
+            "primary_contact": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "+27...",
+                }
+            ),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Set a random password for invited users
+        instance.set_password(Account.objects.make_random_password())
+        if commit:
+            instance.save()
+        return instance

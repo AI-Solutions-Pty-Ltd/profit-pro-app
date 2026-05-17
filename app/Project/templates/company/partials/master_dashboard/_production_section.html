@@ -25,24 +25,24 @@
             <p class="text-[10px] font-semibold text-gray-500">10 day behind schedule</p>
         </div>
         <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Production Performance Index</p>
-            <p class="font-mono text-xl font-black text-gray-900">R 0</p>
-            <p class="text-[10px] text-gray-500">(0.0%)</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Production Performance Index (PPI)</p>
+            <p class="font-mono text-xl font-black {% if production.ppi >= 1 %}text-emerald-600{% else %}text-rose-600{% endif %}">{{ production.ppi|default:"0.00" }}</p>
+            <p class="text-[10px] text-gray-500">Efficiency Ratio</p>
         </div>
         <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Cost Performance Index</p>
-            <p class="font-mono text-xl font-black text-gray-900">R 0</p>
-            <p class="text-[10px] text-gray-500">(0.0%)</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Cost Performance Index (CPI)</p>
+            <p class="font-mono text-xl font-black {% if production.cpi >= 1 %}text-emerald-600{% else %}text-rose-600{% endif %}">{{ production.cpi|default:"0.00" }}</p>
+            <p class="text-[10px] text-gray-500">Cost Efficiency</p>
         </div>
         <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Schedule Impact</p>
-            <p class="font-mono text-xl font-black text-gray-900">R 0</p>
-            <p class="text-[10px] text-gray-500">(0.0%)</p>
+            <p class="font-mono text-xl font-black text-gray-900">{{ production.schedule_overruns }}</p>
+            <p class="text-[10px] text-gray-500">{{ production.overrun_type }} Affected</p>
         </div>
         <div class="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Financial Impact</p>
-            <p class="font-mono text-xl font-black text-gray-900">R 0</p>
-            <p class="text-[10px] text-gray-500">(0.0%)</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">Cost Overruns</p>
+            <p class="font-mono text-xl font-black text-gray-900">{{ production.cost_overruns }}</p>
+            <p class="text-[10px] text-gray-500">{{ production.overrun_type }} Affected</p>
         </div>
     </div>
 </div>

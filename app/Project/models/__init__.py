@@ -5,7 +5,7 @@ from app.Project.categories.category_models import (
     ProjectSubCategory,
 )
 from app.Project.company.company_models import Company
-from app.Project.documents.document_models import ProjectDocument
+from app.Project.documents.document_models import Drawing, ProjectDocument
 from app.Project.profitability.baseline.models import ProfitabilityBaseline
 from app.Project.profitability.materials.models import MaterialCostTracker
 from app.Project.profitability.overheads.models import OverheadCostTracker
@@ -85,6 +85,7 @@ __all__ = [
     "ProjectStage",
     "ProjectSubCategory",
     "ProjectDocument",
+    "Drawing",
     "ProjectImpact",
     "ProjectRole",
     "Role",

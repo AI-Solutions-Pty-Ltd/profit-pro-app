@@ -1,0 +1,69 @@
+{% extends "base_full.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+
+{% block title %}
+    {% if object %}Edit Drawing: {{ object.drawing_number }}{% else %}Add New Drawing{% endif %} - {{ project.name }}
+{% endblock title %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {% if object %}Edit Drawing{% else %}Add New Drawing{% endif %}
+                </h1>
+                <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+            </div>
+            <a href="{% url 'project:drawing-list' project.pk %}"
+               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+                {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                Back to Register
+            </a>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="p-6">
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider border-b pb-2">Identification</h3>
+                            {{ form.drawing_number|as_crispy_field }}
+                            {{ form.name|as_crispy_field }}
+                            {{ form.revision_number|as_crispy_field }}
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider border-b pb-2">Classification & Hierarchy</h3>
+                            {{ form.discipline|as_crispy_field }}
+                            {{ form.parent|as_crispy_field }}
+                            {{ form.category|as_crispy_field }}
+                            {{ form.sub_category|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t">
+                        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider">File & Notes</h3>
+                        {{ form.file|as_crispy_field }}
+                        {{ form.notes|as_crispy_field }}
+                    </div>
+
+                    <div class="flex items-center justify-end space-x-3 pt-6 border-t">
+                        <a href="{% url 'project:drawing-list' project.pk %}"
+                           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% if object %}Update Drawing{% else %}Create Drawing{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

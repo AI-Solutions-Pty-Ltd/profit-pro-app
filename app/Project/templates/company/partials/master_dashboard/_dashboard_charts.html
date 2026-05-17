@@ -1,0 +1,213 @@
+<!-- Trajectory & Profit Trends Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Trajectory Analysis (S-Curve) -->
+    <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
+        <div class="flex justify-between items-center px-6 py-4 bg-gray-50/50 border-b border-gray-100">
+            <div>
+                <h3 class="text-sm font-black tracking-tight text-gray-900">Trajectory Analysis</h3>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cumulative Production S-Curve</p>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Qty</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase border-b border-amber-200 border-dashed">Cost</span>
+                </div>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="h-[320px]">
+                <canvas id="accumulationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Net Profit Trend -->
+    <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
+        <div class="flex justify-between items-center px-6 py-4 bg-gray-50/50 border-b border-gray-100">
+            <div>
+                <h3 class="text-sm font-black tracking-tight text-gray-900">Net Profit Trend</h3>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cumulative Profitability Trajectory</p>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 opacity-50"></div>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Target</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-600"></div>
+                    <span class="text-[10px] font-bold text-gray-900 uppercase">Actual</span>
+                </div>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="h-[320px]">
+                <canvas id="profitChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const data = {{ charts_json|safe|default:"{}" }};
+    if (!data || !data.labels) return;
+
+    // --- Trajectory Analysis (S-Curve) ---
+    const accCtx = document.getElementById('accumulationChart').getContext('2d');
+    new Chart(accCtx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Planned Qty',
+                    data: data.cum_prod_planned,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Actual Qty',
+                    data: data.cum_prod_actual,
+                    borderColor: '#6366f1',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#6366f1',
+                    pointBorderColor: '#fff',
+                    tension: 0.1,
+                    spanGaps: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Planned Cost',
+                    data: data.cum_cost_planned,
+                    borderColor: '#f59e0b',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Actual Cost',
+                    data: data.cum_cost_actual,
+                    borderColor: '#f59e0b',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#f59e0b',
+                    pointBorderColor: '#fff',
+                    tension: 0.1,
+                    spanGaps: true,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            let value = context.parsed.y;
+                            if (value === null) return null;
+                            if (label.includes('Cost')) {
+                                return label + ': R ' + new Intl.NumberFormat().format(value);
+                            }
+                            return label + ': ' + new Intl.NumberFormat().format(value);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    grid: { color: 'rgba(226, 232, 240, 0.5)' },
+                    ticks: { color: '#64748b', font: { size: 10 } }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#f59e0b', font: { size: 10 }, callback: (val) => 'R ' + new Intl.NumberFormat().format(val) }
+                }
+            }
+        }
+    });
+
+    // --- Net Profit Trend ---
+    const profitCtx = document.getElementById('profitChart').getContext('2d');
+    new Chart(profitCtx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Planned Profit',
+                    data: data.cum_profit_planned,
+                    borderColor: '#10b981',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    fill: true,
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    tension: 0.4,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Actual Profit',
+                    data: data.cum_profit_actual,
+                    borderColor: '#059669',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#059669',
+                    pointBorderColor: '#fff',
+                    tension: 0.1,
+                    spanGaps: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': R ' + new Intl.NumberFormat().format(context.parsed.y);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                y: {
+                    beginAtZero: false,
+                    grid: { color: 'rgba(226, 232, 240, 0.5)' },
+                    ticks: { color: '#64748b', font: { size: 10 }, callback: (val) => 'R ' + new Intl.NumberFormat().format(val) }
+                }
+            }
+        }
+    });
+});
+</script>
