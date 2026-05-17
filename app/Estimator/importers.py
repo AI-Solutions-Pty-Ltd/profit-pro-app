@@ -490,10 +490,14 @@ class MaterialSpecImporter:
     """
 
     SHEET_KEYWORDS = [
-        "material spec",
-        "material specs",
+        "materials specification",
+        "materials specifications",
+        "materials spec",
+        "materials specs",
         "material specification",
         "material specifications",
+        "material spec",
+        "material specs",
         "materialspec",
         "materialspecs",
         "mat spec",
@@ -507,24 +511,16 @@ class MaterialSpecImporter:
         self.project = project
         self.company = company
 
-    def _get_trade_code(self, prefix_str):
-        """Resolve trade code by prefix, using project / contractor / system models."""
-        if not prefix_str:
-            return None
-        if self.project:
-            return ProjectTradeCode.objects.filter(
-                project=self.project, prefix=prefix_str
-            ).first()
-        if self.company:
-            return ContractorTradeCode.objects.filter(
-                company=self.company, prefix=prefix_str
-            ).first()
-        tc = SystemTradeCode.objects.filter(prefix=prefix_str).first()
-        if not tc:
-            for stc in SystemTradeCode.objects.all():
-                if stc.trade_code == prefix_str:
-                    return stc
-        return tc
+    def _get_trade_code(self, trade_str):
+        """Resolve (find-or-create) a trade code from a free-text value.
+
+        The master sheet stores the full ``PREFIX-Trade Name`` string in the
+        Trade Code column, so use the normalised resolver (matches on prefix,
+        name, or prefix+name) rather than an exact prefix lookup.
+        """
+        return resolve_trade_code(
+            trade_str, project=self.project, company=self.company
+        )
 
     def _get_material(self, mat_code):
         """Resolve material by code, using project / contractor / system models."""
@@ -542,14 +538,23 @@ class MaterialSpecImporter:
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
-        ws = _find_sheet(wb, self.SHEET_KEYWORDS)
+        ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
+        if fell_back:
+            # Never silently import an arbitrary sheet — that produced the
+            # "all over the place" results when the Materials Specification
+            # sheet name didn't match.
+            raise ValueError(
+                "Could not find a 'Materials Specification' sheet in the "
+                f"workbook (sheets: {', '.join(wb.sheetnames)}). Rename the "
+                "sheet to 'Materials Specification' and re-upload."
+            )
 
         row3_vals = [c.value for c in ws[3]] if ws.max_row >= 3 else []
         is_wide = any("specification code" in _safe_str(v).lower() for v in row3_vals)
 
-        if is_wide:
-            return self._import_wide(ws)
-        return self._import_multirow(ws)
+        result = self._import_wide(ws) if is_wide else self._import_multirow(ws)
+        result["sheet_used"] = sheet_name
+        return result
 
     def _import_wide(self, ws):
         created = updated = 0
