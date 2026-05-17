@@ -125,6 +125,62 @@ def _safe_str(value):
     return s
 
 
+def _norm_trade(s):
+    """Normalise a trade token for matching: alphanumerics only, upper-case.
+
+    So "CFR", "cfr-", "C.F.R." all collapse to "CFR" and match an existing
+    trade code with prefix "CFR-".
+    """
+    return "".join(ch for ch in (s or "") if ch.isalnum()).upper()
+
+
+def _unique_trade_prefix(model, scope_kwargs, name):
+    """Pick a prefix unique within the scope (<=20 chars)."""
+    existing = set(
+        model.objects.filter(**scope_kwargs).values_list("prefix", flat=True)
+    )
+    base = "".join(ch for ch in name if ch.isalnum())[:18].upper() or "TRADE"
+    candidate, n = base, 1
+    while candidate in existing:
+        suffix = str(n)
+        candidate = base[: 20 - len(suffix)] + suffix
+        n += 1
+    return candidate
+
+
+def resolve_trade_code(raw, project=None, company=None):
+    """Resolve (find-or-create) a TradeCode for a free-text trade value,
+    scoped to project / company / system. Returns None if ``raw`` is blank.
+
+    Matches on trade_name (case-insensitive) or the full ``prefix+trade_name``
+    string; creates a new code (so uploads never silently drop a trade)
+    when nothing matches.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    if project is not None:
+        model, scope = ProjectTradeCode, {"project": project}
+    elif company is not None:
+        model, scope = ContractorTradeCode, {"company": company}
+    else:
+        model, scope = SystemTradeCode, {}
+
+    raw_norm = _norm_trade(raw)
+    for tc in model.objects.filter(**scope):
+        if raw_norm and raw_norm in {
+            _norm_trade(tc.trade_name),
+            _norm_trade(tc.prefix),
+            _norm_trade(f"{tc.prefix}{tc.trade_name}"),
+        }:
+            return tc
+    return model.objects.create(
+        prefix=_unique_trade_prefix(model, scope, raw),
+        trade_name=raw[:100],
+        **scope,
+    )
+
+
 # ── Trade Codes ──────────────────────────────────────────────────
 
 
@@ -717,6 +773,15 @@ class LabourSpecImporter:
             if not name:
                 continue
 
+            trade_code = resolve_trade_code(
+                _safe_str(row[1]) if ncols > 1 else "",
+                project=self.project,
+                company=self.company,
+            )
+            if trade_code is None:
+                # Trade is compulsory — skip rows without one.
+                continue
+
             crew_type_str = _safe_str(row[4]) if ncols > 4 else ""
             if self.project:
                 crew = (
@@ -743,7 +808,7 @@ class LabourSpecImporter:
 
             defaults = {
                 "section": _safe_str(row[0]) if ncols > 0 else "",
-                "trade_name": _safe_str(row[1]) if ncols > 1 else "",
+                "trade_code": trade_code,
                 "unit": _safe_str(row[3]) if ncols > 3 else "",
                 "crew": crew,
                 "daily_production": (_safe_decimal(row[5]) if ncols > 5 else None)
@@ -947,6 +1012,14 @@ class PlantSpecImporter:
             if not name:
                 continue
 
+            trade_code = resolve_trade_code(
+                _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                project=self.project,
+                company=self.company,
+            )
+            if trade_code is None:
+                continue
+
             if is_master:
                 # Master layout: 4 plant-type/hours pairs at cols 4..11,
                 # productivity at cols 12..14.
@@ -972,7 +1045,7 @@ class PlantSpecImporter:
 
             defaults = {
                 "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
-                "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                "trade_code": trade_code,
                 "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
                 "daily_production": daily_prod or Decimal("0"),
                 "operator_factor": operator or Decimal("1"),
@@ -1414,10 +1487,18 @@ class PreliminarySpecImporter:
             if not name:
                 continue
 
+            trade_code = resolve_trade_code(
+                _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                project=self.project,
+                company=self.company,
+            )
+            if trade_code is None:
+                continue
+
             raw_type = row[co + 4] if ncols > co + 4 else None
             defaults = {
                 "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
-                "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                "trade_code": trade_code,
                 "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
                 "preliminary_type": self._resolve_type(raw_type, name),
             }

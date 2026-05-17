@@ -210,6 +210,13 @@ class SystemLabourCrew(models.Model):
 class SystemLabourSpecification(models.Model):
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
@@ -231,6 +238,13 @@ class SystemLabourSpecification(models.Model):
         db_table = "estimator_labourspecification"
         ordering = ["section", "name"]
         verbose_name = "System Labour Specification"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -287,6 +301,13 @@ class SystemPlantSpecification(models.Model):
 
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -300,6 +321,13 @@ class SystemPlantSpecification(models.Model):
 
     if TYPE_CHECKING:
         components: "Manager[SystemPlantSpecificationComponent]"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -398,6 +426,13 @@ class SystemPreliminarySpecification(models.Model):
 
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preliminary_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     preliminary_type = models.CharField(
@@ -410,6 +445,13 @@ class SystemPreliminarySpecification(models.Model):
     class Meta:
         ordering = ["section", "name"]
         verbose_name = "System Preliminary Specification"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -796,6 +838,13 @@ class ContractorLabourSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
@@ -817,6 +866,13 @@ class ContractorLabourSpecification(models.Model):
         ordering = ["section", "name"]
         unique_together = [("company", "name")]
         verbose_name = "Contractor Labour Specification"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -900,6 +956,13 @@ class ContractorPlantSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -914,6 +977,13 @@ class ContractorPlantSpecification(models.Model):
 
     if TYPE_CHECKING:
         components: "Manager[ContractorPlantSpecificationComponent]"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -1029,6 +1099,13 @@ class ContractorPreliminarySpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preliminary_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     preliminary_type = models.CharField(
@@ -1042,6 +1119,13 @@ class ContractorPreliminarySpecification(models.Model):
         ordering = ["section", "name"]
         unique_together = [("company", "name")]
         verbose_name = "Contractor Preliminary Specification"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -1444,6 +1528,13 @@ class ProjectLabourSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
@@ -1467,6 +1558,13 @@ class ProjectLabourSpecification(models.Model):
 
     if TYPE_CHECKING:
         boq_items: "Manager[BOQItem]"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -1549,6 +1647,13 @@ class ProjectPlantSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -1563,6 +1668,13 @@ class ProjectPlantSpecification(models.Model):
 
     if TYPE_CHECKING:
         components: "Manager[ProjectPlantSpecificationComponent]"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -1676,6 +1788,13 @@ class ProjectPreliminarySpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preliminary_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     preliminary_type = models.CharField(
@@ -1689,6 +1808,13 @@ class ProjectPreliminarySpecification(models.Model):
         ordering = ["section", "name"]
         unique_together = [("project", "name")]
         verbose_name = "Project Preliminary Specification"
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

@@ -4044,7 +4044,9 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get("form", PreliminarySpecificationForm())
+        context["form"] = context.get(
+            "form", PreliminarySpecificationForm(project=self.get_project())
+        )
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
@@ -4086,7 +4088,7 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
                     kwargs={"project_pk": self.kwargs["project_pk"]},
                 )
             )
-        form = PreliminarySpecificationForm(request.POST)
+        form = PreliminarySpecificationForm(request.POST, project=project)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.project = project
@@ -7325,7 +7327,9 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         company = self.get_company()
-        context["form"] = context.get("form", ContractorPlantSpecificationForm())
+        context["form"] = context.get(
+            "form", ContractorPlantSpecificationForm(company=company)
+        )
         context["plants"] = ContractorPlantCost.objects.filter(company=company)
         context["f_q"] = self.request.GET.get("q", "")
         context["query_params"] = _pagination_query_params(self.request)
@@ -7353,7 +7357,7 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
             )
             return redirect("estimator:ctr_plant_specs")
 
-        form = ContractorPlantSpecificationForm(request.POST)
+        form = ContractorPlantSpecificationForm(request.POST, company=self.get_company())
         if form.is_valid():
             obj = form.save(commit=False)
             obj.company = self.get_company()
@@ -7739,7 +7743,10 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get("form", ContractorPreliminarySpecificationForm())
+        context["form"] = context.get(
+            "form",
+            ContractorPreliminarySpecificationForm(company=self.get_company()),
+        )
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
@@ -7771,7 +7778,7 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
             )
             return redirect("estimator:ctr_preliminary_specs")
 
-        form = ContractorPreliminarySpecificationForm(request.POST)
+        form = ContractorPreliminarySpecificationForm(request.POST, company=self.get_company())
         if form.is_valid():
             obj = form.save(commit=False)
             obj.company = self.get_company()
