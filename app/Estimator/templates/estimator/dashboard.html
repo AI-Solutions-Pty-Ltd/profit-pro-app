@@ -133,23 +133,23 @@
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-green-50 rounded-lg shrink-0">
-                    {% heroicon_outline "arrow-trending-up" class="w-5 h-5 text-green-600" %}
+                <div class="p-1.5 bg-orange-50 rounded-lg shrink-0">
+                    {% heroicon_outline "receipt-percent" class="w-5 h-5 text-orange-600" %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Progress Amount</p>
-                    <p class="text-sm font-bold text-green-700 whitespace-nowrap">{{ total_progress_amount|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Markups Amount</p>
+                    <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_markup_amount|currency }}</p>
                 </div>
             </div>
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-blue-50 rounded-lg shrink-0">
-                    {% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}
+                <div class="p-1.5 bg-teal-50 rounded-lg shrink-0">
+                    {% heroicon_outline "truck" class="w-5 h-5 text-teal-600" %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Forecast Amount</p>
-                    <p class="text-sm font-bold text-blue-700 whitespace-nowrap">{{ total_forecast_amount|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Transport Amount</p>
+                    <p class="text-sm font-bold text-teal-700 whitespace-nowrap">{{ total_transport_amount|currency }}</p>
                 </div>
             </div>
         </div>
@@ -513,7 +513,7 @@
                                class="column-detail-toggle"
                                data-column="col-combined-price"
                                checked>
-                        <span class="ml-2">Price</span>
+                        <span class="ml-2">Rate</span>
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
@@ -744,9 +744,9 @@
                         <th class="bg-orange-50/70 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-700 border-r border-gray-200 column-group-markups w-[75px]">
                             Transp%
                         </th>
-                        <!-- Baseline New Price -->
+                        <!-- Baseline New Rate -->
                         <th class="bg-indigo-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-indigo-700 border-r border-gray-200 column-group-combined w-[95px]">
-                            Price
+                            Rate
                         </th>
                         <!-- Progress -->
                         <th class="bg-green-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-green-700 column-group-progress w-[75px]">

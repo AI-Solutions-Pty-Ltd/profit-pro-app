@@ -374,6 +374,8 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         total_preliminary = Decimal("0")
         total_progress = Decimal("0")
         total_forecast = Decimal("0")
+        total_markup = Decimal("0")
+        total_transport = Decimal("0")
 
         for item in summary_items:
             if item.contract_amount:
@@ -390,6 +392,10 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 total_progress += item.progress_amount
             if item.forecast_amount:
                 total_forecast += item.forecast_amount
+            if item.markup_amount:
+                total_markup += item.markup_amount
+            if item.transport_amount:
+                total_transport += item.transport_amount
 
         context["total_contract_amount"] = total_contract
         context["total_material_amount"] = total_material
@@ -398,6 +404,8 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context["total_preliminary_amount"] = total_preliminary
         context["total_progress_amount"] = total_progress
         context["total_forecast_amount"] = total_forecast
+        context["total_markup_amount"] = total_markup
+        context["total_transport_amount"] = total_transport
 
         # Filter options (scoped to project)
         project_items = BOQItem.objects.filter(project=project)
@@ -1696,6 +1704,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
 
         title_key = "title_contract" if rate_type == "contract" else "title_new"
         context["report_title"] = config[title_key]
+        context["spec_label"] = "Material Spec"
         context["rate_type"] = rate_type
 
         if rate_type == "contract":
@@ -1722,7 +1731,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
 
         grand_total = Decimal("0")
         aggregated: dict[tuple, dict] = {}
-        section_totals: dict[str, Decimal] = {}
+        trade_totals: dict[str, Decimal] = {}
 
         for item in context["items"]:
             raw_quantity = getattr(item, qty_field) or Decimal("0")
@@ -1762,8 +1771,8 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
             if amount:
                 row["amount"] += amount
                 grand_total += amount
-                s = item.section or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
+                t = str(item.trade_code) if item.trade_code else "Unassigned"
+                trade_totals[t] = trade_totals.get(t, Decimal("0")) + amount
 
         report_rows = []
         for row in aggregated.values():
@@ -1796,13 +1805,13 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
                     material_totals.get(m, Decimal("0")) + row["amount"]
                 )
 
-        # Sort sections by amount descending
-        sorted_sections = sorted(
-            section_totals.items(), key=lambda x: x[1], reverse=True
+        # Sort trades by amount descending
+        sorted_trades = sorted(
+            trade_totals.items(), key=lambda x: x[1], reverse=True
         )
-        context["chart_section_labels"] = json.dumps([s[0] for s in sorted_sections])
-        context["chart_section_values"] = json.dumps(
-            [float(s[1]) for s in sorted_sections]
+        context["chart_trade_labels"] = json.dumps([t[0] for t in sorted_trades])
+        context["chart_trade_values"] = json.dumps(
+            [float(t[1]) for t in sorted_trades]
         )
 
         # Top 10 materials by amount
@@ -2039,6 +2048,8 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
     parent_template_new = ""
     parent_template_contract = ""
     title_noun = ""
+    # First-column header label (e.g. "Plant Spec", "Prelim Spec").
+    spec_label = "Spec"
     # Optional URL-name prefixes to enable the "By Spec / By Component" toggle.
     # Subclass sets both to enable; leave empty to omit (e.g. preliminary).
     spec_url_prefix = ""
@@ -2076,6 +2087,7 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
         context["report_title"] = (
             f"{variant_title} {self.title_noun} List ({rate_suffix})"
         )
+        context["spec_label"] = self.spec_label
         context["rate_type"] = rate_type
         context["parent_template"] = (
             self.parent_template_contract
@@ -2100,7 +2112,7 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
 
         grand_total = Decimal("0")
         aggregated: dict[int, dict] = {}
-        section_totals: dict[str, Decimal] = {}
+        trade_totals: dict[str, Decimal] = {}
 
         for item in context["items"]:
             spec = getattr(item, self.spec_field)
@@ -2128,8 +2140,8 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
             if amount:
                 row["amount"] += amount
                 grand_total += amount
-                s = item.section or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
+                t = str(item.trade_code) if item.trade_code else "Unassigned"
+                trade_totals[t] = trade_totals.get(t, Decimal("0")) + amount
 
         report_rows = []
         for row in aggregated.values():
@@ -2154,12 +2166,12 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
                 m = row["material_name"] or "Unknown"
                 name_totals[m] = name_totals.get(m, Decimal("0")) + row["amount"]
 
-        sorted_sections = sorted(
-            section_totals.items(), key=lambda x: x[1], reverse=True
+        sorted_trades = sorted(
+            trade_totals.items(), key=lambda x: x[1], reverse=True
         )
-        context["chart_section_labels"] = json.dumps([s[0] for s in sorted_sections])
-        context["chart_section_values"] = json.dumps(
-            [float(s[1]) for s in sorted_sections]
+        context["chart_trade_labels"] = json.dumps([t[0] for t in sorted_trades])
+        context["chart_trade_values"] = json.dumps(
+            [float(t[1]) for t in sorted_trades]
         )
         sorted_names = sorted(name_totals.items(), key=lambda x: x[1], reverse=True)[
             :10
@@ -2189,6 +2201,7 @@ class PlantListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_plant_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_plant.html"
     title_noun = "Plant"
+    spec_label = "Plant Spec"
     spec_url_prefix = "estimator:report_plant_list_"
     component_url_prefix = "estimator:report_plant_components_"
     component_label = "Component"
@@ -2200,6 +2213,7 @@ class PreliminaryListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_prelim_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_prelim.html"
     title_noun = "Preliminary"
+    spec_label = "Prelim Spec"
     show_rate = False
 
 

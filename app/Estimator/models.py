@@ -2046,6 +2046,45 @@ class BOQItem(models.Model):
             self.baseline_new_price, self.forecast_quantity
         )
 
+    @property
+    def _material_base_amount(self):
+        """Material amount on contract qty before markup/transport (incl. wastage)."""
+        rate = self.new_materials_rate
+        factor = self._material_markup_factor
+        if rate is None or not self.contract_quantity or factor == 0:
+            return Decimal("0")
+        base_rate = rate / factor
+        return base_rate * self.contract_quantity * self._wastage_factor
+
+    @property
+    def _labour_base_amount(self):
+        """Labour amount on contract qty before markup."""
+        rate = self.new_labour_rate
+        factor = self._labour_markup_factor
+        if rate is None or not self.contract_quantity or factor == 0:
+            return Decimal("0")
+        base_rate = rate / factor
+        return base_rate * self.contract_quantity
+
+    @property
+    def markup_amount(self):
+        """Money added on top of base cost by material & labour markup %
+        (transport excluded — it is reported separately)."""
+        mat = self._material_base_amount * (
+            self.material_markup_pct or Decimal("0")
+        ) / Decimal("100")
+        lab = self._labour_base_amount * (
+            self.labour_markup_pct or Decimal("0")
+        ) / Decimal("100")
+        return mat + lab
+
+    @property
+    def transport_amount(self):
+        """Money added on top of base material cost by transport %."""
+        return self._material_base_amount * (
+            self.transport_pct or Decimal("0")
+        ) / Decimal("100")
+
 
 def sync_boq_from_lineitems(project):
     """

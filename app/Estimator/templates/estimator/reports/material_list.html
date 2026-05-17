@@ -6,13 +6,13 @@
         <div class="mb-3 flex">
             <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1"
                  aria-label="Report view">
-                <a href="{{ toggle_spec_url }}"
-                   class="rounded-md px-3 py-1.5 text-xs font-medium {% if toggle_active == 'spec' %}bg-indigo-600 text-white shadow{% else %}text-gray-500 hover:text-gray-700{% endif %}">
-                    By Spec
-                </a>
                 <a href="{{ toggle_alt_url }}"
                    class="rounded-md px-3 py-1.5 text-xs font-medium {% if toggle_active == 'alt' %}bg-indigo-600 text-white shadow{% else %}text-gray-500 hover:text-gray-700{% endif %}">
                     By {{ toggle_alt_label|default:"Component" }}
+                </a>
+                <a href="{{ toggle_spec_url }}"
+                   class="rounded-md px-3 py-1.5 text-xs font-medium {% if toggle_active == 'spec' %}bg-indigo-600 text-white shadow{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                    By Spec
                 </a>
             </nav>
         </div>
@@ -38,11 +38,11 @@
     <!-- Charts -->
     {% if report_rows %}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Cost by Section Donut -->
+            <!-- Cost by Trade Donut -->
             <div class="bg-white shadow-sm rounded-lg p-4">
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Cost by Section</h3>
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Cost by Trade</h3>
                 <div class="relative h-[280px]">
-                    <canvas id="sectionDonut"></canvas>
+                    <canvas id="tradeDonut"></canvas>
                 </div>
             </div>
             <!-- Top Materials Bar -->
@@ -95,7 +95,7 @@
                 <thead>
                     <tr class="border-b border-gray-200">
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[260px]">
-                            Material Spec
+                            {{ spec_label|default:"Material Spec" }}
                         </th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[60px]">
                             Unit
@@ -174,17 +174,17 @@
         return 'R ' + val.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 2});
     }
 
-    // Section Donut
-    const sectionLabels = {{ chart_section_labels|safe }};
-    const sectionValues = {{ chart_section_values|safe }};
+    // Trade Donut
+    const tradeLabels = {{ chart_trade_labels|safe }};
+    const tradeValues = {{ chart_trade_values|safe }};
 
-    new Chart(document.getElementById('sectionDonut'), {
+    new Chart(document.getElementById('tradeDonut'), {
         type: 'doughnut',
         data: {
-            labels: sectionLabels,
+            labels: tradeLabels,
             datasets: [{
-                data: sectionValues,
-                backgroundColor: COLORS.slice(0, sectionLabels.length),
+                data: tradeValues,
+                backgroundColor: COLORS.slice(0, tradeLabels.length),
                 borderWidth: 1,
                 borderColor: '#fff',
             }]

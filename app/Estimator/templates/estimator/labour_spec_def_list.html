@@ -2,6 +2,11 @@
 {% load estimator_tags %}
 {% block title %}Labour Specs - Project Resource Estimator{% endblock %}
 {% block sub_content %}
+    <style>
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    </style>
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Labour Specifications</h1>
@@ -246,7 +251,7 @@
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
                                     <input type="text"
-                                           class="inline-edit-ls w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-ls w-72 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ ls.id }}"
                                            data-field="name"
                                            value="{{ ls.name }}">
