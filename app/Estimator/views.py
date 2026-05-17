@@ -4250,10 +4250,72 @@ def _generate_template(headers, filename):
     return response
 
 
+class CloneFromProjectMixin:
+    """Adds a "clone from another project (same contractor)" option to
+    project-level upload pages.
+
+    The clone copies the *entire* estimator library from the chosen source
+    project (replacing this project's existing library data — not its BoQ
+    items). Source projects are restricted to the same contractor.
+    """
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        project = self.get_project()
+        if project.contractor_id:
+            ctx["clone_source_projects"] = (
+                Project.objects.filter(contractor_id=project.contractor_id)
+                .exclude(pk=project.pk)
+                .order_by("name")
+            )
+        else:
+            ctx["clone_source_projects"] = Project.objects.none()
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") == "clone_project":
+            from .services import clone_from_project
+
+            project = self.get_project()
+            source_pk = request.POST.get("source_project")
+            if not source_pk:
+                messages.error(request, "Please select a project to clone from.")
+            elif not project.contractor_id:
+                messages.error(
+                    request,
+                    "This project has no contractor assigned, so there are "
+                    "no related projects to clone from.",
+                )
+            else:
+                source = get_object_or_404(
+                    Project,
+                    pk=source_pk,
+                    contractor_id=project.contractor_id,
+                )
+                try:
+                    result = clone_from_project(project, source)
+                    messages.success(
+                        request,
+                        f"Cloned the full estimator library from "
+                        f"'{source.name}' — "
+                        f"{result.get('trade_codes', 0)} trade codes, "
+                        f"{result.get('materials', 0)} materials, "
+                        f"{result.get('labour_crews', 0)} labour crews, "
+                        f"{result.get('specifications', 0)} specifications, "
+                        f"{result.get('labour_specs', 0)} labour specs, "
+                        f"{result.get('plant_specs', 0)} plant specs, "
+                        f"{result.get('preliminary_specs', 0)} prelim specs.",
+                    )
+                except Exception as e:
+                    messages.error(request, f"Clone from project failed: {e}")
+            return redirect(self.get_success_url())
+        return super().post(request, *args, **kwargs)
+
+
 # ── Trade Codes Upload/Download ───────────────────────────────────
 
 
-class TradeCodeUploadView(ProjectEstimatorMixin, FormView):
+class TradeCodeUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4299,7 +4361,7 @@ class DownloadTradeCodeTemplateView(View):
 # ── Material Costs Upload/Download ────────────────────────────────
 
 
-class MaterialCostUploadView(ProjectEstimatorMixin, FormView):
+class MaterialCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4363,7 +4425,7 @@ class DownloadMaterialCostTemplateView(View):
 # ── Labour Costs Upload/Download ─────────────────────────────────
 
 
-class LabourCostUploadView(ProjectEstimatorMixin, FormView):
+class LabourCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4430,7 +4492,7 @@ class DownloadLabourCostTemplateView(View):
 # ── Material Specs Upload/Download ───────────────────────────────
 
 
-class MaterialSpecUploadView(ProjectEstimatorMixin, FormView):
+class MaterialSpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4498,7 +4560,7 @@ class DownloadMaterialSpecTemplateView(View):
 # ── Labour Specs Upload/Download ─────────────────────────────────
 
 
-class LabourSpecUploadView(ProjectEstimatorMixin, FormView):
+class LabourSpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4599,7 +4661,7 @@ class InitializeEstimatorView(ProjectEstimatorMixin, View):
 # ── Plant Costs Upload/Download ───────────────────────────────────
 
 
-class PlantCostUploadView(ProjectEstimatorMixin, FormView):
+class PlantCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4646,7 +4708,7 @@ class DownloadPlantCostTemplateView(View):
 # ── Plant Specs Upload/Download ───────────────────────────────────
 
 
-class PlantSpecUploadView(ProjectEstimatorMixin, FormView):
+class PlantSpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4708,7 +4770,7 @@ class DownloadPlantSpecTemplateView(View):
 # ── Preliminary Costs Upload/Download ─────────────────────────────
 
 
-class PreliminaryCostUploadView(ProjectEstimatorMixin, FormView):
+class PreliminaryCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4768,7 +4830,7 @@ class DownloadPreliminaryCostTemplateView(View):
 # ── Preliminary Specs Upload/Download ─────────────────────────────
 
 
-class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
+class PreliminarySpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -7920,7 +7982,7 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
         )
 
 
-class ItemLibraryUploadView(ProjectEstimatorMixin, FormView):
+class ItemLibraryUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
