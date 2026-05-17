@@ -8,29 +8,15 @@
         <div class="px-4 py-8 mx-auto space-y-10 max-w-7xl sm:px-6 lg:px-8">
             <!-- Summary Stats Section -->
             {% include "company/partials/master_dashboard/_summary_stats.html" %}
-            <!-- Trends Section -->
-            <section id="analytics" class="scroll-mt-24">
-                <p class="mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Performance Trends</p>
-                {% include "company/partials/master_dashboard/_dashboard_charts.html" %}
-            </section>
             <!-- Production Section -->
             <section id="production" class="scroll-mt-24">
                 <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Totals</p>
                 {% include "company/partials/master_dashboard/_production_section.html" %}
             </section>
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-            <!-- Baseline Section -->
-            <section id="baseline" class="scroll-mt-24">
-                <p class="mb-2 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Baseline</p>
-                {% include "company/partials/master_dashboard/_baseline_section.html" %}
-            </section>
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-            <!-- Financials Section -->
-            <section id="financials" class="pb-20 scroll-mt-24">
-                <div class="grid grid-cols-1 gap-12">
-                    {% include "company/partials/master_dashboard/_revenue_section.html" %}
-                    {% include "company/partials/master_dashboard/_profitability_section.html" %}
-                </div>
+            <!-- Trends Section -->
+            <section id="analytics" class="scroll-mt-24">
+                <p class="mb-4 text-xs font-bold tracking-widest text-indigo-600 uppercase">Portfolio Performance Trends</p>
+                {% include "company/partials/master_dashboard/_dashboard_charts.html" %}
             </section>
         </div>
     </div>

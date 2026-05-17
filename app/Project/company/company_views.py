@@ -269,86 +269,6 @@ class CompanyUpdateView(
         ]
 
 
-class CompanyDashboardView(
-    SubscriptionRequiredMixin, BreadcrumbMixin, CompanyMetricsMixin, ListView
-):
-    """Projects dashboard showing financial metrics for Portfolio."""
-
-    model = Project
-    template_name = "company/company_dashboard.html"
-    context_object_name = "projects"
-    required_tiers = [Subscription.BUSINESS_MANAGEMENT]
-
-    def get_breadcrumbs(self: "CompanyDashboardView") -> list[BreadcrumbItem]:
-        return [
-            {"title": "Business Dashboard", "url": None},
-        ]
-
-    def get_queryset(self: "CompanyDashboardView") -> QuerySet[Project]:
-        """Get filtered projects for dashboard view."""
-        # Initialize filter form with user's projects
-        user: Account = self.request.user  # type: ignore
-        return user.get_projects
-
-    def get(self, request, *args, **kwargs):
-        """Handle GET request and check for project redirect."""
-        # Initialize filter form with user's projects
-        user: Account = self.request.user  # type: ignore
-
-        # Initialize filter form with the base queryset
-        filter_form = CompanyFilterForm(self.request.GET or {}, user=user)
-
-        if filter_form.is_valid():
-            company = filter_form.cleaned_data.get("company")
-            if company:
-                return redirect(
-                    "project:company-management",
-                    pk=company.pk,
-                )
-
-        # Continue with normal GET processing
-        return super().get(request, *args, **kwargs)
-
-    def get_context_data(self: "CompanyDashboardView", **kwargs):
-        """Add financial metrics to context."""
-        context = super().get_context_data(**kwargs)
-        user: Account = self.request.user  # type: ignore
-        active_projects = self.get_queryset()
-
-        if user.portfolio:
-            portfolio = user.portfolio
-        else:
-            portfolio = Portfolio.objects.create()
-            portfolio.users.add(user)
-            user.get_projects.update(portfolio=portfolio)
-
-        filter_form = CompanyFilterForm(
-            self.request.GET or None, user=self.request.user
-        )
-
-        # Add the already-validated form to context
-        context["filter_form"] = filter_form
-        current_date = datetime.now()
-        context["current_date"] = current_date
-
-        # Highlights
-        context["active_companies"] = (
-            active_projects.values("contractor").distinct().count()
-        )
-        context["urgent_projects_count"] = len(
-            portfolio.get_projects_requiring_urgent_intervention(current_date)
-        )
-        context["attention_projects_count"] = len(
-            portfolio.get_projects_requiring_attention(current_date)
-        )
-
-        # Use mixin to get metrics
-        metrics = self.get_metrics_context(active_projects)
-        context.update(metrics)
-
-        return context
-
-
 class CompanyDetailDashboardView(
     SubscriptionRequiredMixin, BreadcrumbMixin, CompanyMetricsMixin, DetailView
 ):
@@ -931,3 +851,74 @@ class MasterPortfolioDashboardView(
             },
             {"title": "Portfolio Dashboard", "url": None},
         ]
+
+
+class CompanyDashboardView(
+    SubscriptionRequiredMixin, BreadcrumbMixin, MasterDashboardDataMixin, ListView
+):
+    """Projects dashboard showing financial metrics for Portfolio."""
+
+    model = Project
+    template_name = "company/company_dashboard.html"
+    context_object_name = "projects"
+    required_tiers = [Subscription.BUSINESS_MANAGEMENT]
+
+    def get_breadcrumbs(self: "CompanyDashboardView") -> list[BreadcrumbItem]:
+        return [
+            {"title": "Business Dashboard", "url": None},
+        ]
+
+    def get_queryset(self: "CompanyDashboardView") -> QuerySet[Project]:
+        """Get filtered projects for dashboard view."""
+        # Initialize filter form with user's projects
+        user: Account = self.request.user  # type: ignore
+        return user.get_projects
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET request and check for project redirect."""
+        # Initialize filter form with user's projects
+        user: Account = self.request.user  # type: ignore
+
+        # Initialize filter form with the base queryset
+        filter_form = CompanyFilterForm(self.request.GET or {}, user=user)
+
+        if filter_form.is_valid():
+            company = filter_form.cleaned_data.get("company")
+            if company:
+                return redirect(
+                    "project:company-management",
+                    pk=company.pk,
+                )
+
+        # Continue with normal GET processing
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self: "CompanyDashboardView", **kwargs):
+        """Add financial metrics to context."""
+        context = super().get_context_data(**kwargs)
+        user: Account = self.request.user  # type: ignore
+        active_projects = self.get_queryset()
+
+        if user.portfolio:
+            portfolio = user.portfolio
+        else:
+            portfolio = Portfolio.objects.create()
+            portfolio.users.add(user)
+            user.get_projects.update(portfolio=portfolio)
+
+        filter_form = CompanyFilterForm(
+            self.request.GET or None, user=self.request.user
+        )
+
+        # Add the already-validated form to context
+        context["filter_form"] = filter_form
+        current_date = datetime.now()
+        context["current_date"] = current_date
+
+        # MasterDashboardDataMixin metrics
+        context.update(self.get_master_context(active_projects))
+        context["portfolio_mode"] = True
+        context["project_count"] = active_projects.count()
+        context["title"] = "Business Dashboard"
+
+        return context
