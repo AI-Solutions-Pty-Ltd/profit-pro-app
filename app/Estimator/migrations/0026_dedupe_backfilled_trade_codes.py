@@ -63,9 +63,7 @@ def forwards(apps, schema_editor):
                 continue
             # canonical = a "descriptive" code (name differs from prefix),
             # preferring the lowest pk; else just the lowest pk.
-            descriptive = [
-                c for c in codes if _norm(c.prefix) != _norm(c.trade_name)
-            ]
+            descriptive = [c for c in codes if _norm(c.prefix) != _norm(c.trade_name)]
             canonical = min(descriptive or codes, key=lambda c: c.pk)
 
             for dup in codes:
@@ -92,7 +90,6 @@ def backwards(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("estimator", "0025_backfill_spec_trade_code"),
     ]

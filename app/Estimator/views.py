@@ -1806,13 +1806,9 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
                 )
 
         # Sort trades by amount descending
-        sorted_trades = sorted(
-            trade_totals.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_trades = sorted(trade_totals.items(), key=lambda x: x[1], reverse=True)
         context["chart_trade_labels"] = json.dumps([t[0] for t in sorted_trades])
-        context["chart_trade_values"] = json.dumps(
-            [float(t[1]) for t in sorted_trades]
-        )
+        context["chart_trade_values"] = json.dumps([float(t[1]) for t in sorted_trades])
 
         # Top 10 materials by amount
         sorted_materials = sorted(
@@ -2166,13 +2162,9 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
                 m = row["material_name"] or "Unknown"
                 name_totals[m] = name_totals.get(m, Decimal("0")) + row["amount"]
 
-        sorted_trades = sorted(
-            trade_totals.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_trades = sorted(trade_totals.items(), key=lambda x: x[1], reverse=True)
         context["chart_trade_labels"] = json.dumps([t[0] for t in sorted_trades])
-        context["chart_trade_values"] = json.dumps(
-            [float(t[1]) for t in sorted_trades]
-        )
+        context["chart_trade_values"] = json.dumps([float(t[1]) for t in sorted_trades])
         sorted_names = sorted(name_totals.items(), key=lambda x: x[1], reverse=True)[
             :10
         ]
@@ -7357,7 +7349,9 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
             )
             return redirect("estimator:ctr_plant_specs")
 
-        form = ContractorPlantSpecificationForm(request.POST, company=self.get_company())
+        form = ContractorPlantSpecificationForm(
+            request.POST, company=self.get_company()
+        )
         if form.is_valid():
             obj = form.save(commit=False)
             obj.company = self.get_company()
@@ -7778,7 +7772,9 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
             )
             return redirect("estimator:ctr_preliminary_specs")
 
-        form = ContractorPreliminarySpecificationForm(request.POST, company=self.get_company())
+        form = ContractorPreliminarySpecificationForm(
+            request.POST, company=self.get_company()
+        )
         if form.is_valid():
             obj = form.save(commit=False)
             obj.company = self.get_company()

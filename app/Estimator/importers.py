@@ -518,9 +518,7 @@ class MaterialSpecImporter:
         Trade Code column, so use the normalised resolver (matches on prefix,
         name, or prefix+name) rather than an exact prefix lookup.
         """
-        return resolve_trade_code(
-            trade_str, project=self.project, company=self.company
-        )
+        return resolve_trade_code(trade_str, project=self.project, company=self.company)
 
     def _get_material(self, mat_code):
         """Resolve material by code, using project / contractor / system models."""

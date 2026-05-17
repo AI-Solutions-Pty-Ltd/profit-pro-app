@@ -5,55 +5,108 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0023_alter_contractorlabourcrew_crew_size_and_more'),
+        ("estimator", "0023_alter_contractorlabourcrew_crew_size_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='contractorlabourspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='labour_specifications', to='estimator.contractortradecode'),
+            model_name="contractorlabourspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="labour_specifications",
+                to="estimator.contractortradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='contractorplantspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='plant_specifications', to='estimator.contractortradecode'),
+            model_name="contractorplantspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="plant_specifications",
+                to="estimator.contractortradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='contractorpreliminaryspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='preliminary_specifications', to='estimator.contractortradecode'),
+            model_name="contractorpreliminaryspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="preliminary_specifications",
+                to="estimator.contractortradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='projectlabourspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='labour_specifications', to='estimator.projecttradecode'),
+            model_name="projectlabourspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="labour_specifications",
+                to="estimator.projecttradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='projectplantspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='plant_specifications', to='estimator.projecttradecode'),
+            model_name="projectplantspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="plant_specifications",
+                to="estimator.projecttradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='projectpreliminaryspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='preliminary_specifications', to='estimator.projecttradecode'),
+            model_name="projectpreliminaryspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="preliminary_specifications",
+                to="estimator.projecttradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='systemlabourspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='labour_specifications', to='estimator.systemtradecode'),
+            model_name="systemlabourspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="labour_specifications",
+                to="estimator.systemtradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='systemplantspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='plant_specifications', to='estimator.systemtradecode'),
+            model_name="systemplantspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="plant_specifications",
+                to="estimator.systemtradecode",
+            ),
         ),
         migrations.AddField(
-            model_name='systempreliminaryspecification',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='preliminary_specifications', to='estimator.systemtradecode'),
+            model_name="systempreliminaryspecification",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="preliminary_specifications",
+                to="estimator.systemtradecode",
+            ),
         ),
     ]

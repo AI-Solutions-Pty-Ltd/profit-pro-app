@@ -61,9 +61,7 @@ def forwards(apps, schema_editor):
                 for tc in tc_qs:
                     prefixes.add(tc.prefix)
                     lookup.setdefault((tc.trade_name or "").strip().lower(), tc)
-                    lookup.setdefault(
-                        f"{tc.prefix}{tc.trade_name}".strip().lower(), tc
-                    )
+                    lookup.setdefault(f"{tc.prefix}{tc.trade_name}".strip().lower(), tc)
                 cache[scope_id] = (lookup, prefixes)
 
             lookup, prefixes = cache[scope_id]
@@ -89,7 +87,6 @@ def backwards(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("estimator", "0024_contractorlabourspecification_trade_code_and_more"),
     ]

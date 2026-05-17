@@ -2196,20 +2196,26 @@ class BOQItem(models.Model):
     def markup_amount(self):
         """Money added on top of base cost by material & labour markup %
         (transport excluded — it is reported separately)."""
-        mat = self._material_base_amount * (
-            self.material_markup_pct or Decimal("0")
-        ) / Decimal("100")
-        lab = self._labour_base_amount * (
-            self.labour_markup_pct or Decimal("0")
-        ) / Decimal("100")
+        mat = (
+            self._material_base_amount
+            * (self.material_markup_pct or Decimal("0"))
+            / Decimal("100")
+        )
+        lab = (
+            self._labour_base_amount
+            * (self.labour_markup_pct or Decimal("0"))
+            / Decimal("100")
+        )
         return mat + lab
 
     @property
     def transport_amount(self):
         """Money added on top of base material cost by transport %."""
-        return self._material_base_amount * (
-            self.transport_pct or Decimal("0")
-        ) / Decimal("100")
+        return (
+            self._material_base_amount
+            * (self.transport_pct or Decimal("0"))
+            / Decimal("100")
+        )
 
 
 def sync_boq_from_lineitems(project):
