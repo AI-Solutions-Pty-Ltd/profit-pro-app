@@ -17,7 +17,6 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.dates import get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Cost.models import ActualCost
 from app.Estimator.models import BOQItem
 from app.Project.models import (
     Company,
@@ -696,6 +695,21 @@ class MasterDashboardDataMixin:
 
     def _get_financial_performance(self, projects):
         """Aggregates financial performance metrics from Baselines and Actual Costs."""
+        from decimal import Decimal
+
+        from django.db.models import F, Sum
+
+        from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
+        from app.Project.models import (
+            JournalEntry,
+            LabourCostTracker,
+            MaterialCostTracker,
+            OverheadCostTracker,
+            PlantCostTracker,
+            SubcontractorCostTracker,
+        )
+        from app.Project.models.entity_definitions import BaseProjectEntity
+
         # 1. Baseline Ratios (Averages if portfolio)
         baselines = ProfitabilityBaseline.objects.filter(project__in=projects)
 
@@ -715,36 +729,109 @@ class MasterDashboardDataMixin:
         if baselines.count() > 0:
             avg_net_margin = avg_net_margin / baselines.count()
 
-        # 2. Actual Revenue & Cost
-        # Revenue from BoQ Progress
+        # 2. Actual Revenue & Cost (Financial Performance Overview Logic)
+
+        # Certified Revenue from Payment Certificates
+        certified_revenue = ActualTransaction.objects.filter(
+            payment_certificate__project__in=projects,
+            payment_certificate__status__in=[
+                PaymentCertificate.Status.APPROVED,
+                PaymentCertificate.Status.SIGNATORIES_APPROVED,
+            ],
+            approved=True,
+        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
+        certified_revenue = float(certified_revenue)
+
+        # Revenue from BoQ Progress (for pending/remaining calculations)
         revenue_agg = BOQItem.objects.filter(project__in=projects).aggregate(
-            certified=Sum(F("progress_quantity") * F("contract_rate")),
             total=Sum(F("contract_quantity") * F("contract_rate")),
         )
-        certified_revenue = float(revenue_agg["certified"] or 0)
         total_revenue = float(revenue_agg["total"] or 0)
         remaining_revenue = total_revenue - certified_revenue
 
-        # Costs from ActualCost tracker
-        actual_costs = (
-            ActualCost.objects.filter(bill__structure__project__in=projects).aggregate(
-                total=Sum("net")
-            )["total"]
-            or 0
-        )
-        actual_costs = float(actual_costs)
+        # Costs from Trackers & Journals (COS and OPEX)
+        cos_code = BaseProjectEntity.ExpenseCode.COS
+        opex_code = BaseProjectEntity.ExpenseCode.OPEX
 
-        # Preliminaries (Aggregated from BoQ)
+        def get_tracker_sum(code):
+            mat = (
+                MaterialCostTracker.objects.filter(
+                    project__in=projects, material_entity__expense_code=code
+                ).aggregate(total=Sum(F("quantity") * F("rate")))["total"]
+                or 0
+            )
+            lab = (
+                LabourCostTracker.objects.filter(
+                    project__in=projects, labour_entity__expense_code=code
+                ).aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
+                or 0
+            )
+            sub = (
+                SubcontractorCostTracker.objects.filter(
+                    project__in=projects, subcontractor_entity__expense_code=code
+                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
+                or 0
+            )
+            plt = (
+                PlantCostTracker.objects.filter(
+                    project__in=projects, plant_entity__expense_code=code
+                ).aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
+                or 0
+            )
+            ovh = (
+                OverheadCostTracker.objects.filter(
+                    project__in=projects, overhead_entity__expense_code=code
+                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
+                or 0
+            )
+
+            if code == cos_code:
+                cats = [
+                    JournalEntry.Category.MATERIAL,
+                    JournalEntry.Category.LABOUR,
+                    JournalEntry.Category.SUBCONTRACTOR,
+                    JournalEntry.Category.PLANT,
+                ]
+            else:
+                cats = [JournalEntry.Category.OVERHEAD, JournalEntry.Category.OTHER]
+
+            jou = (
+                JournalEntry.objects.filter(
+                    project__in=projects,
+                    transaction_type=JournalEntry.EntryType.DEBIT,
+                    source_log_id__isnull=True,
+                    category__in=cats,
+                ).aggregate(total=Sum("amount"))["total"]
+                or 0
+            )
+
+            return (
+                float(mat)
+                + float(lab)
+                + float(sub)
+                + float(plt)
+                + float(ovh)
+                + float(jou)
+            )
+
+        cos_total = get_tracker_sum(cos_code)
+        opex_total = get_tracker_sum(opex_code)
+        actual_costs = cos_total + opex_total
+
+        # Preliminaries (Aggregated from BoQ - Note: Financial Performance Overview does not have a "Preliminaries" specific metric)
         prelims_agg = BOQItem.objects.filter(
             project__in=projects, preliminary_specification__isnull=False
         ).aggregate(total=Sum(F("contract_quantity") * F("contract_rate")))
         preliminaries = float(prelims_agg["total"] or 0)
 
         # 3. Profitability Calculations
-        net_profit = certified_revenue - actual_costs
-        gross_profit = certified_revenue * (float(avg_gross_margin) / 100)
+        gross_profit = certified_revenue - cos_total
+        net_profit = gross_profit - opex_total
 
         margin = (net_profit / certified_revenue * 100) if certified_revenue > 0 else 0
+        gross_margin_actual = (
+            (gross_profit / certified_revenue * 100) if certified_revenue > 0 else 0
+        )
         variance = margin - float(avg_net_margin)
 
         # Forecast Profit (Lighthouse value)
@@ -761,7 +848,7 @@ class MasterDashboardDataMixin:
             "forecast_profit": forecast_profit,
             "margin": round(margin, 1),
             "variance": round(variance, 1),
-            "gross_margin": round(avg_gross_margin, 1),
+            "gross_margin": round(gross_margin_actual, 1),
             "opex_ratio": round(avg_opex_ratio, 1),
             "certified_revenue": certified_revenue,
             "pending_revenue": total_revenue * 0.05,  # Placeholder for pending claims
