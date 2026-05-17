@@ -1,10 +1,8 @@
 {% extends "base_full.html" %}
 {% load heroicons %}
-
 {% block title %}
     Drawings - {{ project.name }}
 {% endblock title %}
-
 {% block content %}
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
@@ -29,7 +27,6 @@
             </div>
         </div>
     </div>
-
     <!-- Drawings List -->
     <div class="bg-white shadow-sm rounded-lg overflow-hidden">
         {% if drawings %}
@@ -55,16 +52,16 @@
                                         <div class="ml-3">
                                             <span class="text-sm font-bold text-gray-900">{{ drawing.drawing_number }}</span>
                                             {% if drawing.parent %}
-                                                <div class="text-xs text-gray-400">
-                                                    Sub-drawing of {{ drawing.parent.drawing_number }}
-                                                </div>
+                                                <div class="text-xs text-gray-400">Sub-drawing of {{ drawing.parent.drawing_number }}</div>
                                             {% endif %}
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900">{{ drawing.name }}</div>
-                                    <div class="text-xs text-gray-500">Rev: <span class="font-medium text-indigo-600">{{ drawing.revision_number }}</span></div>
+                                    <div class="text-xs text-gray-500">
+                                        Rev: <span class="font-medium text-indigo-600">{{ drawing.revision_number }}</span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {% if drawing.discipline %}
@@ -87,16 +84,19 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {% if drawing.file %}
-                                        <a href="{{ drawing.file.url }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Download">
+                                        <a href="{{ drawing.file.url }}"
+                                           target="_blank"
+                                           class="text-indigo-600 hover:text-indigo-900 mr-3"
+                                           title="Download">
                                             {% heroicon_outline "arrow-down-tray" class="w-5 h-5 inline" %}
                                         </a>
                                     {% endif %}
-                                    <a href="{% url 'project:drawing-update' project.pk drawing.pk %}" class="text-blue-600 hover:text-blue-900 mr-3" title="Edit">
-                                        {% heroicon_outline "pencil" class="w-5 h-5 inline" %}
-                                    </a>
-                                    <a href="{% url 'project:drawing-delete' project.pk drawing.pk %}" class="text-red-600 hover:text-red-900" title="Delete">
-                                        {% heroicon_outline "trash" class="w-5 h-5 inline" %}
-                                    </a>
+                                    <a href="{% url 'project:drawing-update' project.pk drawing.pk %}"
+                                       class="text-blue-600 hover:text-blue-900 mr-3"
+                                       title="Edit">{% heroicon_outline "pencil" class="w-5 h-5 inline" %}</a>
+                                    <a href="{% url 'project:drawing-delete' project.pk drawing.pk %}"
+                                       class="text-red-600 hover:text-red-900"
+                                       title="Delete">{% heroicon_outline "trash" class="w-5 h-5 inline" %}</a>
                                 </td>
                             </tr>
                         {% endfor %}

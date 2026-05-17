@@ -496,10 +496,11 @@ class MasterDashboardDataMixin:
             metrics["exceptions"] = self._get_exception_list(projects)
 
         # 5. Charts Data (S-Curve & Profit Trend)
+        import json
+
         from app.Project.production_progress.utils.production_utils import (
             get_project_productivity_report_data,
         )
-        import json
 
         project_ids = list(projects.values_list("id", flat=True))
         charts_data = get_project_productivity_report_data(project_ids)
@@ -507,35 +508,36 @@ class MasterDashboardDataMixin:
 
         # 6. Compliance / Correspondence (RFIs)
         from app.SiteManagement.models import (
-            RFI, RFIStatus, 
-            NonConformance, NCRStatus, NCRType, BiWeeklyQualityReport,
-            Incident, IncidentStatus, BiWeeklySafetyReport
+            RFI,
+            BiWeeklyQualityReport,
+            BiWeeklySafetyReport,
+            Incident,
+            IncidentStatus,
+            NCRStatus,
+            NonConformance,
+            RFIStatus,
         )
-        
-        pending_rfis = RFI.objects.filter(project__in=projects, status=RFIStatus.OPEN, deleted=False).count()
-        
+
+        pending_rfis = RFI.objects.filter(
+            project__in=projects, status=RFIStatus.OPEN, deleted=False
+        ).count()
+
         # Quality Matters: Sum of Open Quality NCRs and Quality Reports
         open_quality_ncrs = NonConformance.objects.filter(
-            project__in=projects, 
-            status=NCRStatus.OPEN, 
-            deleted=False
+            project__in=projects, status=NCRStatus.OPEN, deleted=False
         ).count()
         quality_reports = BiWeeklyQualityReport.objects.filter(
-            project__in=projects, 
-            deleted=False
+            project__in=projects, deleted=False
         ).count()
 
         # Safety Matters: Sum of Open Incidents and Safety Reports
         open_incidents = Incident.objects.filter(
-            project__in=projects,
-            status=IncidentStatus.OPEN,
-            deleted=False
+            project__in=projects, status=IncidentStatus.OPEN, deleted=False
         ).count()
         safety_reports = BiWeeklySafetyReport.objects.filter(
-            project__in=projects,
-            deleted=False
+            project__in=projects, deleted=False
         ).count()
-        
+
         metrics["compliance"] = {
             "pending_rfis": pending_rfis,
             "quality_matters": open_quality_ncrs + quality_reports,
