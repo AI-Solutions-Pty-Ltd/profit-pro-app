@@ -1,6 +1,7 @@
 """Tests for Production Daily Log system."""
 
 import json
+from typing import cast
 
 import pytest
 from django.urls import reverse
@@ -13,6 +14,8 @@ from app.Project.production_progress.factories import (
 )
 from app.Project.production_progress.production_models import (
     DailyActivityEntry,
+    ProductionPlan,
+    ProductionResource,
 )
 
 
@@ -25,7 +28,7 @@ class TestProductionDailyLog:
         user = project.users.first()
         client.force_login(user)
 
-        entry = DailyActivityEntryFactory(project=project)
+        entry: DailyActivityEntry = cast(DailyActivityEntry, DailyActivityEntryFactory(project=project))
 
         url = reverse(
             "project:production-daily-log-list", kwargs={"project_pk": project.pk}
@@ -40,7 +43,7 @@ class TestProductionDailyLog:
         user = project.users.first()
         client.force_login(user)
 
-        plan = ProductionPlanFactory(project=project, unit="m3")
+        plan: ProductionPlan = cast(ProductionPlan, ProductionPlanFactory(project=project, unit="m3"))
 
         url = reverse(
             "project:ajax-daily-log-activity-data", kwargs={"project_pk": project.pk}
@@ -56,7 +59,7 @@ class TestProductionDailyLog:
         user = project.users.first()
         client.force_login(user)
 
-        plan = ProductionPlanFactory(project=project)
+        plan: ProductionPlan = cast(ProductionPlan, ProductionPlanFactory(project=project))
 
         url = reverse(
             "project:production-daily-log-create", kwargs={"project_pk": project.pk}
@@ -98,7 +101,7 @@ class TestProductionDailyLog:
         user = project.users.first()
         client.force_login(user)
 
-        entry = DailyActivityEntryFactory(project=project)
+        entry: DailyActivityEntry = cast(DailyActivityEntry, DailyActivityEntryFactory(project=project))
 
         url = reverse(
             "project:production-daily-log-detail",
@@ -111,7 +114,7 @@ class TestProductionDailyLog:
 
     def test_granular_update_serializer(self, client):
         """Test that updating a single entry via serializer works."""
-        entry = DailyActivityEntryFactory()
+        entry: DailyActivityEntry = cast(DailyActivityEntry, DailyActivityEntryFactory())
         user = AccountFactory()
         client.force_login(user)
 
@@ -155,11 +158,13 @@ class TestProductionDailyLog:
         # Verify usage
         assert entry.labour_usage.count() == 2
         assert entry.plant_usage.count() == 1
-        assert entry.plant_usage.first().resource.name == "Excavator"
+        plant_usage = entry.plant_usage.first()
+        assert plant_usage is not None
+        assert plant_usage.resource.name == "Excavator"
 
     def test_granular_update_initial_data(self, client):
         """Test that the edit view returns the correct initial data."""
-        entry = DailyActivityEntryFactory(quantity=25.0, hours_on_activity=8.0)
+        entry: DailyActivityEntry = cast(DailyActivityEntry, DailyActivityEntryFactory(quantity=25.0, hours_on_activity=8.0))
         user = AccountFactory()
         client.force_login(user)
 
