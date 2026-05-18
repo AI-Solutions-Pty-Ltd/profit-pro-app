@@ -896,7 +896,7 @@ class MasterPortfolioDashboardView(
     required_tiers = [Subscription.BUSINESS_MANAGEMENT]
 
     def get_queryset(self):
-        return self.request.user.get_projects
+        return self.request.user.get_projects  # type: ignore
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

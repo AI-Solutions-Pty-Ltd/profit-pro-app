@@ -1,10 +1,15 @@
 """Views for managing Lead Consultant Companies."""
 
+import json
+
 from django.contrib import messages
 from django.db.models import QuerySet
+from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from app.Account.models import Account
 from app.Consultant.views.mixins import LeadConsultantMixin
 from app.core.Utilities.mixins import BreadcrumbItem
 from app.Project.company.company_forms import CompanyForm
@@ -19,7 +24,14 @@ class LeadConsultantListView(LeadConsultantMixin, ListView):
     context_object_name = "lead_consultants"
 
     def get_queryset(self) -> QuerySet[Company]:
-        queryset = Company.objects.filter(type=Company.Type.LEAD_CONSULTANT)
+        user: Account = self.request.user  # type: ignore
+        projects = user.get_projects
+        from django.db.models import Q
+
+        queryset = Company.objects.filter(
+            Q(lead_consultant_projects__in=projects) | Q(users=user),
+            type=Company.Type.LEAD_CONSULTANT,
+        )
 
         lead_consultant = self.get_project().lead_consultant
         if lead_consultant:
@@ -155,3 +167,52 @@ class LeadConsultantDeleteView(LeadConsultantMixin, DeleteView):
             "client:lead-consultant-management:lead-consultant-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
+
+
+class RevealLeadConsultantFieldView(LeadConsultantMixin, View):
+    """Reveal a sensitive lead consultant company field securely to authorized project administrators."""
+
+    def handle_no_permission(self):
+        """Return 403 Forbidden since this is a secure JSON AJAX endpoint."""
+        return JsonResponse(
+            {"status": "error", "message": "Permission denied"}, status=403
+        )
+
+    def post(self, request, *args, **kwargs):
+        try:
+            body = json.loads(request.body)
+            field_name = body.get("field_name")
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid JSON"}, status=400
+            )
+
+        sensitive_fields = {
+            "registration_number",
+            "tax_number",
+            "vat_number",
+            "bank_account_number",
+            "bank_branch_code",
+            "bank_swift_code",
+        }
+
+        if field_name not in sensitive_fields:
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "Invalid or non-sensitive field requested",
+                },
+                status=400,
+            )
+
+        try:
+            lead_consultant = Company.objects.get(
+                pk=self.kwargs["company_pk"], type=Company.Type.LEAD_CONSULTANT
+            )
+        except Company.DoesNotExist:
+            return JsonResponse(
+                {"status": "error", "message": "Lead consultant not found"}, status=404
+            )
+
+        val = getattr(lead_consultant, field_name, "")
+        return JsonResponse({"status": "success", "value": val})

@@ -113,3 +113,106 @@ class TestClientListView(TestCase):
         # All returned companies should be clients
         for company in queryset:
             self.assertEqual(company.type, Company.Type.CLIENT)
+
+
+class TestRevealClientFieldView(TestCase):
+    """Test cases for RevealClientFieldView."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user: Account = cast(Account, AccountFactory())
+        self.other_user: Account = cast(Account, AccountFactory())
+
+        from app.Project.models import Company, ProjectRole, Role
+
+        self.client_company: Company = cast(
+            Company,
+            ClientFactory(
+                name="Test Client Company",
+                type=Company.Type.CLIENT,
+            ),
+        )
+
+        self.project: Project = cast(
+            Project,
+            ProjectFactory(
+                name="Client Privacy Project",
+            ),
+        )
+        self.project.client = self.client_company
+        self.project.save()
+
+        # Grant Role.ADMIN to the main test user
+        ProjectRole.objects.create(
+            project=self.project, user=self.user, role=Role.ADMIN
+        )
+
+    def test_reveal_endpoint_success_for_authorized_user(self):
+        import json
+
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+
+        url = reverse(
+            "client:client-management:client-reveal-field",
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.client_company.pk,
+            },
+        )
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"field_name": "registration_number"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+
+    def test_reveal_endpoint_forbidden_for_unauthorized_user(self):
+        """Test that an unauthorized user receives 403 Forbidden."""
+        import json
+
+        from django.urls import reverse
+
+        self.client.force_login(self.other_user)
+
+        url = reverse(
+            "client:client-management:client-reveal-field",
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.client_company.pk,
+            },
+        )
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"field_name": "registration_number"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_reveal_endpoint_bad_request_for_invalid_field(self):
+        """Test that requesting an invalid or non-sensitive field returns 400."""
+        import json
+
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+
+        url = reverse(
+            "client:client-management:client-reveal-field",
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.client_company.pk,
+            },
+        )
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"field_name": "name"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
