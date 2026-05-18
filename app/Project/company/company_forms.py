@@ -25,21 +25,28 @@ class CompanyFilterForm(forms.Form):
             self.fields["company"].queryset = user.get_projects.order_by("name")  # type: ignore
 
 
+class PrivacyModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+    """Custom multiple choice field to display user names instead of email addresses."""
+    def label_from_instance(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+
 class CompanyForm(forms.ModelForm):
     """Form for creating and editing companies."""
 
-    users = forms.ModelMultipleChoiceField(
+    users = PrivacyModelMultipleChoiceField(
         queryset=Account.objects.none(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="Company Users",
     )
-    consultants = forms.ModelMultipleChoiceField(
+    consultants = PrivacyModelMultipleChoiceField(
         queryset=Account.objects.none(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="Company Consultants",
     )
+
 
     class Meta:
         model = Company
@@ -132,6 +139,20 @@ class CompanyForm(forms.ModelForm):
         users_field.queryset = Account.objects.order_by("first_name", "email")
         consultants_field.queryset = Account.objects.order_by("first_name", "email")
 
+        # Apply masking to initial values when editing an existing instance
+        if self.instance and self.instance.pk:
+            sensitive_fields = [
+                "registration_number", "tax_number", "vat_number",
+                "bank_account_number", "bank_branch_code", "bank_swift_code"
+            ]
+            for field_name in sensitive_fields:
+                raw_val = getattr(self.instance, field_name, "")
+                if raw_val:
+                    if len(raw_val) <= 4:
+                        self.initial[field_name] = raw_val
+                    else:
+                        self.initial[field_name] = "•" * (len(raw_val) - 4) + raw_val[-4:]
+
         company_type = None
         if self.instance and self.instance.pk:
             company_type = self.instance.type
@@ -139,6 +160,7 @@ class CompanyForm(forms.ModelForm):
         if contractor or company_type == Company.Type.CONTRACTOR:
             # Contractors only maintain company users in this form.
             self.fields.pop("consultants", None)
+
 
     def clean(self):
         cleaned_data = super().clean()
@@ -155,7 +177,32 @@ class CompanyForm(forms.ModelForm):
         ):
             raise forms.ValidationError("Contractor with this name already exists.")
 
+    def clean_sensitive_field(self, field_name: str) -> str:
+        submitted_val = self.cleaned_data.get(field_name, "")
+        if submitted_val and "•" in submitted_val:
+            return getattr(self.instance, field_name, "") if self.instance else ""
+        return submitted_val
+
+    def clean_registration_number(self):
+        return self.clean_sensitive_field("registration_number")
+
+    def clean_tax_number(self):
+        return self.clean_sensitive_field("tax_number")
+
+    def clean_vat_number(self):
+        return self.clean_sensitive_field("vat_number")
+
+    def clean_bank_account_number(self):
+        return self.clean_sensitive_field("bank_account_number")
+
+    def clean_bank_branch_code(self):
+        return self.clean_sensitive_field("bank_branch_code")
+
+    def clean_bank_swift_code(self):
+        return self.clean_sensitive_field("bank_swift_code")
+
     def save(self, commit=True):
+
         """Save the instance, discarding VAT number if VAT registered is not selected."""
         instance = super().save(commit=False)
 

@@ -70,3 +70,61 @@ class TestProjectContractorForm(TestCase):
         contractor_names = list(queryset.values_list("name", flat=True))
         self.assertIn(self.contractor1.name, contractor_names)
         self.assertIn(self.contractor2.name, contractor_names)
+
+
+class TestCompanyFormPrivacy(TestCase):
+    """Test cases for CompanyForm privacy features."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user: Account = cast(Account, AccountFactory(
+            first_name="John",
+            last_name="Doe",
+            email="john@example.com"
+        ))
+
+    def test_company_form_uses_privacy_user_field(self):
+        """Test that the users field represents names instead of emails."""
+        from app.Project.company.company_forms import CompanyForm
+        form = CompanyForm(contractor=True)
+        # Check label is displayed as name instead of email
+        label = form.fields["users"].label_from_instance(self.user)
+        self.assertEqual(label, "John Doe")
+
+    def test_company_form_masks_initial_sensitive_data(self):
+        """Test that initial sensitive fields are masked to show last 4 chars."""
+        from app.Project.company.company_forms import CompanyForm
+        company = ClientFactory(
+            name="Contractor XYZ",
+            type=Company.Type.CONTRACTOR,
+            registration_number="1234567890",
+            tax_number="TAX-998877",
+            vat_number="VAT-776655",
+            bank_account_number="9876543210",
+            bank_branch_code="198765",
+            bank_swift_code="ABSAZAJJ123"
+        )
+        form = CompanyForm(instance=company, contractor=True)
+        self.assertEqual(form.initial["registration_number"], "••••••7890")
+        self.assertEqual(form.initial["tax_number"], "••••••8877")
+        self.assertEqual(form.initial["bank_swift_code"], "•••••••J123")
+
+
+    def test_company_form_clean_preserves_masked_values(self):
+        """Test that submitting a masked value does not overwrite database value."""
+        from app.Project.company.company_forms import CompanyForm
+        company = ClientFactory(
+            name="Contractor XYZ",
+            type=Company.Type.CONTRACTOR,
+            registration_number="1234567890",
+        )
+        # Post the masked registration number along with other required fields
+        data = {
+            "name": "Contractor XYZ",
+            "registration_number": "••••••7890",
+        }
+        form = CompanyForm(data=data, instance=company, contractor=True)
+        self.assertTrue(form.is_valid(), form.errors)
+        saved_instance = form.save()
+        self.assertEqual(saved_instance.registration_number, "1234567890")
+
