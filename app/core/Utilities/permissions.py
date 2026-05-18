@@ -15,6 +15,13 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         if self.request.user.is_superuser:  # type: ignore
             return True
+        # Allow access on Demo tier if subscription is active and not expired
+        if getattr(
+            self.request.user, "subscription", None
+        ) == "DEMO_TIER" and not getattr(
+            self.request.user, "is_subscription_expired", False
+        ):
+            return True
         if not self.permissions:
             raise ValueError("Permissions must be specified.")
         return self.request.user.groups.filter(name__in=self.permissions).exists()  # type: ignore
