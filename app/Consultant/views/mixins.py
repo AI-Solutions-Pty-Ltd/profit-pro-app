@@ -20,9 +20,17 @@ class ConsultantMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     def get_clients(self):
         companies = Company.objects.filter(type=Company.Type.CLIENT)
         if not self.request.user.is_superuser:  # type: ignore
-            companies = companies.filter(
-                consultants=self.request.user,
-            )
+            # Allow active DEMO_TIER users to see all CLIENT companies
+            if getattr(
+                self.request.user, "subscription", None
+            ) == "DEMO_TIER" and not getattr(
+                self.request.user, "is_subscription_expired", False
+            ):
+                pass
+            else:
+                companies = companies.filter(
+                    consultants=self.request.user,
+                )
         return companies
 
     def get_queryset(self):
@@ -80,6 +88,11 @@ class PaymentCertMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             raise Http404("Client not found")
         user: Account = self.request.user  # type: ignore
         if user.is_superuser:
+            return self.project
+        # Allow active DEMO_TIER users to bypass consultant check
+        if getattr(user, "subscription", None) == "DEMO_TIER" and not getattr(
+            user, "is_subscription_expired", False
+        ):
             return self.project
         if user not in self.project.client.consultants.all():
             raise Http404("User is not a consultant for this client")
