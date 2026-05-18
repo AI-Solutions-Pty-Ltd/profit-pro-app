@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -148,9 +148,12 @@ class ProductivityLogsView(
                 labour_usage_map = {
                     usage.resource.id: usage.number
                     for usage in entry.labour_usage.all()
+                    if usage.resource
                 }
                 plant_usage_map = {
-                    usage.resource.id: usage.number for usage in entry.plant_usage.all()
+                    usage.resource.id: usage.number
+                    for usage in entry.plant_usage.all()
+                    if usage.resource
                 }
 
                 day_data[day_id] = {
@@ -618,6 +621,7 @@ class ProductionControllerView(
             f_fin = (
                 kpis["daily_output"]["forecast_finish"] if kpis else plan.finish_date
             )
+            f_fin_date = f_fin if isinstance(f_fin, date) else None
 
             gantt_data.append(
                 {
@@ -625,7 +629,9 @@ class ProductionControllerView(
                     "activity": plan.activity,
                     "start_date": plan.start_date.isoformat(),
                     "finish_date": plan.finish_date.isoformat(),
-                    "forecast_finish_date": f_fin.isoformat() if f_fin else None,
+                    "forecast_finish_date": f_fin_date.isoformat()
+                    if f_fin_date
+                    else None,
                     "progress_pct": float(prog),
                     "parent_id": str(plan.parent_id) if plan.parent_id else None,
                     "has_children": plan.children.exists(),

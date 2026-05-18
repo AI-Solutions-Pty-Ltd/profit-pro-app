@@ -60,9 +60,12 @@ class ProjectClientForm(forms.Form):
         if user:
             projects = user.get_projects
 
-            # Filter to only show client companies
+            # Filter to show client companies that are either associated with the user's projects or account
+            from django.db.models import Q
+
             queryset = Company.objects.filter(
-                client_projects__in=projects, type=Company.Type.CLIENT
+                Q(client_projects__in=projects) | Q(users=user),
+                type=Company.Type.CLIENT,
             ).order_by("name")
 
             # Exclude the currently assigned client if project is provided

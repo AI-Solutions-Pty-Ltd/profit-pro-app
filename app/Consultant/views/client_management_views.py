@@ -1,8 +1,12 @@
 """Views for managing Client Companies."""
 
+import json
+
 from django.contrib import messages
 from django.db.models import QuerySet
+from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     ListView,
@@ -42,9 +46,12 @@ class ClientListView(ClientMixin, ListView):
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects
         project = self.get_project()
+        from django.db.models import Q
+
         queryset = (
             Company.objects.filter(
-                client_projects__in=projects, type=Company.Type.CLIENT
+                Q(client_projects__in=projects) | Q(users=user),
+                type=Company.Type.CLIENT,
             )
             .distinct()
             .order_by("name")
@@ -143,3 +150,49 @@ class ClientUpdateView(ClientMixin, UpdateView):
             "client:client-management:client-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
+
+
+class RevealClientFieldView(ClientMixin, View):
+    """Reveal a sensitive client company field securely to authorized project administrators."""
+
+    def handle_no_permission(self):
+        """Return 403 Forbidden since this is a secure JSON AJAX endpoint."""
+        return JsonResponse(
+            {"status": "error", "message": "Permission denied"}, status=403
+        )
+
+    def post(self, request, *args, **kwargs):
+        try:
+            body = json.loads(request.body)
+            field_name = body.get("field_name")
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid JSON"}, status=400
+            )
+
+        sensitive_fields = {
+            "registration_number",
+            "tax_number",
+            "vat_number",
+        }
+
+        if field_name not in sensitive_fields:
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "Invalid or non-sensitive field requested",
+                },
+                status=400,
+            )
+
+        try:
+            client = Company.objects.get(
+                pk=self.kwargs["company_pk"], type=Company.Type.CLIENT
+            )
+        except Company.DoesNotExist:
+            return JsonResponse(
+                {"status": "error", "message": "Client not found"}, status=404
+            )
+
+        val = getattr(client, field_name, "")
+        return JsonResponse({"status": "success", "value": val})

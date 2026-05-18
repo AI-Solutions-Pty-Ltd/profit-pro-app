@@ -1,8 +1,10 @@
-"""Views for managing Contractor Companies."""
+import json
 
 from django.contrib import messages
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
+from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.Account.models import Account
@@ -38,7 +40,8 @@ class ContractorListView(ContractorMixin, ListView):
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects
         queryset = Company.objects.filter(
-            contractor_projects__in=projects, type=Company.Type.CONTRACTOR
+            Q(contractor_projects__in=projects) | Q(users=user),
+            type=Company.Type.CONTRACTOR,
         )
 
         # Exclude the currently assigned contractor if it exists
@@ -176,3 +179,50 @@ class ContractorDeleteView(ContractorMixin, DeleteView):
             "client:contractor-management:contractor-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
+
+
+class RevealContractorFieldView(ContractorMixin, View):
+    """Secure endpoint to reveal/decrypt a sensitive contractor field on-demand."""
+
+    def handle_no_permission(self):
+        """Return 403 Forbidden since this is a secure JSON AJAX endpoint."""
+        return JsonResponse(
+            {"status": "error", "message": "Permission denied"}, status=403
+        )
+
+    def post(self, request, *args, **kwargs):
+
+        try:
+            body = json.loads(request.body)
+            field_name = body.get("field_name")
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid JSON"}, status=400
+            )
+
+        sensitive_fields = {
+            "registration_number",
+            "tax_number",
+            "vat_number",
+            "bank_account_number",
+            "bank_branch_code",
+            "bank_swift_code",
+        }
+
+        if field_name not in sensitive_fields:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid or unauthorized field request"},
+                status=400,
+            )
+
+        try:
+            # The URL pattern provides 'company_pk' for the contractor pk
+            contractor = self.get_contractor(slug="company_pk")
+        except Company.DoesNotExist:
+            return JsonResponse(
+                {"status": "error", "message": "Contractor not found"},
+                status=404,
+            )
+
+        val = getattr(contractor, field_name, "")
+        return JsonResponse({"status": "success", "value": val})

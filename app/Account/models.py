@@ -175,6 +175,7 @@ class Account(AbstractUser, BaseModel):
         lead_consultant_projects: QuerySet[Project]
         client_rep_projects: QuerySet[Project]
         project_roles: QuerySet[ProjectRole]
+        companies: QuerySet[Company]
 
     def __str__(self):
         return self.email
