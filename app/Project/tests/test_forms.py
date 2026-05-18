@@ -96,8 +96,8 @@ class TestContractorQuickCreateForm(TestCase):
 
     def test_quick_create_form_fields(self):
         """Test that the quick create form matches CompanyForm and has correct fields."""
-        from app.Project.forms.forms import ContractorQuickCreateForm
         from app.Project.company.company_forms import CompanyForm
+        from app.Project.forms.forms import ContractorQuickCreateForm
 
         form = ContractorQuickCreateForm()
         # Verify it inherits from CompanyForm

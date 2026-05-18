@@ -21,4 +21,9 @@ urlpatterns = [
         client_management_views.ClientUpdateView.as_view(),
         name="client-update",
     ),
+    path(
+        "project/<int:project_pk>/reveal-field/<int:company_pk>/",
+        client_management_views.RevealClientFieldView.as_view(),
+        name="client-reveal-field",
+    ),
 ]

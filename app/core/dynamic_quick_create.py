@@ -107,6 +107,13 @@ class QuickCreateSubmitView(LoginRequiredMixin, View):
                         project = get_object_or_404(Project, pk=project_pk)
                         instance.project = project
                     instance.save()
+                    form.save_m2m()
+
+                    # If this is a Company, associate it with the current user
+                    from app.Project.models import Company
+
+                    if isinstance(instance, Company):
+                        instance.users.add(request.user)
 
                     return JsonResponse(
                         {

@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -40,7 +40,8 @@ class ContractorListView(ContractorMixin, ListView):
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects
         queryset = Company.objects.filter(
-            contractor_projects__in=projects, type=Company.Type.CONTRACTOR
+            Q(contractor_projects__in=projects) | Q(users=user),
+            type=Company.Type.CONTRACTOR,
         )
 
         # Exclude the currently assigned contractor if it exists
@@ -49,6 +50,7 @@ class ContractorListView(ContractorMixin, ListView):
             queryset = queryset.exclude(pk=contractor.pk)
 
         return queryset.distinct().order_by("name")
+
 
 
 class ContractorCreateView(ContractorMixin, CreateView):

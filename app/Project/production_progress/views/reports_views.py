@@ -148,9 +148,12 @@ class ProductivityLogsView(
                 labour_usage_map = {
                     usage.resource.id: usage.number
                     for usage in entry.labour_usage.all()
+                    if usage.resource
                 }
                 plant_usage_map = {
-                    usage.resource.id: usage.number for usage in entry.plant_usage.all()
+                    usage.resource.id: usage.number
+                    for usage in entry.plant_usage.all()
+                    if usage.resource
                 }
 
                 day_data[day_id] = {
