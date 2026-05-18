@@ -290,7 +290,8 @@ def send_payment_certificate_to_signatories(payment_certificate_id: int):
     # Send email to each signatory
     to_emails = []
     for signatory in signatories:
-        to_emails.append(signatory.email)
+        if signatory.user:
+            to_emails.append(signatory.user.email)
 
     # Render email template
     context = {

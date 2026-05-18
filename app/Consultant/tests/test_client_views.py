@@ -120,18 +120,24 @@ class TestRevealClientFieldView(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory()
-        self.other_user = AccountFactory()
+        self.user: Account = cast(Account, AccountFactory())
+        self.other_user: Account = cast(Account, AccountFactory())
 
         from app.Project.models import Company, ProjectRole, Role
 
-        self.client_company = ClientFactory(
-            name="Test Client Company",
-            type=Company.Type.CLIENT,
+        self.client_company: Company = cast(
+            Company,
+            ClientFactory(
+                name="Test Client Company",
+                type=Company.Type.CLIENT,
+            ),
         )
 
-        self.project = ProjectFactory(
-            name="Client Privacy Project",
+        self.project: Project = cast(
+            Project,
+            ProjectFactory(
+                name="Client Privacy Project",
+            ),
         )
         self.project.client = self.client_company
         self.project.save()

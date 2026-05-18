@@ -1,10 +1,12 @@
 """Tests for the Demo Tier and subscription expiration logic."""
 
 from datetime import timedelta
+from typing import cast
 
 import pytest
 from django.utils import timezone
 
+from app.Account.models import Account
 from app.Account.subscription_config import Subscription
 from app.Account.tests.factories import AccountFactory
 
@@ -16,8 +18,12 @@ class TestDemoTier:
     def test_demo_tier_access_before_expiry(self):
         """Test that Demo Tier grants access before expiration."""
         expiry = timezone.now() + timedelta(days=7)
-        user = AccountFactory(
-            subscription=Subscription.DEMO_TIER, subscription_expires_at=expiry
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
         )
 
         # Should have access to business management (parent of demo)
@@ -27,8 +33,12 @@ class TestDemoTier:
     def test_demo_tier_access_after_expiry(self):
         """Test that Demo Tier blocks access after expiration."""
         expiry = timezone.now() - timedelta(days=1)
-        user = AccountFactory(
-            subscription=Subscription.DEMO_TIER, subscription_expires_at=expiry
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
         )
 
         # Should NOT have access even to business management
@@ -39,7 +49,7 @@ class TestDemoTier:
         """Test the human-readable time left string."""
         # 2 days left
         expiry = timezone.now() + timedelta(days=2, hours=1)
-        user = AccountFactory(subscription_expires_at=expiry)
+        user: Account = cast(Account, AccountFactory(subscription_expires_at=expiry))
         assert "2 days remaining" in user.demo_time_left_str
 
         # 5 hours left
