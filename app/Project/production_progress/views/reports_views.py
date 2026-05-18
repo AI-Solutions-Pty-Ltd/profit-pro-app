@@ -629,7 +629,9 @@ class ProductionControllerView(
                     "activity": plan.activity,
                     "start_date": plan.start_date.isoformat(),
                     "finish_date": plan.finish_date.isoformat(),
-                    "forecast_finish_date": f_fin_date.isoformat() if f_fin_date else None,
+                    "forecast_finish_date": f_fin_date.isoformat()
+                    if f_fin_date
+                    else None,
                     "progress_pct": float(prog),
                     "parent_id": str(plan.parent_id) if plan.parent_id else None,
                     "has_children": plan.children.exists(),
