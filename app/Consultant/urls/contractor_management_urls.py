@@ -21,4 +21,9 @@ urlpatterns = [
         contractor_management_views.ContractorUpdateView.as_view(),
         name="contractor-update",
     ),
+    path(
+        "project/<int:project_pk>/reveal-field/<int:company_pk>/",
+        contractor_management_views.RevealContractorFieldView.as_view(),
+        name="contractor-reveal-field",
+    ),
 ]

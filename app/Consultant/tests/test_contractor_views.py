@@ -120,3 +120,95 @@ class TestContractorListView(TestCase):
         # All returned companies should be contractors
         for company in queryset:
             self.assertEqual(company.type, Company.Type.CONTRACTOR)
+
+
+class TestRevealContractorFieldView(TestCase):
+    """Test cases for RevealContractorFieldView."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = AccountFactory()
+        self.other_user = AccountFactory()
+
+        from app.Project.models import Company, ProjectRole, Role
+
+        self.contractor = ClientFactory(
+            name="Test Contractor",
+            type=Company.Type.CONTRACTOR,
+            registration_number="REG-123456",
+        )
+
+        self.project = ProjectFactory(
+            name="Privacy Project",
+        )
+        self.project.contractor = self.contractor
+        self.project.save()
+
+        # Grant Role.ADMIN to the main test user
+        ProjectRole.objects.create(
+            project=self.project, user=self.user, role=Role.ADMIN
+        )
+
+    def test_reveal_endpoint_success_for_authorized_user(self):
+        """Test that an authorized project admin can retrieve decrypted values."""
+        import json
+
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+
+        url = reverse(
+            "client:contractor-management:contractor-reveal-field",
+            kwargs={"project_pk": self.project.pk, "company_pk": self.contractor.pk},
+        )
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"field_name": "registration_number"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+        self.assertEqual(data["value"], "REG-123456")
+
+    def test_reveal_endpoint_forbidden_for_unauthorized_user(self):
+        """Test that an unauthorized user receives 403 Forbidden."""
+        import json
+
+        from django.urls import reverse
+
+        self.client.force_login(self.other_user)
+
+        url = reverse(
+            "client:contractor-management:contractor-reveal-field",
+            kwargs={"project_pk": self.project.pk, "company_pk": self.contractor.pk},
+        )
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"field_name": "registration_number"}),
+            content_type="application/json",
+        )
+        # ContractorMixin enforces Role.ADMIN or raises permission error / 403
+        self.assertEqual(response.status_code, 403)
+
+    def test_reveal_endpoint_bad_request_for_invalid_field(self):
+        """Test that requesting an invalid or non-sensitive field returns 400."""
+        import json
+
+        from django.urls import reverse
+
+        self.client.force_login(self.user)
+
+        url = reverse(
+            "client:contractor-management:contractor-reveal-field",
+            kwargs={"project_pk": self.project.pk, "company_pk": self.contractor.pk},
+        )
+
+        response = self.client.post(
+            url,
+            data=json.dumps({"field_name": "name"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
