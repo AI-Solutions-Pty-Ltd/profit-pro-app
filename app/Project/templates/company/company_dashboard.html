@@ -66,22 +66,22 @@
     </div>
     <!-- Footer -->
     <div class="px-6 py-4 mt-4 bg-gray-50 border-t border-gray-200">
-          <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:portfolio-dashboard' %}"
-                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md transition-colors hover:bg-indigo-700">
-                        {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
-                        Go To Projects Portfolio Dashboard
-                    </a>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:project-list' %}"
-                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md transition-colors hover:bg-indigo-700">
-                        {% heroicon_outline "building-office" size="20" class="mr-2" %}
-                        Go To Projects List
-                    </a>
-                </div>
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'project:portfolio-dashboard' %}"
+                   class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md transition-colors hover:bg-indigo-700">
+                    {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
+                    Go To Projects Portfolio Dashboard
+                </a>
             </div>
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'project:project-list' %}"
+                   class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md transition-colors hover:bg-indigo-700">
+                    {% heroicon_outline "building-office" size="20" class="mr-2" %}
+                    Go To Projects List
+                </a>
+            </div>
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock content %}

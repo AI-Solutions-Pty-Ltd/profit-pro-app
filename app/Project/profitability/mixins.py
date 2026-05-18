@@ -107,21 +107,19 @@ class FinancialCalculationMixin:
                                 t=Sum(F("amount_of_days") * F("salary"))
                             )["t"]
                         elif tracker_type == "materials":
-                            agg = qs.aggregate(t=Sum(F("quantity") * F("rate")))[
+                            agg = qs.aggregate(t=Sum(F("quantity") * F("rate")))["t"]
+                        elif tracker_type == "subcontractors":
+                            agg = qs.aggregate(t=Sum(F("amount_of_days") * F("rate")))[
                                 "t"
                             ]
-                        elif tracker_type == "subcontractors":
-                            agg = qs.aggregate(
-                                t=Sum(F("amount_of_days") * F("rate"))
-                            )["t"]
                         elif tracker_type == "plant":
                             agg = qs.aggregate(
                                 t=Sum(F("usage_hours") * F("hourly_rate"))
                             )["t"]
                         elif tracker_type == "overhead":
-                            agg = qs.aggregate(
-                                t=Sum(F("amount_of_days") * F("rate"))
-                            )["t"]
+                            agg = qs.aggregate(t=Sum(F("amount_of_days") * F("rate")))[
+                                "t"
+                            ]
                         else:
                             agg = 0
                         total += Decimal(str(agg or 0))

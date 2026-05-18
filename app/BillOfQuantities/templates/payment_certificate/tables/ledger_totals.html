@@ -92,7 +92,6 @@
             {% endwith %}
         </tbody>
         <tfoot class="bg-gray-50 divide-y divide-gray-200">
-        
             <!-- Ledger Subtotal -->
             <tr>
                 <td colspan="2"
@@ -106,7 +105,7 @@
                     R {{ payment_certificate.ledger_progressive_to_date|floatformat:2|intcomma }}
                 </td>
             </tr>
-                  <!-- Work Subtotal -->
+            <!-- Work Subtotal -->
             <tr>
                 <td colspan="2"
                     class="px-4 py-3 text-xs font-bold tracking-widest text-right text-gray-500 uppercase">
@@ -119,7 +118,6 @@
                     R {{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}
                 </td>
             </tr>
-          
             <!-- Grand Total -->
             <tr class="bg-blue-50">
                 <td colspan="2"
@@ -136,7 +134,6 @@
         </tfoot>
     </table>
 </div>
-
 <!-- Notes -->
 <div class="p-4 mt-4 bg-blue-50 rounded-lg">
     <div class="flex">
