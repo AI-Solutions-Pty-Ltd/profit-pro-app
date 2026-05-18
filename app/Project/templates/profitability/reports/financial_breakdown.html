@@ -245,67 +245,123 @@
                         </td>
                     </tr>
                     <!-- Production Cost Items -->
-                    {% if cos_breakdown.trackers.total > 0 %}
+                    {% if cos_breakdown.total > 0 %}
                         <!-- Labour -->
-                        <tr class="transition-colors hover:bg-gray-50/80">
-                            <td class="px-6 py-4">
-                                <div class="flex gap-3 items-center">
-                                    <div class="w-4 h-4"></div>
-                                    <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Labour Costs</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
-                                R {{ cos_breakdown.trackers.sub_totals.labour_total|default:"0.00"|floatformat:2|intcomma }}
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.labour_total total_revenue 100 %}%</span>
-                            </td>
-                        </tr>
+                        {% if cos_breakdown.trackers.sub_totals.labour_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Labour Costs</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ cos_breakdown.trackers.sub_totals.labour_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.labour_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
                         <!-- Materials -->
-                        <tr class="transition-colors hover:bg-gray-50/80">
-                            <td class="px-6 py-4">
-                                <div class="flex gap-3 items-center">
-                                    <div class="w-4 h-4"></div>
-                                    <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Material Costs</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
-                                R {{ cos_breakdown.trackers.sub_totals.materials_total|default:"0.00"|floatformat:2|intcomma }}
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.materials_total total_revenue 100 %}%</span>
-                            </td>
-                        </tr>
+                        {% if cos_breakdown.trackers.sub_totals.materials_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Material Costs</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ cos_breakdown.trackers.sub_totals.materials_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.materials_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
                         <!-- Subcontractors -->
-                        <tr class="transition-colors hover:bg-gray-50/80">
-                            <td class="px-6 py-4">
-                                <div class="flex gap-3 items-center">
-                                    <div class="w-4 h-4"></div>
-                                    <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Subcontractors</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
-                                R {{ cos_breakdown.trackers.sub_totals.subcontractors_total|default:"0.00"|floatformat:2|intcomma }}
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.subcontractors_total total_revenue 100 %}%</span>
-                            </td>
-                        </tr>
+                        {% if cos_breakdown.trackers.sub_totals.subcontractors_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Subcontractors</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ cos_breakdown.trackers.sub_totals.subcontractors_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.subcontractors_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
                         <!-- Plant -->
-                        <tr class="transition-colors hover:bg-gray-50/80">
-                            <td class="px-6 py-4">
-                                <div class="flex gap-3 items-center">
-                                    <div class="w-4 h-4"></div>
-                                    <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Plant & Equipment</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
-                                R {{ cos_breakdown.trackers.sub_totals.plant_total|default:"0.00"|floatformat:2|intcomma }}
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.plant_total total_revenue 100 %}%</span>
-                            </td>
-                        </tr>
+                        {% if cos_breakdown.trackers.sub_totals.plant_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Plant & Equipment</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ cos_breakdown.trackers.sub_totals.plant_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.trackers.sub_totals.plant_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        <!-- Production Journals -->
+                        {% if cos_breakdown.journals.total > 0 %}
+                            <tr class="transition-colors cursor-pointer hover:bg-gray-50/80 group"
+                                onclick="toggleBreakdown('cos-journals')">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div id="icon-cos-journals"
+                                             class="text-gray-400 transition-transform duration-200">
+                                            {% heroicon_outline "chevron-right" size="16" %}
+                                        </div>
+                                        <span class="text-xs font-bold tracking-tight text-gray-600 uppercase">Production Journals</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ cos_breakdown.journals.total|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio cos_breakdown.journals.total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                            <!-- Production Journals Detail (Hidden) -->
+                            <tr id="details-cos-journals" class="hidden bg-gray-50/40">
+                                <td colspan="3" class="px-12 py-4">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="border-b border-gray-200">
+                                                <th class="py-2 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400">Date</th>
+                                                <th class="py-2 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400">Description / Reference</th>
+                                                <th class="py-2 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400">Category</th>
+                                                <th class="py-2 text-right text-[9px] font-bold uppercase tracking-widest text-gray-400">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            {% for entry in cos_breakdown.journals.items %}
+                                                <tr>
+                                                    <td class="py-2 text-xs text-gray-600">{{ entry.date|date:"d M Y" }}</td>
+                                                    <td class="py-2 text-xs font-medium text-gray-900">{{ entry.description|default:"Direct Cost Entry" }}</td>
+                                                    <td class="py-2 text-[10px] font-bold text-gray-500 uppercase">{{ entry.category }}</td>
+                                                    <td class="py-2 font-mono text-xs tabular-nums text-right text-red-700">
+                                                        R {{ entry.amount|floatformat:2|intcomma }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        {% endif %}
                     {% endif %}
                     <!-- TOTAL PRODUCTION COST -->
                     <tr class="bg-amber-100/50">
@@ -355,6 +411,142 @@
                             <span class="text-[10px] font-black text-rose-600 italic">({{ opex_breakdown.pct|floatformat:1 }}%)</span>
                         </td>
                     </tr>
+                    <!-- Preliminaries Items -->
+                    {% if opex_breakdown.total > 0 %}
+                        <!-- Labour Prelims -->
+                        {% if opex_breakdown.trackers.sub_totals.labour_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Labour Costs (Prelims)</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ opex_breakdown.trackers.sub_totals.labour_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio opex_breakdown.trackers.sub_totals.labour_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        <!-- Materials Prelims -->
+                        {% if opex_breakdown.trackers.sub_totals.materials_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Material Costs (Prelims)</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ opex_breakdown.trackers.sub_totals.materials_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio opex_breakdown.trackers.sub_totals.materials_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        <!-- Subcontractors Prelims -->
+                        {% if opex_breakdown.trackers.sub_totals.subcontractors_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Subcontractors (Prelims)</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ opex_breakdown.trackers.sub_totals.subcontractors_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio opex_breakdown.trackers.sub_totals.subcontractors_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        <!-- Plant Prelims -->
+                        {% if opex_breakdown.trackers.sub_totals.plant_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Plant & Equipment (Prelims)</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ opex_breakdown.trackers.sub_totals.plant_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio opex_breakdown.trackers.sub_totals.plant_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        <!-- Overhead/Prelim Trackers -->
+                        {% if opex_breakdown.trackers.sub_totals.overhead_total > 0 %}
+                            <tr class="transition-colors hover:bg-gray-50/80">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-4 h-4"></div>
+                                        <span class="text-xs font-semibold tracking-tight text-gray-600 uppercase">Overhead Costs (Tracked)</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ opex_breakdown.trackers.sub_totals.overhead_total|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio opex_breakdown.trackers.sub_totals.overhead_total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        <!-- Prelim Journals -->
+                        {% if opex_breakdown.journals.total > 0 %}
+                            <tr class="transition-colors cursor-pointer hover:bg-gray-50/80 group"
+                                onclick="toggleBreakdown('opex-journals')">
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div id="icon-opex-journals"
+                                             class="text-gray-400 transition-transform duration-200">
+                                            {% heroicon_outline "chevron-right" size="16" %}
+                                        </div>
+                                        <span class="text-xs font-bold tracking-tight text-gray-600 uppercase">Preliminaries Journals</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs font-bold tabular-nums text-right text-gray-900">
+                                    R {{ opex_breakdown.journals.total|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-[10px] font-medium text-gray-400 italic">{% widthratio opex_breakdown.journals.total total_revenue 100 %}%</span>
+                                </td>
+                            </tr>
+                            <!-- Opex Journals Detail (Hidden) -->
+                            <tr id="details-opex-journals" class="hidden bg-gray-50/40">
+                                <td colspan="3" class="px-12 py-4">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="border-b border-gray-200">
+                                                <th class="py-2 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400">Date</th>
+                                                <th class="py-2 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400">Description / Reference</th>
+                                                <th class="py-2 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400">Category</th>
+                                                <th class="py-2 text-right text-[9px] font-bold uppercase tracking-widest text-gray-400">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            {% for entry in opex_breakdown.journals.items %}
+                                                <tr>
+                                                    <td class="py-2 text-xs text-gray-600">{{ entry.date|date:"d M Y" }}</td>
+                                                    <td class="py-2 text-xs font-medium text-gray-900">{{ entry.description|default:"Overhead Entry" }}</td>
+                                                    <td class="py-2 text-[10px] font-bold text-gray-500 uppercase">{{ entry.category }}</td>
+                                                    <td class="py-2 font-mono text-xs tabular-nums text-right text-red-700">
+                                                        R {{ entry.amount|floatformat:2|intcomma }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
                     <!-- NET PROFIT FOOTER -->
                     <tr class="bg-indigo-600/5">
                         <td class="px-6 py-10">

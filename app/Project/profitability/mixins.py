@@ -48,203 +48,150 @@ class FinancialCalculationMixin:
         if not end_date:
             end_date = date.today()
 
-        from django.db.models import Q
-
-        # --- REVENUE (CERTIFICATE DRIVEN) ---
-        # Actual (Certified) comes from APPROVED certificates based on approval date
-        actual_cert_filter = {
-            "payment_certificate__project_id": project.id,
-            "payment_certificate__status__in": [
-                PaymentCertificate.Status.APPROVED,
-                PaymentCertificate.Status.SIGNATORIES_APPROVED,
-            ],
-        }
-
-        # Planned (Claimed) comes from SUBMITTED or APPROVED certificates based on assessment date
-        planned_cert_filter = {
-            "payment_certificate__project_id": project.id,
-            "payment_certificate__status__in": [
-                PaymentCertificate.Status.SUBMITTED,
-                PaymentCertificate.Status.APPROVED,
-                PaymentCertificate.Status.SIGNATORIES_APPROVED,
-            ],
-        }
-
-        # Planned Revenue (Claimed) To Date - uses assessment_date (fallback to approved_on)
-        planned_revenue_to_date = ActualTransaction.objects.filter(
-            **planned_cert_filter,
-            claimed=True,
-        ).filter(
-            Q(payment_certificate__assessment_date__date__lte=end_date)
-            | Q(
-                payment_certificate__assessment_date__isnull=True,
-                payment_certificate__approved_on__date__lte=end_date,
-            )
-        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
-
-        # Actual Revenue (Certified) To Date - uses approved_on
-        actual_revenue_to_date = ActualTransaction.objects.filter(
-            **actual_cert_filter,
-            payment_certificate__approved_on__date__lte=end_date,
-            approved=True,
-        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
-
-        # This Month Calculations
         this_month_start = end_date.replace(day=1)
 
-        # Planned This Month - uses assessment_date (fallback to approved_on)
-        planned_revenue_this_month = ActualTransaction.objects.filter(
-            **planned_cert_filter,
-            claimed=True,
-        ).filter(
-            Q(
-                payment_certificate__assessment_date__date__range=(
-                    this_month_start,
-                    end_date,
-                )
-            )
-            | Q(
-                payment_certificate__assessment_date__isnull=True,
-                payment_certificate__approved_on__date__range=(
-                    this_month_start,
-                    end_date,
-                ),
-            )
-        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
+        from app.Project.models.entity_definitions import BaseProjectEntity
 
-        # Actual This Month - uses approved_on
-        actual_revenue_this_month = ActualTransaction.objects.filter(
-            **actual_cert_filter,
-            payment_certificate__approved_on__date__range=(this_month_start, end_date),
-            approved=True,
-        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
+        cos_code = BaseProjectEntity.ExpenseCode.COS
+        opex_code = BaseProjectEntity.ExpenseCode.OPEX
 
-        # Force Planned Revenue to match Actual
+        # Helper to get actuals for a period/filter
+        def get_actuals(start=None, end=None):
+            # 1. Revenue: CREDIT journals in range
+            rev_filters = {
+                "project": project,
+                "transaction_type": JournalEntry.EntryType.CREDIT,
+            }
+            if start:
+                rev_filters["date__gte"] = start
+            if end:
+                rev_filters["date__lte"] = end
+
+            revenue_total = JournalEntry.objects.filter(**rev_filters).aggregate(
+                total=Sum("amount")
+            )["total"] or Decimal("0.00")
+
+            # 2. Trackers & Journals helper
+            def get_tracker_and_journal_total(code):
+                total = Decimal("0.00")
+
+                # Sum Trackers
+                models_map = {
+                    "materials": MaterialCostTracker,
+                    "labour": LabourCostTracker,
+                    "subcontractors": SubcontractorCostTracker,
+                    "plant": PlantCostTracker,
+                    "overhead": OverheadCostTracker,
+                }
+                for tracker_type, model_class in models_map.items():
+                    try:
+                        entity_field = f"{tracker_type}_entity"
+                        if tracker_type == "subcontractors":
+                            entity_field = "subcontractor_entity"
+                        elif tracker_type == "materials":
+                            entity_field = "material_entity"
+
+                        filters = {
+                            f"{entity_field}__expense_code": code,
+                            "project": project,
+                        }
+                        if start:
+                            filters["date__gte"] = start
+                        if end:
+                            filters["date__lte"] = end
+
+                        qs = model_class.objects.filter(**filters)
+
+                        if tracker_type == "labour":
+                            agg = qs.aggregate(
+                                t=Sum(F("amount_of_days") * F("salary"))
+                            )["t"]
+                        elif tracker_type == "materials":
+                            agg = qs.aggregate(t=Sum(F("quantity") * F("rate")))["t"]
+                        elif tracker_type == "subcontractors":
+                            agg = qs.aggregate(t=Sum(F("amount_of_days") * F("rate")))[
+                                "t"
+                            ]
+                        elif tracker_type == "plant":
+                            agg = qs.aggregate(
+                                t=Sum(F("usage_hours") * F("hourly_rate"))
+                            )["t"]
+                        elif tracker_type == "overhead":
+                            agg = qs.aggregate(t=Sum(F("amount_of_days") * F("rate")))[
+                                "t"
+                            ]
+                        else:
+                            agg = 0
+                        total += Decimal(str(agg or 0))
+                    except Exception:
+                        pass
+
+                # Sum Journals
+                if code == cos_code:
+                    categories = [
+                        JournalEntry.Category.MATERIAL,
+                        JournalEntry.Category.LABOUR,
+                        JournalEntry.Category.SUBCONTRACTOR,
+                        JournalEntry.Category.PLANT,
+                    ]
+                else:
+                    categories = [
+                        JournalEntry.Category.OVERHEAD,
+                        JournalEntry.Category.OTHER,
+                    ]
+
+                j_filters = {
+                    "project": project,
+                    "transaction_type": JournalEntry.EntryType.DEBIT,
+                    "category__in": categories,
+                    "source_log_id__isnull": True,
+                }
+                if start:
+                    j_filters["date__gte"] = start
+                if end:
+                    j_filters["date__lte"] = end
+
+                journals = JournalEntry.objects.filter(**j_filters)
+                journal_total = journals.aggregate(total=Sum("amount"))[
+                    "total"
+                ] or Decimal("0.00")
+                return total + journal_total
+
+            cos_total = get_tracker_and_journal_total(cos_code)
+            opex_total = get_tracker_and_journal_total(opex_code)
+
+            return {
+                "revenue": revenue_total,
+                "cos": cos_total,
+                "opex": opex_total,
+            }
+
+        # Calculate actuals
+        to_date_data = get_actuals(end=end_date)
+        actual_revenue_to_date = to_date_data["revenue"]
+        actual_cogs_to_date = to_date_data["cos"]
+        actual_opex_to_date = to_date_data["opex"]
+
+        this_month_data = get_actuals(start=this_month_start, end=end_date)
+        actual_revenue_this_month = this_month_data["revenue"]
+        actual_cogs_this_month = this_month_data["cos"]
+        actual_opex_this_month = this_month_data["opex"]
+
+        # Force Planned values to match actual
         planned_revenue_to_date = actual_revenue_to_date
         planned_revenue_this_month = actual_revenue_this_month
+        planned_cogs_to_date = actual_cogs_to_date
+        planned_opex_to_date = actual_opex_to_date
+        planned_cogs_this_month = actual_cogs_this_month
+        planned_opex_this_month = actual_opex_this_month
 
         forecast_revenue = CashflowForecast.objects.filter(
             project=project,
             status=CashflowForecast.Status.APPROVED,
         ).aggregate(total=Sum("forecast_value"))["total"] or Decimal("0.00")
 
-        # --- COST CALCULATIONS (SEGMENTED BY COS/OPEX) ---
-        from app.Project.models.entity_definitions import BaseProjectEntity
-
-        cos = BaseProjectEntity.ExpenseCode.COS
-        opex = BaseProjectEntity.ExpenseCode.OPEX
-
-        def get_manual_journal_totals(start=None, end=None, categories=None):
-            """Internal helper to sum manual journals."""
-            filters = {
-                "project": project,
-                "source_log_id__isnull": True,
-                "transaction_type": JournalEntry.EntryType.DEBIT,
-            }
-            if start:
-                filters["date__gte"] = start
-            if end:
-                filters["date__lte"] = end
-            if categories:
-                filters["category__in"] = categories
-
-            return JournalEntry.objects.filter(**filters).aggregate(
-                total=Sum("amount")
-            )["total"] or Decimal("0.00")
-
-        def get_tracker_totals(start=None, end=None, code=cos):
-            """Internal helper to sum costs from all trackers for a given classification."""
-            filters = {"project": project}
-            if start:
-                filters["date__gte"] = start
-            if end:
-                filters["date__lte"] = end
-
-            mat = (
-                MaterialCostTracker.objects.filter(
-                    **filters, material_entity__expense_code=code
-                ).aggregate(total=Sum(F("quantity") * F("rate")))["total"]
-                or 0
-            )
-            lab = (
-                LabourCostTracker.objects.filter(
-                    **filters, labour_entity__expense_code=code
-                ).aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
-                or 0
-            )
-            sub = (
-                SubcontractorCostTracker.objects.filter(
-                    **filters, subcontractor_entity__expense_code=code
-                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-                or 0
-            )
-            plt = (
-                PlantCostTracker.objects.filter(
-                    **filters, plant_entity__expense_code=code
-                ).aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
-                or 0
-            )
-            ovh = (
-                OverheadCostTracker.objects.filter(
-                    **filters, overhead_entity__expense_code=code
-                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-                or 0
-            )
-
-            tracker_total = (
-                Decimal(str(mat))
-                + Decimal(str(lab))
-                + Decimal(str(sub))
-                + Decimal(str(plt))
-                + Decimal(str(ovh))
-            )
-
-            # Add manual journals for these categories
-            if code == cos:
-                # COS categories
-                journal_total = get_manual_journal_totals(
-                    start,
-                    end,
-                    [
-                        JournalEntry.Category.MATERIAL,
-                        JournalEntry.Category.LABOUR,
-                        JournalEntry.Category.SUBCONTRACTOR,
-                        JournalEntry.Category.PLANT,
-                    ],
-                )
-            else:
-                # OpEx categories
-                journal_total = get_manual_journal_totals(
-                    start,
-                    end,
-                    [
-                        JournalEntry.Category.OVERHEAD,
-                        JournalEntry.Category.OTHER,
-                    ],
-                )
-
-            return tracker_total + journal_total
-
-        # 1. Totals to Date
-        actual_cogs_to_date = get_tracker_totals(end=end_date, code=cos)
-        actual_opex_to_date = get_tracker_totals(end=end_date, code=opex)
-
-        # 2. This Month Totals
-        actual_cogs_this_month = get_tracker_totals(
-            start=this_month_start, end=end_date, code=cos
-        )
-        actual_opex_this_month = get_tracker_totals(
-            start=this_month_start, end=end_date, code=opex
-        )
-
         # Use Baseline Assumptions for forecasts and margins
         baseline = self.get_baseline_assumptions()
-
-        # Force Planned Costs to match Actual
-        planned_cogs_to_date = actual_cogs_to_date
-        planned_opex_to_date = actual_opex_to_date
-        planned_cogs_this_month = actual_cogs_this_month
-        planned_opex_this_month = actual_opex_this_month
 
         # --- CALCULATIONS ---
         actual_gp_to_date = actual_revenue_to_date - actual_cogs_to_date
