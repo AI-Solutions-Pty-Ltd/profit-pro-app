@@ -114,6 +114,7 @@ class QuickCreateSubmitView(LoginRequiredMixin, View):
 
                     if isinstance(instance, Company):
                         instance.users.add(request.user)
+                        instance.consultants.add(request.user)
 
                     return JsonResponse(
                         {

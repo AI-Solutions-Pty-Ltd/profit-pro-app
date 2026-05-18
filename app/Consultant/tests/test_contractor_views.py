@@ -304,4 +304,3 @@ class TestProjectContractorRemoveView(TestCase):
             kwargs={"project_pk": self.project.pk},
         )
         self.assertRedirects(response, list_url)
-

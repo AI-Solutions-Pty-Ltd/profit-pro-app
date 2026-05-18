@@ -52,7 +52,6 @@ class ContractorListView(ContractorMixin, ListView):
         return queryset.distinct().order_by("name")
 
 
-
 class ContractorCreateView(ContractorMixin, CreateView):
     """Create a new contractor company."""
 

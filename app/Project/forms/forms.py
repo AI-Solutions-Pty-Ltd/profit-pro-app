@@ -8,7 +8,10 @@ from django.forms import ModelChoiceField
 
 from app.Account.models import Account
 from app.core.Utilities.widgets import SearchableSelectWidget
-from app.Project.company.company_forms import CompanyForm, PrivacyModelMultipleChoiceField
+from app.Project.company.company_forms import (
+    CompanyForm,
+    PrivacyModelMultipleChoiceField,
+)
 from app.Project.models import (
     AdministrativeCompliance,
     Company,
@@ -107,14 +110,29 @@ class ProjectLeadConsultantForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
-        kwargs.pop("user", None)
+        user: Account | None = kwargs.pop("user", None)
 
         super().__init__(*args, **kwargs)
 
-        # Filter to only show lead consultant companies
-        queryset = Company.objects.filter(type=Company.Type.LEAD_CONSULTANT).order_by(
-            "name"
-        )
+        if user:
+            projects = user.get_projects
+
+            # Filter to show lead consultant companies that are either associated with the user's projects or account
+            from django.db.models import Q
+
+            queryset = (
+                Company.objects.filter(
+                    Q(lead_consultant_projects__in=projects) | Q(users=user),
+                    type=Company.Type.LEAD_CONSULTANT,
+                )
+                .distinct()
+                .order_by("name")
+            )
+        else:
+            # Filter to only show lead consultant companies
+            queryset = Company.objects.filter(
+                type=Company.Type.LEAD_CONSULTANT
+            ).order_by("name")
 
         # Exclude the currently assigned lead consultant if project is provided
         if project and project.lead_consultant:
@@ -785,8 +803,12 @@ class ClientForm(forms.ModelForm):
     def __init__(self, *args, contractor=False, client=False, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["users"].queryset = Account.objects.exclude(first_name="", last_name="").order_by("first_name", "email")
-        self.fields["consultants"].queryset = Account.objects.exclude(first_name="", last_name="").order_by("first_name", "email")
+        self.fields["users"].queryset = Account.objects.exclude(
+            first_name="", last_name=""
+        ).order_by("first_name", "email")
+        self.fields["consultants"].queryset = Account.objects.exclude(
+            first_name="", last_name=""
+        ).order_by("first_name", "email")
 
         # Apply masking to initial values when editing an existing instance
         if self.instance and self.instance.pk:
@@ -918,33 +940,22 @@ class ProjectUserCreateForm(forms.Form):
         return email
 
 
-class ClientQuickCreateForm(forms.ModelForm):
+class ClientQuickCreateForm(CompanyForm):
     """Quick create form for client companies."""
 
-    class Meta:
-        model = Company
-        fields = ["name", "registration_number"]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Company Name",
-                }
-            ),
-            "registration_number": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Registration Number",
-                }
-            ),
-        }
+    def __init__(self, *args, **kwargs):
+        kwargs["client"] = True
+        super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.type = Company.Type.CLIENT
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
+
+
 class ContractorQuickCreateForm(CompanyForm):
     """Quick create form for contractor companies."""
 
@@ -961,32 +972,18 @@ class ContractorQuickCreateForm(CompanyForm):
         return instance
 
 
-class LeadConsultantQuickCreateForm(forms.ModelForm):
+class LeadConsultantQuickCreateForm(CompanyForm):
     """Quick create form for lead consultant companies."""
 
-    class Meta:
-        model = Company
-        fields = ["name", "registration_number"]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Company Name",
-                }
-            ),
-            "registration_number": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Registration Number",
-                }
-            ),
-        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.type = Company.Type.LEAD_CONSULTANT
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
 
 

@@ -46,9 +46,12 @@ class ClientListView(ClientMixin, ListView):
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects
         project = self.get_project()
+        from django.db.models import Q
+
         queryset = (
             Company.objects.filter(
-                client_projects__in=projects, type=Company.Type.CLIENT
+                Q(client_projects__in=projects) | Q(users=user),
+                type=Company.Type.CLIENT,
             )
             .distinct()
             .order_by("name")
@@ -175,7 +178,10 @@ class RevealClientFieldView(ClientMixin, View):
 
         if field_name not in sensitive_fields:
             return JsonResponse(
-                {"status": "error", "message": "Invalid or non-sensitive field requested"},
+                {
+                    "status": "error",
+                    "message": "Invalid or non-sensitive field requested",
+                },
                 status=400,
             )
 

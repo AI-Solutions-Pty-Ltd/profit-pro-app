@@ -1,12 +1,13 @@
 """Test cases for lead consultant views."""
 
 import json
+
 from django.test import TestCase
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
-from app.Project.tests.factories import ClientFactory, ProjectFactory
 from app.Project.models import Company, ProjectRole, Role
+from app.Project.tests.factories import ClientFactory, ProjectFactory
 
 
 class TestRevealLeadConsultantFieldView(TestCase):
@@ -38,7 +39,10 @@ class TestRevealLeadConsultantFieldView(TestCase):
 
         url = reverse(
             "client:lead-consultant-management:lead-consultant-reveal-field",
-            kwargs={"project_pk": self.project.pk, "company_pk": self.lead_consultant.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.lead_consultant.pk,
+            },
         )
 
         response = self.client.post(
@@ -56,7 +60,10 @@ class TestRevealLeadConsultantFieldView(TestCase):
 
         url = reverse(
             "client:lead-consultant-management:lead-consultant-reveal-field",
-            kwargs={"project_pk": self.project.pk, "company_pk": self.lead_consultant.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.lead_consultant.pk,
+            },
         )
 
         response = self.client.post(
@@ -72,7 +79,10 @@ class TestRevealLeadConsultantFieldView(TestCase):
 
         url = reverse(
             "client:lead-consultant-management:lead-consultant-reveal-field",
-            kwargs={"project_pk": self.project.pk, "company_pk": self.lead_consultant.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.lead_consultant.pk,
+            },
         )
 
         response = self.client.post(

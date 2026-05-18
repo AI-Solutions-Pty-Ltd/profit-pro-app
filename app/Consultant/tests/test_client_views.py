@@ -143,13 +143,17 @@ class TestRevealClientFieldView(TestCase):
 
     def test_reveal_endpoint_success_for_authorized_user(self):
         import json
+
         from django.urls import reverse
 
         self.client.force_login(self.user)
 
         url = reverse(
             "client:client-management:client-reveal-field",
-            kwargs={"project_pk": self.project.pk, "company_pk": self.client_company.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.client_company.pk,
+            },
         )
 
         response = self.client.post(
@@ -164,13 +168,17 @@ class TestRevealClientFieldView(TestCase):
     def test_reveal_endpoint_forbidden_for_unauthorized_user(self):
         """Test that an unauthorized user receives 403 Forbidden."""
         import json
+
         from django.urls import reverse
 
         self.client.force_login(self.other_user)
 
         url = reverse(
             "client:client-management:client-reveal-field",
-            kwargs={"project_pk": self.project.pk, "company_pk": self.client_company.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.client_company.pk,
+            },
         )
 
         response = self.client.post(
@@ -183,13 +191,17 @@ class TestRevealClientFieldView(TestCase):
     def test_reveal_endpoint_bad_request_for_invalid_field(self):
         """Test that requesting an invalid or non-sensitive field returns 400."""
         import json
+
         from django.urls import reverse
 
         self.client.force_login(self.user)
 
         url = reverse(
             "client:client-management:client-reveal-field",
-            kwargs={"project_pk": self.project.pk, "company_pk": self.client_company.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "company_pk": self.client_company.pk,
+            },
         )
 
         response = self.client.post(

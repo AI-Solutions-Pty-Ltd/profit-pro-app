@@ -9,6 +9,7 @@ from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from app.Account.models import Account
 from app.Consultant.views.mixins import LeadConsultantMixin
 from app.core.Utilities.mixins import BreadcrumbItem
 from app.Project.company.company_forms import CompanyForm
@@ -23,7 +24,14 @@ class LeadConsultantListView(LeadConsultantMixin, ListView):
     context_object_name = "lead_consultants"
 
     def get_queryset(self) -> QuerySet[Company]:
-        queryset = Company.objects.filter(type=Company.Type.LEAD_CONSULTANT)
+        user: Account = self.request.user  # type: ignore
+        projects = user.get_projects
+        from django.db.models import Q
+
+        queryset = Company.objects.filter(
+            Q(lead_consultant_projects__in=projects) | Q(users=user),
+            type=Company.Type.LEAD_CONSULTANT,
+        )
 
         lead_consultant = self.get_project().lead_consultant
         if lead_consultant:
@@ -190,7 +198,10 @@ class RevealLeadConsultantFieldView(LeadConsultantMixin, View):
 
         if field_name not in sensitive_fields:
             return JsonResponse(
-                {"status": "error", "message": "Invalid or non-sensitive field requested"},
+                {
+                    "status": "error",
+                    "message": "Invalid or non-sensitive field requested",
+                },
                 status=400,
             )
 

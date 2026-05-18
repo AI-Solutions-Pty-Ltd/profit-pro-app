@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
-
 {% block content %}
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Page Header -->
@@ -15,23 +14,21 @@
                 </div>
             </div>
         </div>
-
         <!-- Confirmation Card -->
         <div class="bg-white shadow rounded-lg">
             <div class="px-6 py-4">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        {% heroicon_outline "exclamation-triangle" class="h-6 w-6 text-yellow-500" %}
-                    </div>
+                    <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-6 w-6 text-yellow-500" %}</div>
                     <div class="ml-3">
                         <h3 class="text-lg leading-6 font-medium text-gray-900">Are you sure you want to remove "{{ contractor.name }}"?</h3>
                         <div class="mt-2 max-w-xl text-sm text-gray-500">
-                            <p>This will unlink the contractor from <strong>{{ project.name }}</strong>. Existing records and history will be preserved, but the contractor will no longer be assigned to this project.</p>
+                            <p>
+                                This will unlink the contractor from <strong>{{ project.name }}</strong>. Existing records and history will be preserved, but the contractor will no longer be assigned to this project.
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-
             <!-- Contractor Details -->
             <div class="border-t border-gray-200 px-6 py-4">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -51,7 +48,8 @@
                         <dt class="text-sm font-medium text-gray-500">VAT Registered</dt>
                         <dd class="mt-1 text-sm text-gray-900">
                             {% if contractor.vat_registered %}
-                                Yes {% if contractor.vat_number %}({{ contractor.vat_number }}){% endif %}
+                                Yes
+                                {% if contractor.vat_number %}({{ contractor.vat_number }}){% endif %}
                             {% else %}
                                 No
                             {% endif %}
@@ -65,9 +63,9 @@
                     </div>
                 </dl>
             </div>
-
             <!-- Form Actions -->
-            <form method="post" class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+            <form method="post"
+                  class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                 {% csrf_token %}
                 <div class="flex justify-end space-x-3">
                     <a href="{% url 'client:contractor-management:contractor-list' project.pk %}"
@@ -83,7 +81,6 @@
                 </div>
             </form>
         </div>
-
         <!-- Footer -->
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
             <div class="flex justify-between items-center">

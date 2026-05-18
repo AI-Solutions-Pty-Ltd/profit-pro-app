@@ -136,8 +136,12 @@ class CompanyForm(forms.ModelForm):
             self.fields["consultants"],
         )
 
-        users_field.queryset = Account.objects.exclude(first_name="", last_name="").order_by("first_name", "email")
-        consultants_field.queryset = Account.objects.exclude(first_name="", last_name="").order_by("first_name", "email")
+        users_field.queryset = Account.objects.exclude(
+            first_name="", last_name=""
+        ).order_by("first_name", "email")
+        consultants_field.queryset = Account.objects.exclude(
+            first_name="", last_name=""
+        ).order_by("first_name", "email")
 
         # Apply masking to initial values when editing an existing instance
         if self.instance and self.instance.pk:

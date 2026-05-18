@@ -47,10 +47,14 @@ class ClientMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         return Company.objects.filter(type=Company.Type.CLIENT).order_by("name")
 
     def get_object(self) -> Company:
-        return Company.objects.get(id=self.kwargs["pk"], type=Company.Type.CLIENT)
+        return get_object_or_404(
+            Company, id=self.kwargs["pk"], type=Company.Type.CLIENT
+        )
 
     def get_client(self, slug="pk") -> Company:
-        return Company.objects.get(id=self.kwargs[slug], type=Company.Type.CLIENT)
+        return get_object_or_404(
+            Company, id=self.kwargs[slug], type=Company.Type.CLIENT
+        )
 
 
 class ContractorMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
@@ -63,10 +67,14 @@ class ContractorMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         return Company.objects.filter(type=Company.Type.CONTRACTOR).order_by("name")
 
     def get_object(self) -> Company:
-        return Company.objects.get(id=self.kwargs["pk"], type=Company.Type.CONTRACTOR)
+        return get_object_or_404(
+            Company, id=self.kwargs["pk"], type=Company.Type.CONTRACTOR
+        )
 
     def get_contractor(self, slug="pk") -> Company:
-        return Company.objects.get(id=self.kwargs[slug], type=Company.Type.CONTRACTOR)
+        return get_object_or_404(
+            Company, id=self.kwargs[slug], type=Company.Type.CONTRACTOR
+        )
 
 
 class PaymentCertMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
@@ -135,11 +143,11 @@ class LeadConsultantMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         )
 
     def get_object(self) -> Company:
-        return Company.objects.get(
-            id=self.kwargs["pk"], type=Company.Type.LEAD_CONSULTANT
+        return get_object_or_404(
+            Company, id=self.kwargs["pk"], type=Company.Type.LEAD_CONSULTANT
         )
 
     def get_lead_consultant(self, slug="pk") -> Company:
-        return Company.objects.get(
-            id=self.kwargs[slug], type=Company.Type.LEAD_CONSULTANT
+        return get_object_or_404(
+            Company, id=self.kwargs[slug], type=Company.Type.LEAD_CONSULTANT
         )

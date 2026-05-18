@@ -72,9 +72,8 @@
             </div>
         </form>
     </div>
-
     {% if object %}
-    <style>
+        <style>
         /* Premium visual styling for masked locked inputs */
         .locked-input {
             background-color: #f9fafb !important;
@@ -115,9 +114,8 @@
         .lock-btn:active {
             transform: scale(0.95);
         }
-    </style>
-
-    <script>
+        </style>
+        <script>
         document.addEventListener("DOMContentLoaded", function() {
             const sensitiveFieldNames = [
                 "registration_number", 
@@ -218,6 +216,6 @@
                 }
             });
         });
-    </script>
+        </script>
     {% endif %}
 {% endblock content %}
