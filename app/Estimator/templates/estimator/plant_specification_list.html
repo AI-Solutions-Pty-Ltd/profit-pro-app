@@ -2,6 +2,11 @@
 {% load estimator_tags %}
 {% block title %}{{ title_noun }} Calculator - Project Resource Estimator{% endblock %}
 {% block sub_content %}
+    <style>
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    </style>
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">{{ title_noun }} Calculator</h1>
         <p class="mt-1 text-sm text-gray-500">
@@ -73,7 +78,13 @@
                     {% for row in rows %}
                         <tr class="hover:bg-gray-50/50">
                             <td class="px-3 py-1.5 text-gray-700">{{ row.section }}</td>
-                            <td class="px-3 py-1.5 text-gray-700">{{ row.spec.name }}</td>
+                            <td class="px-3 py-1.5 text-gray-700">
+                                <input type="text"
+                                       class="inline-edit-ps w-80 border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ row.spec.id }}"
+                                       data-field="name"
+                                       value="{{ row.spec.name }}">
+                            </td>
                             <td class="px-3 py-1.5 text-gray-600">
                                 {% for comp in row.spec.components.all %}
                                     <div>
@@ -111,4 +122,35 @@
             </table>
         </div>
     </div>
+    <script>
+    document.querySelectorAll('.inline-edit-ps').forEach(input => {
+        let original = input.value;
+        input.addEventListener('focus', () => { original = input.value; });
+        input.addEventListener('change', () => {
+            if (input.value === original) return;
+            const id = input.dataset.itemId;
+            const field = input.dataset.field;
+            fetch(`/estimator/project/{{ project_pk }}/api/plant-spec/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field, value: input.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    input.classList.add('ring-2', 'ring-green-500');
+                    setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
+                    original = input.value;
+                } else {
+                    input.classList.add('ring-2', 'ring-red-500');
+                    input.value = original;
+                    setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 1200);
+                }
+            })
+            .catch(() => {
+                input.value = original;
+            });
+        });
+    });
+    </script>
 {% endblock %}

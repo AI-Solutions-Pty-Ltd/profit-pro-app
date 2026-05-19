@@ -125,6 +125,62 @@ def _safe_str(value):
     return s
 
 
+def _norm_trade(s):
+    """Normalise a trade token for matching: alphanumerics only, upper-case.
+
+    So "CFR", "cfr-", "C.F.R." all collapse to "CFR" and match an existing
+    trade code with prefix "CFR-".
+    """
+    return "".join(ch for ch in (s or "") if ch.isalnum()).upper()
+
+
+def _unique_trade_prefix(model, scope_kwargs, name):
+    """Pick a prefix unique within the scope (<=20 chars)."""
+    existing = set(
+        model.objects.filter(**scope_kwargs).values_list("prefix", flat=True)
+    )
+    base = "".join(ch for ch in name if ch.isalnum())[:18].upper() or "TRADE"
+    candidate, n = base, 1
+    while candidate in existing:
+        suffix = str(n)
+        candidate = base[: 20 - len(suffix)] + suffix
+        n += 1
+    return candidate
+
+
+def resolve_trade_code(raw, project=None, company=None):
+    """Resolve (find-or-create) a TradeCode for a free-text trade value,
+    scoped to project / company / system. Returns None if ``raw`` is blank.
+
+    Matches on trade_name (case-insensitive) or the full ``prefix+trade_name``
+    string; creates a new code (so uploads never silently drop a trade)
+    when nothing matches.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    if project is not None:
+        model, scope = ProjectTradeCode, {"project": project}
+    elif company is not None:
+        model, scope = ContractorTradeCode, {"company": company}
+    else:
+        model, scope = SystemTradeCode, {}
+
+    raw_norm = _norm_trade(raw)
+    for tc in model.objects.filter(**scope):
+        if raw_norm and raw_norm in {
+            _norm_trade(tc.trade_name),
+            _norm_trade(tc.prefix),
+            _norm_trade(f"{tc.prefix}{tc.trade_name}"),
+        }:
+            return tc
+    return model.objects.create(
+        prefix=_unique_trade_prefix(model, scope, raw),
+        trade_name=raw[:100],
+        **scope,
+    )
+
+
 # ── Trade Codes ──────────────────────────────────────────────────
 
 
@@ -434,10 +490,14 @@ class MaterialSpecImporter:
     """
 
     SHEET_KEYWORDS = [
-        "material spec",
-        "material specs",
+        "materials specification",
+        "materials specifications",
+        "materials spec",
+        "materials specs",
         "material specification",
         "material specifications",
+        "material spec",
+        "material specs",
         "materialspec",
         "materialspecs",
         "mat spec",
@@ -451,24 +511,14 @@ class MaterialSpecImporter:
         self.project = project
         self.company = company
 
-    def _get_trade_code(self, prefix_str):
-        """Resolve trade code by prefix, using project / contractor / system models."""
-        if not prefix_str:
-            return None
-        if self.project:
-            return ProjectTradeCode.objects.filter(
-                project=self.project, prefix=prefix_str
-            ).first()
-        if self.company:
-            return ContractorTradeCode.objects.filter(
-                company=self.company, prefix=prefix_str
-            ).first()
-        tc = SystemTradeCode.objects.filter(prefix=prefix_str).first()
-        if not tc:
-            for stc in SystemTradeCode.objects.all():
-                if stc.trade_code == prefix_str:
-                    return stc
-        return tc
+    def _get_trade_code(self, trade_str):
+        """Resolve (find-or-create) a trade code from a free-text value.
+
+        The master sheet stores the full ``PREFIX-Trade Name`` string in the
+        Trade Code column, so use the normalised resolver (matches on prefix,
+        name, or prefix+name) rather than an exact prefix lookup.
+        """
+        return resolve_trade_code(trade_str, project=self.project, company=self.company)
 
     def _get_material(self, mat_code):
         """Resolve material by code, using project / contractor / system models."""
@@ -486,14 +536,23 @@ class MaterialSpecImporter:
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
-        ws = _find_sheet(wb, self.SHEET_KEYWORDS)
+        ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
+        if fell_back:
+            # Never silently import an arbitrary sheet — that produced the
+            # "all over the place" results when the Materials Specification
+            # sheet name didn't match.
+            raise ValueError(
+                "Could not find a 'Materials Specification' sheet in the "
+                f"workbook (sheets: {', '.join(wb.sheetnames)}). Rename the "
+                "sheet to 'Materials Specification' and re-upload."
+            )
 
         row3_vals = [c.value for c in ws[3]] if ws.max_row >= 3 else []
         is_wide = any("specification code" in _safe_str(v).lower() for v in row3_vals)
 
-        if is_wide:
-            return self._import_wide(ws)
-        return self._import_multirow(ws)
+        result = self._import_wide(ws) if is_wide else self._import_multirow(ws)
+        result["sheet_used"] = sheet_name
+        return result
 
     def _import_wide(self, ws):
         created = updated = 0
@@ -717,6 +776,15 @@ class LabourSpecImporter:
             if not name:
                 continue
 
+            trade_code = resolve_trade_code(
+                _safe_str(row[1]) if ncols > 1 else "",
+                project=self.project,
+                company=self.company,
+            )
+            if trade_code is None:
+                # Trade is compulsory — skip rows without one.
+                continue
+
             crew_type_str = _safe_str(row[4]) if ncols > 4 else ""
             if self.project:
                 crew = (
@@ -743,7 +811,7 @@ class LabourSpecImporter:
 
             defaults = {
                 "section": _safe_str(row[0]) if ncols > 0 else "",
-                "trade_name": _safe_str(row[1]) if ncols > 1 else "",
+                "trade_code": trade_code,
                 "unit": _safe_str(row[3]) if ncols > 3 else "",
                 "crew": crew,
                 "daily_production": (_safe_decimal(row[5]) if ncols > 5 else None)
@@ -947,6 +1015,14 @@ class PlantSpecImporter:
             if not name:
                 continue
 
+            trade_code = resolve_trade_code(
+                _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                project=self.project,
+                company=self.company,
+            )
+            if trade_code is None:
+                continue
+
             if is_master:
                 # Master layout: 4 plant-type/hours pairs at cols 4..11,
                 # productivity at cols 12..14.
@@ -972,7 +1048,7 @@ class PlantSpecImporter:
 
             defaults = {
                 "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
-                "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                "trade_code": trade_code,
                 "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
                 "daily_production": daily_prod or Decimal("0"),
                 "operator_factor": operator or Decimal("1"),
@@ -1414,10 +1490,18 @@ class PreliminarySpecImporter:
             if not name:
                 continue
 
+            trade_code = resolve_trade_code(
+                _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                project=self.project,
+                company=self.company,
+            )
+            if trade_code is None:
+                continue
+
             raw_type = row[co + 4] if ncols > co + 4 else None
             defaults = {
                 "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
-                "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                "trade_code": trade_code,
                 "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
                 "preliminary_type": self._resolve_type(raw_type, name),
             }
