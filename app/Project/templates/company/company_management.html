@@ -42,6 +42,61 @@
     <!-- Company Management Section -->
     <!-- Business Management Menu -->
     <div class="grid grid-cols-1 gap-2 mb-4 lg:grid-cols-3">
+            <!-- Row 4: Project Estimator -->
+        <div class="relative p-5 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
+            <div class="flex items-center mb-4 transition-opacity group/header hover:opacity-80">
+                <div class="flex justify-center items-center mr-3 w-12 h-12 bg-purple-500 rounded-lg transition-transform group-hover/header:rotate-12">
+                    {% heroicon_outline "calculator" class="w-6 h-6 text-white" %}
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-purple-900">Project Estimator</h3>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="{% url 'estimator:dashboard' project_pk=company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full bg-white rounded-lg border border-violet-200 transition-colors hover:bg-violet-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "user-group" class="mr-2 w-4 h-4 text-violet-500" %}
+                        <span class="text-sm font-medium text-violet-700">Project Estimator</span>
+                    </div>
+                </a>
+                <a href="{% url 'estimator:project_assumptions' project_pk=company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-purple-200 transition-colors bg-white/70 hover:bg-purple-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "cog-6-tooth" class="mr-2 w-4 h-4 text-purple-500" %}
+                        <span class="text-sm font-medium text-purple-700">Project Markups</span>
+                    </div>
+                </a>
+                <a href="{% url 'estimator:specifications' project_pk=company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-fuchsia-200 transition-colors bg-white/70 hover:bg-fuchsia-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "cube" class="mr-2 w-4 h-4 text-fuchsia-500" %}
+                        <span class="text-sm font-medium text-fuchsia-700">Resource Estimator</span>
+                    </div>
+                </a>
+                <a href="{% url 'estimator:report_material_components_baseline' project_pk=company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-rose-200 transition-colors bg-white/70 hover:bg-rose-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "shield-exclamation" class="mr-2 w-4 h-4 text-rose-500" %}
+                        <span class="text-sm font-medium text-rose-700">Resource Reports</span>
+                    </div>
+                </a>
+                <a href="{% url 'estimator:trade_codes' project_pk=company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-cyan-200 transition-colors bg-white/70 hover:bg-cyan-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "currency-dollar" class="mr-2 w-4 h-4 text-cyan-500" %}
+                        <span class="text-sm font-medium text-cyan-700">Baseline Resources Costs</span>
+                    </div>
+                </a>
+                <a href="{% url 'estimator:ctr_trade_codes' %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-orange-200 transition-colors bg-white/70 hover:bg-orange-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "briefcase" class="mr-2 w-4 h-4 text-orange-500" %}
+                        <span class="text-sm font-medium text-orange-700">Contractor Library</span>
+                    </div>
+                </a>
+            </div>
+        </div>
         <!-- Row 1: Payments and Invoices -->
         <div class="relative p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
             <div class="flex items-center mb-4 transition-opacity group/header hover:opacity-80">
@@ -234,61 +289,7 @@
                 </a> {% endcomment %}
             </div>
         </div>
-        <!-- Row 4: Project Estimator -->
-        <div class="relative p-5 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
-            <div class="flex items-center mb-4 transition-opacity group/header hover:opacity-80">
-                <div class="flex justify-center items-center mr-3 w-12 h-12 bg-purple-500 rounded-lg transition-transform group-hover/header:rotate-12">
-                    {% heroicon_outline "calculator" class="w-6 h-6 text-white" %}
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-purple-900">Project Estimator</h3>
-                </div>
-            </div>
-            <div class="space-y-2">
-                <a href="{% url 'estimator:dashboard' project_pk=company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full bg-white rounded-lg border border-violet-200 transition-colors hover:bg-violet-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "user-group" class="mr-2 w-4 h-4 text-violet-500" %}
-                        <span class="text-sm font-medium text-violet-700">Project Estimator</span>
-                    </div>
-                </a>
-                <a href="{% url 'estimator:project_assumptions' project_pk=company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-purple-200 transition-colors bg-white/70 hover:bg-purple-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "cog-6-tooth" class="mr-2 w-4 h-4 text-purple-500" %}
-                        <span class="text-sm font-medium text-purple-700">Project Markups</span>
-                    </div>
-                </a>
-                <a href="{% url 'estimator:specifications' project_pk=company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-fuchsia-200 transition-colors bg-white/70 hover:bg-fuchsia-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "cube" class="mr-2 w-4 h-4 text-fuchsia-500" %}
-                        <span class="text-sm font-medium text-fuchsia-700">Resource Estimator</span>
-                    </div>
-                </a>
-                <a href="{% url 'estimator:report_material_components_baseline' project_pk=company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-rose-200 transition-colors bg-white/70 hover:bg-rose-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "shield-exclamation" class="mr-2 w-4 h-4 text-rose-500" %}
-                        <span class="text-sm font-medium text-rose-700">Resource Reports</span>
-                    </div>
-                </a>
-                <a href="{% url 'estimator:trade_codes' project_pk=company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-cyan-200 transition-colors bg-white/70 hover:bg-cyan-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "currency-dollar" class="mr-2 w-4 h-4 text-cyan-500" %}
-                        <span class="text-sm font-medium text-cyan-700">Baseline Resources Costs</span>
-                    </div>
-                </a>
-                <a href="{% url 'estimator:ctr_trade_codes' %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-orange-200 transition-colors bg-white/70 hover:bg-orange-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "briefcase" class="mr-2 w-4 h-4 text-orange-500" %}
-                        <span class="text-sm font-medium text-orange-700">Contractor Library</span>
-                    </div>
-                </a>
-            </div>
-        </div>
+    
         <!-- Materials Management -->
         {% comment %} <div class="relative p-5 bg-gradient-to-br from-cyan-50 to-sky-50 rounded-xl border border-cyan-200 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
             <div class="flex items-center mb-4 transition-opacity group/header hover:opacity-80">
