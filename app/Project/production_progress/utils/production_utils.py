@@ -1130,8 +1130,28 @@ def get_project_productivity_report_data(
     from app.Estimator.models import BOQItem
 
     # Handle single project ID or list
-    if not isinstance(project_ids, (list, tuple)):
+    if project_ids is None:
+        project_ids = []
+    elif not isinstance(project_ids, (list, tuple)):
         project_ids = [project_ids]
+    else:
+        project_ids = [pid for pid in project_ids if pid is not None]
+
+    if not project_ids:
+        return {
+            "summary": {
+                "total_planned_qty": Decimal("0"),
+                "total_produced_qty": Decimal("0"),
+                "total_actual_cost": Decimal("0"),
+                "total_planned_cost": Decimal("0"),
+                "ppi": 1.0,
+                "cpi": 1.0,
+                "overall_progress_pct": 0,
+            },
+            "charts": {},
+            "forecasts": {},
+            "activities": [],
+        }
 
     summary = get_project_performance_summary(
         project_ids[0]
