@@ -6,13 +6,13 @@
             <!-- Category Toggle: Materials / Labour / Plant / Prelim (Specs mode) -->
             <div class="mb-4">
                 <nav class="flex space-x-2" aria-label="Estimator category">
-                    <a href="{% url 'estimator:material_specs' project_pk=project_pk %}"
+                    <a href="{% url 'estimator:specifications' project_pk=project_pk %}"
                        class="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md px-4 py-2 text-sm font-medium">Materials</a>
-                    <a href="{% url 'estimator:labour_spec_defs' project_pk=project_pk %}"
+                    <a href="{% url 'estimator:labour_specs' project_pk=project_pk %}"
                        class="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md px-4 py-2 text-sm font-medium">Labour</a>
-                    <a href="{% url 'estimator:plant_spec_defs' project_pk=project_pk %}"
+                    <a href="{% url 'estimator:plant_specs' project_pk=project_pk %}"
                        class="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium">Plant</a>
-                    <a href="{% url 'estimator:preliminary_spec_defs' project_pk=project_pk %}"
+                    <a href="{% url 'estimator:prelim_specs' project_pk=project_pk %}"
                        class="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md px-4 py-2 text-sm font-medium">Prelim</a>
                 </nav>
             </div>
