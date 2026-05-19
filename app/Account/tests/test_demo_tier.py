@@ -60,3 +60,58 @@ class TestDemoTier:
         # Expired
         user.subscription_expires_at = timezone.now() - timedelta(hours=1)
         assert user.demo_time_left_str == "Expired"
+
+    def test_demo_tier_has_project_role(self):
+        """Test that active Demo Tier users bypass project role checks."""
+        from app.Project.models import Role
+        from app.Project.tests.factories import ProjectFactory
+
+        expiry = timezone.now() + timedelta(days=7)
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
+        )
+        project = ProjectFactory()
+
+        # Should have access to any role (e.g. CONTRACT_VARIATIONS) without explicit assignment
+        assert user.has_project_role(project, [Role.CONTRACT_VARIATIONS]) is True
+
+    def test_demo_tier_has_project_role_expired(self):
+        """Test that expired Demo Tier users do NOT bypass project role checks."""
+        from app.Project.models import Role
+        from app.Project.tests.factories import ProjectFactory
+
+        expiry = timezone.now() - timedelta(days=1)
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
+        )
+        project = ProjectFactory()
+
+        # Should NOT have access since the subscription is expired
+        assert user.has_project_role(project, [Role.CONTRACT_VARIATIONS]) is False
+
+    def test_demo_tier_project_roles_filter(self):
+        """Test that the projectroles filter bypasses role checks for active Demo Tier."""
+        from app.core.templatetags.template_extras import project_roles
+        from app.Project.tests.factories import ProjectFactory
+
+        expiry = timezone.now() + timedelta(days=7)
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
+        )
+        project = ProjectFactory()
+
+        roles = project_roles(user, project)
+        # Should return all roles (ProjectRole.objects.all())
+        assert roles.exists() is True
