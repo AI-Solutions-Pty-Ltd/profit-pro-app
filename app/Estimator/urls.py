@@ -217,6 +217,11 @@ urlpatterns = [
         name="item_library_delete",
     ),
     path(
+        "project/<int:project_pk>/item-library/reorder/",
+        views.ReorderItemLibraryEntriesView.as_view(),
+        name="item_library_reorder",
+    ),
+    path(
         "project/<int:project_pk>/item-library/bulk-delete/",
         views.BulkDeleteItemLibraryEntriesView.as_view(),
         name="item_library_bulk_delete",
