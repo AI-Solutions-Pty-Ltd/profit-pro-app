@@ -225,6 +225,10 @@
                                     <div class="space-y-1" data-components-list>
                                         {% for comp in spec.component_totals %}
                                             <div class="flex items-center gap-1" data-component-id="{{ comp.id }}">
+                                                {% if comp.label and not comp.material_id %}
+                                                    <span class="text-xs text-amber-700 w-40 truncate"
+                                                          title="{{ comp.label }} — not found in Material Costs">{{ comp.label }}</span>
+                                                {% endif %}
                                                 <select class="mat-comp-edit mat-comp-material-select w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500"
                                                         data-component-id="{{ comp.id }}"
                                                         data-field="material"
@@ -232,7 +236,7 @@
                                                     {% if comp.material_id %}
                                                         <option value="{{ comp.material_id }}" selected>{{ comp.material_code }}</option>
                                                     {% else %}
-                                                        <option value="" selected>—</option>
+                                                        <option value="" selected>— link material —</option>
                                                     {% endif %}
                                                 </select>
                                                 <input type="number"

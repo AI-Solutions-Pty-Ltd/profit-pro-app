@@ -5,10 +5,10 @@
     <div class="mb-3 flex">
         <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1"
              aria-label="Labour report view">
-            <a href="{% url 'estimator:report_labour_list_'|add:variant project_pk=project_pk %}"
-               class="rounded-md px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700">By Spec</a>
             <a href="{% url 'estimator:report_labour_skills_'|add:variant project_pk=project_pk %}"
                class="rounded-md px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white shadow">By Skill</a>
+            <a href="{% url 'estimator:report_labour_list_'|add:variant project_pk=project_pk %}"
+               class="rounded-md px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700">By Spec</a>
         </nav>
     </div>
     <div class="mb-4">
@@ -105,7 +105,7 @@
                 {% if report_rows %}
                     <tfoot>
                         <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                            <td class="px-3 py-2 text-gray-900" colspan="3">Grand Total</td>
+                            <td class="px-3 py-2 text-gray-900" colspan="3">Total</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_quantity|qty }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_days|qty }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-purple-900 bg-purple-50/40">{{ total_skilled|qty }}</td>
