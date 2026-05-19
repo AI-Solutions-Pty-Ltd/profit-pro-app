@@ -110,7 +110,7 @@
                             </div>
                         </div>
                     {% endif %}
-                    {% if not boq_documents and user.subscription != 'DEMO_TIER' %}
+                    {% if not project.line_items.exists and user.subscription != 'DEMO_TIER' %}
                         <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
                             <h3 class="mb-1 text-sm font-semibold text-gray-900">Attach BOQ (Optional)</h3>
                             <p class="mb-3 text-xs text-gray-600">

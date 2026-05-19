@@ -64,7 +64,7 @@ class TestLaborActivityViews:
         # Note: In the view, plant_cost_sum is Sum('plant_specification__components__plant_type__hourly_rate')
         # Wait, the view does Sum('plant_specification__components__plant_type__hourly_rate').
         # If I have 1 component with hourly_rate 500, it should be 500.
-        assert "500.00" in content
+        assert "R 500" in content
 
     def test_activity_list_grouping(self, client):
         """Test that items with the same name are grouped together."""

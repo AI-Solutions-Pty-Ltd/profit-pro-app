@@ -39,9 +39,36 @@ class FinancialBaseView(ProfitabilityMixin, FinancialCalculationMixin, TemplateV
 
         # Defaults
         default_end_date = today
-        default_start_date = (
-            project.start_date if project.start_date else date(today.year, 1, 1)
+
+        # Determine the absolute earliest transaction or log date for this project
+        earliest_date = project.start_date
+
+        # Check earliest journal entry
+        earliest_journal = (
+            JournalEntry.objects.filter(project=project).order_by("date").first()
         )
+        if earliest_journal and (
+            not earliest_date or earliest_journal.date < earliest_date
+        ):
+            earliest_date = earliest_journal.date
+
+        # Check cost trackers
+        from django.db.models import Min
+
+        for tracker_model in [
+            LabourCostTracker,
+            MaterialCostTracker,
+            SubcontractorCostTracker,
+            PlantCostTracker,
+            # OverheadCostTracker,
+        ]:
+            min_date = tracker_model.objects.filter(project=project).aggregate(
+                m=Min("date")
+            )["m"]
+            if min_date and (not earliest_date or min_date < earliest_date):
+                earliest_date = min_date
+
+        default_start_date = earliest_date if earliest_date else date(today.year, 1, 1)
 
         # Handle Query Parameters (from filters)
         start_date_param = request.GET.get("start_date")
@@ -167,6 +194,7 @@ class FinancialBreakdownView(FinancialBaseView):
                 JournalEntry.Category.SUBCONTRACTOR,
                 JournalEntry.Category.PLANT,
             ],
+            source_log_id__isnull=True,
         ).order_by("-date")
 
         # 4. Operating Expenses (OpEx) Breakdown
@@ -180,6 +208,7 @@ class FinancialBreakdownView(FinancialBaseView):
                 JournalEntry.Category.OVERHEAD,
                 JournalEntry.Category.OTHER,
             ],
+            source_log_id__isnull=True,
         ).order_by("-date")
 
         # Aggregates for Summary Rows
@@ -197,6 +226,8 @@ class FinancialBreakdownView(FinancialBaseView):
                     entity_field = f"{tracker_type}_entity"
                     if tracker_type == "subcontractors":
                         entity_field = "subcontractor_entity"
+                    elif tracker_type == "materials":
+                        entity_field = "material_entity"
 
                     filters = {
                         f"{entity_field}__expense_code": code,
@@ -297,6 +328,162 @@ class FinancialBreakdownView(FinancialBaseView):
         context["total_revenue"] = (
             total_revenue  # Ensure this is also available directly
         )
+
+        # Dynamic structure for traditional Income Statement layouts
+        income_statement = {
+            "revenue": {
+                "total": total_revenue,
+                "items": [
+                    {
+                        "label": "Certified Revenue",
+                        "amount": cert_total,
+                        "pct": (cert_total / total_revenue * 100)
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Revenue Journals",
+                        "amount": journal_total,
+                        "pct": (journal_total / total_revenue * 100)
+                        if total_revenue > 0
+                        else 0,
+                    },
+                ],
+            },
+            "cos": {
+                "total": cos_total,
+                "pct": (cos_total / total_revenue * 100) if total_revenue > 0 else 0,
+                "items": [
+                    {
+                        "label": "Labour Costs",
+                        "amount": cos_results["sub_totals"]["labour_total"],
+                        "pct": (
+                            cos_results["sub_totals"]["labour_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Material Costs",
+                        "amount": cos_results["sub_totals"]["materials_total"],
+                        "pct": (
+                            cos_results["sub_totals"]["materials_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Subcontractors",
+                        "amount": cos_results["sub_totals"]["subcontractors_total"],
+                        "pct": (
+                            cos_results["sub_totals"]["subcontractors_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Plant & Equipment",
+                        "amount": cos_results["sub_totals"]["plant_total"],
+                        "pct": (
+                            cos_results["sub_totals"]["plant_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                ],
+            },
+            "gross_profit": {
+                "amount": gross_profit,
+                "margin": gross_profit_pct,
+            },
+            "opex": {
+                "total": opex_total,
+                "pct": (opex_total / total_revenue * 100) if total_revenue > 0 else 0,
+                "items": [
+                    {
+                        "label": "Labour Costs (Prelim)",
+                        "amount": opex_results["sub_totals"]["labour_total"],
+                        "pct": (
+                            opex_results["sub_totals"]["labour_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Material Costs (Prelim)",
+                        "amount": opex_results["sub_totals"]["materials_total"],
+                        "pct": (
+                            opex_results["sub_totals"]["materials_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Subcontractors (Prelim)",
+                        "amount": opex_results["sub_totals"]["subcontractors_total"],
+                        "pct": (
+                            opex_results["sub_totals"]["subcontractors_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Plant & Equipment (Prelim)",
+                        "amount": opex_results["sub_totals"]["plant_total"],
+                        "pct": (
+                            opex_results["sub_totals"]["plant_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Overhead Costs",
+                        "amount": opex_results["sub_totals"]["overhead_total"],
+                        "pct": (
+                            opex_results["sub_totals"]["overhead_total"]
+                            / total_revenue
+                            * 100
+                        )
+                        if total_revenue > 0
+                        else 0,
+                    },
+                    {
+                        "label": "Opex / Overhead Journals",
+                        "amount": opex_journal_total,
+                        "pct": (opex_journal_total / total_revenue * 100)
+                        if total_revenue > 0
+                        else 0,
+                    },
+                ],
+            },
+            "operating_expenses": {
+                "margin": (opex_total / total_revenue * 100)
+                if total_revenue > 0
+                else 0,
+            },
+            "net_profit": {
+                "amount": net_profit,
+                "margin": net_profit_pct,
+            },
+        }
+        context["income_statement"] = income_statement
+
         return context
 
 
@@ -306,7 +493,12 @@ class IncomeStatementView(FinancialBreakdownView):
     to provide the same high-fidelity drill-down capabilities.
     """
 
-    template_name = "profitability/reports/financial_breakdown.html"
+    template_name = "profitability/reports/income_statement.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["report_name"] = "Simplified Income Statement"
+        return context
 
 
 class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
@@ -506,6 +698,7 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
                     project=project,
                     category=JournalEntry.Category.OVERHEAD,
                     date__range=(m_start, m_end),
+                    source_log_id__isnull=True,
                 ).aggregate(total=Sum("amount"))["total"]
                 or 0
             )
@@ -584,7 +777,9 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
 
         total_journals = (
             JournalEntry.objects.filter(
-                project=project, category=JournalEntry.Category.OVERHEAD
+                project=project,
+                category=JournalEntry.Category.OVERHEAD,
+                source_log_id__isnull=True,
             ).aggregate(total=Sum("amount"))["total"]
             or 0
         )

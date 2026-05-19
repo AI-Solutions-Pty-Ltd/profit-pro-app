@@ -437,30 +437,92 @@ class MasterDashboardDataMixin:
             RFIStatus,
         )
 
-        pending_rfis = RFI.objects.filter(
-            project__in=projects, status=RFIStatus.OPEN, deleted=False
-        ).count()
+        is_portfolio = projects.count() > 1
 
-        # Quality Matters: Sum of Open Quality NCRs and Quality Reports
-        open_quality_ncrs = NonConformance.objects.filter(
-            project__in=projects, status=NCRStatus.OPEN, deleted=False
-        ).count()
-        quality_reports = BiWeeklyQualityReport.objects.filter(
-            project__in=projects, deleted=False
-        ).count()
+        if is_portfolio:
+            pending_rfis = (
+                RFI.objects.filter(
+                    project__in=projects, status=RFIStatus.OPEN, deleted=False
+                )
+                .values("project")
+                .distinct()
+                .count()
+            )
 
-        # Safety Matters: Sum of Open Incidents and Safety Reports
-        open_incidents = Incident.objects.filter(
-            project__in=projects, status=IncidentStatus.OPEN, deleted=False
-        ).count()
-        safety_reports = BiWeeklySafetyReport.objects.filter(
-            project__in=projects, deleted=False
-        ).count()
+            # Quality Matters: Distinct projects with Open Quality NCRs or Quality Reports
+            open_quality_ncrs = (
+                NonConformance.objects.filter(
+                    project__in=projects, status=NCRStatus.OPEN, deleted=False
+                )
+                .values("project")
+                .distinct()
+                .count()
+            )
+            quality_reports = (
+                BiWeeklyQualityReport.objects.filter(
+                    project__in=projects, deleted=False
+                )
+                .values("project")
+                .distinct()
+                .count()
+            )
+            # Note: A pure union across models is hard in Django ORM without raw SQL,
+            # so we'll approximate the 'projects with quality issues' by taking the max
+            # or sum, but it's cleaner to sum them since they might be separate issues,
+            # though taking the sum of distinct project counts could double-count projects
+            # that have BOTH an NCR and a Report. Let's just do a manual python set union.
+
+            quality_projects = set(
+                NonConformance.objects.filter(
+                    project__in=projects, status=NCRStatus.OPEN, deleted=False
+                ).values_list("project_id", flat=True)
+            ) | set(
+                BiWeeklyQualityReport.objects.filter(
+                    project__in=projects, deleted=False
+                ).values_list("project_id", flat=True)
+            )
+            quality_matters = len(quality_projects)
+
+            safety_projects = set(
+                Incident.objects.filter(
+                    project__in=projects, status=IncidentStatus.OPEN, deleted=False
+                ).values_list("project_id", flat=True)
+            ) | set(
+                BiWeeklySafetyReport.objects.filter(
+                    project__in=projects, deleted=False
+                ).values_list("project_id", flat=True)
+            )
+            safety_matters = len(safety_projects)
+
+            issue_type = "Projects"
+        else:
+            pending_rfis = RFI.objects.filter(
+                project__in=projects, status=RFIStatus.OPEN, deleted=False
+            ).count()
+
+            open_quality_ncrs = NonConformance.objects.filter(
+                project__in=projects, status=NCRStatus.OPEN, deleted=False
+            ).count()
+            quality_reports = BiWeeklyQualityReport.objects.filter(
+                project__in=projects, deleted=False
+            ).count()
+            quality_matters = open_quality_ncrs + quality_reports
+
+            open_incidents = Incident.objects.filter(
+                project__in=projects, status=IncidentStatus.OPEN, deleted=False
+            ).count()
+            safety_reports = BiWeeklySafetyReport.objects.filter(
+                project__in=projects, deleted=False
+            ).count()
+            safety_matters = open_incidents + safety_reports
+
+            issue_type = "Items"
 
         metrics["compliance"] = {
             "pending_rfis": pending_rfis,
-            "quality_matters": open_quality_ncrs + quality_reports,
-            "safety_matters": open_incidents + safety_reports,
+            "quality_matters": quality_matters,
+            "safety_matters": safety_matters,
+            "issue_type": issue_type,
         }
 
         return metrics
@@ -834,7 +896,7 @@ class MasterPortfolioDashboardView(
     required_tiers = [Subscription.BUSINESS_MANAGEMENT]
 
     def get_queryset(self):
-        return self.request.user.get_projects
+        return self.request.user.get_projects  # type: ignore
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
