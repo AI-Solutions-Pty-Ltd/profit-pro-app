@@ -204,9 +204,13 @@ class Account(AbstractUser, BaseModel):
         Returns:
             True if user has the role, False otherwise
         """
+        from app.Account.subscription_config import Subscription
         from app.Project.models import Role
 
-        if self.is_superuser:
+        if self.is_superuser or (
+            self.subscription == Subscription.DEMO_TIER
+            and not self.is_subscription_expired
+        ):
             return True
 
         user_project_roles = project.project_roles.filter(user=self)
