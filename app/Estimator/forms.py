@@ -54,6 +54,19 @@ def _attach_datalists(form, field_to_list_id):
             field.widget.attrs["list"] = list_id
 
 
+def _setup_trade_code(form, queryset):
+    """Configure the ``trade_code`` field as a required dropdown that lists
+    trades by their full trade name only (no prefix)."""
+    field = cast(ModelChoiceField, form.fields["trade_code"])
+    field.queryset = queryset
+    field.required = True
+    field.label = "Trade"
+    field.empty_label = "Select a trade…"
+    field.label_from_instance = (  # ty:ignore[invalid-assignment]
+        lambda obj: obj.trade_name or str(obj)
+    )
+
+
 class MaterialForm(forms.ModelForm):
     class Meta:
         model = ProjectMaterial
@@ -113,10 +126,12 @@ class SpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if project:
-            cast(
-                ModelChoiceField, self.fields["trade_code"]
-            ).queryset = ProjectTradeCode.objects.filter(project=project)
+        _setup_trade_code(
+            self,
+            ProjectTradeCode.objects.filter(project=project)
+            if project
+            else ProjectTradeCode.objects.none(),
+        )
         _attach_datalists(
             self,
             {"section": "spec-sections", "unit_label": "spec-units"},
@@ -215,7 +230,7 @@ class LabourSpecificationForm(forms.ModelForm):
         model = ProjectLabourSpecification
         fields = [
             "section",
-            "trade_name",
+            "trade_code",
             "name",
             "unit",
             "crew",
@@ -227,7 +242,7 @@ class LabourSpecificationForm(forms.ModelForm):
         ]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -261,11 +276,16 @@ class LabourSpecificationForm(forms.ModelForm):
             cast(
                 ModelChoiceField, self.fields["crew"]
             ).queryset = ProjectLabourCrew.objects.filter(project=project)
+        _setup_trade_code(
+            self,
+            ProjectTradeCode.objects.filter(project=project)
+            if project
+            else ProjectTradeCode.objects.none(),
+        )
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -366,7 +386,7 @@ class SystemLabourSpecificationForm(forms.ModelForm):
         model = SystemLabourSpecification
         fields = [
             "section",
-            "trade_name",
+            "trade_code",
             "name",
             "unit",
             "crew",
@@ -378,7 +398,7 @@ class SystemLabourSpecificationForm(forms.ModelForm):
         ]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -411,11 +431,11 @@ class SystemLabourSpecificationForm(forms.ModelForm):
         cast(
             ModelChoiceField, self.fields["crew"]
         ).queryset = SystemLabourCrew.objects.all()
+        _setup_trade_code(self, SystemTradeCode.objects.all())
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -440,9 +460,7 @@ class SystemSpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["trade_code"]
-        ).queryset = SystemTradeCode.objects.all()
+        _setup_trade_code(self, SystemTradeCode.objects.all())
         _attach_datalists(
             self,
             {"section": "spec-sections", "unit_label": "spec-units"},
@@ -537,7 +555,7 @@ class PlantSpecificationForm(forms.ModelForm):
         model = ProjectPlantSpecification
         fields = [
             "section",
-            "trade_name",
+            "trade_code",
             "name",
             "unit",
             "daily_production",
@@ -546,7 +564,7 @@ class PlantSpecificationForm(forms.ModelForm):
         ]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -569,11 +587,16 @@ class PlantSpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
+        _setup_trade_code(
+            self,
+            ProjectTradeCode.objects.filter(project=project)
+            if project
+            else ProjectTradeCode.objects.none(),
+        )
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -584,7 +607,7 @@ class SystemPlantSpecificationForm(forms.ModelForm):
         model = SystemPlantSpecification
         fields = [
             "section",
-            "trade_name",
+            "trade_code",
             "name",
             "unit",
             "daily_production",
@@ -593,7 +616,7 @@ class SystemPlantSpecificationForm(forms.ModelForm):
         ]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -616,11 +639,11 @@ class SystemPlantSpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        _setup_trade_code(self, SystemTradeCode.objects.all())
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -711,10 +734,10 @@ class SystemPreliminaryCostForm(forms.ModelForm):
 class PreliminarySpecificationForm(forms.ModelForm):
     class Meta:
         model = ProjectPreliminarySpecification
-        fields = ["section", "trade_name", "name", "unit", "preliminary_type"]
+        fields = ["section", "trade_code", "name", "unit", "preliminary_type"]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -727,13 +750,18 @@ class PreliminarySpecificationForm(forms.ModelForm):
             "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
+        _setup_trade_code(
+            self,
+            ProjectTradeCode.objects.filter(project=project)
+            if project
+            else ProjectTradeCode.objects.none(),
+        )
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -742,10 +770,10 @@ class PreliminarySpecificationForm(forms.ModelForm):
 class SystemPreliminarySpecificationForm(forms.ModelForm):
     class Meta:
         model = SystemPreliminarySpecification
-        fields = ["section", "trade_name", "name", "unit", "preliminary_type"]
+        fields = ["section", "trade_code", "name", "unit", "preliminary_type"]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -760,11 +788,11 @@ class SystemPreliminarySpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        _setup_trade_code(self, SystemTradeCode.objects.all())
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -895,7 +923,7 @@ class ContractorLabourSpecificationForm(forms.ModelForm):
         model = ContractorLabourSpecification
         fields = [
             "section",
-            "trade_name",
+            "trade_code",
             "name",
             "unit",
             "crew",
@@ -907,7 +935,7 @@ class ContractorLabourSpecificationForm(forms.ModelForm):
         ]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -941,11 +969,16 @@ class ContractorLabourSpecificationForm(forms.ModelForm):
         if company is not None:
             crew_qs = crew_qs.filter(company=company)
         cast(ModelChoiceField, self.fields["crew"]).queryset = crew_qs
+        tc_qs = ContractorTradeCode.objects.all()
+        if company is not None:
+            tc_qs = tc_qs.filter(company=company)
+        else:
+            tc_qs = ContractorTradeCode.objects.none()
+        _setup_trade_code(self, tc_qs)
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -973,7 +1006,9 @@ class ContractorSpecificationForm(forms.ModelForm):
         tc_qs = ContractorTradeCode.objects.all()
         if company is not None:
             tc_qs = tc_qs.filter(company=company)
-        cast(ModelChoiceField, self.fields["trade_code"]).queryset = tc_qs
+        else:
+            tc_qs = ContractorTradeCode.objects.none()
+        _setup_trade_code(self, tc_qs)
         _attach_datalists(
             self,
             {"section": "spec-sections", "unit_label": "spec-units"},
@@ -1043,7 +1078,7 @@ class ContractorPlantSpecificationForm(forms.ModelForm):
         model = ContractorPlantSpecification
         fields = [
             "section",
-            "trade_name",
+            "trade_code",
             "name",
             "unit",
             "daily_production",
@@ -1052,7 +1087,7 @@ class ContractorPlantSpecificationForm(forms.ModelForm):
         ]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -1073,13 +1108,18 @@ class ContractorPlantSpecificationForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, company=None, **kwargs):
         super().__init__(*args, **kwargs)
+        tc_qs = ContractorTradeCode.objects.all()
+        if company is not None:
+            tc_qs = tc_qs.filter(company=company)
+        else:
+            tc_qs = ContractorTradeCode.objects.none()
+        _setup_trade_code(self, tc_qs)
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
@@ -1126,10 +1166,10 @@ class ContractorPreliminaryCostForm(forms.ModelForm):
 class ContractorPreliminarySpecificationForm(forms.ModelForm):
     class Meta:
         model = ContractorPreliminarySpecification
-        fields = ["section", "trade_name", "name", "unit", "preliminary_type"]
+        fields = ["section", "trade_code", "name", "unit", "preliminary_type"]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
-            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_code": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,
@@ -1142,13 +1182,18 @@ class ContractorPreliminarySpecificationForm(forms.ModelForm):
             "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, company=None, **kwargs):
         super().__init__(*args, **kwargs)
+        tc_qs = ContractorTradeCode.objects.all()
+        if company is not None:
+            tc_qs = tc_qs.filter(company=company)
+        else:
+            tc_qs = ContractorTradeCode.objects.none()
+        _setup_trade_code(self, tc_qs)
         _attach_datalists(
             self,
             {
                 "section": "spec-sections",
-                "trade_name": "spec-trade-names",
                 "unit": "spec-units",
             },
         )
