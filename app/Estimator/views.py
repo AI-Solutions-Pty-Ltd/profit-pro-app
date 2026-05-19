@@ -7902,7 +7902,7 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
                 "plant_spec",
                 "preliminary_spec",
             )
-            .order_by("display_order", "id")
+            .order_by("item_code", "display_order", "id")
         )
         trade_code = self.request.GET.get("trade_code")
         if trade_code:
@@ -8049,7 +8049,7 @@ class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
                 "plant_spec",
                 "preliminary_spec",
             )
-            .order_by("display_order", "id")
+            .order_by("item_code", "display_order", "id")
         )
         trade_code = self.request.GET.get("trade_code")
         if trade_code:
@@ -8165,7 +8165,7 @@ class SystemItemLibraryListView(SystemLibraryMixin, ListView):
                 "plant_spec",
                 "preliminary_spec",
             )
-            .order_by("display_order", "id")
+            .order_by("item_code", "display_order", "id")
         )
         trade_code = self.request.GET.get("trade_code")
         if trade_code:
@@ -8330,17 +8330,86 @@ class UpdateItemLibraryEntryView(View):
 
 
 class CreateItemLibraryEntryView(ProjectEstimatorMixin, View):
-    """Create a blank ProjectItemLibraryEntry and redirect back to the list."""
+    """Create a ProjectItemLibraryEntry from the Add Item form (all fields
+    entered up front), appended at the end of its item-code group."""
+
+    FORM_FIELDS = (
+        "item_code",
+        "trade_code",
+        "component",
+        "description",
+        "unit",
+        "material_spec",
+        "labour_plant_spec",
+        "preliminary_spec",
+    )
 
     def post(self, request, project_pk):
         project = self.get_project()
-        ProjectItemLibraryEntry.objects.create(project=project, description="")
-        messages.success(
-            request, "New library entry added — fill in the fields inline."
-        )
-        return redirect(
-            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
-        )
+        list_url = reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        entry = ProjectItemLibraryEntry(project=project)
+        scope = {"project_id": project_pk}
+        fk_models = {
+            "trade_code": (ProjectTradeCode, scope),
+            "material_spec": (ProjectSpecification, scope),
+            "labour_spec": (ProjectLabourSpecification, scope),
+            "plant_spec": (ProjectPlantSpecification, scope),
+            "preliminary_spec": (ProjectPreliminarySpecification, scope),
+        }
+        for field in self.FORM_FIELDS:
+            if field in request.POST:
+                err = _apply_item_library_field(
+                    entry, field, request.POST.get(field), fk_models
+                )
+                if err is not None:
+                    messages.error(request, "Could not add item — invalid input.")
+                    return redirect(list_url)
+
+        if not (entry.item_code or entry.component or entry.description):
+            messages.error(
+                request,
+                "Enter at least an item code, component or description.",
+            )
+            return redirect(list_url)
+
+        last = ProjectItemLibraryEntry.objects.filter(
+            project=project, item_code=entry.item_code
+        ).aggregate(m=models.Max("display_order"))["m"]
+        entry.display_order = (last or 0) + 1
+        entry.save()
+        messages.success(request, "Library item added.")
+        return redirect(list_url)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class ReorderItemLibraryEntriesView(ProjectEstimatorMixin, View):
+    """AJAX: persist a drag-and-drop ordering. Body: {"order": [id, ...]}.
+
+    Assigns display_order by the received position so the manual sequence
+    sticks (within each item-code group, which remains the primary sort)."""
+
+    def post(self, request, project_pk):
+        project = self.get_project()
+        try:
+            order = json.loads(request.body).get("order", [])
+        except (json.JSONDecodeError, AttributeError):
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        entries = {
+            e.pk: e for e in ProjectItemLibraryEntry.objects.filter(project=project)
+        }
+        to_update = []
+        for pos, raw_id in enumerate(order):
+            try:
+                e = entries.get(int(raw_id))
+            except (TypeError, ValueError):
+                continue
+            if e is not None and e.display_order != pos:
+                e.display_order = pos
+                to_update.append(e)
+        if to_update:
+            ProjectItemLibraryEntry.objects.bulk_update(to_update, ["display_order"])
+        return JsonResponse({"ok": True, "updated": len(to_update)})
 
 
 class DeleteItemLibraryEntryView(ProjectEstimatorMixin, View):

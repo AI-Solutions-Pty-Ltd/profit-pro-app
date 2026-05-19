@@ -2,25 +2,29 @@
 {% load estimator_tags %}
 {% block title %}Item Library - Project Resource Estimator{% endblock %}
 {% block estimator_content %}
+    <style>
+        tr.il-row.dragging { opacity: .5; }
+        .il-drag-handle { touch-action: none; }
+        tbody.il-dragging tr.il-row td input,
+        tbody.il-dragging tr.il-row td select,
+        tbody.il-dragging tr.il-row td a,
+        tbody.il-dragging tr.il-row td button { pointer-events: none; }
+    </style>
     <div class="px-4 sm:px-6 lg:px-8">
-        <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Item Library</h1>
                 <p class="mt-1 text-sm text-gray-500">
                     Pre-configured BoQ template rows. Each entry bundles a trade code, component, and the four spec types so Output BoQ rows can be auto-filled from a single lookup.
                 </p>
             </div>
-            <div class="mt-4 sm:mt-0 flex flex-wrap gap-2">
-                <form method="post"
-                      action="{% url 'estimator:item_library_create' project_pk=project_pk %}"
-                      class="inline">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                        {% heroicon_outline "plus" class="w-4 h-4 mr-1.5 -ml-0.5" %}
-                        Add Item
-                    </button>
-                </form>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button type="button"
+                        onclick="document.getElementById('item-add-form').classList.toggle('hidden')"
+                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                    {% heroicon_outline "plus" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Add Item
+                </button>
                 <form method="post" class="inline">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="sync_system">
@@ -52,6 +56,102 @@
                     Upload
                 </a>
                 {% include "estimator/_clear_all_modal.html" with clear_sheet_label="Item Library" %}
+            </div>
+        </div>
+        <!-- Add Item form -->
+        <div id="item-add-form" class="hidden mb-6">
+            <div class="overflow-hidden bg-white shadow-sm rounded-lg ring-1 ring-indigo-100">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-base font-semibold text-gray-900 mb-4">New Library Item</h3>
+                    <form method="post"
+                          action="{% url 'estimator:item_library_create' project_pk=project_pk %}">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+                            <div class="sm:col-span-1">
+                                <label for="id_item_code" class="block text-sm font-medium text-gray-700">Item Code</label>
+                                <input type="text"
+                                       id="id_item_code"
+                                       name="item_code"
+                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="id_trade_code" class="block text-sm font-medium text-gray-700">Trade Code</label>
+                                <select id="id_trade_code"
+                                        name="trade_code"
+                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">—</option>
+                                    {% for tc in trade_codes %}<option value="{{ tc.id }}">{{ tc.trade_code }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <label for="id_component" class="block text-sm font-medium text-gray-700">Component</label>
+                                <input type="text"
+                                       id="id_component"
+                                       name="component"
+                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="sm:col-span-1">
+                                <label for="id_unit" class="block text-sm font-medium text-gray-700">Unit</label>
+                                <input type="text"
+                                       id="id_unit"
+                                       name="unit"
+                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
+                                <input type="text"
+                                       id="id_description"
+                                       name="description"
+                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="id_material_spec"
+                                       class="block text-sm font-medium text-gray-700">Material Spec</label>
+                                <select id="id_material_spec"
+                                        name="material_spec"
+                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">—</option>
+                                    {% for s in material_specs %}
+                                        {% if s.is_active %}<option value="{{ s.id }}">{{ s.name }}</option>{% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="id_labour_plant_spec"
+                                       class="block text-sm font-medium text-gray-700">Labour &amp; Plant Spec</label>
+                                <select id="id_labour_plant_spec"
+                                        name="labour_plant_spec"
+                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">—</option>
+                                    {% for name in labour_plant_spec_names %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="id_preliminary_spec"
+                                       class="block text-sm font-medium text-gray-700">Prelim Spec</label>
+                                <select id="id_preliminary_spec"
+                                        name="preliminary_spec"
+                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">—</option>
+                                    {% for s in preliminary_specs %}
+                                        {% if s.is_active %}<option value="{{ s.id }}">{{ s.name }}</option>{% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end gap-x-3">
+                            <button type="button"
+                                    onclick="document.getElementById('item-add-form').classList.add('hidden')"
+                                    class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                Save Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
         <!-- Filters -->
@@ -129,6 +229,7 @@
                                        id="select-all-checkbox"
                                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
+                            <th class="px-2 py-3 w-8" title="Drag rows to reorder"></th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Item Code</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Trade Code</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Component</th>
@@ -142,13 +243,18 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
                         {% for e in entries %}
-                            <tr class="hover:bg-gray-50" data-entry-id="{{ e.id }}">
+                            <tr class="hover:bg-gray-50 il-row" data-entry-id="{{ e.id }}">
                                 <td class="px-3 py-1.5 w-10">
                                     <input type="checkbox"
                                            class="row-select-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                            form="bulk-delete-form"
                                            name="entry_ids"
                                            value="{{ e.id }}">
+                                </td>
+                                <td class="px-2 py-1.5 w-8">
+                                    <span class="il-drag-handle cursor-grab select-none text-gray-400 hover:text-gray-600"
+                                          draggable="true"
+                                          title="Drag to reorder">{% heroicon_outline "bars-3" class="w-4 h-4" %}</span>
                                 </td>
                                 <td class="px-2 py-1.5 w-24">
                                     <input type="text"
@@ -236,21 +342,21 @@
                                         {% endfor %}
                                     </select>
                                 </td>
-                                <td class="px-2 py-1.5 text-right">
+                                <td class="px-2 py-1.5 text-right whitespace-nowrap">
                                     <form method="post"
                                           action="{% url 'estimator:item_library_delete' project_pk=project_pk pk=e.id %}"
                                           class="inline"
                                           onsubmit="return confirm('Delete this entry?');">
                                         {% csrf_token %}
-                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
-                                            {% heroicon_outline "trash" class="w-4 h-4" %}
-                                        </button>
+                                        <button type="submit"
+                                                class="text-red-600 hover:text-red-800 align-middle"
+                                                title="Delete">{% heroicon_outline "trash" class="w-4 h-4" %}</button>
                                     </form>
                                 </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">
+                                <td colspan="11" class="px-6 py-12 text-center text-sm text-gray-500">
                                     No entries yet. Click <em>Add Item</em>, sync from System / Contractor, or upload an Excel sheet.
                                 </td>
                             </tr>
@@ -344,6 +450,130 @@
                 clearBtn.addEventListener('click', () => {
                     rowBoxes.forEach((cb) => { cb.checked = false; });
                     refreshBar();
+                });
+            }
+
+            // ── Drag-and-drop row reordering ──
+            const reorderUrl = "{% url 'estimator:item_library_reorder' project_pk=project_pk %}";
+            const tbody = document.querySelector('table tbody');
+            let draggedRow = null;
+
+            function rowAfter(container, y) {
+                const rows = [...container.querySelectorAll('tr.il-row:not(.dragging)')];
+                return rows.reduce((closest, row) => {
+                    const box = row.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset, element: row };
+                    }
+                    return closest;
+                }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+            }
+
+            const SAVE_DELAY_MS = 5000;
+            let saveTimer = null;
+            let pendingSave = false;
+
+            function currentOrder() {
+                return [...tbody.querySelectorAll('tr.il-row')]
+                    .map((r) => r.dataset.entryId);
+            }
+
+            async function persistOrder() {
+                pendingSave = false;
+                const ids = currentOrder();
+                try {
+                    const res = await fetch(reorderUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: JSON.stringify({ order: ids }),
+                    });
+                    const data = await res.json();
+                    showToast(
+                        res.ok && data.ok ? 'Order saved' : (data.error || 'Save failed'),
+                        !(res.ok && data.ok)
+                    );
+                } catch (e) {
+                    showToast('Save failed', true);
+                }
+            }
+
+            // Reorder happens locally; only persist once the order has been
+            // left untouched for 5s (each new move resets the countdown).
+            function scheduleSave() {
+                pendingSave = true;
+                if (saveTimer) clearTimeout(saveTimer);
+                showToast('Reordered — saving in 5s…');
+                saveTimer = setTimeout(() => {
+                    saveTimer = null;
+                    persistOrder();
+                }, SAVE_DELAY_MS);
+            }
+
+            // Don't lose an unsaved reorder if the user navigates away first.
+            window.addEventListener('beforeunload', () => {
+                if (!pendingSave) return;
+                if (saveTimer) clearTimeout(saveTimer);
+                try {
+                    const blob = new Blob(
+                        [JSON.stringify({ order: currentOrder() })],
+                        { type: 'application/json' }
+                    );
+                    navigator.sendBeacon(reorderUrl, blob);
+                    pendingSave = false;
+                } catch (e) { /* best effort */ }
+            });
+
+            let movedDuringDrag = false;
+
+            function endDrag() {
+                if (!draggedRow) return;
+                draggedRow.classList.remove('dragging', 'opacity-50');
+                draggedRow = null;
+                tbody.classList.remove('il-dragging');
+                if (movedDuringDrag) {
+                    movedDuringDrag = false;
+                    scheduleSave();
+                }
+            }
+
+            if (tbody) {
+                tbody.querySelectorAll('.il-drag-handle').forEach((handle) => {
+                    handle.addEventListener('dragstart', (ev) => {
+                        draggedRow = handle.closest('tr.il-row');
+                        if (!draggedRow) return;
+                        movedDuringDrag = false;
+                        draggedRow.classList.add('dragging', 'opacity-50');
+                        // Disable inner inputs/links so dragover keeps firing
+                        // over the row instead of being swallowed by them.
+                        tbody.classList.add('il-dragging');
+                        ev.dataTransfer.effectAllowed = 'move';
+                        ev.dataTransfer.setData('text/plain', draggedRow.dataset.entryId);
+                    });
+                    handle.addEventListener('dragend', endDrag);
+                });
+                tbody.addEventListener('dragover', (ev) => {
+                    if (!draggedRow) return;
+                    ev.preventDefault();
+                    ev.dataTransfer.dropEffect = 'move';
+                    const after = rowAfter(tbody, ev.clientY);
+                    if (after == null) {
+                        if (tbody.lastElementChild !== draggedRow) {
+                            tbody.appendChild(draggedRow);
+                            movedDuringDrag = true;
+                        }
+                    } else if (after !== draggedRow && after.previousElementSibling !== draggedRow) {
+                        tbody.insertBefore(draggedRow, after);
+                        movedDuringDrag = true;
+                    }
+                });
+                tbody.addEventListener('drop', (ev) => {
+                    if (!draggedRow) return;
+                    ev.preventDefault();
+                    endDrag();
                 });
             }
         })();
