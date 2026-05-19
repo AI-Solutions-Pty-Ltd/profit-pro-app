@@ -175,7 +175,7 @@ class SystemSpecificationComponent(models.Model):
 
 class SystemLabourCrew(models.Model):
     crew_type = models.CharField(max_length=100, unique=True)
-    crew_size = models.IntegerField(default=0)
+    crew_size = models.IntegerField(default=0, editable=False)
     skilled = models.IntegerField(default=0)
     semi_skilled = models.IntegerField(default=0)
     general = models.IntegerField(default=0)
@@ -192,6 +192,12 @@ class SystemLabourCrew(models.Model):
     def __str__(self):
         return self.crew_type
 
+    def save(self, *args, **kwargs):
+        self.crew_size = (
+            (self.skilled or 0) + (self.semi_skilled or 0) + (self.general or 0)
+        )
+        super().save(*args, **kwargs)
+
     @property
     def crew_daily_cost(self):
         return (
@@ -204,6 +210,13 @@ class SystemLabourCrew(models.Model):
 class SystemLabourSpecification(models.Model):
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
@@ -228,6 +241,13 @@ class SystemLabourSpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def daily_output(self):
@@ -281,6 +301,13 @@ class SystemPlantSpecification(models.Model):
 
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -297,6 +324,13 @@ class SystemPlantSpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def daily_output(self):
@@ -392,6 +426,13 @@ class SystemPreliminarySpecification(models.Model):
 
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preliminary_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     preliminary_type = models.CharField(
@@ -407,6 +448,13 @@ class SystemPreliminarySpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def amount(self):
@@ -742,7 +790,7 @@ class ContractorLabourCrew(models.Model):
         related_name="contractor_copies",
     )
     crew_type = models.CharField(max_length=100)
-    crew_size = models.IntegerField(default=0)
+    crew_size = models.IntegerField(default=0, editable=False)
     skilled = models.IntegerField(default=0)
     semi_skilled = models.IntegerField(default=0)
     general = models.IntegerField(default=0)
@@ -758,6 +806,12 @@ class ContractorLabourCrew(models.Model):
 
     def __str__(self):
         return self.crew_type
+
+    def save(self, *args, **kwargs):
+        self.crew_size = (
+            (self.skilled or 0) + (self.semi_skilled or 0) + (self.general or 0)
+        )
+        super().save(*args, **kwargs)
 
     @property
     def crew_daily_cost(self):
@@ -784,6 +838,13 @@ class ContractorLabourSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
@@ -808,6 +869,13 @@ class ContractorLabourSpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def daily_output(self):
@@ -888,6 +956,13 @@ class ContractorPlantSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -905,6 +980,13 @@ class ContractorPlantSpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def daily_output(self):
@@ -1017,6 +1099,13 @@ class ContractorPreliminarySpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ContractorTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preliminary_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     preliminary_type = models.CharField(
@@ -1033,6 +1122,13 @@ class ContractorPreliminarySpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def amount(self):
@@ -1385,7 +1481,7 @@ class ProjectLabourCrew(models.Model):
         related_name="project_copies",
     )
     crew_type = models.CharField(max_length=100)
-    crew_size = models.IntegerField(default=0)
+    crew_size = models.IntegerField(default=0, editable=False)
     skilled = models.IntegerField(default=0)
     semi_skilled = models.IntegerField(default=0)
     general = models.IntegerField(default=0)
@@ -1401,6 +1497,12 @@ class ProjectLabourCrew(models.Model):
 
     def __str__(self):
         return self.crew_type
+
+    def save(self, *args, **kwargs):
+        self.crew_size = (
+            (self.skilled or 0) + (self.semi_skilled or 0) + (self.general or 0)
+        )
+        super().save(*args, **kwargs)
 
     @property
     def crew_daily_cost(self):
@@ -1426,6 +1528,13 @@ class ProjectLabourSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
@@ -1452,6 +1561,13 @@ class ProjectLabourSpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def daily_output(self):
@@ -1531,6 +1647,13 @@ class ProjectPlantSpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -1548,6 +1671,13 @@ class ProjectPlantSpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def daily_output(self):
@@ -1658,6 +1788,13 @@ class ProjectPreliminarySpecification(models.Model):
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
+    trade_code = models.ForeignKey(
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preliminary_specifications",
+    )
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     preliminary_type = models.CharField(
@@ -1674,6 +1811,13 @@ class ProjectPreliminarySpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Keep the legacy free-text trade_name mirrored from the FK so
+        # existing list/report/filter code keeps working.
+        if self.trade_code_id:
+            self.trade_name = self.trade_code.trade_name
+        super().save(*args, **kwargs)
 
     @property
     def amount(self):
@@ -2026,6 +2170,51 @@ class BOQItem(models.Model):
     def forecast_amount(self):
         return calculate_forecast_amount(
             self.baseline_new_price, self.forecast_quantity
+        )
+
+    @property
+    def _material_base_amount(self):
+        """Material amount on contract qty before markup/transport (incl. wastage)."""
+        rate = self.new_materials_rate
+        factor = self._material_markup_factor
+        if rate is None or not self.contract_quantity or factor == 0:
+            return Decimal("0")
+        base_rate = rate / factor
+        return base_rate * self.contract_quantity * self._wastage_factor
+
+    @property
+    def _labour_base_amount(self):
+        """Labour amount on contract qty before markup."""
+        rate = self.new_labour_rate
+        factor = self._labour_markup_factor
+        if rate is None or not self.contract_quantity or factor == 0:
+            return Decimal("0")
+        base_rate = rate / factor
+        return base_rate * self.contract_quantity
+
+    @property
+    def markup_amount(self):
+        """Money added on top of base cost by material & labour markup %
+        (transport excluded — it is reported separately)."""
+        mat = (
+            self._material_base_amount
+            * (self.material_markup_pct or Decimal("0"))
+            / Decimal("100")
+        )
+        lab = (
+            self._labour_base_amount
+            * (self.labour_markup_pct or Decimal("0"))
+            / Decimal("100")
+        )
+        return mat + lab
+
+    @property
+    def transport_amount(self):
+        """Money added on top of base material cost by transport %."""
+        return (
+            self._material_base_amount
+            * (self.transport_pct or Decimal("0"))
+            / Decimal("100")
         )
 
 

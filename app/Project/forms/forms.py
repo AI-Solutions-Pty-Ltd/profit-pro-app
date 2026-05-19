@@ -7,6 +7,11 @@ from django.core.exceptions import ValidationError
 from django.forms import ModelChoiceField
 
 from app.Account.models import Account
+from app.core.Utilities.widgets import SearchableSelectWidget
+from app.Project.company.company_forms import (
+    CompanyForm,
+    PrivacyModelMultipleChoiceField,
+)
 from app.Project.models import (
     AdministrativeCompliance,
     Company,
@@ -26,10 +31,12 @@ class ProjectContractorForm(forms.ModelForm):
         model = Project
         fields = ["contractor"]
         widgets = {
-            "contractor": forms.Select(
+            "contractor": SearchableSelectWidget(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
+                },
+                create_url=True,
+                resource_type="contractor",
             ),
         }
         labels = {
@@ -48,10 +55,17 @@ class ProjectContractorForm(forms.ModelForm):
         if user:
             projects = user.get_projects
 
-            # Filter to only show contractor companies
-            queryset = Company.objects.filter(
-                contractor_projects__in=projects, type=Company.Type.CONTRACTOR
-            ).order_by("name")
+            # Filter to show contractor companies that are either associated with the user's projects or account
+            from django.db.models import Q
+
+            queryset = (
+                Company.objects.filter(
+                    Q(contractor_projects__in=projects) | Q(users=user),
+                    type=Company.Type.CONTRACTOR,
+                )
+                .distinct()
+                .order_by("name")
+            )
 
             # Exclude the currently assigned contractor if project is provided
             if project and project.contractor:
@@ -79,10 +93,12 @@ class ProjectLeadConsultantForm(forms.ModelForm):
         model = Project
         fields = ["lead_consultant"]
         widgets = {
-            "lead_consultant": forms.Select(
+            "lead_consultant": SearchableSelectWidget(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
+                },
+                create_url=True,
+                resource_type="lead_consultant",
             ),
         }
         labels = {
@@ -94,14 +110,29 @@ class ProjectLeadConsultantForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
-        kwargs.pop("user", None)
+        user: Account | None = kwargs.pop("user", None)
 
         super().__init__(*args, **kwargs)
 
-        # Filter to only show lead consultant companies
-        queryset = Company.objects.filter(type=Company.Type.LEAD_CONSULTANT).order_by(
-            "name"
-        )
+        if user:
+            projects = user.get_projects
+
+            # Filter to show lead consultant companies that are either associated with the user's projects or account
+            from django.db.models import Q
+
+            queryset = (
+                Company.objects.filter(
+                    Q(lead_consultant_projects__in=projects) | Q(users=user),
+                    type=Company.Type.LEAD_CONSULTANT,
+                )
+                .distinct()
+                .order_by("name")
+            )
+        else:
+            # Filter to only show lead consultant companies
+            queryset = Company.objects.filter(
+                type=Company.Type.LEAD_CONSULTANT
+            ).order_by("name")
 
         # Exclude the currently assigned lead consultant if project is provided
         if project and project.lead_consultant:
@@ -212,10 +243,12 @@ class SignatoryForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "user": forms.Select(
+            "user": SearchableSelectWidget(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
+                },
+                create_url=True,
+                resource_type="signatory_user",
             ),
         }
         labels = {
@@ -709,6 +742,19 @@ class FinalAccountComplianceForm(forms.ModelForm):
 class ClientForm(forms.ModelForm):
     """Form for creating and editing companies."""
 
+    users = PrivacyModelMultipleChoiceField(
+        queryset=Account.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="Client Users",
+    )
+    consultants = PrivacyModelMultipleChoiceField(
+        queryset=Account.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="Client Consultants",
+    )
+
     class Meta:
         model = Company
         fields = [
@@ -752,24 +798,34 @@ class ClientForm(forms.ModelForm):
                     "placeholder": "Enter VAT number",
                 }
             ),
-            "users": forms.SelectMultiple(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "consultants": forms.SelectMultiple(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
         }
 
     def __init__(self, *args, contractor=False, client=False, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # For clients, show both users and consultants fields
-        self.fields["users"].label = "Client Users"
-        self.fields["consultants"].label = "Client Consultants"
+        self.fields["users"].queryset = Account.objects.exclude(
+            first_name="", last_name=""
+        ).order_by("first_name", "email")
+        self.fields["consultants"].queryset = Account.objects.exclude(
+            first_name="", last_name=""
+        ).order_by("first_name", "email")
+
+        # Apply masking to initial values when editing an existing instance
+        if self.instance and self.instance.pk:
+            sensitive_fields = [
+                "registration_number",
+                "tax_number",
+                "vat_number",
+            ]
+            for field_name in sensitive_fields:
+                raw_val = getattr(self.instance, field_name, "")
+                if raw_val:
+                    if len(raw_val) <= 4:
+                        self.initial[field_name] = raw_val
+                    else:
+                        self.initial[field_name] = (
+                            "•" * (len(raw_val) - 4) + raw_val[-4:]
+                        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -783,6 +839,21 @@ class ClientForm(forms.ModelForm):
             .exists()
         ):
             raise forms.ValidationError("Client with this name already exists.")
+
+    def clean_sensitive_field(self, field_name: str) -> str:
+        submitted_val = self.cleaned_data.get(field_name, "")
+        if submitted_val and "•" in submitted_val:
+            return getattr(self.instance, field_name, "") if self.instance else ""
+        return submitted_val
+
+    def clean_registration_number(self):
+        return self.clean_sensitive_field("registration_number")
+
+    def clean_tax_number(self):
+        return self.clean_sensitive_field("tax_number")
+
+    def clean_vat_number(self):
+        return self.clean_sensitive_field("vat_number")
 
 
 class SignatoryLinkForm(forms.Form):
@@ -867,3 +938,92 @@ class ProjectUserCreateForm(forms.Form):
                 "A user with this email address already exists in the system."
             )
         return email
+
+
+class ClientQuickCreateForm(CompanyForm):
+    """Quick create form for client companies."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["client"] = True
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = Company.Type.CLIENT
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
+
+class ContractorQuickCreateForm(CompanyForm):
+    """Quick create form for contractor companies."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["contractor"] = True
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = Company.Type.CONTRACTOR
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
+
+class LeadConsultantQuickCreateForm(CompanyForm):
+    """Quick create form for lead consultant companies."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = Company.Type.LEAD_CONSULTANT
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
+
+class UserQuickCreateForm(forms.ModelForm):
+    """Quick create form for users."""
+
+    class Meta:
+        model = Account
+        fields = ["email", "first_name", "last_name", "primary_contact"]
+        widgets = {
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "email@example.com",
+                }
+            ),
+            "first_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "First Name",
+                }
+            ),
+            "last_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Last Name",
+                }
+            ),
+            "primary_contact": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "+27...",
+                }
+            ),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Set a random password for invited users
+        instance.set_password(Account.objects.make_random_password())
+        if commit:
+            instance.save()
+        return instance

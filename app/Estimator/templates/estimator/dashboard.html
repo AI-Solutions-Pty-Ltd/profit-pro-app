@@ -27,16 +27,12 @@
                 </svg>
                 Labor Activities
             </a>
-            <form method="post"
-                  action="{% url 'estimator:autofill_boq_from_library' project_pk=project_pk %}">
-                {% csrf_token %}
-                <button type="submit"
-                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('Autofill specs on every BoQ row that is missing them, using matching Item Library entries?')">
-                    {% heroicon_outline "sparkles" class="mr-1.5 -ml-0.5 w-5 h-5" %}
-                    Autofill from Library
-                </button>
-            </form>
+            <button id="autofill-open-btn"
+                    type="button"
+                    class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50">
+                {% heroicon_outline "sparkles" class="mr-1.5 -ml-0.5 w-5 h-5" %}
+                Autofill from Library
+            </button>
             <form method="post"
                   action="{% url 'estimator:sync_boq' project_pk=project_pk %}">
                 {% csrf_token %}
@@ -44,6 +40,40 @@
                         class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500">
                     {% heroicon_outline "arrow-path" class="mr-1.5 -ml-0.5 w-5 h-5" %}
                     Sync from Baseline BoQ
+                </button>
+            </form>
+        </div>
+    </div>
+    <!-- Autofill choice modal -->
+    <div id="autofill-modal"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h2 class="text-lg font-semibold text-gray-900">Autofill specs on every BoQ row?</h2>
+            <p class="mt-2 text-sm text-gray-600">
+                <strong>Autofill missing</strong> fills only rows that have no specs yet.
+                <strong>Reset &amp; re-run all</strong> clears specs on every previously auto-filled row
+                first, then re-applies — manually-edited rows are left alone.
+            </p>
+            <form method="post"
+                  action="{% url 'estimator:autofill_boq_from_library' project_pk=project_pk %}"
+                  class="mt-5 flex justify-end gap-2">
+                {% csrf_token %}
+                <button id="autofill-cancel-btn"
+                        type="button"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit"
+                        name="mode"
+                        value="missing_only"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-amber-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50">
+                    Autofill missing
+                </button>
+                <button type="submit"
+                        name="mode"
+                        value="reset_and_rerun"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-md shadow-sm hover:bg-amber-500">
+                    Reset &amp; re-run all
                 </button>
             </form>
         </div>
@@ -103,23 +133,21 @@
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-green-50 rounded-lg shrink-0">
-                    {% heroicon_outline "arrow-trending-up" class="w-5 h-5 text-green-600" %}
+                <div class="p-1.5 bg-orange-50 rounded-lg shrink-0">
+                    {% heroicon_outline "receipt-percent" class="w-5 h-5 text-orange-600" %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Progress Amount</p>
-                    <p class="text-sm font-bold text-green-700 whitespace-nowrap">{{ total_progress_amount|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Markups Amount</p>
+                    <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_markup_amount|currency }}</p>
                 </div>
             </div>
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-blue-50 rounded-lg shrink-0">
-                    {% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}
-                </div>
+                <div class="p-1.5 bg-teal-50 rounded-lg shrink-0">{% heroicon_outline "truck" class="w-5 h-5 text-teal-600" %}</div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Forecast Amount</p>
-                    <p class="text-sm font-bold text-blue-700 whitespace-nowrap">{{ total_forecast_amount|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Transport Amount</p>
+                    <p class="text-sm font-bold text-teal-700 whitespace-nowrap">{{ total_transport_amount|currency }}</p>
                 </div>
             </div>
         </div>
@@ -483,7 +511,7 @@
                                class="column-detail-toggle"
                                data-column="col-combined-price"
                                checked>
-                        <span class="ml-2">Price</span>
+                        <span class="ml-2">Rate</span>
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
@@ -714,9 +742,9 @@
                         <th class="bg-orange-50/70 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-700 border-r border-gray-200 column-group-markups w-[75px]">
                             Transp%
                         </th>
-                        <!-- Baseline New Price -->
+                        <!-- Baseline New Rate -->
                         <th class="bg-indigo-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-indigo-700 border-r border-gray-200 column-group-combined w-[95px]">
-                            Price
+                            Rate
                         </th>
                         <!-- Progress -->
                         <th class="bg-green-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-green-700 column-group-progress w-[75px]">
@@ -1038,6 +1066,57 @@
         setTimeout(() => el.classList.remove(cls), ok ? 800 : 1500);
     }
 
+    // Position a popover next to a trigger so it stays in the viewport.
+    // Flips above the trigger when there is not enough room below, and
+    // clamps max-height to the available space so long lists scroll
+    // rather than overflowing the screen.
+    function positionPopoverNearTrigger(trigger, popover, options) {
+        options = options || {};
+        const margin = options.margin || 8;
+        const minHeight = options.minHeight || 200;
+        const alignRight = options.alignRight !== false;
+
+        popover.style.position = 'fixed';
+        popover.style.maxHeight = 'none';
+        popover.style.top = '0px';
+        popover.style.left = '0px';
+
+        const trigRect = trigger.getBoundingClientRect();
+        const popWidth = popover.offsetWidth;
+
+        const spaceBelow = window.innerHeight - trigRect.bottom - margin;
+        const spaceAbove = trigRect.top - margin;
+
+        let top, maxHeight;
+        if (spaceBelow >= minHeight || spaceBelow >= spaceAbove) {
+            top = trigRect.bottom + margin;
+            maxHeight = Math.max(minHeight, spaceBelow);
+        } else {
+            maxHeight = Math.max(minHeight, spaceAbove);
+            top = Math.max(margin, trigRect.top - maxHeight - margin);
+        }
+
+        let left = alignRight ? (trigRect.right - popWidth) : trigRect.left;
+        left = Math.max(margin, Math.min(left, window.innerWidth - popWidth - margin));
+
+        popover.style.top = top + 'px';
+        popover.style.left = left + 'px';
+        popover.style.maxHeight = maxHeight + 'px';
+        popover.style.overflowY = 'auto';
+    }
+
+    // ============ Autofill Choice Modal ============
+    const autofillOpenBtn = document.getElementById('autofill-open-btn');
+    const autofillModal = document.getElementById('autofill-modal');
+    const autofillCancelBtn = document.getElementById('autofill-cancel-btn');
+    if (autofillOpenBtn && autofillModal) {
+        autofillOpenBtn.addEventListener('click', () => autofillModal.classList.remove('hidden'));
+        autofillCancelBtn.addEventListener('click', () => autofillModal.classList.add('hidden'));
+        autofillModal.addEventListener('click', (e) => {
+            if (e.target === autofillModal) autofillModal.classList.add('hidden');
+        });
+    }
+
     // ============ Column Groups Visibility Toggle ============
     const columnGroupsBtn = document.getElementById('column-groups-btn');
     const columnGroupsModal = document.getElementById('column-groups-modal');
@@ -1051,10 +1130,7 @@
             columnGroupsModal.classList.toggle('hidden');
             columnDetailsModal.classList.add('hidden');
             if (!columnGroupsModal.classList.contains('hidden')) {
-                columnGroupsModal.style.position = 'fixed';
-                const rect = columnGroupsBtn.getBoundingClientRect();
-                columnGroupsModal.style.top = (rect.bottom + 8) + 'px';
-                columnGroupsModal.style.left = (rect.right - 320) + 'px';
+                positionPopoverNearTrigger(columnGroupsBtn, columnGroupsModal);
             }
         });
     }
@@ -1065,10 +1141,7 @@
             columnDetailsModal.classList.toggle('hidden');
             columnGroupsModal.classList.add('hidden');
             if (!columnDetailsModal.classList.contains('hidden')) {
-                columnDetailsModal.style.position = 'fixed';
-                const rect = columnDetailsBtn.getBoundingClientRect();
-                columnDetailsModal.style.top = (rect.bottom + 8) + 'px';
-                columnDetailsModal.style.left = (rect.right - 380) + 'px';
+                positionPopoverNearTrigger(columnDetailsBtn, columnDetailsModal);
             }
         });
     }
@@ -1290,16 +1363,12 @@
 
     function showLibraryPickerFor(btn) {
         activeLibraryItemId = btn.dataset.itemId;
-        const rect = btn.getBoundingClientRect();
-        const popoverWidth = 288;
-        const maxLeft = window.innerWidth - popoverWidth - 8;
-        libraryPicker.style.top = (rect.bottom + 4) + 'px';
-        libraryPicker.style.left = Math.max(8, Math.min(rect.left, maxLeft)) + 'px';
         librarySearch.value = '';
         libraryPicker.querySelectorAll('.library-picker-option').forEach(opt => {
             opt.parentElement.classList.remove('hidden');
         });
         libraryPicker.classList.remove('hidden');
+        positionPopoverNearTrigger(btn, libraryPicker, { alignRight: false, minHeight: 240 });
         librarySearch.focus();
     }
 

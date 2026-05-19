@@ -34,6 +34,7 @@
                 {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
                 Add Spec
             </button>
+            {% include "estimator/_clear_all_modal.html" with clear_sheet_label="Preliminary Specs" %}
         </div>
     </div>
     <!-- Add Spec Form -->
@@ -59,8 +60,8 @@
                             <div class="mt-1">{{ form.section }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_trade_name" class="block text-sm font-medium text-gray-700">Trade Name</label>
-                            <div class="mt-1">{{ form.trade_name }}</div>
+                            <label for="id_trade_code" class="block text-sm font-medium text-gray-700">Trade</label>
+                            <div class="mt-1">{{ form.trade_code }}</div>
                         </div>
                         <div class="sm:col-span-2">
                             <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>

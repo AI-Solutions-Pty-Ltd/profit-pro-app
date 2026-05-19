@@ -17,6 +17,7 @@ from app.Project.models import (
     AdministrativeCompliance,
     Company,
     ContractualCompliance,
+    Drawing,
     FinalAccountCompliance,
     Milestone,
     PlannedValue,
@@ -451,3 +452,20 @@ class OverheadEntityFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     name = Sequence(lambda n: f"Overhead {n}")
     category = "General"
+
+
+class DrawingFactory(DjangoModelFactory):
+    """Factory for Drawing model."""
+
+    class Meta:
+        model = Drawing
+
+    project = SubFactory(ProjectFactory)
+    drawing_number = Sequence(lambda n: f"DWG-{n:04d}")
+    name = Sequence(lambda n: f"Drawing {n}")
+    revision_number = "01"
+    discipline = SubFactory(DisciplineFactory)
+    category = SubFactory(CategoryFactory)
+    sub_category = SubFactory(SubCategoryFactory)
+    file = factory.django.FileField(filename="test_drawing.pdf")
+    notes = Faker("text")

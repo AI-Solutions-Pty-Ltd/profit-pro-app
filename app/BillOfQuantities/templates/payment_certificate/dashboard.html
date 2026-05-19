@@ -287,19 +287,19 @@
                                 </div>
                                 <div class="flex items-center space-x-8">
                                     <div class="text-right min-w-[140px]">
-                                        <p class="text-xs text-gray-500">Cumulative Total</p>
+                                        <p class="text-xs text-gray-500">Cumulative Certified Total</p>
                                         <p class="font-mono text-sm font-medium tabular-nums text-indigo-600 whitespace-nowrap">
                                             R&nbsp;{{ cert.grand_total_progressive_to_date|default:0|floatformat:2|intcomma }}
                                         </p>
                                     </div>
                                     <div class="text-right min-w-[140px]">
-                                        <p class="text-xs text-gray-500">Progressive To Date</p>
+                                        <p class="text-xs text-gray-500">Previous Certified Total</p>
                                         <p class="font-mono text-sm font-medium tabular-nums text-gray-900 whitespace-nowrap">
                                             R&nbsp;{{ cert.grand_total_progressive_previous|default:0|floatformat:2|intcomma }}
                                         </p>
                                     </div>
                                     <div class="text-right min-w-[140px]">
-                                        <p class="text-xs text-gray-500">Claim Total</p>
+                                        <p class="text-xs text-gray-500">Current Certified Total</p>
                                         <p class="font-mono text-sm font-medium tabular-nums text-gray-900 whitespace-nowrap">
                                             R&nbsp;{{ cert.total_submitted|default:0|floatformat:2|intcomma }}
                                         </p>

@@ -151,6 +151,20 @@ def _spec_datalist_context(qs, unit_field="unit"):
     }
 
 
+def _handle_clear_action(request, queryset, *, label="entries"):
+    """Handle a `clear_all` POST. Deletes everything in `queryset`.
+
+    Returns True if the request was a clear action (caller should redirect),
+    False otherwise.
+    """
+    if request.POST.get("action") != "clear_all":
+        return False
+    count = queryset.count()
+    queryset.delete()
+    messages.success(request, f"Cleared {count} {label}.")
+    return True
+
+
 def _handle_bulk_action(request, queryset, *, allow_toggle_active=False):
     """Handle bulk_delete / bulk_activate / bulk_deactivate POSTs.
 
@@ -360,6 +374,8 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         total_preliminary = Decimal("0")
         total_progress = Decimal("0")
         total_forecast = Decimal("0")
+        total_markup = Decimal("0")
+        total_transport = Decimal("0")
 
         for item in summary_items:
             if item.contract_amount:
@@ -376,6 +392,10 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 total_progress += item.progress_amount
             if item.forecast_amount:
                 total_forecast += item.forecast_amount
+            if item.markup_amount:
+                total_markup += item.markup_amount
+            if item.transport_amount:
+                total_transport += item.transport_amount
 
         context["total_contract_amount"] = total_contract
         context["total_material_amount"] = total_material
@@ -384,6 +404,8 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context["total_preliminary_amount"] = total_preliminary
         context["total_progress_amount"] = total_progress
         context["total_forecast_amount"] = total_forecast
+        context["total_markup_amount"] = total_markup
+        context["total_transport_amount"] = total_transport
 
         # Filter options (scoped to project)
         project_items = BOQItem.objects.filter(project=project)
@@ -529,13 +551,29 @@ class SyncBoqView(ProjectEstimatorMixin, View):
 
 
 class AutofillBoqFromLibraryView(ProjectEstimatorMixin, View):
-    """Bulk-fill BoQ rows that have no specs from matching Item Library entries."""
+    """Bulk-fill BoQ rows from matching Item Library entries.
+
+    POST `mode=reset_and_rerun` first clears specs on every previously
+    auto-filled row, then runs the fill. Any other value (or missing) only
+    fills rows that currently have no specs.
+    """
 
     def post(self, request, project_pk):
-        from .services import autofill_boq_from_library
+        from .services import (
+            autofill_boq_from_library,
+            reset_boq_autofill_trackers,
+        )
 
-        result = autofill_boq_from_library(self.get_project())
-        parts = [f"{result['filled']} filled"]
+        project = self.get_project()
+        reset_count = 0
+        if request.POST.get("mode") == "reset_and_rerun":
+            reset_count = reset_boq_autofill_trackers(project)
+
+        result = autofill_boq_from_library(project)
+        parts = []
+        if reset_count:
+            parts.append(f"{reset_count} reset")
+        parts.append(f"{result['filled']} filled")
         if result["skipped_already_set"]:
             parts.append(f"{result['skipped_already_set']} already had specs")
         if result["ambiguous"]:
@@ -874,11 +912,15 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
-        if _handle_bulk_action(
-            request,
-            ProjectSpecification.objects.filter(project=project),
-            allow_toggle_active=True,
-        ):
+        qs = ProjectSpecification.objects.filter(project=project)
+        if _handle_clear_action(request, qs, label="material specs"):
+            return redirect(
+                reverse(
+                    "estimator:material_specs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
             return redirect(
                 reverse(
                     "estimator:material_specs",
@@ -962,10 +1004,14 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
+        qs = ProjectMaterial.objects.filter(project=self.get_project())
 
-        if _handle_bulk_action(
-            request, ProjectMaterial.objects.filter(project=self.get_project())
-        ):
+        if _handle_clear_action(request, qs, label="materials"):
+            return redirect(
+                reverse("estimator:materials", kwargs={"project_pk": project_pk})
+            )
+
+        if _handle_bulk_action(request, qs):
             return redirect(
                 reverse("estimator:materials", kwargs={"project_pk": project_pk})
             )
@@ -1008,10 +1054,14 @@ class LabourCostListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
+        qs = ProjectLabourCrew.objects.filter(project=self.get_project())
 
-        if _handle_bulk_action(
-            request, ProjectLabourCrew.objects.filter(project=self.get_project())
-        ):
+        if _handle_clear_action(request, qs, label="labour crews"):
+            return redirect(
+                reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
+            )
+
+        if _handle_bulk_action(request, qs):
             return redirect(
                 reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
             )
@@ -1173,9 +1223,12 @@ class TradeCodeListView(ProjectEstimatorMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
-        if _handle_bulk_action(
-            request, ProjectTradeCode.objects.filter(project=self.get_project())
-        ):
+        qs = ProjectTradeCode.objects.filter(project=self.get_project())
+        if _handle_clear_action(request, qs, label="trade codes"):
+            return redirect(
+                reverse("estimator:trade_codes", kwargs={"project_pk": project_pk})
+            )
+        if _handle_bulk_action(request, qs):
             return redirect(
                 reverse("estimator:trade_codes", kwargs={"project_pk": project_pk})
             )
@@ -1651,6 +1704,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
 
         title_key = "title_contract" if rate_type == "contract" else "title_new"
         context["report_title"] = config[title_key]
+        context["spec_label"] = "Material Spec"
         context["rate_type"] = rate_type
 
         if rate_type == "contract":
@@ -1677,7 +1731,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
 
         grand_total = Decimal("0")
         aggregated: dict[tuple, dict] = {}
-        section_totals: dict[str, Decimal] = {}
+        trade_totals: dict[str, Decimal] = {}
 
         for item in context["items"]:
             raw_quantity = getattr(item, qty_field) or Decimal("0")
@@ -1717,8 +1771,8 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
             if amount:
                 row["amount"] += amount
                 grand_total += amount
-                s = item.section or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
+                t = str(item.trade_code) if item.trade_code else "Unassigned"
+                trade_totals[t] = trade_totals.get(t, Decimal("0")) + amount
 
         report_rows = []
         for row in aggregated.values():
@@ -1751,14 +1805,10 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
                     material_totals.get(m, Decimal("0")) + row["amount"]
                 )
 
-        # Sort sections by amount descending
-        sorted_sections = sorted(
-            section_totals.items(), key=lambda x: x[1], reverse=True
-        )
-        context["chart_section_labels"] = json.dumps([s[0] for s in sorted_sections])
-        context["chart_section_values"] = json.dumps(
-            [float(s[1]) for s in sorted_sections]
-        )
+        # Sort trades by amount descending
+        sorted_trades = sorted(trade_totals.items(), key=lambda x: x[1], reverse=True)
+        context["chart_trade_labels"] = json.dumps([t[0] for t in sorted_trades])
+        context["chart_trade_values"] = json.dumps([float(t[1]) for t in sorted_trades])
 
         # Top 10 materials by amount
         sorted_materials = sorted(
@@ -1994,6 +2044,8 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
     parent_template_new = ""
     parent_template_contract = ""
     title_noun = ""
+    # First-column header label (e.g. "Plant Spec", "Prelim Spec").
+    spec_label = "Spec"
     # Optional URL-name prefixes to enable the "By Spec / By Component" toggle.
     # Subclass sets both to enable; leave empty to omit (e.g. preliminary).
     spec_url_prefix = ""
@@ -2031,6 +2083,7 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
         context["report_title"] = (
             f"{variant_title} {self.title_noun} List ({rate_suffix})"
         )
+        context["spec_label"] = self.spec_label
         context["rate_type"] = rate_type
         context["parent_template"] = (
             self.parent_template_contract
@@ -2055,7 +2108,7 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
 
         grand_total = Decimal("0")
         aggregated: dict[int, dict] = {}
-        section_totals: dict[str, Decimal] = {}
+        trade_totals: dict[str, Decimal] = {}
 
         for item in context["items"]:
             spec = getattr(item, self.spec_field)
@@ -2083,8 +2136,8 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
             if amount:
                 row["amount"] += amount
                 grand_total += amount
-                s = item.section or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
+                t = str(item.trade_code) if item.trade_code else "Unassigned"
+                trade_totals[t] = trade_totals.get(t, Decimal("0")) + amount
 
         report_rows = []
         for row in aggregated.values():
@@ -2109,13 +2162,9 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
                 m = row["material_name"] or "Unknown"
                 name_totals[m] = name_totals.get(m, Decimal("0")) + row["amount"]
 
-        sorted_sections = sorted(
-            section_totals.items(), key=lambda x: x[1], reverse=True
-        )
-        context["chart_section_labels"] = json.dumps([s[0] for s in sorted_sections])
-        context["chart_section_values"] = json.dumps(
-            [float(s[1]) for s in sorted_sections]
-        )
+        sorted_trades = sorted(trade_totals.items(), key=lambda x: x[1], reverse=True)
+        context["chart_trade_labels"] = json.dumps([t[0] for t in sorted_trades])
+        context["chart_trade_values"] = json.dumps([float(t[1]) for t in sorted_trades])
         sorted_names = sorted(name_totals.items(), key=lambda x: x[1], reverse=True)[
             :10
         ]
@@ -2144,6 +2193,7 @@ class PlantListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_plant_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_plant.html"
     title_noun = "Plant"
+    spec_label = "Plant Spec"
     spec_url_prefix = "estimator:report_plant_list_"
     component_url_prefix = "estimator:report_plant_components_"
     component_label = "Component"
@@ -2155,6 +2205,7 @@ class PreliminaryListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_prelim_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_prelim.html"
     title_noun = "Preliminary"
+    spec_label = "Prelim Spec"
     show_rate = False
 
 
@@ -3335,7 +3386,6 @@ class UpdateLabourCrewView(View):
 
     ALLOWED_FIELDS = {
         "crew_type": "str",
-        "crew_size": "int",
         "skilled": "int",
         "semi_skilled": "int",
         "general": "int",
@@ -3372,6 +3422,7 @@ class UpdateLabourCrewView(View):
         return JsonResponse(
             {
                 "ok": True,
+                "crew_size": item.crew_size,
                 "crew_daily_cost": format_num(item.crew_daily_cost),
             }
         )
@@ -3443,11 +3494,15 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
-        if _handle_bulk_action(
-            request,
-            ProjectLabourSpecification.objects.filter(project=project),
-            allow_toggle_active=True,
-        ):
+        qs = ProjectLabourSpecification.objects.filter(project=project)
+        if _handle_clear_action(request, qs, label="labour specs"):
+            return redirect(
+                reverse(
+                    "estimator:labour_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
             return redirect(
                 reverse(
                     "estimator:labour_spec_defs",
@@ -3499,10 +3554,14 @@ class PlantCostListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
+        qs = ProjectPlantCost.objects.filter(project=self.get_project())
 
-        if _handle_bulk_action(
-            request, ProjectPlantCost.objects.filter(project=self.get_project())
-        ):
+        if _handle_clear_action(request, qs, label="plant costs"):
+            return redirect(
+                reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
+            )
+
+        if _handle_bulk_action(request, qs):
             return redirect(
                 reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
             )
@@ -3613,11 +3672,15 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
-        if _handle_bulk_action(
-            request,
-            ProjectPlantSpecification.objects.filter(project=project),
-            allow_toggle_active=True,
-        ):
+        qs = ProjectPlantSpecification.objects.filter(project=project)
+        if _handle_clear_action(request, qs, label="plant specs"):
+            return redirect(
+                reverse(
+                    "estimator:plant_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
             return redirect(
                 reverse(
                     "estimator:plant_spec_defs",
@@ -3868,10 +3931,17 @@ class PreliminaryCostListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
+        qs = ProjectPreliminaryCost.objects.filter(project=self.get_project())
 
-        if _handle_bulk_action(
-            request, ProjectPreliminaryCost.objects.filter(project=self.get_project())
-        ):
+        if _handle_clear_action(request, qs, label="preliminary costs"):
+            return redirect(
+                reverse(
+                    "estimator:preliminary_costs",
+                    kwargs={"project_pk": project_pk},
+                )
+            )
+
+        if _handle_bulk_action(request, qs):
             return redirect(
                 reverse(
                     "estimator:preliminary_costs",
@@ -3966,7 +4036,9 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get("form", PreliminarySpecificationForm())
+        context["form"] = context.get(
+            "form", PreliminarySpecificationForm(project=self.get_project())
+        )
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
@@ -3982,11 +4054,15 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
-        if _handle_bulk_action(
-            request,
-            ProjectPreliminarySpecification.objects.filter(project=project),
-            allow_toggle_active=True,
-        ):
+        qs = ProjectPreliminarySpecification.objects.filter(project=project)
+        if _handle_clear_action(request, qs, label="preliminary specs"):
+            return redirect(
+                reverse(
+                    "estimator:preliminary_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
             return redirect(
                 reverse(
                     "estimator:preliminary_spec_defs",
@@ -4004,7 +4080,7 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
                     kwargs={"project_pk": self.kwargs["project_pk"]},
                 )
             )
-        form = PreliminarySpecificationForm(request.POST)
+        form = PreliminarySpecificationForm(request.POST, project=project)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.project = project
@@ -4168,10 +4244,72 @@ def _generate_template(headers, filename):
     return response
 
 
+class CloneFromProjectMixin:
+    """Adds a "clone from another project (same contractor)" option to
+    project-level upload pages.
+
+    The clone copies the *entire* estimator library from the chosen source
+    project (replacing this project's existing library data — not its BoQ
+    items). Source projects are restricted to the same contractor.
+    """
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        project = self.get_project()
+        if project.contractor_id:
+            ctx["clone_source_projects"] = (
+                Project.objects.filter(contractor_id=project.contractor_id)
+                .exclude(pk=project.pk)
+                .order_by("name")
+            )
+        else:
+            ctx["clone_source_projects"] = Project.objects.none()
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") == "clone_project":
+            from .services import clone_from_project
+
+            project = self.get_project()
+            source_pk = request.POST.get("source_project")
+            if not source_pk:
+                messages.error(request, "Please select a project to clone from.")
+            elif not project.contractor_id:
+                messages.error(
+                    request,
+                    "This project has no contractor assigned, so there are "
+                    "no related projects to clone from.",
+                )
+            else:
+                source = get_object_or_404(
+                    Project,
+                    pk=source_pk,
+                    contractor_id=project.contractor_id,
+                )
+                try:
+                    result = clone_from_project(project, source)
+                    messages.success(
+                        request,
+                        f"Cloned the full estimator library from "
+                        f"'{source.name}' — "
+                        f"{result.get('trade_codes', 0)} trade codes, "
+                        f"{result.get('materials', 0)} materials, "
+                        f"{result.get('labour_crews', 0)} labour crews, "
+                        f"{result.get('specifications', 0)} specifications, "
+                        f"{result.get('labour_specs', 0)} labour specs, "
+                        f"{result.get('plant_specs', 0)} plant specs, "
+                        f"{result.get('preliminary_specs', 0)} prelim specs.",
+                    )
+                except Exception as e:
+                    messages.error(request, f"Clone from project failed: {e}")
+            return redirect(self.get_success_url())
+        return super().post(request, *args, **kwargs)
+
+
 # ── Trade Codes Upload/Download ───────────────────────────────────
 
 
-class TradeCodeUploadView(ProjectEstimatorMixin, FormView):
+class TradeCodeUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4217,7 +4355,7 @@ class DownloadTradeCodeTemplateView(View):
 # ── Material Costs Upload/Download ────────────────────────────────
 
 
-class MaterialCostUploadView(ProjectEstimatorMixin, FormView):
+class MaterialCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4281,7 +4419,7 @@ class DownloadMaterialCostTemplateView(View):
 # ── Labour Costs Upload/Download ─────────────────────────────────
 
 
-class LabourCostUploadView(ProjectEstimatorMixin, FormView):
+class LabourCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4298,7 +4436,10 @@ class LabourCostUploadView(ProjectEstimatorMixin, FormView):
         ctx["download_url_name"] = "estimator:download_labour_cost_template"
         ctx["columns"] = [
             ("Crew Type", "Unique crew identifier (required)"),
-            ("Crew Size", "Total crew members"),
+            (
+                "Crew Size",
+                "Ignored on import — auto-computed as Skilled + Semi Skilled + General",
+            ),
             ("Skilled", "Number of skilled workers"),
             ("Semi Skilled", "Number of semi-skilled workers"),
             ("General", "Number of general workers"),
@@ -4308,6 +4449,7 @@ class LabourCostUploadView(ProjectEstimatorMixin, FormView):
         ]
         ctx["notes"] = [
             "Crew Type is the unique key — existing crews with the same type will be updated.",
+            "Crew Size is auto-computed from Skilled + Semi Skilled + General; the column is kept for backwards compatibility but its value is ignored.",
             "Worker counts must be whole numbers. Rates must be numeric.",
         ]
         return ctx
@@ -4344,7 +4486,7 @@ class DownloadLabourCostTemplateView(View):
 # ── Material Specs Upload/Download ───────────────────────────────
 
 
-class MaterialSpecUploadView(ProjectEstimatorMixin, FormView):
+class MaterialSpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4412,7 +4554,7 @@ class DownloadMaterialSpecTemplateView(View):
 # ── Labour Specs Upload/Download ─────────────────────────────────
 
 
-class LabourSpecUploadView(ProjectEstimatorMixin, FormView):
+class LabourSpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4513,7 +4655,7 @@ class InitializeEstimatorView(ProjectEstimatorMixin, View):
 # ── Plant Costs Upload/Download ───────────────────────────────────
 
 
-class PlantCostUploadView(ProjectEstimatorMixin, FormView):
+class PlantCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4560,7 +4702,7 @@ class DownloadPlantCostTemplateView(View):
 # ── Plant Specs Upload/Download ───────────────────────────────────
 
 
-class PlantSpecUploadView(ProjectEstimatorMixin, FormView):
+class PlantSpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4622,7 +4764,7 @@ class DownloadPlantSpecTemplateView(View):
 # ── Preliminary Costs Upload/Download ─────────────────────────────
 
 
-class PreliminaryCostUploadView(ProjectEstimatorMixin, FormView):
+class PreliminaryCostUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4682,7 +4824,7 @@ class DownloadPreliminaryCostTemplateView(View):
 # ── Preliminary Specs Upload/Download ─────────────────────────────
 
 
-class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
+class PreliminarySpecUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -4756,9 +4898,16 @@ class SystemTradeCodeListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemTradeCodeForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request, SystemTradeCode.objects.all(), label="trade codes"
+        ):
+            return redirect(reverse("estimator:sys_trade_codes"))
+        if _handle_bulk_action(request, SystemTradeCode.objects.all()):
+            return redirect(reverse("estimator:sys_trade_codes"))
         form = SystemTradeCodeForm(request.POST)
         if form.is_valid():
             form.save()
@@ -4805,12 +4954,44 @@ class SystemMaterialListView(SystemLibraryMixin, ListView):
     template_name = "estimator/system/material_list.html"
     context_object_name = "materials"
 
+    def get_queryset(self):
+        qs = SystemMaterial.objects.all()
+        unit = self.request.GET.get("unit", "").strip()
+        if unit:
+            qs = qs.filter(unit=unit)
+        trade_name = self.request.GET.get("trade_name", "").strip()
+        if trade_name:
+            qs = qs.filter(trade_name=trade_name)
+        return qs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemMaterialForm())
+        all_materials = SystemMaterial.objects.all()
+        context["units"] = (
+            all_materials.exclude(unit="")
+            .values_list("unit", flat=True)
+            .distinct()
+            .order_by("unit")
+        )
+        context["trade_names"] = (
+            all_materials.exclude(trade_name="")
+            .values_list("trade_name", flat=True)
+            .distinct()
+            .order_by("trade_name")
+        )
+        context["f_q"] = self.request.GET.get("q", "")
+        context["f_unit"] = self.request.GET.get("unit", "")
+        context["f_trade_name"] = self.request.GET.get("trade_name", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request, SystemMaterial.objects.all(), label="materials"
+        ):
+            return redirect(reverse("estimator:sys_materials"))
+        if _handle_bulk_action(request, SystemMaterial.objects.all()):
+            return redirect(reverse("estimator:sys_materials"))
         form = SystemMaterialForm(request.POST)
         if form.is_valid():
             form.save()
@@ -4904,6 +5085,17 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
     context_object_name = "specs"
     paginate_by = 50
 
+    def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request, SystemSpecification.objects.all(), label="material specs"
+        ):
+            return redirect(reverse("estimator:sys_material_specs"))
+        if _handle_bulk_action(
+            request, SystemSpecification.objects.all(), allow_toggle_active=True
+        ):
+            return redirect(reverse("estimator:sys_material_specs"))
+        return self._handle_create(request, *args, **kwargs)
+
     def get_queryset(self):
         qs = (
             super()
@@ -4946,6 +5138,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["f_q"] = self.request.GET.get("q", "")
         context["query_params"] = _pagination_query_params(self.request)
         context.update(
             _spec_datalist_context(
@@ -4954,7 +5147,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         )
         return context
 
-    def post(self, request, *args, **kwargs):
+    def _handle_create(self, request, *args, **kwargs):
         from .forms import SystemSpecificationComponentFormSet, SystemSpecificationForm
 
         spec_form = SystemSpecificationForm(request.POST)
@@ -5216,9 +5409,16 @@ class SystemLabourCrewListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemLabourCrewForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request, SystemLabourCrew.objects.all(), label="labour crews"
+        ):
+            return redirect(reverse("estimator:sys_labour_crews"))
+        if _handle_bulk_action(request, SystemLabourCrew.objects.all()):
+            return redirect(reverse("estimator:sys_labour_crews"))
         form = SystemLabourCrewForm(request.POST)
         if form.is_valid():
             form.save()
@@ -5231,7 +5431,6 @@ class SystemLabourCrewListView(SystemLibraryMixin, ListView):
 class UpdateSystemLabourCrewView(View):
     ALLOWED_FIELDS = {
         "crew_type",
-        "crew_size",
         "skilled",
         "semi_skilled",
         "general",
@@ -5251,7 +5450,13 @@ class UpdateSystemLabourCrewView(View):
             return JsonResponse({"error": "Invalid field"}, status=400)
         setattr(crew, field, value)
         crew.save()
-        return JsonResponse({"ok": True, "crew_daily_cost": str(crew.crew_daily_cost)})
+        return JsonResponse(
+            {
+                "ok": True,
+                "crew_size": crew.crew_size,
+                "crew_daily_cost": str(crew.crew_daily_cost),
+            }
+        )
 
 
 class SystemLabourCrewUploadView(SystemLibraryMixin, FormView):
@@ -5306,6 +5511,21 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
     context_object_name = "labour_specs"
     paginate_by = 50
 
+    def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request,
+            SystemLabourSpecification.objects.all(),
+            label="labour specs",
+        ):
+            return redirect(reverse("estimator:sys_labour_specs"))
+        if _handle_bulk_action(
+            request,
+            SystemLabourSpecification.objects.all(),
+            allow_toggle_active=True,
+        ):
+            return redirect(reverse("estimator:sys_labour_specs"))
+        return self._handle_create(request, *args, **kwargs)
+
     def get_queryset(self):
         qs = super().get_queryset().select_related("crew")
         section = self.request.GET.get("section")
@@ -5341,12 +5561,13 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["f_q"] = self.request.GET.get("q", "")
         context["crews"] = SystemLabourCrew.objects.all()
         context["query_params"] = _pagination_query_params(self.request)
         context.update(_spec_datalist_context(all_specs))
         return context
 
-    def post(self, request, *args, **kwargs):
+    def _handle_create(self, request, *args, **kwargs):
         form = SystemLabourSpecificationForm(request.POST)
         if form.is_valid():
             form.save()
@@ -5463,9 +5684,16 @@ class SystemPlantCostListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPlantCostForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request, SystemPlantCost.objects.all(), label="plant costs"
+        ):
+            return redirect("estimator:sys_plant_costs")
+        if _handle_bulk_action(request, SystemPlantCost.objects.all()):
+            return redirect("estimator:sys_plant_costs")
         form = SystemPlantCostForm(request.POST)
         if form.is_valid():
             form.save()
@@ -5557,11 +5785,24 @@ class SystemPlantSpecListView(SystemLibraryMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPlantSpecificationForm())
         context["plants"] = SystemPlantCost.objects.all()
+        context["f_q"] = self.request.GET.get("q", "")
         context["query_params"] = _pagination_query_params(self.request)
         context.update(_spec_datalist_context(SystemPlantSpecification.objects.all()))
         return context
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request,
+            SystemPlantSpecification.objects.all(),
+            label="plant specs",
+        ):
+            return redirect("estimator:sys_plant_specs")
+        if _handle_bulk_action(
+            request,
+            SystemPlantSpecification.objects.all(),
+            allow_toggle_active=True,
+        ):
+            return redirect("estimator:sys_plant_specs")
         form = SystemPlantSpecificationForm(request.POST)
         if form.is_valid():
             form.save()
@@ -5797,9 +6038,18 @@ class SystemPreliminaryCostListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPreliminaryCostForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request,
+            SystemPreliminaryCost.objects.all(),
+            label="preliminary costs",
+        ):
+            return redirect("estimator:sys_preliminary_costs")
+        if _handle_bulk_action(request, SystemPreliminaryCost.objects.all()):
+            return redirect("estimator:sys_preliminary_costs")
         form = SystemPreliminaryCostForm(request.POST)
         if form.is_valid():
             form.save()
@@ -5903,12 +6153,25 @@ class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
+        context["f_q"] = self.request.GET.get("q", "")
         context.update(
             _spec_datalist_context(SystemPreliminarySpecification.objects.all())
         )
         return context
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request,
+            SystemPreliminarySpecification.objects.all(),
+            label="preliminary specs",
+        ):
+            return redirect("estimator:sys_preliminary_specs")
+        if _handle_bulk_action(
+            request,
+            SystemPreliminarySpecification.objects.all(),
+            allow_toggle_active=True,
+        ):
+            return redirect("estimator:sys_preliminary_specs")
         form = SystemPreliminarySpecificationForm(request.POST)
         if form.is_valid():
             form.save()
@@ -6024,6 +6287,14 @@ class ContractorLibraryMixin(LoginRequiredMixin, ContextMixin):
         if not request.user.is_authenticated:
             return super().dispatch(request, *args, **kwargs)
         if self.get_company() is None:
+            from app.Account.subscription_config import Subscription
+
+            if request.user.subscription in [
+                Subscription.DEMO_TIER,
+                Subscription.FREE_TIER,
+            ]:
+                return super().dispatch(request, *args, **kwargs)
+
             return HttpResponseForbidden(
                 "You must be linked to a Contractor company to use the Contractor "
                 "Library."
@@ -6068,9 +6339,15 @@ class ContractorTradeCodeListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", ContractorTradeCodeForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorTradeCode.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="trade codes"):
+            return redirect(reverse("estimator:ctr_trade_codes"))
+        if _handle_bulk_action(request, qs):
+            return redirect(reverse("estimator:ctr_trade_codes"))
         if request.POST.get("action") == "sync_system":
             from .services import sync_trade_codes_to_contractor
 
@@ -6134,12 +6411,44 @@ class ContractorMaterialListView(ContractorLibraryMixin, ListView):
     template_name = "estimator/contractor/material_list.html"
     context_object_name = "materials"
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        unit = self.request.GET.get("unit", "").strip()
+        if unit:
+            qs = qs.filter(unit=unit)
+        trade_name = self.request.GET.get("trade_name", "").strip()
+        if trade_name:
+            qs = qs.filter(trade_name=trade_name)
+        return qs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", ContractorMaterialForm())
+        company = self.get_company()
+        all_materials = ContractorMaterial.objects.filter(company=company)
+        context["units"] = (
+            all_materials.exclude(unit="")
+            .values_list("unit", flat=True)
+            .distinct()
+            .order_by("unit")
+        )
+        context["trade_names"] = (
+            all_materials.exclude(trade_name="")
+            .values_list("trade_name", flat=True)
+            .distinct()
+            .order_by("trade_name")
+        )
+        context["f_q"] = self.request.GET.get("q", "")
+        context["f_unit"] = self.request.GET.get("unit", "")
+        context["f_trade_name"] = self.request.GET.get("trade_name", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorMaterial.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="materials"):
+            return redirect(reverse("estimator:ctr_materials"))
+        if _handle_bulk_action(request, qs):
+            return redirect(reverse("estimator:ctr_materials"))
         if request.POST.get("action") == "sync_system":
             from .services import sync_materials_to_contractor
 
@@ -6296,11 +6605,17 @@ class ContractorMaterialSpecListView(ContractorLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["f_q"] = self.request.GET.get("q", "")
         context["query_params"] = _pagination_query_params(self.request)
         context.update(_spec_datalist_context(all_specs, unit_field="unit_label"))
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorSpecification.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="material specs"):
+            return redirect(reverse("estimator:ctr_material_specs"))
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
+            return redirect(reverse("estimator:ctr_material_specs"))
         if request.POST.get("action") == "sync_system":
             from .services import sync_material_specs_to_contractor
 
@@ -6588,9 +6903,15 @@ class ContractorLabourCrewListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", ContractorLabourCrewForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorLabourCrew.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="labour crews"):
+            return redirect(reverse("estimator:ctr_labour_crews"))
+        if _handle_bulk_action(request, qs):
+            return redirect(reverse("estimator:ctr_labour_crews"))
         if request.POST.get("action") == "sync_system":
             from .services import sync_labour_costs_to_contractor
 
@@ -6616,7 +6937,6 @@ class ContractorLabourCrewListView(ContractorLibraryMixin, ListView):
 class UpdateContractorLabourCrewView(View):
     ALLOWED_FIELDS = {
         "crew_type",
-        "crew_size",
         "skilled",
         "semi_skilled",
         "general",
@@ -6637,7 +6957,13 @@ class UpdateContractorLabourCrewView(View):
             return JsonResponse({"error": "Invalid field"}, status=400)
         setattr(crew, field, value)
         crew.save()
-        return JsonResponse({"ok": True, "crew_daily_cost": str(crew.crew_daily_cost)})
+        return JsonResponse(
+            {
+                "ok": True,
+                "crew_size": crew.crew_size,
+                "crew_daily_cost": str(crew.crew_daily_cost),
+            }
+        )
 
 
 class ContractorLabourCrewUploadView(ContractorLibraryMixin, FormView):
@@ -6731,12 +7057,18 @@ class ContractorLabourSpecListView(ContractorLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["f_q"] = self.request.GET.get("q", "")
         context["crews"] = ContractorLabourCrew.objects.filter(company=company)
         context["query_params"] = _pagination_query_params(self.request)
         context.update(_spec_datalist_context(all_specs))
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorLabourSpecification.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="labour specs"):
+            return redirect(reverse("estimator:ctr_labour_specs"))
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
+            return redirect(reverse("estimator:ctr_labour_specs"))
         if request.POST.get("action") == "sync_system":
             from .services import sync_labour_specs_to_contractor
 
@@ -6871,9 +7203,15 @@ class ContractorPlantCostListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", ContractorPlantCostForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorPlantCost.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="plant costs"):
+            return redirect("estimator:ctr_plant_costs")
+        if _handle_bulk_action(request, qs):
+            return redirect("estimator:ctr_plant_costs")
         if request.POST.get("action") == "sync_system":
             from .services import sync_plant_costs_to_contractor
 
@@ -6981,8 +7319,11 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         company = self.get_company()
-        context["form"] = context.get("form", ContractorPlantSpecificationForm())
+        context["form"] = context.get(
+            "form", ContractorPlantSpecificationForm(company=company)
+        )
         context["plants"] = ContractorPlantCost.objects.filter(company=company)
+        context["f_q"] = self.request.GET.get("q", "")
         context["query_params"] = _pagination_query_params(self.request)
         context.update(
             _spec_datalist_context(
@@ -6992,6 +7333,11 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorPlantSpecification.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="plant specs"):
+            return redirect("estimator:ctr_plant_specs")
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
+            return redirect("estimator:ctr_plant_specs")
         if request.POST.get("action") == "sync_system":
             from .services import sync_plant_specs_to_contractor
 
@@ -7003,7 +7349,9 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
             )
             return redirect("estimator:ctr_plant_specs")
 
-        form = ContractorPlantSpecificationForm(request.POST)
+        form = ContractorPlantSpecificationForm(
+            request.POST, company=self.get_company()
+        )
         if form.is_valid():
             obj = form.save(commit=False)
             obj.company = self.get_company()
@@ -7264,9 +7612,15 @@ class ContractorPreliminaryCostListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", ContractorPreliminaryCostForm())
+        context["f_q"] = self.request.GET.get("q", "")
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorPreliminaryCost.objects.filter(company=self.get_company())
+        if _handle_clear_action(request, qs, label="preliminary costs"):
+            return redirect("estimator:ctr_preliminary_costs")
+        if _handle_bulk_action(request, qs):
+            return redirect("estimator:ctr_preliminary_costs")
         if request.POST.get("action") == "sync_system":
             from .services import sync_preliminary_costs_to_contractor
 
@@ -7383,11 +7737,15 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get("form", ContractorPreliminarySpecificationForm())
+        context["form"] = context.get(
+            "form",
+            ContractorPreliminarySpecificationForm(company=self.get_company()),
+        )
         context["preliminary_type_choices"] = (
             SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
         )
         company = self.get_company()
+        context["f_q"] = self.request.GET.get("q", "")
         context.update(
             _spec_datalist_context(
                 ContractorPreliminarySpecification.objects.filter(company=company)
@@ -7396,6 +7754,13 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        qs = ContractorPreliminarySpecification.objects.filter(
+            company=self.get_company()
+        )
+        if _handle_clear_action(request, qs, label="preliminary specs"):
+            return redirect("estimator:ctr_preliminary_specs")
+        if _handle_bulk_action(request, qs, allow_toggle_active=True):
+            return redirect("estimator:ctr_preliminary_specs")
         if request.POST.get("action") == "sync_system":
             from .services import sync_preliminary_specs_to_contractor
 
@@ -7407,7 +7772,9 @@ class ContractorPreliminarySpecListView(ContractorLibraryMixin, ListView):
             )
             return redirect("estimator:ctr_preliminary_specs")
 
-        form = ContractorPreliminarySpecificationForm(request.POST)
+        form = ContractorPreliminarySpecificationForm(
+            request.POST, company=self.get_company()
+        )
         if form.is_valid():
             obj = form.save(commit=False)
             obj.company = self.get_company()
@@ -7535,7 +7902,7 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
                 "plant_spec",
                 "preliminary_spec",
             )
-            .order_by("display_order", "id")
+            .order_by("item_code", "display_order", "id")
         )
         trade_code = self.request.GET.get("trade_code")
         if trade_code:
@@ -7573,6 +7940,17 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
     def post(self, request, *args, **kwargs):
         project = self.get_project()
         action = request.POST.get("action")
+        if _handle_clear_action(
+            request,
+            ProjectItemLibraryEntry.objects.filter(project=project),
+            label="item library entries",
+        ):
+            return redirect(
+                reverse(
+                    "estimator:item_library",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         if action == "sync_system":
             from .services import sync_item_library_from_system
 
@@ -7607,7 +7985,7 @@ class ItemLibraryListView(ProjectEstimatorMixin, ListView):
         )
 
 
-class ItemLibraryUploadView(ProjectEstimatorMixin, FormView):
+class ItemLibraryUploadView(CloneFromProjectMixin, ProjectEstimatorMixin, FormView):
     template_name = "estimator/upload_generic.html"
     form_class = ExcelImportForm
 
@@ -7671,7 +8049,7 @@ class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
                 "plant_spec",
                 "preliminary_spec",
             )
-            .order_by("display_order", "id")
+            .order_by("item_code", "display_order", "id")
         )
         trade_code = self.request.GET.get("trade_code")
         if trade_code:
@@ -7716,6 +8094,12 @@ class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
         return ctx
 
     def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request,
+            ContractorItemLibraryEntry.objects.filter(company=self.get_company()),
+            label="item library entries",
+        ):
+            return redirect(reverse("estimator:ctr_item_library"))
         if request.POST.get("action") == "sync_system":
             from .services import sync_item_library_to_contractor
 
@@ -7781,7 +8165,7 @@ class SystemItemLibraryListView(SystemLibraryMixin, ListView):
                 "plant_spec",
                 "preliminary_spec",
             )
-            .order_by("display_order", "id")
+            .order_by("item_code", "display_order", "id")
         )
         trade_code = self.request.GET.get("trade_code")
         if trade_code:
@@ -7808,6 +8192,15 @@ class SystemItemLibraryListView(SystemLibraryMixin, ListView):
         ctx["f_q"] = self.request.GET.get("q", "")
         ctx["query_params"] = _pagination_query_params(self.request)
         return ctx
+
+    def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request,
+            SystemItemLibraryEntry.objects.all(),
+            label="item library entries",
+        ):
+            return redirect(reverse("estimator:sys_item_library"))
+        return redirect(reverse("estimator:sys_item_library"))
 
 
 class SystemItemLibraryUploadView(SystemLibraryMixin, FormView):
@@ -7937,17 +8330,86 @@ class UpdateItemLibraryEntryView(View):
 
 
 class CreateItemLibraryEntryView(ProjectEstimatorMixin, View):
-    """Create a blank ProjectItemLibraryEntry and redirect back to the list."""
+    """Create a ProjectItemLibraryEntry from the Add Item form (all fields
+    entered up front), appended at the end of its item-code group."""
+
+    FORM_FIELDS = (
+        "item_code",
+        "trade_code",
+        "component",
+        "description",
+        "unit",
+        "material_spec",
+        "labour_plant_spec",
+        "preliminary_spec",
+    )
 
     def post(self, request, project_pk):
         project = self.get_project()
-        ProjectItemLibraryEntry.objects.create(project=project, description="")
-        messages.success(
-            request, "New library entry added — fill in the fields inline."
-        )
-        return redirect(
-            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
-        )
+        list_url = reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        entry = ProjectItemLibraryEntry(project=project)
+        scope = {"project_id": project_pk}
+        fk_models = {
+            "trade_code": (ProjectTradeCode, scope),
+            "material_spec": (ProjectSpecification, scope),
+            "labour_spec": (ProjectLabourSpecification, scope),
+            "plant_spec": (ProjectPlantSpecification, scope),
+            "preliminary_spec": (ProjectPreliminarySpecification, scope),
+        }
+        for field in self.FORM_FIELDS:
+            if field in request.POST:
+                err = _apply_item_library_field(
+                    entry, field, request.POST.get(field), fk_models
+                )
+                if err is not None:
+                    messages.error(request, "Could not add item — invalid input.")
+                    return redirect(list_url)
+
+        if not (entry.item_code or entry.component or entry.description):
+            messages.error(
+                request,
+                "Enter at least an item code, component or description.",
+            )
+            return redirect(list_url)
+
+        last = ProjectItemLibraryEntry.objects.filter(
+            project=project, item_code=entry.item_code
+        ).aggregate(m=models.Max("display_order"))["m"]
+        entry.display_order = (last or 0) + 1
+        entry.save()
+        messages.success(request, "Library item added.")
+        return redirect(list_url)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class ReorderItemLibraryEntriesView(ProjectEstimatorMixin, View):
+    """AJAX: persist a drag-and-drop ordering. Body: {"order": [id, ...]}.
+
+    Assigns display_order by the received position so the manual sequence
+    sticks (within each item-code group, which remains the primary sort)."""
+
+    def post(self, request, project_pk):
+        project = self.get_project()
+        try:
+            order = json.loads(request.body).get("order", [])
+        except (json.JSONDecodeError, AttributeError):
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        entries = {
+            e.pk: e for e in ProjectItemLibraryEntry.objects.filter(project=project)
+        }
+        to_update = []
+        for pos, raw_id in enumerate(order):
+            try:
+                e = entries.get(int(raw_id))
+            except (TypeError, ValueError):
+                continue
+            if e is not None and e.display_order != pos:
+                e.display_order = pos
+                to_update.append(e)
+        if to_update:
+            ProjectItemLibraryEntry.objects.bulk_update(to_update, ["display_order"])
+        return JsonResponse({"ok": True, "updated": len(to_update)})
 
 
 class DeleteItemLibraryEntryView(ProjectEstimatorMixin, View):
@@ -7955,6 +8417,23 @@ class DeleteItemLibraryEntryView(ProjectEstimatorMixin, View):
         entry = get_object_or_404(ProjectItemLibraryEntry, pk=pk, project_id=project_pk)
         entry.delete()
         messages.success(request, "Library entry deleted.")
+        return redirect(
+            reverse("estimator:item_library", kwargs={"project_pk": project_pk})
+        )
+
+
+class BulkDeleteItemLibraryEntriesView(ProjectEstimatorMixin, View):
+    def post(self, request, project_pk):
+        ids = request.POST.getlist("entry_ids")
+        count, _ = ProjectItemLibraryEntry.objects.filter(
+            pk__in=ids, project_id=project_pk
+        ).delete()
+        if count:
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
+        else:
+            messages.info(request, "No entries selected.")
         return redirect(
             reverse("estimator:item_library", kwargs={"project_pk": project_pk})
         )
@@ -8008,6 +8487,22 @@ class DeleteContractorItemLibraryEntryView(ContractorLibraryMixin, View):
         return redirect(reverse("estimator:ctr_item_library"))
 
 
+class BulkDeleteContractorItemLibraryEntriesView(ContractorLibraryMixin, View):
+    def post(self, request):
+        company = self.get_company()
+        ids = request.POST.getlist("entry_ids")
+        count, _ = ContractorItemLibraryEntry.objects.filter(
+            pk__in=ids, company=company
+        ).delete()
+        if count:
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
+        else:
+            messages.info(request, "No entries selected.")
+        return redirect(reverse("estimator:ctr_item_library"))
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSystemItemLibraryEntryView(View):
     def post(self, request, pk):
@@ -8049,4 +8544,17 @@ class DeleteSystemItemLibraryEntryView(SystemLibraryMixin, View):
         entry = get_object_or_404(SystemItemLibraryEntry, pk=pk)
         entry.delete()
         messages.success(request, "Library entry deleted.")
+        return redirect(reverse("estimator:sys_item_library"))
+
+
+class BulkDeleteSystemItemLibraryEntriesView(SystemLibraryMixin, View):
+    def post(self, request):
+        ids = request.POST.getlist("entry_ids")
+        count, _ = SystemItemLibraryEntry.objects.filter(pk__in=ids).delete()
+        if count:
+            messages.success(
+                request, f"Deleted {count} library entr{'y' if count == 1 else 'ies'}."
+            )
+        else:
+            messages.info(request, "No entries selected.")
         return redirect(reverse("estimator:sys_item_library"))

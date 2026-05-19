@@ -217,6 +217,16 @@ urlpatterns = [
         name="item_library_delete",
     ),
     path(
+        "project/<int:project_pk>/item-library/reorder/",
+        views.ReorderItemLibraryEntriesView.as_view(),
+        name="item_library_reorder",
+    ),
+    path(
+        "project/<int:project_pk>/item-library/bulk-delete/",
+        views.BulkDeleteItemLibraryEntriesView.as_view(),
+        name="item_library_bulk_delete",
+    ),
+    path(
         "project/<int:project_pk>/api/item-library/<int:pk>/update/",
         views.UpdateItemLibraryEntryView.as_view(),
         name="update_item_library_entry",
@@ -854,6 +864,11 @@ urlpatterns = [
         name="sys_item_library_delete",
     ),
     path(
+        "system/item-library/bulk-delete/",
+        views.BulkDeleteSystemItemLibraryEntriesView.as_view(),
+        name="sys_item_library_bulk_delete",
+    ),
+    path(
         "system/api/item-library/<int:pk>/update/",
         views.UpdateSystemItemLibraryEntryView.as_view(),
         name="sys_update_item_library_entry",
@@ -1115,6 +1130,11 @@ urlpatterns = [
         "contractor/item-library/<int:pk>/delete/",
         views.DeleteContractorItemLibraryEntryView.as_view(),
         name="ctr_item_library_delete",
+    ),
+    path(
+        "contractor/item-library/bulk-delete/",
+        views.BulkDeleteContractorItemLibraryEntriesView.as_view(),
+        name="ctr_item_library_bulk_delete",
     ),
     path(
         "contractor/api/item-library/<int:pk>/update/",

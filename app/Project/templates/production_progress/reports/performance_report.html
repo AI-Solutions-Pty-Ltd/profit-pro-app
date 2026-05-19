@@ -6,7 +6,7 @@
         <a href="{% url 'project:company-management' project.pk %}"
            class="inline-flex items-center py-2 text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 focus:outline-none">
             {% heroicon_outline "chevron-left" size="20" %}
-            <span class="ml-2">Back to Management</span>
+            <span class="ml-2">Business Management</span>
         </a>
         <div class="flex flex-col gap-4 justify-between md:flex-row md:items-center">
             <div>
@@ -175,7 +175,7 @@
             </div>
         </div>
         <!-- Charts Section -->
-        <div class="grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <!-- Accumulation & Forecasting Chart (S-Curve) -->
             <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
                 <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -183,28 +183,34 @@
                         <h3 class="text-sm font-bold text-gray-900">Trajectory Analysis</h3>
                         <p class="text-xs tracking-tight text-gray-500 uppercase">Cumulative Production S-Curve</p>
                     </div>
+                </div>
+                <div class="p-6">
+                    <div class="h-[350px]">
+                        <canvas id="accumulationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Net Profit Trend Chart -->
+            <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900">Net Profit Trend</h3>
+                        <p class="text-xs tracking-tight text-gray-500 uppercase">Cumulative Profitability Trajectory</p>
+                    </div>
                     <div class="flex gap-4 items-center text-xs">
                         <div class="flex gap-1.5 items-center">
-                            <div class="w-3 h-3 bg-indigo-500 rounded"></div>
-                            <span class="font-medium text-gray-600">Planned Qty</span>
-                        </div>
-                        <div class="flex gap-1.5 items-center">
                             <div class="w-3 h-3 bg-emerald-500 rounded"></div>
-                            <span class="font-medium text-gray-600">Actual Qty</span>
+                            <span class="font-medium text-gray-600">Planned Profit</span>
                         </div>
                         <div class="flex gap-1.5 items-center">
-                            <div class="w-3 h-3 bg-amber-500 rounded"></div>
-                            <span class="font-medium text-gray-600">Planned Cost</span>
-                        </div>
-                        <div class="flex gap-1.5 items-center">
-                            <div class="w-3 h-3 bg-orange-500 rounded"></div>
-                            <span class="font-medium text-gray-600">Actual Cost</span>
+                            <div class="w-3 h-3 bg-emerald-600 rounded"></div>
+                            <span class="font-medium text-gray-600">Actual Profit</span>
                         </div>
                     </div>
                 </div>
                 <div class="p-6">
-                    <div class="h-[400px]">
-                        <canvas id="accumulationChart"></canvas>
+                    <div class="h-[350px]">
+                        <canvas id="profitChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -309,15 +315,6 @@
                         spanGaps: true,
                         yAxisID: 'y'
                     },
-                    {
-                        label: 'Monthly Qty Plan',
-                        type: 'bar',
-                        data: data.prod_planned,
-                        backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                        borderRadius: 4,
-                        barPercentage: 0.6,
-                        yAxisID: 'y'
-                    },
                     // --- COST DATASETS (Y1-AXIS) ---
                     {
                         label: 'Planned Cost',
@@ -340,15 +337,6 @@
                         pointHoverRadius: 6,
                         tension: 0.1,
                         spanGaps: true,
-                        yAxisID: 'y1'
-                    },
-                    {
-                        label: 'Monthly Actual Cost',
-                        type: 'bar',
-                        data: data.cost_actual,
-                        backgroundColor: 'rgba(249, 115, 22, 0.2)', // Orange 500
-                        borderRadius: 4,
-                        barPercentage: 0.4,
                         yAxisID: 'y1'
                     }
                 ]
@@ -424,10 +412,72 @@
                             color: '#f97316',
                             font: { size: 10, weight: 'bold' }
                         },
-                        grid: { drawOnChartArea: false }, // Only want grid lines from left axis
+                        grid: { drawOnChartArea: false },
                         ticks: {
                             color: '#f97316',
                             font: { size: 11, family: 'monospace' },
+                            callback: (val) => 'R ' + new Intl.NumberFormat().format(val)
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize Net Profit Chart
+        const profitCtx = document.getElementById('profitChart').getContext('2d');
+        const profitChart = new Chart(profitCtx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Planned Profit',
+                        data: data.cum_profit_planned,
+                        borderColor: '#10b981', // Emerald 500
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                        tension: 0.4,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Actual Profit',
+                        data: data.cum_profit_actual,
+                        borderColor: '#059669', // Emerald 600
+                        borderWidth: 3,
+                        pointBackgroundColor: '#059669',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 6,
+                        tension: 0.1,
+                        spanGaps: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': R ' + new Intl.NumberFormat().format(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
                             callback: (val) => 'R ' + new Intl.NumberFormat().format(val)
                         }
                     }

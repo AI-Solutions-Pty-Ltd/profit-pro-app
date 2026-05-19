@@ -2,6 +2,7 @@ from django import forms
 
 from app.Account.models import Account
 from app.BillOfQuantities.models import PaymentCertificate
+from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Project.models import Company
 
 
@@ -36,10 +37,12 @@ class ProjectClientForm(forms.Form):
 
     client = forms.ModelChoiceField(
         queryset=Company.objects.none(),
-        widget=forms.Select(
+        widget=SearchableSelectWidget(
             attrs={
                 "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-            }
+            },
+            create_url=True,
+            resource_type="client",
         ),
         required=False,
         help_text="Select a client company to associate with this project.",
@@ -57,9 +60,12 @@ class ProjectClientForm(forms.Form):
         if user:
             projects = user.get_projects
 
-            # Filter to only show client companies
+            # Filter to show client companies that are either associated with the user's projects or account
+            from django.db.models import Q
+
             queryset = Company.objects.filter(
-                client_projects__in=projects, type=Company.Type.CLIENT
+                Q(client_projects__in=projects) | Q(users=user),
+                type=Company.Type.CLIENT,
             ).order_by("name")
 
             # Exclude the currently assigned client if project is provided
