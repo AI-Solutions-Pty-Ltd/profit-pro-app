@@ -597,6 +597,30 @@ def pull_from_library(project):
     return results
 
 
+def sync_trade_codes_from_contractor(project):
+    """Sync project trade codes with the project's Contractor Library.
+
+    Matches existing project rows by `prefix` and upserts.
+    """
+    company = project.contractor
+    if company is None:
+        return {"updated": 0, "created": 0, "skipped_no_contractor": True}
+
+    created = updated = 0
+    for ctc in ContractorTradeCode.objects.filter(company=company):
+        _, was_created = ProjectTradeCode.objects.update_or_create(
+            project=project,
+            prefix=ctc.prefix,
+            defaults={"trade_name": ctc.trade_name},
+        )
+        if was_created:
+            created += 1
+        else:
+            updated += 1
+
+    return {"updated": updated, "created": created}
+
+
 def sync_materials_from_contractor(project):
     """Sync project material costs with the project's Contractor Library.
 
