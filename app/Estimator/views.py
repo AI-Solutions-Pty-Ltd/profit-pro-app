@@ -1223,12 +1223,21 @@ class TradeCodeListView(ProjectEstimatorMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
         qs = ProjectTradeCode.objects.filter(project=self.get_project())
         if _handle_clear_action(request, qs, label="trade codes"):
             return redirect(
                 reverse("estimator:trade_codes", kwargs={"project_pk": project_pk})
             )
         if _handle_bulk_action(request, qs):
+            return redirect(
+                reverse("estimator:trade_codes", kwargs={"project_pk": project_pk})
+            )
+        if action == "sync_system":
+            from .services import sync_trade_codes_from_contractor
+
+            result = sync_trade_codes_from_contractor(self.get_project())
+            _flash_sync_result(request, result, "Trade codes")
             return redirect(
                 reverse("estimator:trade_codes", kwargs={"project_pk": project_pk})
             )
