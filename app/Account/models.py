@@ -204,7 +204,6 @@ class Account(AbstractUser, BaseModel):
         Returns:
             True if user has the role, False otherwise
         """
-        from app.Account.subscription_config import Subscription
         from app.Project.models import Role
 
         if self.is_superuser or self.has_demo_permission:
@@ -341,7 +340,11 @@ class Account(AbstractUser, BaseModel):
     def has_demo_permission(self) -> bool:
         """Check if the user has an active, unexpired Demo subscription."""
         from app.Account.subscription_config import Subscription
-        return self.subscription == Subscription.DEMO_TIER and not self.is_subscription_expired
+
+        return (
+            self.subscription == Subscription.DEMO_TIER
+            and not self.is_subscription_expired
+        )
 
     @property
     def is_subscription_expired(self) -> bool:

@@ -112,7 +112,7 @@ class TestDemoTierConsultantAccess(TestCase):
         """Test that expired DEMO_TIER users fail group permission checks."""
         mixin = UserHasGroupGenericMixin()
         mixin.permissions = ["consultant"]
-        
+
         # Set expired trial
         self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
         self.demo_user.save()
@@ -139,6 +139,7 @@ class TestDemoTierConsultantAccess(TestCase):
     def test_payment_cert_mixin_raises_404_for_expired_demo_user(self):
         """Test that PaymentCertMixin blocks expired DEMO_TIER users."""
         from django.http import Http404
+
         mixin = PaymentCertMixin()
         self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
         self.demo_user.save()

@@ -165,5 +165,3 @@ class TestDemoTier:
         roles = project_roles(user, project)
         # Should not return all roles; since user is not assigned to the project, should be empty/filtered
         assert roles.exists() is False
-
-

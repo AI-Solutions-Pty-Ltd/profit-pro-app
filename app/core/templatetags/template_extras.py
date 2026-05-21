@@ -54,7 +54,6 @@ def user_in_group(user, group_names):
 @register.filter(name="projectroles")
 def project_roles(user, project) -> QuerySet[ProjectRole]:
     """Get all roles that the user has for the given project."""
-    from app.Account.subscription_config import Subscription
 
     if user.is_superuser or getattr(user, "has_demo_permission", False):
         return ProjectRole.objects.all()
