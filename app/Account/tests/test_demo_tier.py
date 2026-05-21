@@ -147,3 +147,23 @@ class TestDemoTier:
         )
         assert user.has_demo_permission is True
 
+    def test_demo_tier_project_roles_filter_expired(self):
+        """Test that the projectroles filter does NOT bypass role checks for expired trials."""
+        from app.core.templatetags.template_extras import project_roles
+        from app.Project.tests.factories import ProjectFactory
+
+        expiry = timezone.now() - timedelta(days=1)
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
+        )
+        project = ProjectFactory()
+
+        roles = project_roles(user, project)
+        # Should not return all roles; since user is not assigned to the project, should be empty/filtered
+        assert roles.exists() is False
+
+
