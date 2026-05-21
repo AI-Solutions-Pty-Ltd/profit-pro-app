@@ -64,7 +64,7 @@
                                     System Library
                                 </a>
                             {% endif %}
-                            {% comment %} {% if user.contractor_company  or user.subscription == 'DEMO_TIER' %}
+                            {% comment %} {% if user.contractor_company  or user.has_demo_permission %}
                                 <!-- 4c. Contractor Library -->
                                 <a href="{% url 'estimator:ctr_trade_codes' %}" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
                                     {% heroicon_outline "archive-box" class="mr-1 w-4 h-4" %}
@@ -80,7 +80,7 @@
                                 </a>
                             {% endif %}
                             <!-- 5. Consultant Clients (only for consultant group) -->
-                            {% if user|useringroup:"consultant" or user.subscription == 'DEMO_TIER' %}
+                            {% if user|useringroup:"consultant" or user.has_demo_permission %}
                                 <a href="{% url 'client:consultant:client-list' %}"
                                    class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
                                     {% heroicon_outline "building-office-2" class="mr-1 w-4 h-4" %}
