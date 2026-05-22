@@ -4,6 +4,7 @@ from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 
+from app.Account.subscription_config import Subscription
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import Structure
 from app.BillOfQuantities.tests.factories import StructureFactory
@@ -16,7 +17,9 @@ class TestStructureListView(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory.create()
+        self.user = AccountFactory.create(
+            subscription=Subscription.PAYMENTS_AND_INVOICES
+        )
         self.project = ProjectFactory.create(users=self.user)
         ProjectRole.objects.create(
             user=self.user, project=self.project, role=Role.CONTRACT_BOQ
@@ -91,7 +94,9 @@ class TestStructureDetailView(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory.create()
+        self.user = AccountFactory.create(
+            subscription=Subscription.PAYMENTS_AND_INVOICES
+        )
         self.project = ProjectFactory.create(users=self.user)
         ProjectRole.objects.create(
             user=self.user, project=self.project, role=Role.CONTRACT_BOQ
@@ -149,7 +154,9 @@ class TestStructureUpdateView(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory.create()
+        self.user = AccountFactory.create(
+            subscription=Subscription.PAYMENTS_AND_INVOICES
+        )
         self.project = ProjectFactory.create(users=self.user)
         ProjectRole.objects.create(
             user=self.user, project=self.project, role=Role.CONTRACT_BOQ
@@ -226,7 +233,9 @@ class TestStructureDeleteView(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory.create()
+        self.user = AccountFactory.create(
+            subscription=Subscription.PAYMENTS_AND_INVOICES
+        )
         self.project = ProjectFactory.create(users=self.user)
         ProjectRole.objects.create(
             user=self.user, project=self.project, role=Role.CONTRACT_BOQ
@@ -304,7 +313,9 @@ class TestStructureExcelUploadView(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory.create()
+        self.user = AccountFactory.create(
+            subscription=Subscription.PAYMENTS_AND_INVOICES
+        )
         self.project = ProjectFactory.create(users=self.user)
         ProjectRole.objects.create(
             user=self.user, project=self.project, role=Role.CONTRACT_BOQ
