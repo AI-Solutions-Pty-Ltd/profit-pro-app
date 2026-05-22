@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import DetailView, UpdateView
+from django.shortcuts import redirect
+from django.views.generic import DetailView, TemplateView, UpdateView
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):
@@ -69,3 +71,24 @@ class UserEditView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         """Redirect to user detail page."""
         return self.object.detail_url
+
+
+class DemoExpiredView(LoginRequiredMixin, TemplateView):
+    """View shown to users whose demo subscription has expired."""
+
+    template_name = "account/demo_expired.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        """Redirect active non-expired users back to home."""
+        user = request.user
+        if not user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+
+        is_demo = getattr(user, "subscription", None) == Subscription.DEMO_TIER
+        is_expired = getattr(user, "is_subscription_expired", False)
+        is_staff_or_admin = user.is_superuser or user.is_staff
+
+        if is_staff_or_admin or not (is_demo and is_expired):
+            return redirect("home")
+
+        return super().dispatch(request, *args, **kwargs)

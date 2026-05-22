@@ -204,13 +204,9 @@ class Account(AbstractUser, BaseModel):
         Returns:
             True if user has the role, False otherwise
         """
-        from app.Account.subscription_config import Subscription
         from app.Project.models import Role
 
-        if self.is_superuser or (
-            self.subscription == Subscription.DEMO_TIER
-            and not self.is_subscription_expired
-        ):
+        if self.is_superuser or self.has_demo_permission:
             return True
 
         user_project_roles = project.project_roles.filter(user=self)
@@ -238,10 +234,7 @@ class Account(AbstractUser, BaseModel):
             return True
 
         if self.subscription == Subscription.DEMO_TIER:
-            if self.is_subscription_expired:
-                return False
-            # Demo tier bypasses requirement checks if not expired
-            return True
+            return not self.is_subscription_expired
 
         if str(Subscription.FREE_TIER) in normalized_required_tiers:
             return True
@@ -342,6 +335,16 @@ class Account(AbstractUser, BaseModel):
         except ValueError:
             subscription_tier = Subscription.FREE_TIER
         return SubscriptionConfig.get_all_limits(subscription_tier)
+
+    @property
+    def has_demo_permission(self) -> bool:
+        """Check if the user has an active, unexpired Demo subscription."""
+        from app.Account.subscription_config import Subscription
+
+        return (
+            self.subscription == Subscription.DEMO_TIER
+            and not self.is_subscription_expired
+        )
 
     @property
     def is_subscription_expired(self) -> bool:

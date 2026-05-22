@@ -21,11 +21,7 @@ class ConsultantMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         companies = Company.objects.filter(type=Company.Type.CLIENT)
         if not self.request.user.is_superuser:  # type: ignore
             # Allow active DEMO_TIER users to see all CLIENT companies
-            if getattr(
-                self.request.user, "subscription", None
-            ) == "DEMO_TIER" and not getattr(
-                self.request.user, "is_subscription_expired", False
-            ):
+            if getattr(self.request.user, "has_demo_permission", False):
                 pass
             else:
                 companies = companies.filter(
@@ -98,9 +94,7 @@ class PaymentCertMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         if user.is_superuser:
             return self.project
         # Allow active DEMO_TIER users to bypass consultant check
-        if getattr(user, "subscription", None) == "DEMO_TIER" and not getattr(
-            user, "is_subscription_expired", False
-        ):
+        if getattr(user, "has_demo_permission", False):
             return self.project
         if user not in self.project.client.consultants.all():
             raise Http404("User is not a consultant for this client")

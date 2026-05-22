@@ -17,4 +17,9 @@ urlpatterns = [
         account_views.UserEditView.as_view(),
         name="user_edit",
     ),
+    path(
+        "demo-expired/",
+        account_views.DemoExpiredView.as_view(),
+        name="demo-expired",
+    ),
 ]

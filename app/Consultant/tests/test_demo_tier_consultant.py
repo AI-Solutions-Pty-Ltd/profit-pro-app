@@ -1,8 +1,10 @@
 """Tests for Demo tier access on consultant views."""
 
+from datetime import timedelta
 from typing import cast
 
 from django.test import RequestFactory, TestCase
+from django.utils import timezone
 
 from app.Account.models import Account
 from app.Account.subscription_config import Subscription
@@ -105,3 +107,47 @@ class TestDemoTierConsultantAccess(TestCase):
         project = mixin.get_project()
         self.assertEqual(project, self.project)
         self.assertEqual(mixin.get_client(), self.client1)
+
+    def test_expired_demo_user_fails_group_permission_mixin(self):
+        """Test that expired DEMO_TIER users fail group permission checks."""
+        mixin = UserHasGroupGenericMixin()
+        mixin.permissions = ["consultant"]
+
+        # Set expired trial
+        self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
+        self.demo_user.save()
+
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+
+        self.assertFalse(mixin.test_func())
+
+    def test_consultant_mixin_filters_clients_for_expired_demo_user(self):
+        """Test that ConsultantMixin.get_clients filters clients for expired DEMO_TIER users."""
+        mixin = ConsultantMixin()
+        self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
+        self.demo_user.save()
+
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+
+        clients = mixin.get_clients()
+        self.assertEqual(clients.count(), 0)
+
+    def test_payment_cert_mixin_raises_404_for_expired_demo_user(self):
+        """Test that PaymentCertMixin blocks expired DEMO_TIER users."""
+        from django.http import Http404
+
+        mixin = PaymentCertMixin()
+        self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
+        self.demo_user.save()
+
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+        mixin.kwargs = {"project_pk": self.project.pk}
+
+        with self.assertRaises(Http404):
+            mixin.get_project()
