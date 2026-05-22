@@ -83,6 +83,14 @@ class Command(BaseCommand):
                 self.style.SUCCESS("Successfully created a new demo user.")
             )
 
+        # Seed and verify demo companies
+        from app.Project.models import Company
+
+        Company.ensure_demo_companies()
+        self.stdout.write(
+            self.style.SUCCESS("Successfully seeded or verified demo companies.")
+        )
+
         self.stdout.write(self.style.SUCCESS(f"Email:        {user.email}"))
         self.stdout.write(self.style.SUCCESS(f"Password:     {password}"))
         self.stdout.write(

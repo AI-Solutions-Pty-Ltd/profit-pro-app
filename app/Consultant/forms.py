@@ -63,8 +63,12 @@ class ProjectClientForm(forms.Form):
             # Filter to show client companies that are either associated with the user's projects or account
             from django.db.models import Q
 
+            condition = Q(client_projects__in=projects) | Q(users=user)
+            if user.has_demo_permission:
+                condition |= Q(name="Demo Client")
+
             queryset = Company.objects.filter(
-                Q(client_projects__in=projects) | Q(users=user),
+                condition,
                 type=Company.Type.CLIENT,
             ).order_by("name")
 

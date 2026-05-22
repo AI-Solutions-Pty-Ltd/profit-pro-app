@@ -282,8 +282,26 @@ class ProjectFilterForm(forms.Form):
         if consultant_queryset is not None:
             self.fields["consultant"].queryset = consultant_queryset  # type: ignore
         if client_queryset is not None:
+            if user and getattr(user, "has_demo_permission", False):
+                demo_clients = Company.objects.filter(
+                    type=Company.Type.CLIENT, name="Demo Client"
+                )
+                if client_queryset.query.distinct:
+                    demo_clients = demo_clients.distinct()
+                client_queryset = (
+                    (client_queryset | demo_clients).distinct().order_by("name")
+                )
             self.fields["client"].queryset = client_queryset  # type: ignore
         if contractor_queryset is not None:
+            if user and getattr(user, "has_demo_permission", False):
+                demo_contractors = Company.objects.filter(
+                    type=Company.Type.CONTRACTOR, name="Demo Contractor 1"
+                )
+                if contractor_queryset.query.distinct:
+                    demo_contractors = demo_contractors.distinct()
+                contractor_queryset = (
+                    (contractor_queryset | demo_contractors).distinct().order_by("name")
+                )
             self.fields["contractor"].queryset = contractor_queryset  # type: ignore
         if category_queryset is not None:
             self.fields["project_category"].queryset = category_queryset  # type: ignore
