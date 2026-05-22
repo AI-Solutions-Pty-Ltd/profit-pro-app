@@ -30,7 +30,7 @@ class BasicProjectCreateForm(forms.ModelForm):
             "project_category",
             "area",
             "project_stage",
-            "project_discipline",
+            # "project_discipline",
         ]
         widgets = {
             "name": forms.TextInput(
