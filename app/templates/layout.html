@@ -202,5 +202,169 @@
                 margin-right: 5px;
             }
         </style>
+        {% if show_demo_welcome_popup %}
+            {% load heroicons %}
+            <!-- Demo Tier Welcome Modal Container -->
+            <div id="demoWelcomeModal"
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 hidden"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="modal-title">
+                <!-- Glassmorphism Backdrop Overlay -->
+                <div id="demoModalBackdrop"
+                     class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-auto cursor-pointer">
+                </div>
+                <!-- Modal Card Container -->
+                <div id="demoModalCard"
+                     class="relative bg-white rounded-2xl shadow-2xl border border-gray-100 max-w-2xl w-full overflow-hidden transition-all duration-300 transform scale-95 opacity-0 z-10 flex flex-col">
+                    <!-- Header with Indigo & Violet Gradient -->
+                    <div class="relative bg-indigo-600 px-6 py-8 sm:px-8 text-white">
+                        <!-- Decorative circles -->
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                        <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                        <!-- Close X Button -->
+                        <button type="button"
+                                id="demoModalCloseBtn"
+                                class="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+                                aria-label="Close modal">{% heroicon_outline "x-mark" size="20" %}</button>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/30 border border-white/20 text-indigo-100 mb-3 tracking-wide uppercase">
+                            Welcome to &nbsp;<span class="font-black uppercase">Serge Pro</span>
+                        </span>
+                        <h2 id="modal-title"
+                            class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                            Master the <span class="font-black uppercase">Serge Pro</span>
+                        </h2>
+                        <p class="mt-2 text-sm sm:text-base text-indigo-100 max-w-lg leading-relaxed">
+                            We've prepared preloaded, interactive demo data so you can witness the platform's robust capabilities immediately.
+                        </p>
+                    </div>
+                    <!-- Content Body: Platform Features Showcase -->
+                    <div class="px-6 py-6 sm:px-8 sm:py-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Portfolio Management Card -->
+                            <div class="flex flex-col p-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-xl transition-all duration-200 group">
+                                <div class="flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg group-hover:scale-110 transition-transform duration-200 mb-3">
+                                    {% heroicon_outline "briefcase" size="22" %}
+                                </div>
+                                <h3 class="text-sm font-bold text-slate-800">Portfolio Management</h3>
+                                <p class="mt-1 text-xs text-slate-500 leading-relaxed flex-grow">
+                                    Track the complete performance of your projects, team members, and comprehensive portfolio health at a glance.
+                                </p>
+                            </div>
+                            <!-- Progress & Productivity Management Card -->
+                            <div class="flex flex-col p-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-xl transition-all duration-200 group">
+                                <div class="flex items-center justify-center w-10 h-10 bg-violet-100 text-violet-600 rounded-lg group-hover:scale-110 transition-transform duration-200 mb-3">
+                                    {% heroicon_outline "chart-bar" size="22" %}
+                                </div>
+                                <h3 class="text-sm font-bold text-slate-800">Progress & Productivity</h3>
+                                <p class="mt-1 text-xs text-slate-500 leading-relaxed flex-grow">
+                                    Monitor daily resource utilisation, cost variances, and auto-generated cashflow forecasts based on real-time field performance.
+                                </p>
+                            </div>
+                            <!-- Project Estimator Card -->
+                            <div class="flex flex-col p-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-xl transition-all duration-200 group">
+                                <div class="flex items-center justify-center w-10 h-10 bg-cyan-100 text-cyan-600 rounded-lg group-hover:scale-110 transition-transform duration-200 mb-3">
+                                    {% heroicon_outline "calculator" size="22" %}
+                                </div>
+                                <h3 class="text-sm font-bold text-slate-800">Project Estimator</h3>
+                                <p class="mt-1 text-xs text-slate-500 leading-relaxed flex-grow">
+                                    Rapidly build resource-based first-principles estimates, pricing schedules, and custom price libraries in a matter of minutes.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Actions Footer -->
+                    <div class="px-6 py-5 sm:px-8 bg-slate-50 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                        <!-- Secondary CTA: View Profile -->
+                        <a href="{{ request.user.detail_url }}"
+                           id="demoModalProfileBtn"
+                           class="w-full sm:w-auto px-5 py-2.5 text-center text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 rounded-md border border-slate-200 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                            View Profile
+                        </a>
+                        <!-- Primary CTA: Create First Project -->
+                        <a href="{% url 'project:project-create' %}"
+                           id="demoModalCreateBtn"
+                           class="w-full sm:w-auto px-6 py-2.5 text-center text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            Create Your First Project
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                   
+
+
+                    const modal = document.getElementById('demoWelcomeModal');
+                    const backdrop = document.getElementById('demoModalBackdrop');
+                    const card = document.getElementById('demoModalCard');
+                    const closeBtn = document.getElementById('demoModalCloseBtn');
+                    const profileBtn = document.getElementById('demoModalProfileBtn');
+                    const createBtn = document.getElementById('demoModalCreateBtn');
+
+                    if (!modal || !backdrop || !card) return;
+
+                    // Function to show modal with premium animations
+                    function showModal() {
+                        modal.classList.remove('hidden');
+                        // Force reflow
+                        void modal.offsetHeight;
+                        
+                        // Animate transition in
+                        backdrop.classList.remove('opacity-0');
+                        backdrop.classList.add('opacity-100');
+                        
+                        card.classList.remove('scale-95', 'opacity-0');
+                        card.classList.add('scale-100', 'opacity-100');
+                    }
+
+                    // Function to hide modal with animations
+                    function hideModal(permanently = false) {
+                        if (permanently) {
+                            localStorage.setItem('dismissed_demo_welcome', 'true');
+                        }
+                        
+                        // Animate transition out
+                        backdrop.classList.remove('opacity-100');
+                        backdrop.classList.add('opacity-0');
+                        
+                        card.classList.remove('scale-100', 'opacity-100');
+                        card.classList.add('scale-95', 'opacity-0');
+                        
+                        // Wait for transition duration before hiding container
+                        setTimeout(() => {
+                            modal.classList.add('hidden');
+                        }, 300);
+                    }
+
+                    // Event listeners for close triggers
+                    closeBtn.addEventListener('click', () => hideModal(true));
+                    
+                    if (profileBtn) {
+                        profileBtn.addEventListener('click', () => {
+                            localStorage.setItem('dismissed_demo_welcome', 'true');
+                        });
+                    }
+                    if (createBtn) {
+                        createBtn.addEventListener('click', () => {
+                            localStorage.setItem('dismissed_demo_welcome', 'true');
+                        });
+                    }
+
+                    // Click outside on backdrop
+                    backdrop.addEventListener('click', () => hideModal(true));
+
+                    // Keyboard press - Escape key
+                    document.addEventListener('keydown', function(event) {
+                        if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                            hideModal(true);
+                        }
+                    });
+
+                    // Show modal on short delay for seamless, visual impact
+                    setTimeout(showModal, 400);
+                });
+            </script>
+        {% endif %}
     </body>
 </html>

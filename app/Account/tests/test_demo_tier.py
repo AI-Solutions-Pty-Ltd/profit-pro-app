@@ -115,3 +115,53 @@ class TestDemoTier:
         roles = project_roles(user, project)
         # Should return all roles (ProjectRole.objects.all())
         assert roles.exists() is True
+
+    def test_has_demo_permission_active(self):
+        """Test that has_demo_permission is True for active trials."""
+        expiry = timezone.now() + timedelta(days=5)
+        user = AccountFactory(
+            subscription=Subscription.DEMO_TIER,
+            subscription_expires_at=expiry,
+        )
+        assert user.has_demo_permission is True
+
+    def test_has_demo_permission_expired(self):
+        """Test that has_demo_permission is False for expired trials."""
+        expiry = timezone.now() - timedelta(days=1)
+        user = AccountFactory(
+            subscription=Subscription.DEMO_TIER,
+            subscription_expires_at=expiry,
+        )
+        assert user.has_demo_permission is False
+
+    def test_has_demo_permission_other_tier(self):
+        """Test that has_demo_permission is False for other active tiers."""
+        user = AccountFactory(subscription=Subscription.BUSINESS_MANAGEMENT)
+        assert user.has_demo_permission is False
+
+    def test_has_demo_permission_no_expiry(self):
+        """Test that has_demo_permission handles None expiry dates gracefully."""
+        user = AccountFactory(
+            subscription=Subscription.DEMO_TIER,
+            subscription_expires_at=None,
+        )
+        assert user.has_demo_permission is True
+
+    def test_demo_tier_project_roles_filter_expired(self):
+        """Test that the projectroles filter does NOT bypass role checks for expired trials."""
+        from app.core.templatetags.template_extras import project_roles
+        from app.Project.tests.factories import ProjectFactory
+
+        expiry = timezone.now() - timedelta(days=1)
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
+        )
+        project = ProjectFactory()
+
+        roles = project_roles(user, project)
+        # Should not return all roles; since user is not assigned to the project, should be empty/filtered
+        assert roles.exists() is False
