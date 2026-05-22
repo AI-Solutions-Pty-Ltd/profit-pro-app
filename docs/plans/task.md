@@ -1,8 +1,8 @@
 | Task | Status | Description |
 | :--- | :--- | :--- |
-| **Step 1: Implement Company.ensure_demo_companies() classmethod** | [x] | Add duplicates-proof class method to seed target companies |
-| **Step 2: Hook up seeding to the create_demo_user command** | [x] | Integrate ensure_demo_companies inside manage.py create_demo_user |
-| **Step 3: Conditionally filter querysets in project setup Forms** | [x] | Expand dropdown querysets for clients, contractors, and lead consultants |
-| **Step 4: Include demo companies in portfolio filter dropdowns** | [x] | Update ProjectFilterForm initialization to union demo companies |
-| **Step 5: Add comprehensive pytest unit tests** | [x] | Create test suite test_demo_companies.py to verify visibility and isolation |
-| **Step 6: Verify and run Graphify update** | [x] | Run all pytest suites and graphify update to finalize |
+| **Step 1: Create the DemoExpiredMiddleware** | [x] | Middleware blocking access for expired trial users and allowing AJAX safety / assets. |
+| **Step 2: Implement Locked View and URL Routing** | [x] | Add DemoExpiredView view in account_views.py and routing in account_urls.py. |
+| **Step 3: Design the Premium Locked View Template** | [x] | Create demo_expired.html layout with elegant styling, CSS backdrop blur, marketing redirection button, and secure Logout POST. |
+| **Step 4: Register the Middleware in Settings** | [x] | Add DemoExpiredMiddleware to MIDDLEWARE list in settings/base.py. |
+| **Step 5: Write Comprehensive Pytest Unit Tests** | [x] | Create unit tests using factories to verify redirection, exclusion bypasses, and AJAX 403. |
+| **Step 6: Verification & Complete Review** | [x] | Run all pytest suites, check code quality with ruff, and update graphify. |
