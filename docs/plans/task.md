@@ -1,7 +1,8 @@
 | Task | Status | Description |
 | :--- | :--- | :--- |
-| **Step 1: Investigation & Analysis** | [/] | Run check tools individually to gather the full set of 203 diagnostics and pinpoint the exact source of failures. |
-| **Step 2: Fix python formatting and lint errors** | [ ] | Fix any Python formatting and lint errors reported by ruff. |
-| **Step 3: Fix type check errors** | [ ] | Address type checking errors reported by ty check. |
-| **Step 4: Fix Django template formatting and lint errors** | [ ] | Format and lint templates using djlint, fixing any reporting issues. |
-| **Step 5: Verify all checks pass** | [ ] | Run the full verification suite to ensure all diagnostics are clean and exit code is 0. |
+| **Step 1: Create the DemoExpiredMiddleware** | [x] | Middleware blocking access for expired trial users and allowing AJAX safety / assets. |
+| **Step 2: Implement Locked View and URL Routing** | [x] | Add DemoExpiredView view in account_views.py and routing in account_urls.py. |
+| **Step 3: Design the Premium Locked View Template** | [x] | Create demo_expired.html layout with elegant styling, CSS backdrop blur, marketing redirection button, and secure Logout POST. |
+| **Step 4: Register the Middleware in Settings** | [x] | Add DemoExpiredMiddleware to MIDDLEWARE list in settings/base.py. |
+| **Step 5: Write Comprehensive Pytest Unit Tests** | [x] | Create unit tests using factories to verify redirection, exclusion bypasses, and AJAX 403. |
+| **Step 6: Verification & Complete Review** | [x] | Run all pytest suites, check code quality with ruff, and update graphify. |
