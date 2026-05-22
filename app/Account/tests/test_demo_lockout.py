@@ -1,10 +1,11 @@
 """Tests for the Demo Tier Expiration Lock-out System (Middleware & View)."""
 
 from datetime import timedelta
+
 import pytest
+from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
-from django.test import Client
 
 from app.Account.subscription_config import Subscription
 from app.Account.tests.factories import AccountFactory, SuperuserFactory
@@ -41,7 +42,7 @@ class TestDemoLockout:
         """Verify that an expired demo user is redirected to the demo-expired page."""
         self.client.force_login(self.expired_demo_user)
         response = self.client.get(reverse("users:account:user_detail"))
-        
+
         # Check standard 302 redirect
         assert response.status_code == 302
         assert response.url == reverse("users:account:demo-expired")
@@ -49,14 +50,16 @@ class TestDemoLockout:
     def test_expired_demo_user_can_access_logout_and_demo_expired_views(self):
         """Verify that the middleware permits expired users to access lockout view and logout."""
         self.client.force_login(self.expired_demo_user)
-        
+
         # Lockout page itself should be accessible
         response_expired = self.client.get(reverse("users:account:demo-expired"))
         assert response_expired.status_code == 200
-        
+
         # Logout page should not redirect to demo-expired (can be 200 or 302, but not redirecting to lockout)
         response_logout = self.client.get(reverse("users:auth:logout"))
-        assert response_logout.status_code != 302 or response_logout.url != reverse("users:account:demo-expired")
+        assert response_logout.status_code != 302 or response_logout.url != reverse(
+            "users:account:demo-expired"
+        )
 
     def test_active_user_cannot_access_lockout_view(self):
         """Verify that an active user accessing the demo-expired view is redirected to home."""
@@ -86,11 +89,10 @@ class TestDemoLockout:
     def test_expired_demo_user_ajax_receives_403(self):
         """Verify that AJAX/JSON requests from expired users return 403 instead of 302 HTML redirects."""
         self.client.force_login(self.expired_demo_user)
-        
+
         # Scenario A: XMLHttpRequest header
         response_ajax = self.client.get(
-            reverse("users:account:user_detail"),
-            HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+            reverse("users:account:user_detail"), HTTP_X_REQUESTED_WITH="XMLHttpRequest"
         )
         assert response_ajax.status_code == 403
         assert response_ajax.json() == {
@@ -99,8 +101,7 @@ class TestDemoLockout:
 
         # Scenario B: Accept header with application/json
         response_json = self.client.get(
-            reverse("users:account:user_detail"),
-            HTTP_ACCEPT="application/json"
+            reverse("users:account:user_detail"), HTTP_ACCEPT="application/json"
         )
         assert response_json.status_code == 403
         assert response_json.json() == {

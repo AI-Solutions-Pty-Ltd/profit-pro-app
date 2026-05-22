@@ -12,6 +12,15 @@
           "pwd": "${workspaceFolder}"
         }
       },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "python",
@@ -44,6 +53,15 @@
           "pwd": "${workspaceFolder}"
         }
       },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
+      },
       "problemMatcher": []
     },
     {
@@ -57,6 +75,15 @@
         "env": {
           "pwd": "${workspaceFolder}"
         }
+      },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
       }
     },
     {
@@ -71,6 +98,15 @@
           "pwd": "${workspaceFolder}"
         }
       },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
+      },
       "problemMatcher": []
     },
     {
@@ -84,7 +120,16 @@
     {
       "label": "checks",
       "type": "shell",
-      "command": "${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check . && ${command:python.interpreterPath} -m djlint --reformat . && ${command:python.interpreterPath} -m djlint --lint .",
+      "command": ".venv/bin/python -m ruff format . && .venv/bin/python -m ruff check . --fix && .venv/bin/python -m ty check . && .venv/bin/python -m djlint --reformat . && .venv/bin/python -m djlint --lint .",
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe -m ruff format . && .venv\\Scripts\\python.exe -m ruff check . --fix && .venv\\Scripts\\python.exe -m ty check . && .venv\\Scripts\\python.exe -m djlint --reformat . && .venv\\Scripts\\python.exe -m djlint --lint ."
+      },
+      "linux": {
+        "command": ".venv/bin/python -m ruff format . && .venv/bin/python -m ruff check . --fix && .venv/bin/python -m ty check . && .venv/bin/python -m djlint --reformat . && .venv/bin/python -m djlint --lint ."
+      },
+      "osx": {
+        "command": ".venv/bin/python -m ruff format . && .venv/bin/python -m ruff check . --fix && .venv/bin/python -m ty check . && .venv/bin/python -m djlint --reformat . && .venv/bin/python -m djlint --lint ."
+      },
       "problemMatcher": []
     },
     {

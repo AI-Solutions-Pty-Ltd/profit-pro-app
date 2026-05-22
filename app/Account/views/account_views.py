@@ -92,4 +92,3 @@ class DemoExpiredView(LoginRequiredMixin, TemplateView):
             return redirect("home")
 
         return super().dispatch(request, *args, **kwargs)
-

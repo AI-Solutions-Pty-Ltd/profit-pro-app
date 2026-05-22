@@ -20,7 +20,10 @@ class DemoExpiredMiddleware:
         # Only apply to authenticated, non-superuser, non-staff users
         if user.is_authenticated and not (user.is_superuser or user.is_staff):
             # Check if subscription is DEMO_TIER and is expired
-            if user.subscription == Subscription.DEMO_TIER and user.is_subscription_expired:
+            if (
+                user.subscription == Subscription.DEMO_TIER
+                and user.is_subscription_expired
+            ):
                 # Allow access to static, media, and browser reload assets
                 path = request.path
                 if (
@@ -45,12 +48,16 @@ class DemoExpiredMiddleware:
 
                 if view_name not in safe_views:
                     # Detect AJAX/JSON requests
-                    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+                    is_ajax = (
+                        request.headers.get("x-requested-with") == "XMLHttpRequest"
+                    )
                     is_json = "application/json" in request.headers.get("accept", "")
                     if is_ajax or is_json:
                         return JsonResponse(
-                            {"error": "Demo trial period has expired. Please upgrade your plan."},
-                            status=403
+                            {
+                                "error": "Demo trial period has expired. Please upgrade your plan."
+                            },
+                            status=403,
                         )
                     # Redirect standard browser requests
                     return redirect("users:account:demo-expired")
