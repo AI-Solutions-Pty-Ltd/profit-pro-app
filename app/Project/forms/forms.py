@@ -58,9 +58,13 @@ class ProjectContractorForm(forms.ModelForm):
             # Filter to show contractor companies that are either associated with the user's projects or account
             from django.db.models import Q
 
+            condition = Q(contractor_projects__in=projects) | Q(users=user)
+            if user.has_demo_permission:
+                condition |= Q(name="Demo Contractor 1")
+
             queryset = (
                 Company.objects.filter(
-                    Q(contractor_projects__in=projects) | Q(users=user),
+                    condition,
                     type=Company.Type.CONTRACTOR,
                 )
                 .distinct()
@@ -120,9 +124,13 @@ class ProjectLeadConsultantForm(forms.ModelForm):
             # Filter to show lead consultant companies that are either associated with the user's projects or account
             from django.db.models import Q
 
+            condition = Q(lead_consultant_projects__in=projects) | Q(users=user)
+            if user.has_demo_permission:
+                condition |= Q(name="Demo Consultant 1")
+
             queryset = (
                 Company.objects.filter(
-                    Q(lead_consultant_projects__in=projects) | Q(users=user),
+                    condition,
                     type=Company.Type.LEAD_CONSULTANT,
                 )
                 .distinct()

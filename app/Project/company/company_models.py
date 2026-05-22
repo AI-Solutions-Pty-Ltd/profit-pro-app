@@ -97,6 +97,28 @@ class Company(BaseModel):
             self.logo = logo
         return super().save(*args, **kwargs)
 
+    @classmethod
+    def ensure_demo_companies(cls) -> list["Company"]:
+        """Search for target demo companies and create them if they do not exist.
+
+        Returns:
+            list[Company]: The list of three ensured demo companies.
+        """
+        demo_companies = []
+        targets = [
+            (cls.Type.CLIENT, "Demo Client", "DEMO-CLIENT"),
+            (cls.Type.CONTRACTOR, "Demo Contractor 1", "DEMO-CONTRACTOR-1"),
+            (cls.Type.LEAD_CONSULTANT, "Demo Consultant 1", "DEMO-CONSULTANT-1"),
+        ]
+        for comp_type, name, reg_num in targets:
+            company, created = cls.objects.get_or_create(
+                type=comp_type,
+                name=name,
+                defaults={"registration_number": reg_num},
+            )
+            demo_companies.append(company)
+        return demo_companies
+
 
 @receiver(post_save, sender=Company)
 def resize_company_logo(sender, instance, created, **kwargs):

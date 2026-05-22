@@ -1,7 +1,8 @@
 | Task | Status | Description |
 | :--- | :--- | :--- |
-| **Step 1: Investigation & Analysis** | [/] | Run check tools individually to gather the full set of 203 diagnostics and pinpoint the exact source of failures. |
-| **Step 2: Fix python formatting and lint errors** | [ ] | Fix any Python formatting and lint errors reported by ruff. |
-| **Step 3: Fix type check errors** | [ ] | Address type checking errors reported by ty check. |
-| **Step 4: Fix Django template formatting and lint errors** | [ ] | Format and lint templates using djlint, fixing any reporting issues. |
-| **Step 5: Verify all checks pass** | [ ] | Run the full verification suite to ensure all diagnostics are clean and exit code is 0. |
+| **Step 1: Implement Company.ensure_demo_companies() classmethod** | [x] | Add duplicates-proof class method to seed target companies |
+| **Step 2: Hook up seeding to the create_demo_user command** | [x] | Integrate ensure_demo_companies inside manage.py create_demo_user |
+| **Step 3: Conditionally filter querysets in project setup Forms** | [x] | Expand dropdown querysets for clients, contractors, and lead consultants |
+| **Step 4: Include demo companies in portfolio filter dropdowns** | [x] | Update ProjectFilterForm initialization to union demo companies |
+| **Step 5: Add comprehensive pytest unit tests** | [x] | Create test suite test_demo_companies.py to verify visibility and isolation |
+| **Step 6: Verify and run Graphify update** | [x] | Run all pytest suites and graphify update to finalize |
