@@ -79,7 +79,7 @@ class TestDemoLockout:
         """Verify that administrators/superusers bypass the demo lockout logic entirely."""
         # Force superuser to have demo tier & expired subscription config
         self.superuser.subscription = Subscription.DEMO_TIER
-        self.superuser.subscription_expires_at = timezone.now() - timedelta(days=1)
+        self.superuser.subscription_expires_at = timezone.now() - timedelta(days=1)  # ty: ignore[invalid-assignment]
         self.superuser.save()
 
         self.client.force_login(self.superuser)
