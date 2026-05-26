@@ -83,3 +83,14 @@ ESTIMATOR PERFORMANCE
    a. BOQItem(project_id, is_section_header, specification_id) — covers the dominant filter combo
    b. BOQItem(project_id, section) — only if section filtering becomes hot
    Skip for now — current single-column FK indexes are sufficient at present row counts.
+
+BUSINESS DASHBOARD PERFORMANCE
+
+The Business Dashboard at `project:company-dashboard` (`CompanyDashboardView` in `app/Project/company/company_views.py:918`) loads slowly. Hotspots live in the shared `MasterDashboardDataMixin.get_master_context` (`app/Project/company/company_views.py:393`), which also feeds `MasterProjectDashboardView` and `MasterPortfolioDashboardView`. Fixes listed biggest-impact-first / lowest-risk-first:
+
+1. Replace `_get_baseline_comparison` Python loop with DB aggregate — `app/Project/company/company_views.py:632` iterates every `BOQItem` and calls the `baseline_new_price` property (which fans out to materials/labour/plant/preliminary rate properties, each touching specs and components). The result is then multiplied by hard-coded `1.05` / `1.08` mocks (lines 663–664), so most of the compute is wasted. Replace with a DB-side `Sum` aggregate, or drop the loop entirely while the values remain mocked.
+2. Cache `projects.count()` once in `get_master_context` — currently called ~6× across the mixin (and `is_portfolio = projects.count() > 1` re-computes inside `_get_production_summary`). Compute once at the top and pass down.
+3. Batch per-project productivity calls — `_get_production_summary` (line 556) and `_get_exception_list` (line 530) call `get_premium_productivity_report_data(project.id)` / per-project aggregates inside a `for project in projects:` loop. Refactor `production_utils.get_premium_productivity_report_data` to accept a list of project IDs and return a `{project_id: report}` dict in one pass, or memoize within the request.
+4. Short-TTL cache for `get_master_context` (30–60s, keyed by user + query string) — only after the structural fixes above, and only if stakeholders accept the staleness. Applies to all three master dashboards.
+
+Use django-silk (already wired up; see ESTIMATOR PERFORMANCE notes) to confirm timings before and after each fix.
