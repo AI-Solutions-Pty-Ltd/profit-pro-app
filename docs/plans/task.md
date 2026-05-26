@@ -1,3 +1,3 @@
 | Task | Status | Description |
 | :--- | :--- | :--- |
-| **Resolve type checking diagnostics** | [x] | Fix invalid-assignment error in `test_allocation_fixes.py` and run verification. |
+| **Resolve Pyright type checking failure** | [x] | Fix subscript assignment in project_views.py and report_data subscripting in portfolio_views.py. |

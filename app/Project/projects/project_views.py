@@ -880,8 +880,9 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
         }
         for amendment in amendments:
             cat = amendment["category"]
-            category_totals[cat] = (
-                category_totals.get(cat, 0) + amendment["variation_amount"]
+            current_value = category_totals.get(cat, 0.0)
+            category_totals[cat] = float(
+                current_value + amendment["variation_amount"]
             )
 
         category_labels = [category_names[k] for k in category_names.keys()]
