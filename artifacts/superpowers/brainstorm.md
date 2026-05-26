@@ -1,85 +1,57 @@
-# Superpowers Brainstorm
+# Brainstorming: Complimentary Access Notice for Non-Demo Tiers
 
 ## Goal
-To search for the following demo companies and create them if they do not exist:
-* Client: `"Demo Client"` (Type: `Company.Type.CLIENT`)
-* Contractor: `"Demo Contractor 1"` (Type: `Company.Type.CONTRACTOR`)
-* Lead Consultant: `"Demo Consultant 1"` (Type: `Company.Type.LEAD_CONSULTANT`)
-
-These companies must be made available to users on the **Demo Tier** subscription (`DEMO_TIER`) inside both the project setup dropdowns (Client selection, Contractor selection, Lead Consultant selection forms) and the portfolio filter dropdowns.
+Implement a premium, visually outstanding global notification/notice in the application indicating that the user is a `Subscriber {{tier}} with complimentary access` for all authenticated users who are **not** in the `DEMO_TIER`.
 
 ## Constraints
-* **Virtual Environment**: Use `.venv` exclusively, prefixing execution with `.venv\Scripts\python.exe`.
-* **Testing & Data**: Write new unit tests using `pytest` and `factory_boy` factories.
-* **Inheritance**: Any new models or custom data models must inherit from `BaseModel`.
-* **Single-Flow Execution**: Keep exactly one active task step in `docs/plans/task.md` (table-only progress tracker).
-* **Graphify**: Eagerly run `graphify update .` after changes to update the project knowledge graph.
+1. **Target Tiers**: Must render only for authenticated users whose subscription tier is **not** `DEMO_TIER`.
+2. **Message Requirement**: Must explicitly contain `Subscriber {{tier}} with complimentary access`, where `{{tier}}` dynamically displays the user's subscription tier.
+3. **No Breakage**: Must not disrupt the existing Demo Ribbon, the general banner, or any other elements in `nav.html`.
+4. **Premium Styling**: Must align with modern web design principles, using sleek styling, appropriate color harmony, responsiveness, and premium micro-animations (e.g., matching or exceeding the polish of the Demo Ribbon).
+5. **Robust Implementation**: Must use working implementation details (no placeholder text) and fit neatly into the Django template structure.
 
-## Known Context
-* `Company` model resides in `app/Project/company/company_models.py` with enum types: `CLIENT`, `CONTRACTOR`, `LEAD_CONSULTANT`.
-* `create_demo_user` management command is in `app/Account/management/commands/create_demo_user.py`. It is responsible for setting up active `DEMO_TIER` accounts.
-* The forms that manage project company assignments:
-  * `ProjectClientForm` in `app/Consultant/forms.py` (filters clients).
-  * `ProjectContractorForm` in `app/Project/forms/forms.py` (filters contractors).
-  * `ProjectLeadConsultantForm` in `app/Project/forms/forms.py` (filters lead consultants).
-* The dashboard filters:
-  * `ProjectFilterForm` in `app/Project/projects/project_forms.py` receives querysets initialized in views like `PortfolioDashboardView` (`app/Project/views/portfolio_views.py`), `ProjectListView` (`app/Project/projects/project_views.py`), and others in `report_views.py`.
-* `Account` model has `has_demo_permission` property which returns `True` if user is in active unexpired `DEMO_TIER`.
+## Known context
+1. **User Subscription Field**: `Account` model has a `subscription` field and is associated with `Subscription` choices enum defined in `app/Account/subscription_config.py`.
+2. **Current Ribbon Logic**: `app/templates/nav.html` already has an authenticated check and a `DEMO_TIER` ribbon check.
+3. **Base Layout**: `app/templates/layout.html` includes `nav.html` on line 28, making it a perfect global container for sticky page-top ribbons.
+4. **Subscription Choices**:
+   - `FREE_TIER = "FREE_TIER", "Free Tier"`
+   - `BUSINESS_MANAGEMENT = "BUSINESS_MANAGEMENT", "Business Management Module"`
+   - `PAYMENTS_AND_INVOICES = "PAYMENTS_AND_INVOICES", "Payments and Invoices"`
+   - `PROFIT_AND_LOSS = "PROFIT_AND_LOSS", "Profit and Loss"`
+   - `SITE_MANAGEMENT = "SITE_MANAGEMENT", "Project Management"`
+   - `PROJECT_ESTIMATOR = "PROJECT_ESTIMATOR", "Project Estimator"`
+   - `ADMINISTRATION = "ADMINISTRATION", "Administration"`
+   - `DEMO_TIER = "DEMO_TIER", "Demo"`
 
 ## Risks
-* **Data Duplication**: Re-running the management command or seeding logic could create duplicate "Demo" companies if they are not searched by exact type and name first.
-* **Scope Leakage**: Non-demo tier users must not see these demo companies in their dropdowns/filters unless the companies are explicitly assigned to their projects or accounts.
-* **Test Isolation**: In testing environments, the database is clean. If tests expect these companies to exist, they must be set up via fixtures, factories, or seeded dynamically.
+1. **UI Clutter**: Having multiple global banners (e.g. general banner, demo banner, and complimentary banner) might clutter the top area of the page.
+2. **Styling Clashes**: Ad-hoc styling might clash with the current tailwind color schemes.
+3. **Template Rendering Errors**: Using fields that do not exist or incorrect template variables (e.g., `user.subscription` vs `user.get_subscription_display`).
 
-## Options (2–4)
+## Options (2?4)
 
-### Option 1: Seed via Management Command and Helper Method, and Filter Querysets conditionally in Forms/Views (Recommended)
-* **Summary**:
-  1. Add a classmethod `ensure_demo_companies()` on the `Company` model that searches for and creates `"Demo Client"`, `"Demo Contractor 1"`, and `"Demo Consultant 1"` if they don't exist.
-  2. Invoke `Company.ensure_demo_companies()` in the `create_demo_user` management command.
-  3. In `ProjectClientForm`, `ProjectContractorForm`, and `ProjectLeadConsultantForm`, check if `user.has_demo_permission`. If so, include the corresponding demo company in the queryset.
-  4. In dashboard views (e.g. `PortfolioDashboardView`, `ProjectListView`, and reports in `report_views.py`), when constructing the client/contractor querysets, check if `user.has_demo_permission`. If `True`, append/union the demo companies.
-* **Pros**:
-  * Decoupled and modular: seeding lives in a classmethod on `Company` and is invoked during environment setup.
-  * Robust conditional filtering: only targets demo-tier users.
-  * Very easy to test.
-* **Cons**:
-  * Requires modifying multiple dashboard views to ensure consistency of filter options.
-* **Complexity / Risk**: Low.
+### Option 1: Premium Emerald-to-Teal Top Ribbon in `nav.html` (Recommended)
+Add a dedicated, sticky top ribbon in `app/templates/nav.html` styled with an elegant, modern emerald-to-teal gradient (`bg-gradient-to-r from-emerald-600 to-teal-500`) to highlight a polished, exclusive "complimentary access" status. It would sit above or below the navigation and only render if `user.is_authenticated` and `user.subscription != "DEMO_TIER"`.
+- **Pros**: Clear, prominent, highly polished, consistent with the Demo Ribbon layout.
+- **Cons**: Takes up a small amount of vertical screen space.
 
-### Option 2: Database Migration for Seeding and Filter Querysets
-* **Summary**:
-  * Create a standard Django data migration to seed the three demo companies.
-  * Apply form and view queryset updates identically to Option 1.
-* **Pros**:
-  * Guaranteed to exist in all environments (including production and newly spun up instances) without needing to run a management command.
-* **Cons**:
-  * Slows down some fresh DB creations or test setups unless properly cached, though standard for Django.
-  * Still requires the same view/form queryset modifications to make them visible to the Demo Tier.
-* **Complexity / Risk**: Low.
+### Option 2: Dynamic Header/General Banner Integration
+Incorporate the subscriber message directly into the existing secondary banner `You build the business, we handle the software` in `app/templates/nav.html`. If the user is logged in and not in the Demo tier, this general banner dynamically changes its text to the complimentary subscriber message and shifts to an elegant gradient.
+- **Pros**: Extremely clean, zero additional vertical clutter since it repurposes existing space.
+- **Cons**: Less prominent than a dedicated new alert ribbon.
 
-### Option 3: Dynamic Form/View-Level Lazy Creation
-* **Summary**:
-  * Do not pre-seed. Instead, when the form/view is initialized, check if the demo companies exist. If not, create them dynamically during the request lifecycle.
-* **Pros**:
-  * Zero setup or command dependencies.
-* **Cons**:
-  * Major anti-pattern: writing to the database during GET requests / form instantiation.
-  * Can lead to race conditions under load or concurrent users, creating duplicate companies.
-* **Complexity / Risk**: High.
+### Option 3: Elegant Dashboard Banner / Toast
+Add a beautifully animated sliding card/alert on dashboard load, or a persistent, gorgeous card in the Dashboard home views rather than a persistent global ribbon.
+- **Pros**: Zero impact on global navigation space.
+- **Cons**: Only visible on specific dashboards, not globally persistent.
 
 ## Recommendation
-We recommend **Option 1**. Since the environment already utilizes a standard `create_demo_user` command to configure a demo user, extending this command to seed the demo companies via a reusable classmethod `Company.ensure_demo_companies()` is clean, maintainable, and aligned with standard Django practices. We will update the forms (`ProjectClientForm`, `ProjectContractorForm`, `ProjectLeadConsultantForm`) and views (`PortfolioDashboardView`, `ProjectListView`, `ProjectReportView`, etc.) to conditionally include these companies when `user.has_demo_permission` is `True`. We will also add full unit tests for both regular and demo users using factory_boy factories.
+**Option 1** is highly recommended. A persistent global ribbon at the top of the viewport (similar to the Demo Ribbon) keeps this important account notice visible across the entire application without disrupting normal page content. By using a distinct, premium emerald/teal gradient (`bg-gradient-to-r from-emerald-500 to-teal-600`), we clearly distinguish it from the Indigo Demo Ribbon and give it an upscale, high-end feel.
 
-## Acceptance Criteria
-- Running `create_demo_user` seeds `"Demo Client"`, `"Demo Contractor 1"`, and `"Demo Consultant 1"` if they do not exist.
-- When logged in as a user with active `DEMO_TIER` subscription (`user.has_demo_permission` is True):
-  - `"Demo Client"` is available in the Client selection dropdown.
-  - `"Demo Contractor 1"` is available in the Contractor selection dropdown.
-  - `"Demo Consultant 1"` is available in the Lead Consultant selection dropdown.
-  - All three demo companies are available in the portfolio dashboard and project list filter dropdowns.
-- When logged in as a regular user (not `DEMO_TIER`):
-  - These demo companies are not visible in dropdowns or filters (unless explicitly associated with their projects/accounts).
-- Unit tests are added/updated to verify this behavior for both user groups.
-- `ruff check .` and all `pytest` suites pass.
-- `graphify update .` is executed successfully.
+## Acceptance criteria
+1. For any authenticated user with a subscription NOT equal to `DEMO_TIER`, the notice is displayed at the top of the page.
+2. For unauthenticated/anonymous users, no complimentary notice is displayed.
+3. For users with subscription `DEMO_TIER`, the original Demo Ribbon is displayed, and the complimentary notice is NOT displayed.
+4. The notice message correctly displays the subscription tier name dynamically (e.g., `Subscriber Free Tier with complimentary access` or `Subscriber Business Management Module with complimentary access`).
+5. The visual presentation is highly premium and responsive, adapting nicely to mobile and desktop screens.

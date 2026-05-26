@@ -92,6 +92,34 @@ class TestAllocationFixes(TestCase):
             form_with_user.fields["lead_consultant"].queryset,
         )
 
+    def test_project_client_form_includes_currently_assigned_client(self):
+        """Verify that ProjectClientForm includes the currently assigned client in its queryset."""
+        self.project.client = self.client_company
+        self.project.save()
+
+        # Check with user
+        self.client_company.users.add(self.user)
+        form = ProjectClientForm(project=self.project, user=self.user)
+        self.assertIn(self.client_company, form.fields["client"].queryset)
+
+        # Check without user
+        form_no_user = ProjectClientForm(project=self.project)
+        self.assertIn(self.client_company, form_no_user.fields["client"].queryset)
+
+    def test_project_lead_consultant_form_includes_currently_assigned_lead_consultant(self):
+        """Verify that ProjectLeadConsultantForm includes the currently assigned lead consultant."""
+        self.project.lead_consultant = self.lead_consultant_company
+        self.project.save()
+
+        # Check with user
+        self.lead_consultant_company.users.add(self.user)
+        form = ProjectLeadConsultantForm(project=self.project, user=self.user)
+        self.assertIn(self.lead_consultant_company, form.fields["lead_consultant"].queryset)
+
+        # Check without user
+        form_no_user = ProjectLeadConsultantForm(project=self.project)
+        self.assertIn(self.lead_consultant_company, form_no_user.fields["lead_consultant"].queryset)
+
     def test_client_quick_create_save_with_m2m(self):
         """Verify saving ClientQuickCreateForm saves type and many-to-many associations correctly."""
         form = ClientQuickCreateForm(
