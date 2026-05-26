@@ -16,7 +16,7 @@
                     <span class="hidden text-indigo-100 sm:inline">Time Remaining:</span>
                     <span class="font-mono">{{ user.demo_time_left_str }}</span>
                 </div>
-                <a href="https://sedgepro.co.za/#prelaunch-promotion?promo=open&email={{user.email}}&name={{user.get_full_name|urlencode}}&phone={{user.phone|urlencode}}"
+                <a href="https://sedgepro.co.za/#prelaunch-promotion?promo=open&email={{ user.email }}&name={{ user.get_full_name|urlencode }}&phone={{ user.phone|urlencode }}"
                    target="_blank"
                    class="bg-white text-indigo-600 px-3 py-1 rounded-md hover:bg-gray-50 transition-all shadow-sm flex items-center gap-1 text-[9px] sm:text-xs uppercase tracking-wider font-black">
                     {% heroicon_outline "shopping-cart" size="12" %}
@@ -27,7 +27,8 @@
     {% endif %}
     {% if user.is_authenticated and user.subscription != "DEMO_TIER" %}
         <!-- Complimentary Access Ribbon -->
-        <div id="complimentary-access-ribbon" class="hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white text-[10px] sm:text-xs font-bold py-1.5 px-4 justify-between items-center z-[60] border-b border-emerald-500 shadow-lg">
+        <div id="complimentary-access-ribbon"
+             class="hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white text-[10px] sm:text-xs font-bold py-1.5 px-4 justify-between items-center z-[60] border-b border-emerald-500 shadow-lg">
             <div class="flex gap-2 items-center mx-auto sm:mx-0">
                 <span class="flex relative w-2 h-2">
                     <span class="inline-flex absolute w-full h-full bg-emerald-300 rounded-full opacity-75 animate-ping"></span>
@@ -38,9 +39,7 @@
             <button type="button"
                     onclick="dismissComplimentaryRibbon()"
                     class="p-0.5 text-emerald-100 rounded-md transition-all hover:text-white hover:bg-emerald-700/30 focus:outline-none"
-                    aria-label="Dismiss notice">
-                {% heroicon_outline "x-mark" size="14" %}
-            </button>
+                    aria-label="Dismiss notice">{% heroicon_outline "x-mark" size="14" %}</button>
         </div>
         <script>
             document.addEventListener('DOMContentLoaded', function() {

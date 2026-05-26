@@ -10,7 +10,7 @@ from app.Project.forms.forms import (
     LeadConsultantQuickCreateForm,
     ProjectLeadConsultantForm,
 )
-from app.Project.models import Company, ProjectRole, Role
+from app.Project.models import Company, Project, ProjectRole, Role
 from app.Project.tests.factories import ClientFactory, ProjectFactory
 
 
@@ -23,16 +23,16 @@ class TestAllocationFixes(TestCase):
         self.user = AccountFactory()
 
         # Create client and lead consultant companies
-        self.client_company = ClientFactory(
+        self.client_company: Company = ClientFactory(  # type: ignore
             name="Test Client Company",
             type=Company.Type.CLIENT,
         )
-        self.lead_consultant_company = ClientFactory(
+        self.lead_consultant_company: Company = ClientFactory(  # type: ignore
             name="Test Lead Consultant Company",
             type=Company.Type.LEAD_CONSULTANT,
         )
 
-        self.project = ProjectFactory(
+        self.project: Project = ProjectFactory(  # type: ignore
             name="Allocation Test Project",
             client=None,
         )
