@@ -135,6 +135,10 @@ class TestCorrespondenceDialogFileModel:
 
     def test_file_ordering(self):
         """Test files are ordered by creation date descending."""
+        from datetime import timedelta
+
+        from django.utils import timezone
+
         dialog = CorrespondenceDialog.objects.create(
             correspondence=ContractualCorrespondenceFactory.create(),
             message="Test message",
@@ -144,6 +148,9 @@ class TestCorrespondenceDialogFileModel:
         file1 = CorrespondenceDialogFile.objects.create(
             dialog=dialog, file=SimpleUploadedFile("file1.pdf", b"content1")
         )
+        file1.created_at = timezone.now() - timedelta(seconds=1)
+        file1.save()
+
         file2 = CorrespondenceDialogFile.objects.create(
             dialog=dialog, file=SimpleUploadedFile("file2.pdf", b"content2")
         )

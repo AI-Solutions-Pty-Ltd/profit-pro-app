@@ -78,10 +78,10 @@ class ProjectAllocateExistingClientView(
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        """Redirect to project edit page."""
+        """Redirect to project setup page."""
         return reverse_lazy(
-            "client:client-management:client-list",
-            kwargs={"project_pk": self.project.pk},
+            "project:project-setup",
+            kwargs={"pk": self.project.pk},
         )
 
 
@@ -141,6 +141,4 @@ class ProjectClientRemoveView(ClientMixin, View):
         else:
             messages.warning(request, "This client is not assigned to this project.")
 
-        return redirect(
-            "client:client-management:client-list", project_pk=self.project.pk
-        )
+        return redirect("project:project-setup", pk=self.project.pk)

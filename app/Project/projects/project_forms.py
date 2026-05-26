@@ -284,7 +284,7 @@ class ProjectFilterForm(forms.Form):
         if client_queryset is not None:
             if user and getattr(user, "has_demo_permission", False):
                 demo_clients = Company.objects.filter(
-                    type=Company.Type.CLIENT, name="Demo Client"
+                    type=Company.Type.CLIENT, registration_number="DEMO-CLIENT"
                 )
                 if client_queryset.query.distinct:
                     demo_clients = demo_clients.distinct()
@@ -295,7 +295,8 @@ class ProjectFilterForm(forms.Form):
         if contractor_queryset is not None:
             if user and getattr(user, "has_demo_permission", False):
                 demo_contractors = Company.objects.filter(
-                    type=Company.Type.CONTRACTOR, name="Demo Contractor 1"
+                    type=Company.Type.CONTRACTOR,
+                    registration_number="DEMO-CONTRACTOR-1",
                 )
                 if contractor_queryset.query.distinct:
                     demo_contractors = demo_contractors.distinct()

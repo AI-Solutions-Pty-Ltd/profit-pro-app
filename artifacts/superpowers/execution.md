@@ -1,60 +1,49 @@
-# Seeding and Filtering Demo Companies for Demo Tier Users - Execution Notes
+# Implementation of Complimentary Access Notice for Non-Demo Tiers - Execution Notes
 
 This document tracks sequential step executions, verification commands, and outcome results for the task.
 
 ---
 
-## Step 1: Implement Company.ensure_demo_companies() classmethod
+## Step 1: Add the Complimentary Access Ribbon to the Navigation Template
 * **Files changed**:
-  * [MODIFY] [company_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/company/company_models.py)
+  * [nav.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/templates/nav.html)
 * **What changed**:
-  * Implemented `ensure_demo_companies` classmethod inside `Company` model.
-  * Configured `get_or_create` lookups for "Demo Client", "Demo Contractor 1", and "Demo Consultant 1" using exact name and type parameters to prevent data duplication.
-* **Verification command**: `.venv\Scripts\python.exe -m ruff check app/Project/company/company_models.py`
-* **Result**: PASS
+  * Added a conditional check for `user.is_authenticated and user.subscription != "DEMO_TIER"`.
+  * Implemented an elegant, premium emerald-to-teal gradient top ribbon displaying the subscriber's tier: `Subscriber {{ user.get_subscription_display }} with complimentary access`.
+  * Included a glowing animation green badge using Tailwind (`animate-ping`) for high visual quality.
+* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
+* **Result**: PASS (All 7 existing tests passed successfully)
 
-## Step 2: Hook up seeding to the create_demo_user management command
+## Step 2: Add Pytest Unit Tests to Validate the Ribbon Rendering
 * **Files changed**:
-  * [MODIFY] [create_demo_user.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/management/commands/create_demo_user.py)
+  * [test_demo_lockout.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_lockout.py)
 * **What changed**:
-  * Imported the `Company` model in the command handle method.
-  * Invoked `Company.ensure_demo_companies()` inside the management command run, ensuring companies exist when setting up a demo environment.
-* **Verification command**: `.venv\Scripts\python.exe manage.py create_demo_user`
-* **Result**: PASS (Successfully ran and logged "Successfully seeded or verified demo companies.")
+  * Added three new pytest cases: `test_complimentary_notice_visible_for_paid_user`, `test_complimentary_notice_not_visible_for_demo_user`, and `test_complimentary_notice_not_visible_for_anonymous_user`.
+  * Tested all access conditions (fully authenticated non-demo user, active demo tier user, and unauthenticated visitor).
+  * Asserted correct rendering of text, classes, and dynamic tier display values.
+* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
+* **Result**: PASS (All 10 tests passed successfully!)
 
-## Step 3: Conditionally filter querysets in project setup Forms
+## Step 3: Implement Dismissable Feature with Local Storage Persistence
 * **Files changed**:
-  * [MODIFY] [forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/forms.py)
-  * [MODIFY] [forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/forms/forms.py)
+  * [nav.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/templates/nav.html)
+  * [test_demo_lockout.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_lockout.py)
 * **What changed**:
-  * Modified `ProjectClientForm` initialization logic to conditionally append `"Demo Client"` when `user.has_demo_permission` is True.
-  * Modified `ProjectContractorForm` and `ProjectLeadConsultantForm` initialization logic to conditionally append `"Demo Contractor 1"` and `"Demo Consultant 1"` respectively when `user.has_demo_permission` is True.
-* **Verification command**: `.venv\Scripts\python.exe -m ruff check app/Consultant/forms.py app/Project/forms/forms.py`
-* **Result**: PASS
+  * Added a close button with heroicon `x-mark` to the complimentary ribbon in `nav.html`.
+  * Added local storage persistence (`dismissed_complimentary_ribbon` key) and page-load checks to remember the user's dismissal state and prevent visual shift (by starting the element with `class="hidden"`).
+  * Expanded `test_complimentary_notice_visible_for_paid_user` to assert close button rendering and the presence of the `dismissComplimentaryRibbon` Javascript function.
+* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
+* **Result**: PASS (All tests passed, verifying the dismissable markup works correctly)
 
-## Step 4: Include demo companies in portfolio filter dropdowns
+## Step 4: Implement 4-Hour Re-appear and 2-Minute Auto-dismiss Logic
 * **Files changed**:
-  * [MODIFY] [project_forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/project_forms.py)
+  * [nav.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/templates/nav.html)
+  * [test_demo_lockout.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_lockout.py)
 * **What changed**:
-  * Updated `ProjectFilterForm.__init__` to check if `user` has active demo permission and conditionally union the client and contractor querysets with the seeded demo companies.
-* **Verification command**: `.venv\Scripts\python.exe -m ruff check app/Project/projects/project_forms.py`
-* **Result**: PASS
-
-## Step 5: Add comprehensive pytest unit tests
-* **Files changed**:
-  * [NEW] [test_demo_companies.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/tests/test_demo_companies.py)
-* **What changed**:
-  * Created `test_demo_companies.py` testing framework containing test classes `TestDemoCompaniesSeeding` and `TestDemoCompaniesFormFiltering`.
-  * Verified correct seeding logic, idempotency, conditional form filtering for client, contractor, lead consultant and project filter forms.
-  * Verified that regular users and expired demo users cannot view these seeded companies, except when explicitly associated with them.
-* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Project/tests/test_demo_companies.py -v`
-* **Result**: PASS (7 tests passed successfully)
-
-## Step 6: Verify and run Graphify update
-* **Files changed**:
-  * [MODIFY] [project_forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/project_forms.py)
-* **What changed**:
-  * Ran the entire project test suite in `app/Project/tests` to verify that there are no regressions, including that the `ProjectFilterForm` dynamic query distinctness check works perfectly in URL views. All 41 tests passed successfully!
-  * Rebuilt the knowledge graph with `graphify update .` to ensure the codebase and architecture remain completely in sync.
-* **Verification command**: `graphify update .`
-* **Result**: PASS (successfully compiled AST graph representing 11,414 nodes and 41,368 edges)
+  * Implemented timestamp storage in local storage (`complimentary_ribbon_dismissed_at`).
+  * Configured page-load logic to dynamically compare current timestamp with last dismissal timestamp, making the ribbon re-appear after 4 hours have elapsed.
+  * Set a `setTimeout` auto-dismiss trigger to hide the ribbon automatically after 2 minutes of the page load.
+  * Added robust timer cleanup when a user manually dismisses the notice.
+  * Extended pytest unit tests to assert key timing constants (`FOUR_HOURS`, `TWO_MINUTES`) and storage keys.
+* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
+* **Result**: PASS (All 10 tests passed successfully!)

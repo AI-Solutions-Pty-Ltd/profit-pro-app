@@ -107,3 +107,37 @@ class TestDemoLockout:
         assert response_json.json() == {
             "error": "Demo trial period has expired. Please upgrade your plan."
         }
+
+    def test_complimentary_notice_visible_for_paid_user(self):
+        """Verify the complimentary notice ribbon is rendered for paid users."""
+        self.client.force_login(self.paid_user)
+        response = self.client.get(reverse("home"))
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert (
+            "Subscriber Business Management Module with complimentary access" in content
+        )
+        assert "Complimentary Access Ribbon" in content
+        assert 'id="complimentary-access-ribbon"' in content
+        assert 'onclick="dismissComplimentaryRibbon()"' in content
+        assert "function dismissComplimentaryRibbon" in content
+        assert "FOUR_HOURS" in content
+        assert "TWO_MINUTES" in content
+        assert "complimentary_ribbon_dismissed_at" in content
+
+    def test_complimentary_notice_not_visible_for_demo_user(self):
+        """Verify the complimentary notice is not rendered for demo users."""
+        self.client.force_login(self.active_demo_user)
+        response = self.client.get(reverse("users:account:user_detail"))
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "with complimentary access" not in content
+        assert "Complimentary Access Ribbon" not in content
+
+    def test_complimentary_notice_not_visible_for_anonymous_user(self):
+        """Verify the complimentary notice is not rendered for unauthenticated users."""
+        response = self.client.get(reverse("home"))
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "with complimentary access" not in content
+        assert "Complimentary Access Ribbon" not in content

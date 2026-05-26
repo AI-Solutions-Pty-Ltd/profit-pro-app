@@ -2,6 +2,7 @@
 
 from django.urls import reverse
 
+from app.Account.subscription_config import Subscription
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import PaymentCertificate
 from app.BillOfQuantities.tests.factories import (
@@ -84,6 +85,10 @@ class TestProjectPaymentCertificateDetailView:
 
     def test_user_can_only_see_own_projects(self, client, user):
         """Test user can only see their own projects."""
+        # Ensure our test user does not have demo bypass permission
+        user.subscription = Subscription.PAYMENTS_AND_INVOICES
+        user.save()
+
         other_user = AccountFactory.create()
         other_project = ProjectFactory.create(users=other_user)
         LineItemFactory.create(project=other_project)

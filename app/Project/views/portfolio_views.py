@@ -984,7 +984,7 @@ class ComplianceReportView(PortfolioReportMixin):
         party_filter = self.request.GET.get("party", "")  # contractor or consultant
 
         # Build report data per project
-        report_data = []
+        report_data: list[dict[str, Any]] = []
         for project in projects:
             # Get responsible party filter
             party_q = Q()
