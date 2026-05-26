@@ -251,10 +251,12 @@ class PaymentCertificatePaymentStatementView(
         # Calculate running balance after sorting
         running_balance = Decimal("0.00")
         for entry in statement_entries:
-            if entry["debit"]:
-                running_balance += entry["debit"]
-            if entry["credit"]:
-                running_balance -= entry["credit"]
+            debit = entry["debit"]
+            if debit and isinstance(debit, Decimal):
+                running_balance += debit
+            credit = entry["credit"]
+            if credit and isinstance(credit, Decimal):
+                running_balance -= credit
             entry["balance"] = running_balance
 
         # Calculate totals
@@ -389,10 +391,12 @@ class EmailPaymentStatementView(PaymentCertificatePaymentMixin, View):
             statement_entries.sort(key=lambda x: x["date"])
             running_balance = Decimal("0.00")
             for entry in statement_entries:
-                if entry["debit"]:
-                    running_balance += entry["debit"]
-                if entry["credit"]:
-                    running_balance -= entry["credit"]
+                debit = entry["debit"]
+                if debit and isinstance(debit, Decimal):
+                    running_balance += debit
+                credit = entry["credit"]
+                if credit and isinstance(credit, Decimal):
+                    running_balance -= credit
                 entry["balance"] = running_balance
 
             # Calculate totals
