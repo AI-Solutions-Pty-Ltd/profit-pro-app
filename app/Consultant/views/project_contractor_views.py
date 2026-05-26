@@ -79,10 +79,10 @@ class ProjectAllocateExistingContractorView(
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        """Redirect to project edit page."""
+        """Redirect to project setup page."""
         return reverse_lazy(
-            "client:contractor-management:contractor-list",
-            kwargs={"project_pk": self.project.pk},
+            "project:project-setup",
+            kwargs={"pk": self.project.pk},
         )
 
 
@@ -145,5 +145,5 @@ class ProjectContractorRemoveView(ContractorMixin, View):
             )
 
         return redirect(
-            "client:contractor-management:contractor-list", project_pk=self.project.pk
+            "project:project-setup", pk=self.project.pk
         )

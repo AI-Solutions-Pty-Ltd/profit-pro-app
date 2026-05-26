@@ -1,60 +1,96 @@
-# Implementation Plan: Complimentary Access Notice for Non-Demo Tiers
+# Implementation Plan - Setup Page Redirects for Client and Contractor Allocation
 
 ## Goal
-Implement a premium, visually outstanding global notice ribbon in the application navigation indicating that the user is a `Subscriber {{tier}} with complimentary access` for all authenticated users who are NOT in the `DEMO_TIER`.
+To automatically navigate the user back to the **Project Setup** dashboard page (`project:project-setup`) upon successfully allocating or removing a Client or Contractor company, instead of redirecting them to the intermediate company list pages.
+
+---
 
 ## Assumptions
-1. The `user` object is available in the template context via `request.user` (or `user` globally in standard Django navigation context).
-2. The user's subscription tier can be resolved dynamically via `user.get_subscription_display` (or `user.subscription`).
-3. Tailwind CSS classes are fully available and compiled properly for styling the ribbon.
+- The target environment is a Django application running on Python 3.13+ (or Python 3.11+).
+- The `project:project-setup` URL pattern exists, takes a `pk` parameter representing the project primary key, and resolves to the setup dashboard.
+- Modifying redirects requires updating `get_success_url` in `FormView`s and `redirect` in simple POST view handlers, plus updating any affected unit tests.
+
+---
 
 ## Plan
 
-### Step 1: Add the Complimentary Access Ribbon to the Navigation Template
-- **Files**:
-  - `app/templates/nav.html`
-- **Change**:
-  - Underneath the existing `{% if user.is_authenticated and user.subscription == "DEMO_TIER" %}` block (line 27), add a new conditional block:
-    ```html
-    {% if user.is_authenticated and user.subscription != "DEMO_TIER" %}
-        <!-- Complimentary Access Ribbon -->
-        <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white text-[10px] sm:text-xs font-bold py-1.5 px-4 flex justify-between items-center z-[60] border-b border-emerald-500 shadow-lg">
-            <div class="flex gap-2 items-center">
-                <span class="flex relative w-2 h-2">
-                    <span class="inline-flex absolute w-full h-full bg-emerald-300 rounded-full opacity-75 animate-ping"></span>
-                    <span class="inline-flex relative w-2 h-2 bg-white rounded-full"></span>
-                </span>
-                <span class="tracking-widest uppercase">Subscriber {{ user.get_subscription_display }} with complimentary access</span>
-            </div>
-        </div>
-    {% endif %}
+### Step 1: Update client allocation and removal views
+* **Files**:
+  - [MODIFY] [project_client_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/project_client_views.py)
+* **Change**:
+  - Update `ProjectAllocateExistingClientView.get_success_url` to return `project:project-setup` with project `pk`:
+    ```python
+    def get_success_url(self):
+        """Redirect to project setup page."""
+        return reverse_lazy(
+            "project:project-setup",
+            kwargs={"pk": self.project.pk},
+        )
     ```
-- **Verify**:
-  - Perform a sanity test compilation or template load to confirm syntax correctness.
+  - Update `ProjectClientRemoveView.post` to redirect to `project:project-setup` with project `pk`:
+    ```python
+    return redirect(
+        "project:project-setup", pk=self.project.pk
+    )
+    ```
+* **Verify**:
+  - Run syntax validation: `.venv\Scripts\python.exe -m ruff check app/Consultant/views/project_client_views.py`
 
-### Step 2: Add Pytest Unit Tests to Validate the Ribbon Rendering
-- **Files**:
-  - `app/Account/tests/test_demo_lockout.py`
-- **Change**:
-  - Add test cases to the `TestDemoLockout` class that:
-    1. Verify the complimentary access ribbon renders for an authenticated non-demo user (`self.paid_user`) and dynamically displays their subscription tier display name.
-    2. Verify the complimentary access ribbon is NOT visible for an authenticated demo user (`self.active_demo_user`).
-    3. Verify the complimentary access ribbon is NOT visible for an anonymous/unauthenticated user.
-- **Verify**:
-  - Run the test suite:
-    ```bash
-    .venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v
+### Step 2: Update contractor allocation and removal views
+* **Files**:
+  - [MODIFY] [project_contractor_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/project_contractor_views.py)
+* **Change**:
+  - Update `ProjectAllocateExistingContractorView.get_success_url` to return `project:project-setup` with project `pk`:
+    ```python
+    def get_success_url(self):
+        """Redirect to project setup page."""
+        return reverse_lazy(
+            "project:project-setup",
+            kwargs={"pk": self.project.pk},
+        )
     ```
-  - Confirm all tests pass with no errors.
+  - Update `ProjectContractorRemoveView.post` to redirect to `project:project-setup` with project `pk`:
+    ```python
+    return redirect(
+        "project:project-setup", pk=self.project.pk
+    )
+    ```
+* **Verify**:
+  - Run syntax validation: `.venv\Scripts\python.exe -m ruff check app/Consultant/views/project_contractor_views.py`
+
+### Step 3: Update and expand unit test suites
+* **Files**:
+  - [MODIFY] [test_contractor_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/tests/test_contractor_views.py)
+* **Change**:
+  - In `TestProjectContractorRemoveView.test_post_remove_contractor_from_project`, update the expected redirect assertion from `client:contractor-management:contractor-list` to `project:project-setup`:
+    ```python
+    setup_url = reverse(
+        "project:project-setup",
+        kwargs={"pk": self.project.pk},
+    )
+    self.assertRedirects(response, setup_url)
+    ```
+* **Verify**:
+  - Run the test suite: `.venv\Scripts\python.exe -m pytest app/Consultant/tests/test_contractor_views.py -v`
+
+### Step 4: Run all related tests and finalize
+* **Files**: None
+* **Change**:
+  - Run the full Consultant and forms test suites to ensure that all redirections and queryset filters work together perfectly.
+  - Run `graphify update .` to keep the AST graph in sync.
+* **Verify**:
+  - Run command: `.venv\Scripts\python.exe -m pytest app/Consultant/tests app/Project/tests -v`
+  - Rebuild AST graph: `graphify update .`
+
+---
 
 ## Risks & mitigations
-- **Risk**: The notice overlaps or displaces other page elements.
-  - *Mitigation*: The nav container is already a flex-col box with appropriate sticky styling. By matching the height and style of the existing Demo Ribbon, we ensure layout flows correctly without causing overlapping or displacement issues.
-- **Risk**: Missing translation or empty display for certain custom/new subscription tiers.
-  - *Mitigation*: `get_subscription_display` automatically falls back gracefully or retrieves the mapped display name from choices in `Subscription` class.
+- **Risk**: Test failures in views that expect redirects to company lists.
+  - *Mitigation*: We identified the single test case `test_post_remove_contractor_from_project` in `test_contractor_views.py` that makes this assertion, and will update it as part of our plan.
+
+---
 
 ## Rollback plan
-- Revert the changes to `app/templates/nav.html` and `app/Account/tests/test_demo_lockout.py` using git:
-  ```bash
-  git checkout app/templates/nav.html app/Account/tests/test_demo_lockout.py
-  ```
+- To rollback changes:
+  - Revert view modifications in `project_client_views.py` and `project_contractor_views.py` to their previous redirection URLs.
+  - Revert `test_post_remove_contractor_from_project` in `test_contractor_views.py`.

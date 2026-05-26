@@ -114,14 +114,16 @@ class TestDemoLockout:
         response = self.client.get(reverse("home"))
         assert response.status_code == 200
         content = response.content.decode("utf-8")
-        assert "Subscriber Business Management Module with complimentary access" in content
+        assert (
+            "Subscriber Business Management Module with complimentary access" in content
+        )
         assert "Complimentary Access Ribbon" in content
         assert 'id="complimentary-access-ribbon"' in content
         assert 'onclick="dismissComplimentaryRibbon()"' in content
-        assert 'function dismissComplimentaryRibbon' in content
-        assert 'FOUR_HOURS' in content
-        assert 'TWO_MINUTES' in content
-        assert 'complimentary_ribbon_dismissed_at' in content
+        assert "function dismissComplimentaryRibbon" in content
+        assert "FOUR_HOURS" in content
+        assert "TWO_MINUTES" in content
+        assert "complimentary_ribbon_dismissed_at" in content
 
     def test_complimentary_notice_not_visible_for_demo_user(self):
         """Verify the complimentary notice is not rendered for demo users."""
@@ -139,4 +141,3 @@ class TestDemoLockout:
         content = response.content.decode("utf-8")
         assert "with complimentary access" not in content
         assert "Complimentary Access Ribbon" not in content
-

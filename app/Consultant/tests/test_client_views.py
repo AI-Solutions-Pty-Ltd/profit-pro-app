@@ -120,8 +120,12 @@ class TestRevealClientFieldView(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        from app.Account.subscription_config import Subscription
+
         self.user: Account = cast(Account, AccountFactory())
-        self.other_user: Account = cast(Account, AccountFactory())
+        self.other_user: Account = cast(
+            Account, AccountFactory(subscription=Subscription.FREE_TIER)
+        )
 
         from app.Project.models import Company, ProjectRole, Role
 

@@ -150,8 +150,10 @@ class TestRevealContractorFieldView(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        from app.Account.subscription_config import Subscription
+
         self.user = AccountFactory()
-        self.other_user = AccountFactory()
+        self.other_user = AccountFactory(subscription=Subscription.FREE_TIER)
 
         from app.Project.models import Company, ProjectRole, Role
 
@@ -298,9 +300,9 @@ class TestProjectContractorRemoveView(TestCase):
         self.project.refresh_from_db()
         self.assertIsNone(self.project.contractor)
 
-        # Should redirect to contractor-list
-        list_url = reverse(
-            "client:contractor-management:contractor-list",
-            kwargs={"project_pk": self.project.pk},
+        # Should redirect to project setup page
+        setup_url = reverse(
+            "project:project-setup",
+            kwargs={"pk": self.project.pk},
         )
-        self.assertRedirects(response, list_url)
+        self.assertRedirects(response, setup_url)
