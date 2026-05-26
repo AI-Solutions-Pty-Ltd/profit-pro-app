@@ -879,7 +879,7 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
             "other": "Other",
         }
         for amendment in amendments:
-            cat: str = amendment["category"]  # Add explicit type annotation
+            cat = cast(str, amendment["category"])  # Add explicit type annotation
             current_value = category_totals.get(cat, 0.0)
             category_totals[cat] = float(current_value + amendment["variation_amount"])
 
