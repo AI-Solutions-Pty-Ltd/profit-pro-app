@@ -141,6 +141,4 @@ class ProjectClientRemoveView(ClientMixin, View):
         else:
             messages.warning(request, "This client is not assigned to this project.")
 
-        return redirect(
-            "project:project-setup", pk=self.project.pk
-        )
+        return redirect("project:project-setup", pk=self.project.pk)

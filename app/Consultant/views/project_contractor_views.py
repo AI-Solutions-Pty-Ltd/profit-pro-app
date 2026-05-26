@@ -144,6 +144,4 @@ class ProjectContractorRemoveView(ContractorMixin, View):
                 request, "This contractor is not assigned to this project."
             )
 
-        return redirect(
-            "project:project-setup", pk=self.project.pk
-        )
+        return redirect("project:project-setup", pk=self.project.pk)
