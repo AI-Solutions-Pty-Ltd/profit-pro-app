@@ -58,6 +58,9 @@ class ProjectClientForm(forms.Form):
         self.fields["client"].label = "Client Company"
 
         if user:
+            if user.has_demo_permission:
+                Company.ensure_demo_companies(user=user)
+
             projects = user.get_projects
 
             # Filter to show client companies that are either associated with the user's projects or account
@@ -65,7 +68,7 @@ class ProjectClientForm(forms.Form):
 
             condition = Q(client_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
-                condition |= Q(registration_number="DEMO-CLIENT")
+                condition |= Q(registration_number__in=["DEMO-CLIENT", f"DEMO-CLIENT-{user.pk}"])
 
             queryset = Company.objects.filter(
                 condition,

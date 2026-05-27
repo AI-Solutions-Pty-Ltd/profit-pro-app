@@ -53,6 +53,9 @@ class ProjectContractorForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if user:
+            if user.has_demo_permission:
+                Company.ensure_demo_companies(user=user)
+
             projects = user.get_projects
 
             # Filter to show contractor companies that are either associated with the user's projects or account
@@ -60,7 +63,7 @@ class ProjectContractorForm(forms.ModelForm):
 
             condition = Q(contractor_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
-                condition |= Q(registration_number="DEMO-CONTRACTOR-1")
+                condition |= Q(registration_number__in=["DEMO-CONTRACTOR-1", f"DEMO-CONTRACTOR-1-{user.pk}"])
 
             queryset = (
                 Company.objects.filter(
@@ -115,6 +118,9 @@ class ProjectLeadConsultantForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if user:
+            if user.has_demo_permission:
+                Company.ensure_demo_companies(user=user)
+
             projects = user.get_projects
 
             # Filter to show lead consultant companies that are either associated with the user's projects or account
@@ -122,7 +128,7 @@ class ProjectLeadConsultantForm(forms.ModelForm):
 
             condition = Q(lead_consultant_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
-                condition |= Q(registration_number="DEMO-CONSULTANT-1")
+                condition |= Q(registration_number__in=["DEMO-CONSULTANT-1", f"DEMO-CONSULTANT-1-{user.pk}"])
 
             queryset = (
                 Company.objects.filter(

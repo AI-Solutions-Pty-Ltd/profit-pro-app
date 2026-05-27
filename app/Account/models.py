@@ -206,7 +206,10 @@ class Account(AbstractUser, BaseModel):
         """
         from app.Project.models import Role
 
-        if self.is_superuser or self.has_demo_permission:
+        if self.is_superuser:
+            return True
+
+        if self.has_demo_permission and getattr(project, "is_demo", False):
             return True
 
         user_project_roles = project.project_roles.filter(user=self)
@@ -230,7 +233,10 @@ class Account(AbstractUser, BaseModel):
         if not normalized_required_tiers:
             return True
 
-        if self.is_superuser or self.subscription == Subscription.ADMINISTRATION:
+        if self.is_superuser or self.subscription in [
+            Subscription.ADMINISTRATION,
+            Subscription.FULL_ACCESS,
+        ]:
             return True
 
         if self.subscription == Subscription.DEMO_TIER:
@@ -338,17 +344,24 @@ class Account(AbstractUser, BaseModel):
 
     @property
     def has_demo_permission(self) -> bool:
-        """Check if the user has an active, unexpired Demo subscription."""
+        """Check if the user has an active, unexpired Demo subscription OR the Full Access tier."""
         from app.Account.subscription_config import Subscription
 
         return (
-            self.subscription == Subscription.DEMO_TIER
-            and not self.is_subscription_expired
+            self.subscription == Subscription.FULL_ACCESS
+            or (
+                self.subscription == Subscription.DEMO_TIER
+                and not self.is_subscription_expired
+            )
         )
 
     @property
     def is_subscription_expired(self) -> bool:
         """Check if the current subscription has expired."""
+        from app.Account.subscription_config import Subscription
+
+        if self.subscription == Subscription.FULL_ACCESS:
+            return False
         if not self.subscription_expires_at:
             return False
         return timezone.now() > self.subscription_expires_at
