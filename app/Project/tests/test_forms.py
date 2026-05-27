@@ -16,7 +16,11 @@ class TestProjectContractorForm(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user: Account = cast(Account, AccountFactory())
+        from app.Account.subscription_config import Subscription
+
+        self.user: Account = cast(
+            Account, AccountFactory(subscription=Subscription.FREE_TIER)
+        )
 
         self.contractor1 = ClientFactory(
             name="Contractor 1",

@@ -1,49 +1,64 @@
-# Implementation of Complimentary Access Notice for Non-Demo Tiers - Execution Notes
+# Implementation of Full Access (FULL_ACCESS) Subscription Tier - Execution Notes
 
 This document tracks sequential step executions, verification commands, and outcome results for the task.
 
 ---
 
-## Step 1: Add the Complimentary Access Ribbon to the Navigation Template
+## Step 1: Add `FULL_ACCESS` to `Subscription` Choice Enum
 * **Files changed**:
-  * [nav.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/templates/nav.html)
+  * [subscription_config.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/subscription_config.py)
 * **What changed**:
-  * Added a conditional check for `user.is_authenticated and user.subscription != "DEMO_TIER"`.
-  * Implemented an elegant, premium emerald-to-teal gradient top ribbon displaying the subscriber's tier: `Subscriber {{ user.get_subscription_display }} with complimentary access`.
-  * Included a glowing animation green badge using Tailwind (`animate-ping`) for high visual quality.
-* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
-* **Result**: PASS (All 7 existing tests passed successfully)
+  * Added `FULL_ACCESS = "FULL_ACCESS", "Full Access"` to class `Subscription(models.TextChoices)`.
+* **Verification command**: `.venv\Scripts\python.exe -c "from app.Account.subscription_config import Subscription; print(Subscription.FULL_ACCESS)"`
+* **Result**: PASS (Successfully outputs `FULL_ACCESS`)
 
-## Step 2: Add Pytest Unit Tests to Validate the Ribbon Rendering
+## Step 2: Configure Limits for the `FULL_ACCESS` Tier
 * **Files changed**:
-  * [test_demo_lockout.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_lockout.py)
+  * [subscription_config.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/subscription_config.py)
 * **What changed**:
-  * Added three new pytest cases: `test_complimentary_notice_visible_for_paid_user`, `test_complimentary_notice_not_visible_for_demo_user`, and `test_complimentary_notice_not_visible_for_anonymous_user`.
-  * Tested all access conditions (fully authenticated non-demo user, active demo tier user, and unauthenticated visitor).
-  * Asserted correct rendering of text, classes, and dynamic tier display values.
-* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
-* **Result**: PASS (All 10 tests passed successfully!)
+  * Added `Subscription.FULL_ACCESS` limits configuration inside `SubscriptionConfig.LIMITS` mapping to `SubscriptionLimits(parent=Subscription.BUSINESS_MANAGEMENT, max_projects=50, max_users_per_project=100)`.
+* **Verification command**: `.venv\Scripts\python.exe -c "from app.Account.subscription_config import Subscription, SubscriptionConfig; print(SubscriptionConfig.get_all_limits(Subscription.FULL_ACCESS))"`
+* **Result**: PASS (Successfully outputs `{'max_projects': 50, 'max_users_per_project': 100}`)
 
-## Step 3: Implement Dismissable Feature with Local Storage Persistence
+## Step 3: Implement Bypass Checks in `Account` Model
 * **Files changed**:
-  * [nav.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/templates/nav.html)
-  * [test_demo_lockout.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_lockout.py)
+  * [models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/models.py)
 * **What changed**:
-  * Added a close button with heroicon `x-mark` to the complimentary ribbon in `nav.html`.
-  * Added local storage persistence (`dismissed_complimentary_ribbon` key) and page-load checks to remember the user's dismissal state and prevent visual shift (by starting the element with `class="hidden"`).
-  * Expanded `test_complimentary_notice_visible_for_paid_user` to assert close button rendering and the presence of the `dismissComplimentaryRibbon` Javascript function.
-* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
-* **Result**: PASS (All tests passed, verifying the dismissable markup works correctly)
+  * Modified `has_subscription_tier` to automatically return `True` for `FULL_ACCESS` subscription.
+  * Refactored `has_demo_permission` property on `Account` model to return `True` for `FULL_ACCESS` subscription, serving as a unified bypass property for both active demo and full-access users.
+  * Added safety override to `is_subscription_expired` property to always return `False` for `FULL_ACCESS` users.
+* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_tier.py`
+* **Result**: PASS (All 11 existing tests passed successfully, verifying that the role bypass and subscription checks work correctly under the new tier)
 
-## Step 4: Implement 4-Hour Re-appear and 2-Minute Auto-dismiss Logic
+## Step 4: Generate and Apply Database Migration
 * **Files changed**:
-  * [nav.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/templates/nav.html)
-  * [test_demo_lockout.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_lockout.py)
+  * [0014_alter_account_subscription.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/migrations/0014_alter_account_subscription.py)
 * **What changed**:
-  * Implemented timestamp storage in local storage (`complimentary_ribbon_dismissed_at`).
-  * Configured page-load logic to dynamically compare current timestamp with last dismissal timestamp, making the ribbon re-appear after 4 hours have elapsed.
-  * Set a `setTimeout` auto-dismiss trigger to hide the ribbon automatically after 2 minutes of the page load.
-  * Added robust timer cleanup when a user manually dismisses the notice.
-  * Extended pytest unit tests to assert key timing constants (`FOUR_HOURS`, `TWO_MINUTES`) and storage keys.
-* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_lockout.py -v`
-* **Result**: PASS (All 10 tests passed successfully!)
+  * Generated Django migrations reflecting the altered choices for the `Account.subscription` field.
+  * Successfully applied the migration to the database.
+* **Verification command**: `.venv\Scripts\python.exe manage.py migrate Account`
+* **Result**: PASS (Outputs `Applying Account.0014_alter_account_subscription... OK`)
+
+## Step 5: Write and Run Unit Tests for `FULL_ACCESS` Tier
+* **Files changed**:
+  * [test_demo_tier.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_tier.py)
+* **What changed**:
+  * Added `TestFullAccessTier` class to verify all `FULL_ACCESS` functionality.
+  * Verified that full access tier satisfies all required module checks, bypasses project-level role permissions in demo projects, is exempt from trials/expirations, and maintains absolute multi-tenant data isolation.
+* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_tier.py`
+* **Result**: PASS (All 16 tests passed successfully!)
+
+## Step 6: Verify Full System Suite Passes
+* **Files changed**:
+  * None (Validation phase only)
+* **What changed**:
+  * Executed the entire test suite for the `app/Account/` app (consisting of 70 separate database-backed tests).
+  * Validated that the new `FULL_ACCESS` subscription tier integrates seamlessly with lockout, creation, models, limits, and timing behaviors across the entire module.
+* **Verification command**: `.venv\Scripts\python.exe -m pytest app/Account/tests/`
+* **Result**: PASS (All 70 tests passed successfully!)
+
+
+
+
+
+
