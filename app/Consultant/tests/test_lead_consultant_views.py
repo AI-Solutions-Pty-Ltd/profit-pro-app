@@ -15,8 +15,10 @@ class TestRevealLeadConsultantFieldView(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        from app.Account.subscription_config import Subscription
+
         self.user = AccountFactory()
-        self.other_user = AccountFactory()
+        self.other_user = AccountFactory(subscription=Subscription.FREE_TIER)
 
         self.lead_consultant = ClientFactory(
             name="Test Lead Consultant",

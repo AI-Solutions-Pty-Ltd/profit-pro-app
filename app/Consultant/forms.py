@@ -49,7 +49,7 @@ class ProjectClientForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
+        kwargs.pop("project", None)
         user: Account | None = kwargs.pop("user", None)
 
         # Pop instance before calling super() to avoid passing it to Form
@@ -65,16 +65,12 @@ class ProjectClientForm(forms.Form):
 
             condition = Q(client_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
-                condition |= Q(name="Demo Client")
+                condition |= Q(registration_number="DEMO-CLIENT")
 
             queryset = Company.objects.filter(
                 condition,
                 type=Company.Type.CLIENT,
             ).order_by("name")
-
-            # Exclude the currently assigned client if project is provided
-            if project and project.client:
-                queryset = queryset.exclude(pk=project.client.pk)
 
             # Type: ModelChoiceField has queryset attribute
             client_field = self.fields["client"]
