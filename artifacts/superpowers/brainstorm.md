@@ -1,4 +1,8 @@
-# Superpowers Brainstorm
+# Superpowers Brainstorm - Setup Page Redirects for Client and Contractor Allocation
+
+This document outlines the goal, context, risks, and implementation strategies for redirecting the user to the project setup page upon completing client or contractor allocation or removal.
+
+---
 
 ## Goal
 The goal is to create a new non-expiring **Full Access** subscription tier, similar in capability to the existing `DEMO_TIER`. This tier will grant a user full module and project role access within the projects and client/contractor companies they are associated with, while strictly ensuring they cannot see or modify unrelated data from other users or projects (preserving standard data isolation and tenant boundary constraints).
