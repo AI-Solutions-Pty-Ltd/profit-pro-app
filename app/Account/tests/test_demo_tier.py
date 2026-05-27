@@ -74,7 +74,7 @@ class TestDemoTier:
                 subscription_expires_at=expiry,
             ),
         )
-        project = ProjectFactory()
+        project = ProjectFactory(is_demo=True)
 
         # Should have access to any role (e.g. CONTRACT_VARIATIONS) without explicit assignment
         assert user.has_project_role(project, [Role.CONTRACT_VARIATIONS]) is True
@@ -92,7 +92,7 @@ class TestDemoTier:
                 subscription_expires_at=expiry,
             ),
         )
-        project = ProjectFactory()
+        project = ProjectFactory(is_demo=True)
 
         # Should NOT have access since the subscription is expired
         assert user.has_project_role(project, [Role.CONTRACT_VARIATIONS]) is False
@@ -165,3 +165,63 @@ class TestDemoTier:
         roles = project_roles(user, project)
         # Should not return all roles; since user is not assigned to the project, should be empty/filtered
         assert roles.exists() is False
+
+
+@pytest.mark.django_db
+class TestFullAccessTier:
+    """Test cases for the new non-expiring Full Access Tier behavior."""
+
+    def test_full_access_tier_has_subscription_tier(self):
+        """Test that Full Access Tier satisfies any required subscription checks."""
+        user: Account = cast(
+            Account,
+            AccountFactory(subscription=Subscription.FULL_ACCESS),
+        )
+        assert user.has_subscription_tier([Subscription.BUSINESS_MANAGEMENT]) is True
+
+    def test_full_access_tier_has_demo_permission(self):
+        """Test that Full Access Tier has full access / demo bypass permission."""
+        user: Account = cast(
+            Account,
+            AccountFactory(subscription=Subscription.FULL_ACCESS),
+        )
+        assert user.has_demo_permission is True
+
+    def test_full_access_tier_is_not_expired(self):
+        """Test that Full Access Tier never expires, even with old or None expiry dates."""
+        past_expiry = timezone.now() - timedelta(days=10)
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.FULL_ACCESS,
+                subscription_expires_at=past_expiry,
+            ),
+        )
+        assert user.is_subscription_expired is False
+        assert user.has_demo_permission is True
+
+    def test_full_access_tier_bypasses_project_role_checks(self):
+        """Test that Full Access Tier users bypass role checks in their assigned demo projects."""
+        from app.Project.models import Role
+        from app.Project.tests.factories import ProjectFactory
+
+        user: Account = cast(
+            Account,
+            AccountFactory(subscription=Subscription.FULL_ACCESS),
+        )
+        project = ProjectFactory(is_demo=True)
+        assert user.has_project_role(project, [Role.CONTRACT_VARIATIONS]) is True
+
+    def test_full_access_tier_data_isolation(self):
+        """Test that Full Access Tier preserves multi-tenant data isolation."""
+        from app.Project.tests.factories import ProjectFactory
+
+        user: Account = cast(
+            Account,
+            AccountFactory(subscription=Subscription.FULL_ACCESS),
+        )
+        # Unrelated project
+        unrelated_project = ProjectFactory()
+
+        # The user is not in the project users or project roles, so they should not get it in their list
+        assert unrelated_project not in user.get_projects

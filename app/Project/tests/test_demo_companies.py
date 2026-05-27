@@ -82,54 +82,57 @@ class TestDemoCompaniesFormFiltering:
 
     def test_project_client_form_filters_correctly(self):
         """Test that ProjectClientForm filters clients based on user demo permissions."""
-        # Case A: Active demo user should see Demo Client
+        # Case A: Active demo user should see their own user-scoped Demo Client
         form_demo = ProjectClientForm(user=self.demo_user)
         queryset_demo = form_demo.fields["client"].queryset
-        assert queryset_demo.filter(name="Demo Client").exists()
+        expected_name = f"{self.demo_user.first_name}'s Demo Client"
+        assert queryset_demo.filter(name=expected_name).exists()
 
         # Case B: Regular user should NOT see Demo Client
         form_reg = ProjectClientForm(user=self.regular_user)
         queryset_reg = form_reg.fields["client"].queryset
-        assert not queryset_reg.filter(name="Demo Client").exists()
+        assert not queryset_reg.filter(name__contains="Demo Client").exists()
 
         # Case C: Expired demo user should NOT see Demo Client
         form_exp = ProjectClientForm(user=self.expired_demo_user)
         queryset_exp = form_exp.fields["client"].queryset
-        assert not queryset_exp.filter(name="Demo Client").exists()
+        assert not queryset_exp.filter(name__contains="Demo Client").exists()
 
     def test_project_contractor_form_filters_correctly(self):
         """Test that ProjectContractorForm filters contractors based on user demo permissions."""
-        # Case A: Active demo user should see Demo Contractor 1
+        # Case A: Active demo user should see their own Demo Contractor 1
         form_demo = ProjectContractorForm(user=self.demo_user)
         queryset_demo = form_demo.fields["contractor"].queryset
-        assert queryset_demo.filter(name="Demo Contractor 1").exists()
+        expected_name = f"{self.demo_user.first_name}'s Demo Contractor 1"
+        assert queryset_demo.filter(name=expected_name).exists()
 
         # Case B: Regular user should NOT see Demo Contractor 1
         form_reg = ProjectContractorForm(user=self.regular_user)
         queryset_reg = form_reg.fields["contractor"].queryset
-        assert not queryset_reg.filter(name="Demo Contractor 1").exists()
+        assert not queryset_reg.filter(name__contains="Demo Contractor 1").exists()
 
         # Case C: Expired demo user should NOT see Demo Contractor 1
         form_exp = ProjectContractorForm(user=self.expired_demo_user)
         queryset_exp = form_exp.fields["contractor"].queryset
-        assert not queryset_exp.filter(name="Demo Contractor 1").exists()
+        assert not queryset_exp.filter(name__contains="Demo Contractor 1").exists()
 
     def test_project_lead_consultant_form_filters_correctly(self):
         """Test that ProjectLeadConsultantForm filters consultants based on user demo permissions."""
-        # Case A: Active demo user should see Demo Consultant 1
+        # Case A: Active demo user should see their own Demo Consultant 1
         form_demo = ProjectLeadConsultantForm(user=self.demo_user)
         queryset_demo = form_demo.fields["lead_consultant"].queryset
-        assert queryset_demo.filter(name="Demo Consultant 1").exists()
+        expected_name = f"{self.demo_user.first_name}'s Demo Consultant 1"
+        assert queryset_demo.filter(name=expected_name).exists()
 
         # Case B: Regular user should NOT see Demo Consultant 1
         form_reg = ProjectLeadConsultantForm(user=self.regular_user)
         queryset_reg = form_reg.fields["lead_consultant"].queryset
-        assert not queryset_reg.filter(name="Demo Consultant 1").exists()
+        assert not queryset_reg.filter(name__contains="Demo Consultant 1").exists()
 
         # Case C: Expired demo user should NOT see Demo Consultant 1
         form_exp = ProjectLeadConsultantForm(user=self.expired_demo_user)
         queryset_exp = form_exp.fields["lead_consultant"].queryset
-        assert not queryset_exp.filter(name="Demo Consultant 1").exists()
+        assert not queryset_exp.filter(name__contains="Demo Consultant 1").exists()
 
     def test_project_filter_form_filters_correctly(self):
         """Test that ProjectFilterForm includes demo companies based on user demo permissions."""
@@ -155,13 +158,15 @@ class TestDemoCompaniesFormFiltering:
             client_queryset=client_qs,
             contractor_queryset=contractor_qs,
         )
-        assert form_demo.fields["client"].queryset.filter(name="Demo Client").exists()
+        expected_client = f"{self.demo_user.first_name}'s Demo Client"
+        expected_contractor = f"{self.demo_user.first_name}'s Demo Contractor 1"
+        assert form_demo.fields["client"].queryset.filter(name=expected_client).exists()
         assert (
             form_demo.fields["client"].queryset.filter(name="Regular Client").exists()
         )
         assert (
             form_demo.fields["contractor"]
-            .queryset.filter(name="Demo Contractor 1")
+            .queryset.filter(name=expected_contractor)
             .exists()
         )
         assert (
@@ -177,12 +182,14 @@ class TestDemoCompaniesFormFiltering:
             contractor_queryset=contractor_qs,
         )
         assert (
-            not form_reg.fields["client"].queryset.filter(name="Demo Client").exists()
+            not form_reg.fields["client"]
+            .queryset.filter(name__contains="Demo Client")
+            .exists()
         )
         assert form_reg.fields["client"].queryset.filter(name="Regular Client").exists()
         assert (
             not form_reg.fields["contractor"]
-            .queryset.filter(name="Demo Contractor 1")
+            .queryset.filter(name__contains="Demo Contractor 1")
             .exists()
         )
         assert (
@@ -198,12 +205,14 @@ class TestDemoCompaniesFormFiltering:
             contractor_queryset=contractor_qs,
         )
         assert (
-            not form_exp.fields["client"].queryset.filter(name="Demo Client").exists()
+            not form_exp.fields["client"]
+            .queryset.filter(name__contains="Demo Client")
+            .exists()
         )
         assert form_exp.fields["client"].queryset.filter(name="Regular Client").exists()
         assert (
             not form_exp.fields["contractor"]
-            .queryset.filter(name="Demo Contractor 1")
+            .queryset.filter(name__contains="Demo Contractor 1")
             .exists()
         )
         assert (

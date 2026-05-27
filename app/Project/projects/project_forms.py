@@ -274,6 +274,9 @@ class ProjectFilterForm(forms.Form):
         **kwargs,
     ):
         """Initialize filter form with user-specific querysets."""
+        if user and getattr(user, "has_demo_permission", False):
+            Company.ensure_demo_companies(user=user)
+
         super().__init__(*args, **kwargs)
 
         # Set custom querysets if provided
@@ -284,7 +287,8 @@ class ProjectFilterForm(forms.Form):
         if client_queryset is not None:
             if user and getattr(user, "has_demo_permission", False):
                 demo_clients = Company.objects.filter(
-                    type=Company.Type.CLIENT, registration_number="DEMO-CLIENT"
+                    type=Company.Type.CLIENT,
+                    registration_number__in=["DEMO-CLIENT", f"DEMO-CLIENT-{user.pk}"],
                 )
                 if client_queryset.query.distinct:
                     demo_clients = demo_clients.distinct()
@@ -296,7 +300,10 @@ class ProjectFilterForm(forms.Form):
             if user and getattr(user, "has_demo_permission", False):
                 demo_contractors = Company.objects.filter(
                     type=Company.Type.CONTRACTOR,
-                    registration_number="DEMO-CONTRACTOR-1",
+                    registration_number__in=[
+                        "DEMO-CONTRACTOR-1",
+                        f"DEMO-CONTRACTOR-1-{user.pk}",
+                    ],
                 )
                 if contractor_queryset.query.distinct:
                     demo_contractors = demo_contractors.distinct()

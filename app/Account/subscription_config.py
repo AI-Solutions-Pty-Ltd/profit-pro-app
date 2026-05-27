@@ -24,6 +24,7 @@ class Subscription(models.TextChoices):
     PROJECT_ESTIMATOR = "PROJECT_ESTIMATOR", "Project Estimator"
     ADMINISTRATION = "ADMINISTRATION", "Administration"
     DEMO_TIER = "DEMO_TIER", "Demo"
+    FULL_ACCESS = "FULL_ACCESS", "Full Access"
 
 
 class SubscriptionConfig:
@@ -64,6 +65,11 @@ class SubscriptionConfig:
             max_users_per_project=100,
         ),
         Subscription.DEMO_TIER: SubscriptionLimits(
+            parent=Subscription.BUSINESS_MANAGEMENT,
+            max_projects=50,
+            max_users_per_project=100,
+        ),
+        Subscription.FULL_ACCESS: SubscriptionLimits(
             parent=Subscription.BUSINESS_MANAGEMENT,
             max_projects=50,
             max_users_per_project=100,

@@ -1,6 +1,6 @@
 """Mixins for Consultant views."""
 
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
@@ -20,9 +20,14 @@ class ConsultantMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     def get_clients(self):
         companies = Company.objects.filter(type=Company.Type.CLIENT)
         if not self.request.user.is_superuser:  # type: ignore
-            # Allow active DEMO_TIER users to see all CLIENT companies
+            # Allow active DEMO_TIER users to see only their associated or demo client companies
             if getattr(self.request.user, "has_demo_permission", False):
-                pass
+                companies = companies.filter(
+                    Q(consultants=self.request.user)
+                    | Q(users=self.request.user)
+                    | Q(name="Demo Client")
+                    | Q(client_projects__in=self.request.user.get_projects)
+                ).distinct()
             else:
                 companies = companies.filter(
                     consultants=self.request.user,
@@ -93,9 +98,14 @@ class PaymentCertMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         user: Account = self.request.user  # type: ignore
         if user.is_superuser:
             return self.project
-        # Allow active DEMO_TIER users to bypass consultant check
+        # Allow active DEMO_TIER users to bypass consultant check for demo projects or projects they are explicitly associated with
         if getattr(user, "has_demo_permission", False):
-            return self.project
+            if (
+                getattr(self.project, "is_demo", False)
+                or self.project.users.filter(pk=user.pk).exists()
+                or self.project.project_roles.filter(user=user).exists()
+            ):
+                return self.project
         if user not in self.project.client.consultants.all():
             raise Http404("User is not a consultant for this client")
         return self.project
