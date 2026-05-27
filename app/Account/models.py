@@ -347,12 +347,9 @@ class Account(AbstractUser, BaseModel):
         """Check if the user has an active, unexpired Demo subscription OR the Full Access tier."""
         from app.Account.subscription_config import Subscription
 
-        return (
-            self.subscription == Subscription.FULL_ACCESS
-            or (
-                self.subscription == Subscription.DEMO_TIER
-                and not self.is_subscription_expired
-            )
+        return self.subscription == Subscription.FULL_ACCESS or (
+            self.subscription == Subscription.DEMO_TIER
+            and not self.is_subscription_expired
         )
 
     @property

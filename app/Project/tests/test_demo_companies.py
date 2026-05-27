@@ -182,7 +182,9 @@ class TestDemoCompaniesFormFiltering:
             contractor_queryset=contractor_qs,
         )
         assert (
-            not form_reg.fields["client"].queryset.filter(name__contains="Demo Client").exists()
+            not form_reg.fields["client"]
+            .queryset.filter(name__contains="Demo Client")
+            .exists()
         )
         assert form_reg.fields["client"].queryset.filter(name="Regular Client").exists()
         assert (
@@ -203,7 +205,9 @@ class TestDemoCompaniesFormFiltering:
             contractor_queryset=contractor_qs,
         )
         assert (
-            not form_exp.fields["client"].queryset.filter(name__contains="Demo Client").exists()
+            not form_exp.fields["client"]
+            .queryset.filter(name__contains="Demo Client")
+            .exists()
         )
         assert form_exp.fields["client"].queryset.filter(name="Regular Client").exists()
         assert (

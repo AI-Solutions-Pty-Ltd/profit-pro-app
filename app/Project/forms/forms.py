@@ -63,7 +63,12 @@ class ProjectContractorForm(forms.ModelForm):
 
             condition = Q(contractor_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
-                condition |= Q(registration_number__in=["DEMO-CONTRACTOR-1", f"DEMO-CONTRACTOR-1-{user.pk}"])
+                condition |= Q(
+                    registration_number__in=[
+                        "DEMO-CONTRACTOR-1",
+                        f"DEMO-CONTRACTOR-1-{user.pk}",
+                    ]
+                )
 
             queryset = (
                 Company.objects.filter(
@@ -128,7 +133,12 @@ class ProjectLeadConsultantForm(forms.ModelForm):
 
             condition = Q(lead_consultant_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
-                condition |= Q(registration_number__in=["DEMO-CONSULTANT-1", f"DEMO-CONSULTANT-1-{user.pk}"])
+                condition |= Q(
+                    registration_number__in=[
+                        "DEMO-CONSULTANT-1",
+                        f"DEMO-CONSULTANT-1-{user.pk}",
+                    ]
+                )
 
             queryset = (
                 Company.objects.filter(

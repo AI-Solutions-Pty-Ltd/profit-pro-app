@@ -113,8 +113,16 @@ class Company(BaseModel):
             suffix = f"-{user.pk}"
             targets = [
                 (cls.Type.CLIENT, f"{prefix}Demo Client", f"DEMO-CLIENT{suffix}"),
-                (cls.Type.CONTRACTOR, f"{prefix}Demo Contractor 1", f"DEMO-CONTRACTOR-1{suffix}"),
-                (cls.Type.LEAD_CONSULTANT, f"{prefix}Demo Consultant 1", f"DEMO-CONSULTANT-1{suffix}"),
+                (
+                    cls.Type.CONTRACTOR,
+                    f"{prefix}Demo Contractor 1",
+                    f"DEMO-CONTRACTOR-1{suffix}",
+                ),
+                (
+                    cls.Type.LEAD_CONSULTANT,
+                    f"{prefix}Demo Consultant 1",
+                    f"DEMO-CONSULTANT-1{suffix}",
+                ),
             ]
         else:
             targets = [

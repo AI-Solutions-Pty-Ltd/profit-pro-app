@@ -27,7 +27,6 @@ class Subscription(models.TextChoices):
     FULL_ACCESS = "FULL_ACCESS", "Full Access"
 
 
-
 class SubscriptionConfig:
     """Configuration for each subscription tier."""
 

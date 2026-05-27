@@ -300,7 +300,10 @@ class ProjectFilterForm(forms.Form):
             if user and getattr(user, "has_demo_permission", False):
                 demo_contractors = Company.objects.filter(
                     type=Company.Type.CONTRACTOR,
-                    registration_number__in=["DEMO-CONTRACTOR-1", f"DEMO-CONTRACTOR-1-{user.pk}"],
+                    registration_number__in=[
+                        "DEMO-CONTRACTOR-1",
+                        f"DEMO-CONTRACTOR-1-{user.pk}",
+                    ],
                 )
                 if contractor_queryset.query.distinct:
                     demo_contractors = demo_contractors.distinct()

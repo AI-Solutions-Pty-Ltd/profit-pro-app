@@ -68,7 +68,9 @@ class ProjectClientForm(forms.Form):
 
             condition = Q(client_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
-                condition |= Q(registration_number__in=["DEMO-CLIENT", f"DEMO-CLIENT-{user.pk}"])
+                condition |= Q(
+                    registration_number__in=["DEMO-CLIENT", f"DEMO-CLIENT-{user.pk}"]
+                )
 
             queryset = Company.objects.filter(
                 condition,
