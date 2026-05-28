@@ -91,4 +91,9 @@ class DemoExpiredView(LoginRequiredMixin, TemplateView):
         if is_staff_or_admin or not (is_demo and is_expired):
             return redirect("home")
 
+        # Clean up target demo companies on trial expiration
+        from app.Project.models import Company
+
+        Company.clean_demo_companies(user)
+
         return super().dispatch(request, *args, **kwargs)

@@ -1,65 +1,63 @@
-# Superpowers Brainstorm - Setup Page Redirects for Client and Contractor Allocation
+# Brainstorming: Adding "demo 123" Project to Demo Tier Users as Read-Only
 
-This document outlines the goal, context, risks, and implementation strategies for redirecting the user to the project setup page upon completing client or contractor allocation or removal.
+This document details the goals, constraints, context, risks, options, and recommended approach for enabling a dedicated "demo 123" project for all demo-tier users under read-only restrictions.
 
 ---
 
 ## Goal
-The goal is to create a new non-expiring **Full Access** subscription tier, similar in capability to the existing `DEMO_TIER`. This tier will grant a user full module and project role access within the projects and client/contractor companies they are associated with, while strictly ensuring they cannot see or modify unrelated data from other users or projects (preserving standard data isolation and tenant boundary constraints).
+* Dynamically present a project named "demo 123" in the project and portfolio lists of all active `DEMO_TIER` users.
+* Enforce strict read-only access (GET/HEAD/OPTIONS allowed; POST/PUT/DELETE/PATCH blocked) for demo tier users accessing "demo 123".
 
 ## Constraints
-1. **Existing Architecture Alignment:** The new tier must be seamlessly integrated into the existing `Subscription` choices enum and `SubscriptionConfig.LIMITS`.
-2. **Data Privacy (Tenant Isolation):** Standard data isolation must remain intact. Users on this tier are *not* superusers and must only see projects they are explicitly added to, and only clients/contractors associated with those projects.
-3. **No Automatic Expiry:** Unlike `DEMO_TIER` which expires after 7 days (or standard trial periods), this tier must not automatically expire or be blocked by trial lockout middleware.
-4. **Clean Code and Maintainability:** Avoid duplicating permission logic. We should unify the project role/group bypass logic currently used for `DEMO_TIER` with this new tier.
-5. **Standards Compliance:** All code must conform to Python 3.13+, Ruff styling guidelines, and pass all system tests without introducing regressions.
+* **Virtual Environment**: All validations, commands, and dependencies must run inside the `.venv` development environment.
+* **Test Discipline**: Must use `factory_boy` factories for testing and avoid raw ORM creations in test files.
+* **Base Models**: Custom models must inherit from `app.core.Utilities.models.BaseModel`.
+* **Read-Only Rigor**: Any attempt by a demo tier user to modify "demo 123" (e.g., uploading WBS, creating a payment certificate) must fail with a 403 response or a read-only redirect/error message.
 
-## Known Context
-* **Tiers & Subscriptions:** Defined in `app/Account/subscription_config.py`.
-* **Project Role Bypass:** Currently, active demo users (`has_demo_permission`) bypass the project role permission checks in `Account.has_project_role()`, `UserHasProjectRoleGenericMixin`, and various forms/views.
-* **Group Permission Bypass:** Demo users bypass Django group permission checks via `UserHasGroupGenericMixin`.
-* **Standard Filtering:** `Account.get_projects` and mixins like `ConsultantMixin.get_clients` check `self.is_superuser` to determine whether to return all data vs. filtering to only associated items. For non-superusers (including demo users), it uses strict filtering.
+## Known context
+* **Demo Permission Hook**: Active demo-tier users are identified by the `has_demo_permission` property (returns `True` if `subscription == DEMO_TIER` and is not expired).
+* **Project Querying**: Users get their project list via the `get_projects` property on the `Account` model. However, several mixins and report views hardcode project queryset logic as `Q(users=self.request.user) | Q(is_demo=True)`.
+* **Read-Only Enforcement**: Read-only enforcement for demo projects is handled at the mixin level in `app/core/Utilities/permissions.py` (checks `getattr(project, "is_demo", False)`).
+* **Role Bypasses**: Active demo tier users automatically bypass project role checks (`has_project_role` returns `True`) for `is_demo=True` projects.
 
 ## Risks
-* **Privilege Escalation / Data Leaking:** If the implementation makes full-access users behave like superusers (e.g. bypassing the `is_superuser` checks in `get_projects` or `get_clients`), they would see other users' private data. We must ensure the new tier inherits the standard filter behavior, *not* the superuser bypass.
-* **Middleware Expiration Check:** We must ensure the demo lockout middleware (`demo_expired_middleware.py`) does not flag or block users on the new non-expiring tier.
-* **Migration Integrity:** Adding a choice to `Subscription` requires creating a Django migration to update the field choices in the database safely.
+* **Data Isolation Leak**: If "demo 123" is marked as `is_demo = True`, it automatically becomes visible to all tiers (e.g. `FREE_TIER`, standard paid tiers). If we want it restricted specifically to `DEMO_TIER` users, using `is_demo = True` alone is insufficient.
+* **Inconsistent View Support**: Hardcoded querysets in mixins or report views (such as `ProjectMixin.get_queryset` and `PortfolioReportMixin.get_active_projects`) will omit "demo 123" if they only check `is_demo=True` or explicit user assignments.
+* **Mutation Vulnerability**: Failing to align all custom mixins (e.g. `SubscriptionAndRoleRequiredMixin`, `SubscriptionRequiredMixin`, `PaymentCertMixin`) could allow write actions on "demo 123".
 
-## Options (2–4)
+## Options (2???4)
 
-### Option A: Clean Extension with Unified Bypass (Recommended)
-1. Add `FULL_ACCESS = "FULL_ACCESS", "Full Access"` to the `Subscription` enum.
-2. Configure limits for `FULL_ACCESS` in `SubscriptionConfig.LIMITS` (matching `DEMO_TIER` limits but with no expiry check).
-3. Introduce a unified property `has_full_access_bypass` on the `Account` model:
-   ```python
-   @property
-   def has_full_access_bypass(self) -> bool:
-       """Check if the user has full access bypass (either active Demo or Full Access tier)."""
-       return (
-           self.subscription == Subscription.FULL_ACCESS
-           or self.has_demo_permission
-       )
-   ```
-4. Update all core permission/bypass checks (including `has_project_role`, template tags, form classes, and mixins) to check `has_full_access_bypass` instead of `has_demo_permission`.
-5. Write unit tests verifying full access permissions, data isolation, and lack of expiration.
+### Option 1: Explicit Database Seeding and Scoped Assignment
+* **Description**: Create a migration or post-save signal that ensures a project named "demo 123" (with `is_demo=False`) exists in the database. When a `DEMO_TIER` user is created, explicitly add them to the project's ManyToMany `users` field. Enforce read-only logic in permission mixins specifically by checking `project.name == "demo 123"`.
+* **Pros**: No changes needed for `get_projects` queryset logic; standard project associations work natively.
+* **Cons**: High database overhead. Deleting or cleaning expired demo accounts requires extra cleanup steps. Difficult to scale if thousands of demo users are registered.
 
-### Option B: Reuse `ADMINISTRATION` Tier and Enable Project-Role Bypass
-1. Modify the existing `ADMINISTRATION` tier's definition.
-2. Currently, the `ADMINISTRATION` tier acts as full access in terms of subscriptions but is *not* granted the project-role/group bypass that `DEMO_TIER` has.
-3. We could update `has_demo_permission` or project role checks to include `self.subscription == Subscription.ADMINISTRATION`.
+### Option 2: Dynamic QuerySet Injection and Unified Mixin Treatment (Recommended)
+* **Description**:
+  1. Dynamically append "demo 123" to the `get_projects` QuerySet for active `DEMO_TIER` users.
+  2. Refactor all hardcoded querysets in `ProjectMixin.get_queryset` and `PortfolioReportMixin.get_active_projects` to utilize the `user.get_projects` property directly, promoting DRY principles.
+  3. Update permission mixins (`UserHasProjectRoleGenericMixin`, `SubscriptionAndRoleRequiredMixin`, `SubscriptionRequiredMixin`, `PaymentCertMixin`) and the `Account.has_project_role` method to treat `project.name == "demo 123"` identically to `is_demo=True` projects (read-only for non-staff).
+* **Pros**: 
+  * Clean, fully dynamic, and zero database management/cleanup overhead.
+  * Ensures perfect tier isolation (only `DEMO_TIER` and staff/superusers can see it).
+  * Automatically propagates across all views and report summaries.
+* **Cons**: Requires refactoring of hardcoded project querysets in views.
 
-### Option C: Decouple Via a Boolean Attribute on Account
-1. Add a new database column `is_full_access` (boolean) to the `Account` model.
-2. Bypass role/subscription checks if `is_full_access` is `True`.
+---
 
 ## Recommendation
-We strongly recommend **Option A**. It leverages the clean, existing subscription engine, introduces zero architectural bloat, and provides an extremely readable and maintainable way to manage high-tier users who need full capabilities within their own workspace without experiencing trial expiration.
+Implement **Option 2**. It provides an elegant, scalable, and secure solution that leverages the existing `get_projects` property and read-only mixin structures, while correcting several hardcoded query anomalies across the codebase.
 
-## Acceptance Criteria
-1. **Tier Definition:** `Subscription` choices enum contains `FULL_ACCESS` ("Full Access").
-2. **Subscription Config:** `FULL_ACCESS` limits are configured in `SubscriptionConfig.LIMITS`.
-3. **Graceful Bypass:** A user on the `FULL_ACCESS` tier has all modules/features unlocked and bypasses standard project-level roles (just like `DEMO_TIER`), but does *not* expire.
-4. **Data Isolation:** `FULL_ACCESS` users cannot see projects, clients, or data that they are not explicitly associated with.
-5. **Lockout Safety:** The new tier is completely unaffected by trial expiry logic or lockout middleware.
-6. **Robust Testing:** Unit tests exist verifying active `FULL_ACCESS` users can view their own data, pass permission checks, and do not expire.
-7. **Database Migration:** A Django schema migration is generated and applied successfully.
+---
+
+## Acceptance criteria
+1. **Visibility**:
+   * Active `DEMO_TIER` users see the "demo 123" project in their project lists and portfolio dashboards.
+   * `FREE_TIER` and other non-demo/non-staff users cannot see or access "demo 123".
+   * Superusers and staff can see and fully manage "demo 123".
+2. **Access Control**:
+   * Active `DEMO_TIER` users can successfully view all dashboard pages, BOQ/WBS items, and compliance/payment certificate records of the "demo 123" project.
+   * Active `DEMO_TIER` users are strictly blocked from writing, updating, or deleting any records within "demo 123", returning a `403 Forbidden` response or redirection with a "read-only" error message.
+3. **Tests**:
+   * Comprehensive unit tests are added to verify visibility, access control, and mutation blocks on "demo 123" projects.
+   * Entire pytest suite runs and passes successfully.

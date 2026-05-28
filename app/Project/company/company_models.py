@@ -147,6 +147,32 @@ class Company(BaseModel):
             demo_companies.append(company)
         return demo_companies
 
+    @classmethod
+    def clean_demo_companies(cls, user) -> int:
+        """Find and hard-delete all scoped demo companies for the given user.
+
+        This safely triggers Django's on_delete=models.SET_NULL on associated Projects,
+        clearing the user's project's client, contractor, and lead_consultant fields.
+
+        Args:
+            user (Account): The user whose demo companies to clean.
+
+        Returns:
+            int: The number of companies deleted.
+        """
+        if not user or not user.pk:
+            return 0
+
+        # Scoped demo companies registration numbers start with "DEMO-" and end with "-{user.pk}"
+        # We query including soft-deleted ones (all_objects manager) to ensure complete purge
+        targets = cls.all_objects.filter(
+            registration_number__startswith="DEMO-",
+            registration_number__endswith=f"-{user.pk}",
+        )
+        count = targets.count()
+        targets.delete()
+        return count
+
 
 @receiver(post_save, sender=Company)
 def resize_company_logo(sender, instance, created, **kwargs):

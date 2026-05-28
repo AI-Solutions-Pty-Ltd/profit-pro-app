@@ -102,6 +102,7 @@ class PaymentCertMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         if getattr(user, "has_demo_permission", False):
             if (
                 getattr(self.project, "is_demo", False)
+                or getattr(self.project, "name", "") == "demo 123"
                 or self.project.users.filter(pk=user.pk).exists()
                 or self.project.project_roles.filter(user=user).exists()
             ):
