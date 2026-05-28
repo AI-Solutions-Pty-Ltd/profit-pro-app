@@ -7,7 +7,7 @@ from typing import cast
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, QuerySet, Sum
+from django.db.models import QuerySet, Sum
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -54,9 +54,7 @@ class ProjectMixin(
     required_tiers = [Subscription.FREE_TIER]
 
     def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
-        return Project.objects.filter(
-            Q(users=self.request.user) | Q(is_demo=True)
-        ).order_by("-created_at")
+        return self.request.user.get_projects.order_by("-created_at")
 
     def get_object(self: "ProjectMixin") -> Project:
         return self.get_project()

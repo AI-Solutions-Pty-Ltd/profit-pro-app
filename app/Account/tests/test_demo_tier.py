@@ -53,7 +53,7 @@ class TestDemoTier:
         assert "2 days remaining" in user.demo_time_left_str
 
         # 5 hours left
-        expiry = timezone.now() + timedelta(hours=5)
+        expiry = timezone.now() + timedelta(hours=5, seconds=10)
         user.subscription_expires_at = expiry
         assert "5 hours remaining" in user.demo_time_left_str
 
@@ -225,3 +225,69 @@ class TestFullAccessTier:
 
         # The user is not in the project users or project roles, so they should not get it in their list
         assert unrelated_project not in user.get_projects
+
+
+@pytest.mark.django_db
+class TestDemo123Project:
+    """Test cases for the special 'demo 123' project scoping and read-only behavior."""
+
+    def test_demo_123_visible_to_demo_tier_user(self):
+        """Test that active and expired Demo Tier users see the 'demo 123' project."""
+        from app.Project.tests.factories import ProjectFactory
+
+        demo_user = AccountFactory(subscription=Subscription.DEMO_TIER)
+        demo_123 = ProjectFactory(name="demo 123", is_demo=False)
+
+        assert demo_123 in demo_user.get_projects
+
+    def test_demo_123_not_visible_to_other_users(self):
+        """Test that non-demo tier, non-staff users do NOT see 'demo 123'."""
+        from app.Project.tests.factories import ProjectFactory
+
+        free_user = AccountFactory(subscription=Subscription.FREE_TIER)
+        demo_123 = ProjectFactory(name="demo 123", is_demo=False)
+
+        assert demo_123 not in free_user.get_projects
+
+    def test_demo_123_read_only_for_demo_tier_user(self):
+        """Test that demo tier users have read-only access (GET permitted, POST/mutation blocked)."""
+        from django.test import RequestFactory
+
+        from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+        from app.Project.models import Role
+        from app.Project.tests.factories import ProjectFactory
+
+        # Create an active demo user
+        demo_user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=timezone.now() + timedelta(days=7),
+            ),
+        )
+        demo_123 = ProjectFactory(name="demo 123", is_demo=False)
+
+        # 1. Check role bypass
+        assert demo_user.has_project_role(demo_123, [Role.CONTRACT_VARIATIONS]) is True
+
+        # 2. Check read-only blocks in mixin
+        class DummyView(UserHasProjectRoleGenericMixin):
+            roles = [Role.CONTRACT_VARIATIONS]
+            project_slug = "project_pk"
+
+        view = DummyView()
+        view.kwargs = {"project_pk": demo_123.pk}
+
+        factory = RequestFactory()
+
+        # GET request should pass test_func
+        request_get = factory.get(f"/projects/{demo_123.pk}/")
+        request_get.user = demo_user
+        view.request = request_get
+        assert view.test_func() is True
+
+        # POST request should NOT pass (it is blocked / read-only)
+        request_post = factory.post(f"/projects/{demo_123.pk}/")
+        request_post.user = demo_user
+        view.request = request_post
+        assert view.test_func() is False
