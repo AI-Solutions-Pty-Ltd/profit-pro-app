@@ -10,7 +10,7 @@ from app.Project.forms.forms import (
     LeadConsultantQuickCreateForm,
     ProjectLeadConsultantForm,
 )
-from app.Project.models import Company, ProjectRole, Role
+from app.Project.models import Company, Project, ProjectRole, Role
 from app.Project.tests.factories import ClientFactory, ProjectFactory
 
 
@@ -23,16 +23,16 @@ class TestAllocationFixes(TestCase):
         self.user = AccountFactory()
 
         # Create client and lead consultant companies
-        self.client_company = ClientFactory(
+        self.client_company: Company = ClientFactory(  # type: ignore
             name="Test Client Company",
             type=Company.Type.CLIENT,
         )
-        self.lead_consultant_company = ClientFactory(
+        self.lead_consultant_company: Company = ClientFactory(  # type: ignore
             name="Test Lead Consultant Company",
             type=Company.Type.LEAD_CONSULTANT,
         )
 
-        self.project = ProjectFactory(
+        self.project: Project = ProjectFactory(  # type: ignore
             name="Allocation Test Project",
             client=None,
         )
@@ -90,6 +90,41 @@ class TestAllocationFixes(TestCase):
         self.assertIn(
             self.lead_consultant_company,
             form_with_user.fields["lead_consultant"].queryset,
+        )
+
+    def test_project_client_form_includes_currently_assigned_client(self):
+        """Verify that ProjectClientForm includes the currently assigned client in its queryset."""
+        self.project.client = self.client_company
+        self.project.save()
+
+        # Check with user
+        self.client_company.users.add(self.user)
+        form = ProjectClientForm(project=self.project, user=self.user)
+        self.assertIn(self.client_company, form.fields["client"].queryset)
+
+        # Check without user
+        form_no_user = ProjectClientForm(project=self.project)
+        self.assertIn(self.client_company, form_no_user.fields["client"].queryset)
+
+    def test_project_lead_consultant_form_includes_currently_assigned_lead_consultant(
+        self,
+    ):
+        """Verify that ProjectLeadConsultantForm includes the currently assigned lead consultant."""
+        self.project.lead_consultant = self.lead_consultant_company
+        self.project.save()
+
+        # Check with user
+        self.lead_consultant_company.users.add(self.user)
+        form = ProjectLeadConsultantForm(project=self.project, user=self.user)
+        self.assertIn(
+            self.lead_consultant_company, form.fields["lead_consultant"].queryset
+        )
+
+        # Check without user
+        form_no_user = ProjectLeadConsultantForm(project=self.project)
+        self.assertIn(
+            self.lead_consultant_company,
+            form_no_user.fields["lead_consultant"].queryset,
         )
 
     def test_client_quick_create_save_with_m2m(self):

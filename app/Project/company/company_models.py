@@ -97,6 +97,82 @@ class Company(BaseModel):
             self.logo = logo
         return super().save(*args, **kwargs)
 
+    @classmethod
+    def ensure_demo_companies(cls, user=None) -> list["Company"]:
+        """Search for target demo companies and create them if they do not exist.
+
+        If user is provided, prefixes the company names with the user's first name,
+        and appends the user's pk to the registration numbers.
+
+        Returns:
+            list[Company]: The list of three ensured demo companies.
+        """
+        demo_companies = []
+        if user:
+            prefix = f"{user.first_name}'s " if user.first_name else "Demo "
+            suffix = f"-{user.pk}"
+            targets = [
+                (cls.Type.CLIENT, f"{prefix}Demo Client", f"DEMO-CLIENT{suffix}"),
+                (
+                    cls.Type.CONTRACTOR,
+                    f"{prefix}Demo Contractor 1",
+                    f"DEMO-CONTRACTOR-1{suffix}",
+                ),
+                (
+                    cls.Type.LEAD_CONSULTANT,
+                    f"{prefix}Demo Consultant 1",
+                    f"DEMO-CONSULTANT-1{suffix}",
+                ),
+            ]
+        else:
+            targets = [
+                (cls.Type.CLIENT, "Demo Client", "DEMO-CLIENT"),
+                (cls.Type.CONTRACTOR, "Demo Contractor 1", "DEMO-CONTRACTOR-1"),
+                (cls.Type.LEAD_CONSULTANT, "Demo Consultant 1", "DEMO-CONSULTANT-1"),
+            ]
+
+        for comp_type, name, reg_num in targets:
+            company, created = cls.objects.get_or_create(
+                type=comp_type,
+                registration_number=reg_num,
+                defaults={"name": name},
+            )
+            if not created and company.name != name:
+                company.name = name
+                company.save()
+
+            if user:
+                company.users.add(user)
+
+            demo_companies.append(company)
+        return demo_companies
+
+    @classmethod
+    def clean_demo_companies(cls, user) -> int:
+        """Find and hard-delete all scoped demo companies for the given user.
+
+        This safely triggers Django's on_delete=models.SET_NULL on associated Projects,
+        clearing the user's project's client, contractor, and lead_consultant fields.
+
+        Args:
+            user (Account): The user whose demo companies to clean.
+
+        Returns:
+            int: The number of companies deleted.
+        """
+        if not user or not user.pk:
+            return 0
+
+        # Scoped demo companies registration numbers start with "DEMO-" and end with "-{user.pk}"
+        # We query including soft-deleted ones (all_objects manager) to ensure complete purge
+        targets = cls.all_objects.filter(
+            registration_number__startswith="DEMO-",
+            registration_number__endswith=f"-{user.pk}",
+        )
+        count = targets.count()
+        targets.delete()
+        return count
+
 
 @receiver(post_save, sender=Company)
 def resize_company_logo(sender, instance, created, **kwargs):

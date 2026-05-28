@@ -49,7 +49,7 @@ class ProjectClientForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
+        kwargs.pop("project", None)
         user: Account | None = kwargs.pop("user", None)
 
         # Pop instance before calling super() to avoid passing it to Form
@@ -58,19 +58,24 @@ class ProjectClientForm(forms.Form):
         self.fields["client"].label = "Client Company"
 
         if user:
+            if user.has_demo_permission:
+                Company.ensure_demo_companies(user=user)
+
             projects = user.get_projects
 
             # Filter to show client companies that are either associated with the user's projects or account
             from django.db.models import Q
 
+            condition = Q(client_projects__in=projects) | Q(users=user)
+            if user.has_demo_permission:
+                condition |= Q(
+                    registration_number__in=["DEMO-CLIENT", f"DEMO-CLIENT-{user.pk}"]
+                )
+
             queryset = Company.objects.filter(
-                Q(client_projects__in=projects) | Q(users=user),
+                condition,
                 type=Company.Type.CLIENT,
             ).order_by("name")
-
-            # Exclude the currently assigned client if project is provided
-            if project and project.client:
-                queryset = queryset.exclude(pk=project.client.pk)
 
             # Type: ModelChoiceField has queryset attribute
             client_field = self.fields["client"]

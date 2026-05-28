@@ -84,6 +84,7 @@ MIDDLEWARE = [
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "app.core.middleware.timer_middleware.RequestTimerMiddleware",
+    "app.core.middleware.demo_expired_middleware.DemoExpiredMiddleware",
 ]
 
 REST_FRAMEWORK = {

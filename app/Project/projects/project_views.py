@@ -7,7 +7,7 @@ from typing import cast
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, QuerySet, Sum
+from django.db.models import QuerySet, Sum
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -54,9 +54,7 @@ class ProjectMixin(
     required_tiers = [Subscription.FREE_TIER]
 
     def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
-        return Project.objects.filter(
-            Q(users=self.request.user) | Q(is_demo=True)
-        ).order_by("-created_at")
+        return self.request.user.get_projects.order_by("-created_at")
 
     def get_object(self: "ProjectMixin") -> Project:
         return self.get_project()
@@ -879,10 +877,9 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
             "other": "Other",
         }
         for amendment in amendments:
-            cat = amendment["category"]
-            category_totals[cat] = (
-                category_totals.get(cat, 0) + amendment["variation_amount"]
-            )
+            cat = cast(str, amendment["category"])  # Add explicit type annotation
+            current_value = category_totals.get(cat, 0.0)
+            category_totals[cat] = float(current_value + amendment["variation_amount"])
 
         category_labels = [category_names[k] for k in category_names.keys()]
         category_signed_values = [

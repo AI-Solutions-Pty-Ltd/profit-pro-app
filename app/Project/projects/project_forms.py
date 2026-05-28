@@ -30,7 +30,7 @@ class BasicProjectCreateForm(forms.ModelForm):
             "project_category",
             "area",
             "project_stage",
-            "project_discipline",
+            # "project_discipline",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -274,6 +274,9 @@ class ProjectFilterForm(forms.Form):
         **kwargs,
     ):
         """Initialize filter form with user-specific querysets."""
+        if user and getattr(user, "has_demo_permission", False):
+            Company.ensure_demo_companies(user=user)
+
         super().__init__(*args, **kwargs)
 
         # Set custom querysets if provided
@@ -282,8 +285,31 @@ class ProjectFilterForm(forms.Form):
         if consultant_queryset is not None:
             self.fields["consultant"].queryset = consultant_queryset  # type: ignore
         if client_queryset is not None:
+            if user and getattr(user, "has_demo_permission", False):
+                demo_clients = Company.objects.filter(
+                    type=Company.Type.CLIENT,
+                    registration_number__in=["DEMO-CLIENT", f"DEMO-CLIENT-{user.pk}"],
+                )
+                if client_queryset.query.distinct:
+                    demo_clients = demo_clients.distinct()
+                client_queryset = (
+                    (client_queryset | demo_clients).distinct().order_by("name")
+                )
             self.fields["client"].queryset = client_queryset  # type: ignore
         if contractor_queryset is not None:
+            if user and getattr(user, "has_demo_permission", False):
+                demo_contractors = Company.objects.filter(
+                    type=Company.Type.CONTRACTOR,
+                    registration_number__in=[
+                        "DEMO-CONTRACTOR-1",
+                        f"DEMO-CONTRACTOR-1-{user.pk}",
+                    ],
+                )
+                if contractor_queryset.query.distinct:
+                    demo_contractors = demo_contractors.distinct()
+                contractor_queryset = (
+                    (contractor_queryset | demo_contractors).distinct().order_by("name")
+                )
             self.fields["contractor"].queryset = contractor_queryset  # type: ignore
         if category_queryset is not None:
             self.fields["project_category"].queryset = category_queryset  # type: ignore

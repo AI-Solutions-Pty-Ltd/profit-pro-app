@@ -956,8 +956,7 @@ class PortfolioReportMixin(
     def get_active_projects(self) -> list[Project]:
         """Get active projects for the current user."""
         return list(
-            Project.objects.filter(
-                Q(users=self.request.user) | Q(is_demo=True),
+            self.request.user.get_projects.filter(
                 status=Project.Status.ACTIVE,
             ).order_by("name")
         )
@@ -984,7 +983,7 @@ class ComplianceReportView(PortfolioReportMixin):
         party_filter = self.request.GET.get("party", "")  # contractor or consultant
 
         # Build report data per project
-        report_data = []
+        report_data: list[dict[str, Any]] = []
         for project in projects:
             # Get responsible party filter
             party_q = Q()

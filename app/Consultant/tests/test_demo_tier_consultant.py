@@ -1,8 +1,10 @@
 """Tests for Demo tier access on consultant views."""
 
+from datetime import timedelta
 from typing import cast
 
 from django.test import RequestFactory, TestCase
+from django.utils import timezone
 
 from app.Account.models import Account
 from app.Account.subscription_config import Subscription
@@ -66,8 +68,8 @@ class TestDemoTierConsultantAccess(TestCase):
         # Should return False
         self.assertFalse(mixin.test_func())
 
-    def test_consultant_mixin_returns_all_clients_for_demo_user(self):
-        """Test that ConsultantMixin.get_clients returns all clients for DEMO_TIER user."""
+    def test_consultant_mixin_returns_only_associated_clients_for_demo_user(self):
+        """Test that ConsultantMixin.get_clients returns only associated clients for DEMO_TIER user."""
         mixin = ConsultantMixin()
         request = self.factory.get("/")
         request.user = self.demo_user
@@ -75,11 +77,11 @@ class TestDemoTierConsultantAccess(TestCase):
 
         clients = mixin.get_clients()
 
-        # Should see all CLIENT companies without being a consultant of any
+        # Should see associated client (via the project where user is in users)
+        # but NOT unrelated self.client2
         client_list = list(clients)
         self.assertIn(self.client1, client_list)
-        self.assertIn(self.client2, client_list)
-        self.assertEqual(len(client_list), 2)
+        self.assertNotIn(self.client2, client_list)
 
     def test_consultant_mixin_filters_clients_for_non_demo_user(self):
         """Test that ConsultantMixin.get_clients filters clients for non-demo users."""
@@ -105,3 +107,64 @@ class TestDemoTierConsultantAccess(TestCase):
         project = mixin.get_project()
         self.assertEqual(project, self.project)
         self.assertEqual(mixin.get_client(), self.client1)
+
+    def test_expired_demo_user_fails_group_permission_mixin(self):
+        """Test that expired DEMO_TIER users fail group permission checks."""
+        mixin = UserHasGroupGenericMixin()
+        mixin.permissions = ["consultant"]
+
+        # Set expired trial
+        self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
+        self.demo_user.save()
+
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+
+        self.assertFalse(mixin.test_func())
+
+    def test_consultant_mixin_filters_clients_for_expired_demo_user(self):
+        """Test that ConsultantMixin.get_clients filters clients for expired DEMO_TIER users."""
+        mixin = ConsultantMixin()
+        self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
+        self.demo_user.save()
+
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+
+        clients = mixin.get_clients()
+        self.assertEqual(clients.count(), 0)
+
+    def test_payment_cert_mixin_raises_404_for_expired_demo_user(self):
+        """Test that PaymentCertMixin blocks expired DEMO_TIER users."""
+        from django.http import Http404
+
+        mixin = PaymentCertMixin()
+        self.demo_user.subscription_expires_at = timezone.now() - timedelta(days=1)
+        self.demo_user.save()
+
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+        mixin.kwargs = {"project_pk": self.project.pk}
+
+        with self.assertRaises(Http404):
+            mixin.get_project()
+
+    def test_payment_cert_mixin_blocks_unassociated_private_project_for_demo_user(self):
+        """Test that PaymentCertMixin blocks DEMO_TIER user from accessing unrelated private projects."""
+        from django.http import Http404
+
+        unrelated_project = ProjectFactory(
+            name="Private Project", client=self.client2
+        )  # No users/roles associated with demo user
+
+        mixin = PaymentCertMixin()
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+        mixin.kwargs = {"project_pk": unrelated_project.pk}
+
+        with self.assertRaises(Http404):
+            mixin.get_project()

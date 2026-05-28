@@ -16,7 +16,11 @@ class TestProjectContractorForm(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user: Account = cast(Account, AccountFactory())
+        from app.Account.subscription_config import Subscription
+
+        self.user: Account = cast(
+            Account, AccountFactory(subscription=Subscription.FREE_TIER)
+        )
 
         self.contractor1 = ClientFactory(
             name="Contractor 1",
@@ -51,12 +55,12 @@ class TestProjectContractorForm(TestCase):
         form = ProjectContractorForm(user=self.user, project=self.project)
         queryset = form.fields["contractor"].queryset  # type: ignore
 
-        # Should only return contractors associated with user's projects
-        self.assertEqual(queryset.count(), 1)
+        # Should return all contractors associated with user's projects including the assigned contractor
+        self.assertEqual(queryset.count(), 2)
 
-        # Should exclude the assigned contractor
+        # Should include the assigned contractor
         contractor_names = list(queryset.values_list("name", flat=True))
-        self.assertNotIn(self.contractor1.name, contractor_names)
+        self.assertIn(self.contractor1.name, contractor_names)
         self.assertIn(self.contractor2.name, contractor_names)
 
     def test_form_without_project_shows_all_contractors(self):
@@ -82,13 +86,13 @@ class TestProjectContractorForm(TestCase):
         form = ProjectContractorForm(user=self.user, project=self.project)
         queryset = form.fields["contractor"].queryset  # type: ignore
 
-        # Should show contractor2 (active on project2) AND new_contractor (linked to user)
-        self.assertEqual(queryset.count(), 2)
+        # Should show contractor1 (assigned to project), contractor2 (active on project2) AND new_contractor (linked to user)
+        self.assertEqual(queryset.count(), 3)
 
         contractor_names = list(queryset.values_list("name", flat=True))
         self.assertIn("New Contractor XYZ", contractor_names)
         self.assertIn(self.contractor2.name, contractor_names)
-        self.assertNotIn(self.contractor1.name, contractor_names)
+        self.assertIn(self.contractor1.name, contractor_names)
 
 
 class TestContractorQuickCreateForm(TestCase):

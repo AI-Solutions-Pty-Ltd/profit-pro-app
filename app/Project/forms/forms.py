@@ -47,29 +47,37 @@ class ProjectContractorForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
+        kwargs.pop("project", None)
         user: Account | None = kwargs.pop("user", None)
 
         super().__init__(*args, **kwargs)
 
         if user:
+            if user.has_demo_permission:
+                Company.ensure_demo_companies(user=user)
+
             projects = user.get_projects
 
             # Filter to show contractor companies that are either associated with the user's projects or account
             from django.db.models import Q
 
+            condition = Q(contractor_projects__in=projects) | Q(users=user)
+            if user.has_demo_permission:
+                condition |= Q(
+                    registration_number__in=[
+                        "DEMO-CONTRACTOR-1",
+                        f"DEMO-CONTRACTOR-1-{user.pk}",
+                    ]
+                )
+
             queryset = (
                 Company.objects.filter(
-                    Q(contractor_projects__in=projects) | Q(users=user),
+                    condition,
                     type=Company.Type.CONTRACTOR,
                 )
                 .distinct()
                 .order_by("name")
             )
-
-            # Exclude the currently assigned contractor if project is provided
-            if project and project.contractor:
-                queryset = queryset.exclude(pk=project.contractor.pk)
 
             # Type: ModelChoiceField has queryset attribute
             contractor_field = self.fields["contractor"]
@@ -109,20 +117,32 @@ class ProjectLeadConsultantForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
+        kwargs.pop("project", None)
         user: Account | None = kwargs.pop("user", None)
 
         super().__init__(*args, **kwargs)
 
         if user:
+            if user.has_demo_permission:
+                Company.ensure_demo_companies(user=user)
+
             projects = user.get_projects
 
             # Filter to show lead consultant companies that are either associated with the user's projects or account
             from django.db.models import Q
 
+            condition = Q(lead_consultant_projects__in=projects) | Q(users=user)
+            if user.has_demo_permission:
+                condition |= Q(
+                    registration_number__in=[
+                        "DEMO-CONSULTANT-1",
+                        f"DEMO-CONSULTANT-1-{user.pk}",
+                    ]
+                )
+
             queryset = (
                 Company.objects.filter(
-                    Q(lead_consultant_projects__in=projects) | Q(users=user),
+                    condition,
                     type=Company.Type.LEAD_CONSULTANT,
                 )
                 .distinct()
@@ -133,10 +153,6 @@ class ProjectLeadConsultantForm(forms.ModelForm):
             queryset = Company.objects.filter(
                 type=Company.Type.LEAD_CONSULTANT
             ).order_by("name")
-
-        # Exclude the currently assigned lead consultant if project is provided
-        if project and project.lead_consultant:
-            queryset = queryset.exclude(pk=project.lead_consultant.pk)
 
         # Type: ModelChoiceField has queryset attribute
         lead_consultant_field = self.fields["lead_consultant"]

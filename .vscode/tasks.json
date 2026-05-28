@@ -12,6 +12,15 @@
           "pwd": "${workspaceFolder}"
         }
       },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "python",
@@ -44,6 +53,15 @@
           "pwd": "${workspaceFolder}"
         }
       },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
+      },
       "problemMatcher": []
     },
     {
@@ -57,6 +75,15 @@
         "env": {
           "pwd": "${workspaceFolder}"
         }
+      },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
       }
     },
     {
@@ -70,6 +97,15 @@
         "env": {
           "pwd": "${workspaceFolder}"
         }
+      },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
       },
       "problemMatcher": []
     },

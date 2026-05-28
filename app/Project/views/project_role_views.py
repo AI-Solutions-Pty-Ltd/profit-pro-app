@@ -3,7 +3,7 @@
 from typing import Any
 
 from django.contrib import messages
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -29,11 +29,10 @@ class BaseRoleListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
     def get_project(self) -> Project:
         """Get the project and verify access."""
-        return get_object_or_404(
-            Project,
-            Q(pk=self.kwargs["project_pk"]),
-            Q(users=self.request.user) | Q(is_demo=True),
-        )
+        user = self.request.user
+        if user.is_superuser or user.is_staff:
+            return get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return get_object_or_404(user.get_projects, pk=self.kwargs["project_pk"])
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -83,11 +82,10 @@ class BaseRoleAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
     def get_project(self) -> Project:
         """Get the project and verify access."""
-        return get_object_or_404(
-            Project,
-            Q(pk=self.kwargs["project_pk"]),
-            Q(users=self.request.user) | Q(is_demo=True),
-        )
+        user = self.request.user
+        if user.is_superuser or user.is_staff:
+            return get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return get_object_or_404(user.get_projects, pk=self.kwargs["project_pk"])
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -178,11 +176,10 @@ class BaseRoleRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
 
     def get_project(self) -> Project:
         """Get the project and verify access."""
-        return get_object_or_404(
-            Project,
-            Q(pk=self.kwargs["project_pk"]),
-            Q(users=self.request.user) | Q(is_demo=True),
-        )
+        user = self.request.user
+        if user.is_superuser or user.is_staff:
+            return get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return get_object_or_404(user.get_projects, pk=self.kwargs["project_pk"])
 
     def get_object(self) -> Account:  # type: ignore
         """Get the user to remove."""

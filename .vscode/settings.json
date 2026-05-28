@@ -12,8 +12,8 @@
   "python.testing.unittestEnabled": false,
   "python.testing.pytestArgs": ["."],
   "python.languageServer": "None",
-  "ty.interpreter": ["${workspaceFolder}\\.venv\\Scripts\\python.exe"],
-  // "ty.path": ["${workspaceFolder}\\.venv\\Scripts\\ty.exe"]
+  "ty.interpreter": ["${workspaceFolder}/.venv/bin/python"],
+  // "ty.path": ["${workspaceFolder}/.venv/bin/ty"]
   "cSpell.words": ["focusable", "heroicon", "nowrap", "onclick"],
   "python.autoComplete.extraPaths": [
     "${workspaceFolder}",

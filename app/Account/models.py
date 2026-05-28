@@ -204,12 +204,13 @@ class Account(AbstractUser, BaseModel):
         Returns:
             True if user has the role, False otherwise
         """
-        from app.Account.subscription_config import Subscription
         from app.Project.models import Role
 
-        if self.is_superuser or (
-            self.subscription == Subscription.DEMO_TIER
-            and not self.is_subscription_expired
+        if self.is_superuser:
+            return True
+
+        if self.has_demo_permission and (
+            getattr(project, "is_demo", False) or project.name == "demo 123"
         ):
             return True
 
@@ -234,14 +235,14 @@ class Account(AbstractUser, BaseModel):
         if not normalized_required_tiers:
             return True
 
-        if self.is_superuser or self.subscription == Subscription.ADMINISTRATION:
+        if self.is_superuser or self.subscription in [
+            Subscription.ADMINISTRATION,
+            Subscription.FULL_ACCESS,
+        ]:
             return True
 
         if self.subscription == Subscription.DEMO_TIER:
-            if self.is_subscription_expired:
-                return False
-            # Demo tier bypasses requirement checks if not expired
-            return True
+            return not self.is_subscription_expired
 
         if str(Subscription.FREE_TIER) in normalized_required_tiers:
             return True
@@ -264,9 +265,12 @@ class Account(AbstractUser, BaseModel):
 
         if self.is_superuser:
             return Project.objects.all()
-        return Project.objects.filter(
-            Q(users=self) | Q(project_roles__user=self) | Q(is_demo=True)
-        ).distinct()
+
+        q_filter = Q(users=self) | Q(project_roles__user=self) | Q(is_demo=True)
+        if self.subscription == Subscription.DEMO_TIER:
+            q_filter |= Q(name="demo 123")
+
+        return Project.objects.filter(q_filter).distinct()
 
     @property
     def get_clients(self: "Account") -> QuerySet["Company"]:
@@ -344,8 +348,22 @@ class Account(AbstractUser, BaseModel):
         return SubscriptionConfig.get_all_limits(subscription_tier)
 
     @property
+    def has_demo_permission(self) -> bool:
+        """Check if the user has an active, unexpired Demo subscription OR the Full Access tier."""
+        from app.Account.subscription_config import Subscription
+
+        return self.subscription == Subscription.FULL_ACCESS or (
+            self.subscription == Subscription.DEMO_TIER
+            and not self.is_subscription_expired
+        )
+
+    @property
     def is_subscription_expired(self) -> bool:
         """Check if the current subscription has expired."""
+        from app.Account.subscription_config import Subscription
+
+        if self.subscription == Subscription.FULL_ACCESS:
+            return False
         if not self.subscription_expires_at:
             return False
         return timezone.now() > self.subscription_expires_at
