@@ -258,9 +258,12 @@ class TestDemo123Project:
         from app.Project.tests.factories import ProjectFactory
 
         # Create an active demo user
-        demo_user = AccountFactory(
-            subscription=Subscription.DEMO_TIER,
-            subscription_expires_at=timezone.now() + timedelta(days=7),
+        demo_user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=timezone.now() + timedelta(days=7),
+            ),
         )
         demo_123 = ProjectFactory(name="demo 123", is_demo=False)
 
