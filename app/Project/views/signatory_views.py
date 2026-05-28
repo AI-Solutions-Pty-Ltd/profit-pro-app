@@ -148,7 +148,7 @@ class SignatoryInviteView(SignatoryMixin, FormView):
         # Send email
         self._send_invite_email(user, project, user_exists)
 
-        return redirect("project:signatory-list", project_pk=self.kwargs["project_pk"])
+        return redirect("project:project-setup", pk=self.kwargs["project_pk"])
 
     def _send_invite_email(self, user: Account, project: Project, user_exists: bool):
         """Send invitation email to the signatory."""
@@ -225,9 +225,9 @@ class SignatoryInviteView(SignatoryMixin, FormView):
             )
 
     def get_success_url(self):
-        """Redirect to the signatory list."""
+        """Redirect to the project setup page."""
         return reverse_lazy(
-            "project:signatory-list", kwargs={"project_pk": self.kwargs["project_pk"]}
+            "project:project-setup", kwargs={"pk": self.kwargs["project_pk"]}
         )
 
 
@@ -258,10 +258,10 @@ class SignatoryUpdateView(SignatoryMixin, UpdateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        """Redirect to the signatory list."""
+        """Redirect to the project setup page."""
         return reverse_lazy(
-            "project:signatory-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
+            "project:project-setup",
+            kwargs={"pk": self.kwargs["project_pk"]},
         )
 
 
@@ -302,9 +302,9 @@ class SignatoryDeleteView(SignatoryMixin, DeleteView):
         return redirect(str(self.get_success_url()))
 
     def get_success_url(self):
-        """Redirect to the signatory list."""
+        """Redirect to the project setup page."""
         return reverse_lazy(
-            "project:signatory-list", kwargs={"project_pk": self.kwargs["project_pk"]}
+            "project:project-setup", kwargs={"pk": self.kwargs["project_pk"]}
         )
 
 
@@ -322,7 +322,7 @@ class SignatoryResendInviteView(SignatoryMixin, DetailView):
             messages.error(
                 self.request, "This signatory does not have an associated user."
             )
-            return redirect("project:signatory-list", project_pk=self.project.pk)
+            return redirect("project:project-setup", pk=self.project.pk)
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -332,7 +332,7 @@ class SignatoryResendInviteView(SignatoryMixin, DetailView):
 
         if not settings.USE_EMAIL:
             messages.warning(self.request, "Email is disabled. Cannot send invitation.")
-            return redirect("project:signatory-list", project_pk=self.project.pk)
+            return redirect("project:project-setup", pk=self.project.pk)
 
         # Generate password reset token
         token = default_token_generator.make_token(user)
@@ -372,7 +372,7 @@ class SignatoryResendInviteView(SignatoryMixin, DetailView):
                 self.request, f"Failed to send invitation email. Error: {str(e)}"
             )
 
-        return redirect("project:signatory-list", project_pk=self.project.pk)
+        return redirect("project:project-setup", pk=self.project.pk)
 
 
 class SignatoryLinkView(SignatoryMixin, View):
@@ -387,7 +387,7 @@ class SignatoryLinkView(SignatoryMixin, View):
 
         if not user_id:
             messages.error(request, "No user selected for linking.")
-            return redirect("project:signatory-list", project_pk=project.pk)
+            return redirect("project:project-setup", pk=project.pk)
 
         try:
             user = Account.objects.get(pk=user_id)
@@ -416,4 +416,4 @@ class SignatoryLinkView(SignatoryMixin, View):
         except Exception as e:
             messages.error(request, f"Error linking signatory: {str(e)}")
 
-        return redirect("project:signatory-list", project_pk=project.pk)
+        return redirect("project:project-setup", pk=project.pk)
