@@ -1,6 +1,6 @@
 {
   "editor.formatOnSave": true,
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.tabSize": 4,
@@ -12,8 +12,8 @@
   "python.testing.unittestEnabled": false,
   "python.testing.pytestArgs": ["."],
   "python.languageServer": "None",
-  "ty.interpreter": ["${workspaceFolder}\\.venv\\Scripts\\python.exe"],
-  // "ty.path": ["${workspaceFolder}\\.venv\\Scripts\\ty.exe"]
+  "ty.interpreter": ["${workspaceFolder}/.venv/bin/python"],
+  // "ty.path": ["${workspaceFolder}/.venv/bin/ty"]
   "cSpell.words": ["focusable", "heroicon", "nowrap", "onclick"],
   "python.autoComplete.extraPaths": [
     "${workspaceFolder}",
