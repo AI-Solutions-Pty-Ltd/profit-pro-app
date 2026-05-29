@@ -3672,6 +3672,9 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
             .order_by("trade_name")
         )
         context["plants"] = ProjectPlantCost.objects.filter(project=project)
+        context["labour_specs"] = ProjectLabourSpecification.objects.filter(
+            project=project, is_active=True
+        ).order_by("name")
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["query_params"] = _pagination_query_params(self.request)

@@ -230,9 +230,8 @@
                                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
                             <th class="px-2 py-3 w-8" title="Drag rows to reorder"></th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Item Code</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500 w-44">Item Code</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Trade Code</th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Component</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Description</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Unit</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Material</th>
@@ -256,7 +255,7 @@
                                           draggable="true"
                                           title="Drag to reorder">{% heroicon_outline "bars-3" class="w-4 h-4" %}</span>
                                 </td>
-                                <td class="px-2 py-1.5 w-24">
+                                <td class="px-2 py-1.5 w-44">
                                     <input type="text"
                                            class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
                                            data-entry-id="{{ e.id }}"
@@ -275,13 +274,6 @@
                                             </option>
                                         {% endfor %}
                                     </select>
-                                </td>
-                                <td class="px-2 py-1.5">
-                                    <input type="text"
-                                           class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
-                                           data-entry-id="{{ e.id }}"
-                                           data-field="component"
-                                           value="{{ e.component }}">
                                 </td>
                                 <td class="px-2 py-1.5 min-w-[260px]">
                                     <input type="text"
@@ -356,7 +348,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="11" class="px-6 py-12 text-center text-sm text-gray-500">
+                                <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">
                                     No entries yet. Click <em>Add Item</em>, sync from System / Contractor, or upload an Excel sheet.
                                 </td>
                             </tr>
