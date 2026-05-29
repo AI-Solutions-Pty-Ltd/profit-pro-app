@@ -1,8 +1,7 @@
 | Task | Status | Description |
 | :--- | :--- | :--- |
-| **Step 1: Add `FULL_ACCESS` to `Subscription` Choice Enum** | [x] | Add FULL_ACCESS choice to Subscription TextChoices in subscription_config.py |
-| **Step 2: Configure Limits for the `FULL_ACCESS` Tier** | [x] | Map limits for FULL_ACCESS in SubscriptionConfig.LIMITS in subscription_config.py |
-| **Step 3: Implement Bypass Checks in `Account` Model** | [x] | Refactor has_subscription_tier and has_demo_permission in models.py |
-| **Step 4: Generate and Apply Database Migration** | [x] | Run makemigrations and migrate to update Subscription choices in DB |
-| **Step 5: Write and Run Unit Tests for `FULL_ACCESS` Tier** | [x] | Implement TestFullAccessTier in test_demo_tier.py and run pytest |
-| **Step 6: Verify Full System Suite Passes** | [x] | Run the complete project test suite to verify no regressions |
+| **Step 1: Update Default Subscription in `Account` Model** | [x] | Update Account.subscription default to FULL_ACCESS in models.py |
+| **Step 2: Generate and Apply Database Migration** | [x] | Run makemigrations and migrate to update default value in DB |
+| **Step 3: Update Factories Documentation/Comments** | [x] | Update factories.py comments/defaults to FULL_ACCESS |
+| **Step 4: Update and Rename Subscription Default Test** | [/] | Rename and update test_default_subscription_is_demo to test_default_subscription_is_full_access in test_models.py |
+| **Step 5: Audit and Verify Entire Account Test Suite** | [ ] | Run pytest app/Account/tests/ to verify zero regressions |

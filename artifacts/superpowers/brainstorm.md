@@ -1,63 +1,48 @@
-# Brainstorming: Adding "demo 123" Project to Demo Tier Users as Read-Only
-
-This document details the goals, constraints, context, risks, options, and recommended approach for enabling a dedicated "demo 123" project for all demo-tier users under read-only restrictions.
-
----
+# Superpowers Brainstorm
 
 ## Goal
-* Dynamically present a project named "demo 123" in the project and portfolio lists of all active `DEMO_TIER` users.
-* Enforce strict read-only access (GET/HEAD/OPTIONS allowed; POST/PUT/DELETE/PATCH blocked) for demo tier users accessing "demo 123".
+Make `FULL_ACCESS` the default subscription tier when creating a new `Account` user.
 
 ## Constraints
-* **Virtual Environment**: All validations, commands, and dependencies must run inside the `.venv` development environment.
-* **Test Discipline**: Must use `factory_boy` factories for testing and avoid raw ORM creations in test files.
-* **Base Models**: Custom models must inherit from `app.core.Utilities.models.BaseModel`.
-* **Read-Only Rigor**: Any attempt by a demo tier user to modify "demo 123" (e.g., uploading WBS, creating a payment certificate) must fail with a 403 response or a read-only redirect/error message.
+* **Existing Codebase Harmony:** Ensure the default choice matches the `Subscription` choices enum seamlessly.
+* **Test Suite Correctness:** Update unit tests that explicitly assert that newly created accounts default to `DEMO_TIER`, while ensuring existing `DEMO_TIER` tests still run correctly by explicitly passing `subscription=Subscription.DEMO_TIER` where necessary.
+* **Migration Integration:** Generate and apply a new Django migration that updates the `default` value of the `subscription` column on the database level.
+* **Ruff Compliance:** Keep code formatted and clean according to Ruff guidelines.
 
-## Known context
-* **Demo Permission Hook**: Active demo-tier users are identified by the `has_demo_permission` property (returns `True` if `subscription == DEMO_TIER` and is not expired).
-* **Project Querying**: Users get their project list via the `get_projects` property on the `Account` model. However, several mixins and report views hardcode project queryset logic as `Q(users=self.request.user) | Q(is_demo=True)`.
-* **Read-Only Enforcement**: Read-only enforcement for demo projects is handled at the mixin level in `app/core/Utilities/permissions.py` (checks `getattr(project, "is_demo", False)`).
-* **Role Bypasses**: Active demo tier users automatically bypass project role checks (`has_project_role` returns `True`) for `is_demo=True` projects.
+## Known Context
+* In `app/Account/models.py`, the `Account.subscription` field has `default=Subscription.DEMO_TIER`.
+* In `app/Account/tests/test_models.py`, `TestAccountSubscription.test_default_subscription_is_demo` asserts that a new account defaults to `DEMO_TIER`.
+* In `app/Account/tests/factories.py`, `AccountFactory` and `UserFactory` comments refer to utilizing the model default `DEMO_TIER`.
+* Newly created accounts are added to the default `contractor` group and if they are demo tier, their expiry is calculated by the signal in `app/Account/signals.py`. If they are `FULL_ACCESS`, no expiry will be set, which matches the required non-expiring behavior.
 
 ## Risks
-* **Data Isolation Leak**: If "demo 123" is marked as `is_demo = True`, it automatically becomes visible to all tiers (e.g. `FREE_TIER`, standard paid tiers). If we want it restricted specifically to `DEMO_TIER` users, using `is_demo = True` alone is insufficient.
-* **Inconsistent View Support**: Hardcoded querysets in mixins or report views (such as `ProjectMixin.get_queryset` and `PortfolioReportMixin.get_active_projects`) will omit "demo 123" if they only check `is_demo=True` or explicit user assignments.
-* **Mutation Vulnerability**: Failing to align all custom mixins (e.g. `SubscriptionAndRoleRequiredMixin`, `SubscriptionRequiredMixin`, `PaymentCertMixin`) could allow write actions on "demo 123".
+* **Broken Tests:** Changing the default tier may cause tests that assumed newly created users are on `DEMO_TIER` (and therefore are subject to lockout or are trials) to fail or behave differently.
+  * *Mitigation:* Carefully audit all `pytest` errors after changing the default. Update `test_models.py` to assert default to `FULL_ACCESS`, and verify if other test classes (like `test_create_demo_user.py` or `test_demo_lockout.py`) specifically expect `DEMO_TIER` defaults. (Most of them use factories or create a demo user command which explicitly sets the subscription to `DEMO_TIER`, so they should remain safe).
+* **Database Default Out of Sync:** Failing to run migration leaves the database default out of sync with the Django model class definition.
+  * *Mitigation:* Always generate (`makemigrations`) and apply (`migrate`) the changes immediately using the virtual environment.
 
-## Options (2???4)
+## Options (2–4)
 
-### Option 1: Explicit Database Seeding and Scoped Assignment
-* **Description**: Create a migration or post-save signal that ensures a project named "demo 123" (with `is_demo=False`) exists in the database. When a `DEMO_TIER` user is created, explicitly add them to the project's ManyToMany `users` field. Enforce read-only logic in permission mixins specifically by checking `project.name == "demo 123"`.
-* **Pros**: No changes needed for `get_projects` queryset logic; standard project associations work natively.
-* **Cons**: High database overhead. Deleting or cleaning expired demo accounts requires extra cleanup steps. Difficult to scale if thousands of demo users are registered.
+### Option 1: Direct model default update + update default-asserting tests (Recommended)
+Directly change the `default` on the `Account.subscription` field in `models.py` from `Subscription.DEMO_TIER` to `Subscription.FULL_ACCESS`. Update `test_models.py` and `factories.py` to reflect this change, run migrations, and execute all tests.
+* *Pros:* Simple, direct, correct, aligns perfectly with Django design patterns.
+* *Cons:* Requires updating a few assertions in `test_models.py`.
 
-### Option 2: Dynamic QuerySet Injection and Unified Mixin Treatment (Recommended)
-* **Description**:
-  1. Dynamically append "demo 123" to the `get_projects` QuerySet for active `DEMO_TIER` users.
-  2. Refactor all hardcoded querysets in `ProjectMixin.get_queryset` and `PortfolioReportMixin.get_active_projects` to utilize the `user.get_projects` property directly, promoting DRY principles.
-  3. Update permission mixins (`UserHasProjectRoleGenericMixin`, `SubscriptionAndRoleRequiredMixin`, `SubscriptionRequiredMixin`, `PaymentCertMixin`) and the `Account.has_project_role` method to treat `project.name == "demo 123"` identically to `is_demo=True` projects (read-only for non-staff).
-* **Pros**: 
-  * Clean, fully dynamic, and zero database management/cleanup overhead.
-  * Ensures perfect tier isolation (only `DEMO_TIER` and staff/superusers can see it).
-  * Automatically propagates across all views and report summaries.
-* **Cons**: Requires refactoring of hardcoded project querysets in views.
+### Option 2: Keep model default as `DEMO_TIER` and default to `FULL_ACCESS` in UserManager / create_user
+Keep the default on the model field as `DEMO_TIER` but intercept user creation inside `UserManager.create_user()` to set `subscription` to `FULL_ACCESS` if not explicitly specified.
+* *Pros:* Preserves some database-level field settings.
+* *Cons:* Confusing, prone to errors if users are created through other Django operations (like admin panel, `Account.objects.create()`, or custom commands) that bypass the manager method, violating database integrity.
 
 ---
 
 ## Recommendation
-Implement **Option 2**. It provides an elegant, scalable, and secure solution that leverages the existing `get_projects` property and read-only mixin structures, while correcting several hardcoded query anomalies across the codebase.
+We recommend **Option 1**. It is the standard, clean, and most maintainable Django paradigm. It ensures that any user created via any channel (Django Admin, shell, factory, or standard signup) consistently receives the `FULL_ACCESS` default.
 
 ---
 
-## Acceptance criteria
-1. **Visibility**:
-   * Active `DEMO_TIER` users see the "demo 123" project in their project lists and portfolio dashboards.
-   * `FREE_TIER` and other non-demo/non-staff users cannot see or access "demo 123".
-   * Superusers and staff can see and fully manage "demo 123".
-2. **Access Control**:
-   * Active `DEMO_TIER` users can successfully view all dashboard pages, BOQ/WBS items, and compliance/payment certificate records of the "demo 123" project.
-   * Active `DEMO_TIER` users are strictly blocked from writing, updating, or deleting any records within "demo 123", returning a `403 Forbidden` response or redirection with a "read-only" error message.
-3. **Tests**:
-   * Comprehensive unit tests are added to verify visibility, access control, and mutation blocks on "demo 123" projects.
-   * Entire pytest suite runs and passes successfully.
+## Acceptance Criteria
+1. **Model Default Update:** The `Account.subscription` field default value is set to `Subscription.FULL_ACCESS` in `app/Account/models.py`.
+2. **Database Choice Schema Alignment:** A Django database migration is generated and successfully applied to update the field default.
+3. **Factories & Documentation Updated:** `app/Account/tests/factories.py` comments/defaults are updated to reflect the new default tier.
+4. **Assert Correct Default in Test:** `TestAccountSubscription.test_default_subscription_is_demo` in `test_models.py` is renamed/updated to assert default to `FULL_ACCESS` and passes.
+5. **No Regressions:** All existing 70 tests in `app/Account/tests/` and related app tests pass without issue.
