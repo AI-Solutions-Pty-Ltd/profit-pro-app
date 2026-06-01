@@ -1,48 +1,54 @@
-# Superpowers Brainstorm
+# Brainstorm: Setup Cards Get-Started Help Tooltips
 
 ## Goal
-Make `FULL_ACCESS` the default subscription tier when creating a new `Account` user.
+Add a premium, visually appealing information icon button next to each setup card's heading on the Project Setup page. Clicking the icon opens a toggleable, secure, and beautifully styled tooltip detailing step-by-step help for getting started with that specific setup step.
 
 ## Constraints
-* **Existing Codebase Harmony:** Ensure the default choice matches the `Subscription` choices enum seamlessly.
-* **Test Suite Correctness:** Update unit tests that explicitly assert that newly created accounts default to `DEMO_TIER`, while ensuring existing `DEMO_TIER` tests still run correctly by explicitly passing `subscription=Subscription.DEMO_TIER` where necessary.
-* **Migration Integration:** Generate and apply a new Django migration that updates the `default` value of the `subscription` column on the database level.
-* **Ruff Compliance:** Keep code formatted and clean according to Ruff guidelines.
+- **Tailwind Compatibility**: Tooltips must utilize pure Tailwind CSS classes and Vanilla Javascript for smooth, lightweight transitions (no external JQuery or tooltip framework dependencies).
+- **No Overflow Clipping**: Tooltips must be positioned defensively to ensure they are never cut off by the `overflow-hidden` properties of parent dashboard panels.
+- **Icon Style**: Use standard Heroicon outlines already registered in the template for consistency.
+- **Responsive Layout**: Tooltip cards must render perfectly on both mobile screens (single-column) and larger grid screens (up to 3 columns).
 
-## Known Context
-* In `app/Account/models.py`, the `Account.subscription` field has `default=Subscription.DEMO_TIER`.
-* In `app/Account/tests/test_models.py`, `TestAccountSubscription.test_default_subscription_is_demo` asserts that a new account defaults to `DEMO_TIER`.
-* In `app/Account/tests/factories.py`, `AccountFactory` and `UserFactory` comments refer to utilizing the model default `DEMO_TIER`.
-* Newly created accounts are added to the default `contractor` group and if they are demo tier, their expiry is calculated by the signal in `app/Account/signals.py`. If they are `FULL_ACCESS`, no expiry will be set, which matches the required non-expiring behavior.
+## Known context
+- **Setup Cards Location**: `app/Project/templates/project/project_setup.html` renders the grid of cards under the "Project Information" panel.
+- **Card Elements**: Card headings like "Setup Project", "Allocate Client", "Allocate Contractor", "Allocate Lead Consultant", "Upload BOQ (CSV)", "Attach BOQ (Optional)", and "Allocate Signatory".
+- **Global Styles & Templates**: Core assets are defined in `layout.html` and static stylesheets.
 
 ## Risks
-* **Broken Tests:** Changing the default tier may cause tests that assumed newly created users are on `DEMO_TIER` (and therefore are subject to lockout or are trials) to fail or behave differently.
-  * *Mitigation:* Carefully audit all `pytest` errors after changing the default. Update `test_models.py` to assert default to `FULL_ACCESS`, and verify if other test classes (like `test_create_demo_user.py` or `test_demo_lockout.py`) specifically expect `DEMO_TIER` defaults. (Most of them use factories or create a demo user command which explicitly sets the subscription to `DEMO_TIER`, so they should remain safe).
-* **Database Default Out of Sync:** Failing to run migration leaves the database default out of sync with the Django model class definition.
-  * *Mitigation:* Always generate (`makemigrations`) and apply (`migrate`) the changes immediately using the virtual environment.
+- **Visual Clutter**: Adding info buttons to 7 different cards in a small grid can look cluttered if not designed with micro-spacing and subtle styling.
+  - *Mitigation*: We will use a small, elegant `text-gray-400` color for the icon, matching standard layout tokens, and make it highlight in `text-indigo-600` only on hover/active toggle.
+- **Clipping on Grid Edges**: Tooltips near the left/right boundaries of the grid could overflow the container.
+  - *Mitigation*: We will position the tooltips relative to the heading text with safe padding and center-align or edge-align them (`left-0` or `right-0`) so they stay contained within the respective card boundaries.
 
 ## Options (2–4)
 
-### Option 1: Direct model default update + update default-asserting tests (Recommended)
-Directly change the `default` on the `Account.subscription` field in `models.py` from `Subscription.DEMO_TIER` to `Subscription.FULL_ACCESS`. Update `test_models.py` and `factories.py` to reflect this change, run migrations, and execute all tests.
-* *Pros:* Simple, direct, correct, aligns perfectly with Django design patterns.
-* *Cons:* Requires updating a few assertions in `test_models.py`.
+### Option 1: Standard Hover Tooltips (CSS Group)
+- **Summary**: Add an absolute-positioned hidden tooltip element inside a relative container. Show it on hover using Tailwind `group-hover:block` or `group-hover:opacity-100` classes.
+- **Pros**: Super fast, no JS required, light footprint.
+- **Cons**: Cannot be accessed easily by mobile touch-events. Hard to read step-by-step instructions because the tooltip immediately vanishes as soon as the mouse cursor moves a millimeter away.
+- **Complexity / risk**: Low complexity / Low risk.
 
-### Option 2: Keep model default as `DEMO_TIER` and default to `FULL_ACCESS` in UserManager / create_user
-Keep the default on the model field as `DEMO_TIER` but intercept user creation inside `UserManager.create_user()` to set `subscription` to `FULL_ACCESS` if not explicitly specified.
-* *Pros:* Preserves some database-level field settings.
-* *Cons:* Confusing, prone to errors if users are created through other Django operations (like admin panel, `Account.objects.create()`, or custom commands) that bypass the manager method, violating database integrity.
+### Option 2: Interactive Click-to-Toggle Tooltip Cards (Recommended)
+- **Summary**: Implement a click-to-toggle tooltip card for each setup step. The help card is positioned absolute to the heading, showing a clean checkmark list of getting-started steps, a step title, and a small close cross button. We will write a tiny, global inline JS function (`toggleSetupTooltip`) to show/hide the tooltips and close them when clicking outside or clicking the close button.
+- **Pros**:
+  - Extremely premium feel: feels like a fully interactive guide.
+  - Excellent for mobile: works seamlessly on touch devices.
+  - User friendly: stays open while the user performs the actions or reads the steps.
+- **Cons**: Requires adding a simple toggle script.
+- **Complexity / risk**: Low-Medium complexity / Very low risk.
 
----
+### Option 3: Inline Expandable Help Drawers (Accordion style)
+- **Summary**: Add an inline help drawer inside the card itself. Clicking the info icon expands the drawer vertically within the card, shifting content down.
+- **Pros**: 100% immune to clipping since it lives in the normal document flow.
+- **Cons**: Modifies the height of individual cards dynamically, creating uneven grid alignment across the columns (ruining the pristine symmetrical dashboard grid look).
+- **Complexity / risk**: Medium complexity / Medium risk (aesthetic inconsistency).
 
 ## Recommendation
-We recommend **Option 1**. It is the standard, clean, and most maintainable Django paradigm. It ensures that any user created via any channel (Django Admin, shell, factory, or standard signup) consistently receives the `FULL_ACCESS` default.
+We recommend **Option 2 (Interactive Click-to-Toggle Tooltips)**. It delivers a premium visual experience, functions flawlessly on touch devices, and maintains grid symmetry without altering card heights dynamically.
 
----
-
-## Acceptance Criteria
-1. **Model Default Update:** The `Account.subscription` field default value is set to `Subscription.FULL_ACCESS` in `app/Account/models.py`.
-2. **Database Choice Schema Alignment:** A Django database migration is generated and successfully applied to update the field default.
-3. **Factories & Documentation Updated:** `app/Account/tests/factories.py` comments/defaults are updated to reflect the new default tier.
-4. **Assert Correct Default in Test:** `TestAccountSubscription.test_default_subscription_is_demo` in `test_models.py` is renamed/updated to assert default to `FULL_ACCESS` and passes.
-5. **No Regressions:** All existing 70 tests in `app/Account/tests/` and related app tests pass without issue.
+## Acceptance criteria
+- [ ] Every card inside the Project Setup section has a small inline Info Icon button next to its heading.
+- [ ] Clicking the icon toggles a structured tooltip containing clear getting-started steps.
+- [ ] The tooltip layout is styled with a dark glassmorphism aesthetic (`bg-slate-900 text-white rounded-xl shadow-xl`), custom checkmark bullet points, and an explicit close button.
+- [ ] Clicking outside the tooltip or clicking another tooltip closes the open one.
+- [ ] Fully responsive: fits cleanly within card borders on all device sizes.

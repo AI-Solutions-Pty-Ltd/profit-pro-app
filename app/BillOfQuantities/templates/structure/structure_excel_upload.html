@@ -60,6 +60,13 @@
                         <strong>⚠️ Important:</strong> All rows will be validated before saving. If any errors are found, you'll see a detailed list of all issues to fix.
                     </p>
                 </div>
+                <div class="mt-4 flex items-center">
+                    <a href="{% url 'bill_of_quantities:structure-template-download' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md border border-blue-300 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        {% heroicon_outline name="arrow-down-tray" size="18" class="mr-2 text-blue-800" %}
+                        Download Excel Template
+                    </a>
+                </div>
             </div>
             <!-- Validation Errors Table -->
             {% if upload_errors %}

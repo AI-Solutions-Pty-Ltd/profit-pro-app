@@ -1,7 +1,7 @@
-| Task | Status | Description |
-| :--- | :--- | :--- |
-| **Step 1: Update Default Subscription in `Account` Model** | [x] | Update Account.subscription default to FULL_ACCESS in models.py |
-| **Step 2: Generate and Apply Database Migration** | [x] | Run makemigrations and migrate to update default value in DB |
-| **Step 3: Update Factories Documentation/Comments** | [x] | Update factories.py comments/defaults to FULL_ACCESS |
-| **Step 4: Update and Rename Subscription Default Test** | [/] | Rename and update test_default_subscription_is_demo to test_default_subscription_is_full_access in test_models.py |
-| **Step 5: Audit and Verify Entire Account Test Suite** | [ ] | Run pytest app/Account/tests/ to verify zero regressions |
+# Task Progress: Setup Cards Interactive Help Tooltips
+
+| Task ID | Task Description | Status | Verification Command / Method |
+| :--- | :--- | :--- | :--- |
+| **TSK-01** | Add interactive tooltips to cards in `project_setup.html` | `[/]` | View template syntax verification |
+| **TSK-02** | Add Javascript toggling and click-outside dismissal handlers | `[/]` | Script check |
+| **TSK-03** | Run full verification suite | `[ ]` | Pytest verification |
