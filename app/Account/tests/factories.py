@@ -27,7 +27,7 @@ class AdminUserFactory(DjangoModelFactory):
 class UserFactory(AdminUserFactory):
     is_staff = False
     is_superuser = False
-    # Use model default (DEMO_TIER)
+    # Use model default (FULL_ACCESS)
 
 
 class UserGroupFactory(DjangoModelFactory):
@@ -84,7 +84,7 @@ class AccountFactory(DjangoModelFactory):
     is_active = True
     is_staff = False
     is_superuser = False
-    # Use model default (DEMO_TIER)
+    # Use model default (FULL_ACCESS)
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):

@@ -1,9 +1,13 @@
 """Views for Structure app."""
 
+from pathlib import Path
+
 import pandas as pd
 from django.contrib import messages
+from django.http import FileResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.views import View
 from django.views.generic import (
     DeleteView,
     DetailView,
@@ -271,3 +275,43 @@ class StructureExcelUploadView(
             "project:project-wbs-detail",
             kwargs={"pk": self.get_project().pk},
         )
+
+
+class DownloadBOQTemplateView(SubscriptionAndRoleRequiredMixin, View):
+    """View to download the BOQ excel/csv template file securely."""
+
+    roles = [Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+
+    def get(self, request, project_pk):
+        """Handle GET request to download the BOQ excel template.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            project_pk (int): The primary key of the project.
+
+        Returns:
+            HttpResponse: FileResponse containing the excel template or a redirect with error message.
+        """
+        template_path = (
+            Path(__file__).parent.parent / "data" / "Project set-up Template.xlsx"
+        )
+
+        if not template_path.exists():
+            messages.error(request, "Template file not found.")
+            return redirect(
+                reverse(
+                    "bill_of_quantities:structure-upload",
+                    kwargs={"project_pk": project_pk},
+                )
+            )
+
+        response = FileResponse(open(template_path, "rb"), as_attachment=True)
+        response["Content-Disposition"] = (
+            'attachment; filename="Project set-up Template.xlsx"'
+        )
+        response["Content-Type"] = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        return response

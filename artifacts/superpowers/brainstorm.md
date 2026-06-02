@@ -1,63 +1,77 @@
-# Brainstorming: Adding "demo 123" Project to Demo Tier Users as Read-Only
+# SedgePro Integration Brainstorming - User Invitation Flow
 
-This document details the goals, constraints, context, risks, options, and recommended approach for enabling a dedicated "demo 123" project for all demo-tier users under read-only restrictions.
+## Goal
+Establish a secure, automated integration that allows the third-party application **SedgePro** to trigger a user invitation in **Profit Pro** immediately after a successful customer payment. The invitation will associate the user (identified by their email) with their specific organization (identified by a client reference code) and launch the standard account activation workflow.
 
 ---
 
-## Goal
-* Dynamically present a project named "demo 123" in the project and portfolio lists of all active `DEMO_TIER` users.
-* Enforce strict read-only access (GET/HEAD/OPTIONS allowed; POST/PUT/DELETE/PATCH blocked) for demo tier users accessing "demo 123".
-
 ## Constraints
-* **Virtual Environment**: All validations, commands, and dependencies must run inside the `.venv` development environment.
-* **Test Discipline**: Must use `factory_boy` factories for testing and avoid raw ORM creations in test files.
-* **Base Models**: Custom models must inherit from `app.core.Utilities.models.BaseModel`.
-* **Read-Only Rigor**: Any attempt by a demo tier user to modify "demo 123" (e.g., uploading WBS, creating a payment certificate) must fail with a 403 response or a read-only redirect/error message.
+1. **Third-Party Initiation**: The invitation must be triggered dynamically by SedgePro immediately following payment success.
+2. **Security**: We must prevent unauthorized or malicious invitation requests (e.g. spoofed payment triggers). Requires cryptographic verification or secure API tokens.
+3. **Data Requirements**: The payload must include at least an `email` and a `client_reference` to accurately resolve the organization and provision the user account.
+4. **No Code Implementation**: At this stage, the task is purely architectural brainstorming and plan creation; no actual application code should be written.
+5. **No Existing Sign-Up Endpoint**: Standard registration requires interactive form validation; this flow must support headless, unattended account generation.
 
-## Known context
-* **Demo Permission Hook**: Active demo-tier users are identified by the `has_demo_permission` property (returns `True` if `subscription == DEMO_TIER` and is not expired).
-* **Project Querying**: Users get their project list via the `get_projects` property on the `Account` model. However, several mixins and report views hardcode project queryset logic as `Q(users=self.request.user) | Q(is_demo=True)`.
-* **Read-Only Enforcement**: Read-only enforcement for demo projects is handled at the mixin level in `app/core/Utilities/permissions.py` (checks `getattr(project, "is_demo", False)`).
-* **Role Bypasses**: Active demo tier users automatically bypass project role checks (`has_project_role` returns `True`) for `is_demo=True` projects.
+---
+
+## Known Context
+1. **Existing Invite System**: The system already supports invite flows for Project Signatories, Client Users, and standard Project Users via `urlsafe_base64_encode(force_bytes(user.pk))` and standard `default_token_generator.make_token(user)`.
+2. **Company/Client Records**: Companies are stored in the database via the `Company` model (`app/Project/company/company_models.py`) and identified by `registration_number` or other reference fields. They have a ManyToMany relationship with `Account` (`users`).
+3. **Account Model**: Accounts are represented by the custom `Account` model, which uses email as the username. It has an `email_verified` boolean flag.
+4. **Onboarding Email Templates**: Reusable welcome templates exist at `client/password_reset_email.html` and `portfolio/emails/project_user_welcome.html`.
+
+---
 
 ## Risks
-* **Data Isolation Leak**: If "demo 123" is marked as `is_demo = True`, it automatically becomes visible to all tiers (e.g. `FREE_TIER`, standard paid tiers). If we want it restricted specifically to `DEMO_TIER` users, using `is_demo = True` alone is insufficient.
-* **Inconsistent View Support**: Hardcoded querysets in mixins or report views (such as `ProjectMixin.get_queryset` and `PortfolioReportMixin.get_active_projects`) will omit "demo 123" if they only check `is_demo=True` or explicit user assignments.
-* **Mutation Vulnerability**: Failing to align all custom mixins (e.g. `SubscriptionAndRoleRequiredMixin`, `SubscriptionRequiredMixin`, `PaymentCertMixin`) could allow write actions on "demo 123".
+1. **Orphaned Accounts**: If SedgePro references a client code that does not exist in Profit Pro, the system must handle the failure gracefully without creating orphaned, unlinked users.
+2. **Rate Limiting and Abuse**: Public-facing webhooks are vulnerable to Denial of Service (DoS) or spam if not properly throttled, authenticated, and rate-limited.
+3. **Email Delivery Failure**: If the invitation email fails to send due to downstream mailer issues, the transaction must not lock up SedgePro's payment completion confirmation page.
+4. **Duplicate Invitations**: If SedgePro sends multiple webhook retries due to connection timeouts, the system must be idempotent (i.e. ensure only one user invitation is processed).
 
-## Options (2???4)
+---
 
-### Option 1: Explicit Database Seeding and Scoped Assignment
-* **Description**: Create a migration or post-save signal that ensures a project named "demo 123" (with `is_demo=False`) exists in the database. When a `DEMO_TIER` user is created, explicitly add them to the project's ManyToMany `users` field. Enforce read-only logic in permission mixins specifically by checking `project.name == "demo 123"`.
-* **Pros**: No changes needed for `get_projects` queryset logic; standard project associations work natively.
-* **Cons**: High database overhead. Deleting or cleaning expired demo accounts requires extra cleanup steps. Difficult to scale if thousands of demo users are registered.
+## Options (2–4)
 
-### Option 2: Dynamic QuerySet Injection and Unified Mixin Treatment (Recommended)
-* **Description**:
-  1. Dynamically append "demo 123" to the `get_projects` QuerySet for active `DEMO_TIER` users.
-  2. Refactor all hardcoded querysets in `ProjectMixin.get_queryset` and `PortfolioReportMixin.get_active_projects` to utilize the `user.get_projects` property directly, promoting DRY principles.
-  3. Update permission mixins (`UserHasProjectRoleGenericMixin`, `SubscriptionAndRoleRequiredMixin`, `SubscriptionRequiredMixin`, `PaymentCertMixin`) and the `Account.has_project_role` method to treat `project.name == "demo 123"` identically to `is_demo=True` projects (read-only for non-staff).
-* **Pros**: 
-  * Clean, fully dynamic, and zero database management/cleanup overhead.
-  * Ensures perfect tier isolation (only `DEMO_TIER` and staff/superusers can see it).
-  * Automatically propagates across all views and report summaries.
-* **Cons**: Requires refactoring of hardcoded project querysets in views.
+### Option 1: Direct Secure Webhook API Endpoint (Recommended)
+Profit Pro exposes a secure, lightweight POST endpoint (e.g., `/api/v1/integrations/sedgepro/invite/`).
+* **Security**: The endpoint is secured via an API key shared between Profit Pro and SedgePro, transmitted in the headers (e.g., `X-SedgePro-API-Key`).
+* **Payload**: SedgePro triggers this webhook upon successful payment with a JSON body:
+  ```json
+  {
+    "email": "user@example.com",
+    "client_reference": "CLIENT-REF-123",
+    "first_name": "John",
+    "last_name": "Doe",
+    "primary_contact": "+27821234567"
+  }
+  ```
+* **Process**: Profit Pro processes the request synchronously: it finds/creates the user, links them to the company, generates an onboarding token, and sends the standard client activation email.
+
+### Option 2: Asynchronous Event-Queue Webhook (Celery Worker)
+Similar webhook endpoint structure as Option 1, but the request handler simply validates the API token, enqueues a background celery task (e.g., `process_sedgepro_invite.delay(...)`), and returns an immediate `202 Accepted` response.
+* **Process**: The background worker takes care of resolving the Company model, creating the account, and sending the activation email.
+* **Pros**: High resilience, decoupling, and fast response times.
+* **Cons**: Slightly higher operational and queuing complexity.
+
+### Option 3: Cryptographically Signed Redirect (Claims-Based)
+Upon successful payment, SedgePro redirects the user's browser directly to Profit Pro via a parameterized URL: `/invite/claim/?email=...&ref=...&sig=...`.
+* **Process**: The signature `sig` is an HMAC-SHA256 hash generated by SedgePro using a shared secret. When the user lands on Profit Pro, the server validates the signature. If valid, it presents a password setup screen. The user account and client link are provisioned upon password submission.
+* **Pros**: Bypasses the need for background webhook retries or headless account generation; guarantees the user's email is valid and they are present.
+* **Cons**: Relies entirely on the user's client-side redirection; if the user closes their browser post-payment, the invitation is not generated.
 
 ---
 
 ## Recommendation
-Implement **Option 2**. It provides an elegant, scalable, and secure solution that leverages the existing `get_projects` property and read-only mixin structures, while correcting several hardcoded query anomalies across the codebase.
+**Option 1 (Direct Secure Webhook)** is recommended for the initial implementation phase, with a roadmap to transition to **Option 2 (Asynchronous Queueing)** if payment volume scales. Option 1 provides the cleanest separation of systems (server-to-server webhook) and ensures invitations are dispatched immediately upon payment confirmation without relying on the user completing a manual browser redirect. It leverages existing token and email services, requires minimal new infrastructure, and is easy to implement securely using standard Django views and API key validation in a middleware/mixin.
 
 ---
 
-## Acceptance criteria
-1. **Visibility**:
-   * Active `DEMO_TIER` users see the "demo 123" project in their project lists and portfolio dashboards.
-   * `FREE_TIER` and other non-demo/non-staff users cannot see or access "demo 123".
-   * Superusers and staff can see and fully manage "demo 123".
-2. **Access Control**:
-   * Active `DEMO_TIER` users can successfully view all dashboard pages, BOQ/WBS items, and compliance/payment certificate records of the "demo 123" project.
-   * Active `DEMO_TIER` users are strictly blocked from writing, updating, or deleting any records within "demo 123", returning a `403 Forbidden` response or redirection with a "read-only" error message.
-3. **Tests**:
-   * Comprehensive unit tests are added to verify visibility, access control, and mutation blocks on "demo 123" projects.
-   * Entire pytest suite runs and passes successfully.
+## Acceptance Criteria
+1. **Secure Access**: The new endpoint rejects all requests without a valid `X-SedgePro-API-Key` header with a `401 Unauthorized` status.
+2. **Client Code Validation**: If the `client_reference` provided does not match a valid `Company` registration number or reference in the database, the endpoint returns a `400 Bad Request` with an explicit error message, and no user account is created.
+3. **Idempotent Account Processing**:
+   - If the user does not exist, the system creates the account with an unusable password, joins them to the target company, and sends the activation email.
+   - If the user exists and is already joined to the company, the endpoint returns a `200 OK` indicating no action is needed.
+   - If the user exists but is not joined to the company, the system joins the user to the company and sends a welcome notification email.
+4. **Transaction Integrity**: The operation runs within a database transaction block (`transaction.atomic`) to ensure that if email sending or user linking fails, all database changes are rolled back.
+5. **Detailed Logging**: Logs are generated for all successful invitations, unrecognized client references, and failed verification attempts for traceability.

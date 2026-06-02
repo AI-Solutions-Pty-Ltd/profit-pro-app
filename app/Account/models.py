@@ -120,7 +120,7 @@ class Account(AbstractUser, BaseModel):
         max_length=50,
         choices=Subscription.choices,
         help_text="Subscription tier",
-        default=Subscription.DEMO_TIER,
+        default=Subscription.FULL_ACCESS,
     )
     email = models.EmailField(_("email address"), unique=True)
     first_name = models.CharField(
