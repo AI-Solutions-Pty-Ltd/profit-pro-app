@@ -1,6 +1,6 @@
 """Core views for the application."""
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -126,7 +126,7 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
         user = self.request.user
 
         # Programmatic module metadata
-        help_modules_data = [
+        help_modules_data: list[dict[str, Any]] = [
             {
                 "id": "projects",
                 "title": "Project Management",
@@ -138,8 +138,8 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
                 "checklist": [
                     "Navigate to Project List & click 'Add Project'",
                     "Fill in project coordinates, town, and client info",
-                    "Launch the Project Setup screen to allocate roles"
-                ]
+                    "Launch the Project Setup screen to allocate roles",
+                ],
             },
             {
                 "id": "boq",
@@ -152,8 +152,8 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
                 "checklist": [
                     "Download the standard Excel BOQ Setup Template",
                     "Upload the populated BOQ CSV template to the WBS uploader",
-                    "Set up payment certificate cycles and track contractual letters"
-                ]
+                    "Set up payment certificate cycles and track contractual letters",
+                ],
             },
             {
                 "id": "site_management",
@@ -166,8 +166,8 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
                 "checklist": [
                     "Create a daily diary entry for labor attendance",
                     "Log weather reports directly from the project site",
-                    "Assign weekly tasks to subcontractors and track progress"
-                ]
+                    "Assign weekly tasks to subcontractors and track progress",
+                ],
             },
             {
                 "id": "business_dashboard",
@@ -180,13 +180,15 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
                 "checklist": [
                     "Configure master tenant accounts for your organization",
                     "Set up enterprise billing rules and currency settings",
-                    "Review high-level aggregated cashflow charts across all projects"
-                ]
-            }
+                    "Review high-level aggregated cashflow charts across all projects",
+                ],
+            },
         ]
 
         evaluated_modules = []
-        is_demo = getattr(user, "subscription", None) == "DEMO_TIER" or getattr(user, "has_demo_permission", False)
+        is_demo = getattr(user, "subscription", None) == "DEMO_TIER" or getattr(
+            user, "has_demo_permission", False
+        )
         is_superuser = user.is_superuser
 
         for module in help_modules_data:
@@ -212,10 +214,12 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
 
             evaluated_modules.append(mod)
 
-        context.update({
-            "page_title": "Help Center & Onboarding Guides",
-            "help_modules": evaluated_modules,
-        })
+        context.update(
+            {
+                "page_title": "Help Center & Onboarding Guides",
+                "help_modules": evaluated_modules,
+            }
+        )
         return context
 
 

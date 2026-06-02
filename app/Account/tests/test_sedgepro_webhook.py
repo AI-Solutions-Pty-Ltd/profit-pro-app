@@ -221,4 +221,3 @@ class TestSedgeProWebhookView:
         assert user.first_name == first_name
         assert user.last_name == last_name
         assert self.company.users.filter(pk=user.pk).exists()
-

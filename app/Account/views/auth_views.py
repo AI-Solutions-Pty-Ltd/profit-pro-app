@@ -424,10 +424,12 @@ class SedgeProWebhookView(View):
                 # Ensure linked to Company
                 if company.users.filter(pk=user.pk).exists():
                     # Idempotent case: already linked
-                    return JsonResponse({
-                        "status": "success",
-                        "message": "User already associated with company",
-                    })
+                    return JsonResponse(
+                        {
+                            "status": "success",
+                            "message": "User already associated with company",
+                        }
+                    )
 
                 company.users.add(user)
 
@@ -478,16 +480,21 @@ class SedgeProWebhookView(View):
                     )
 
                 if user_exists:
-                    return JsonResponse({
-                        "status": "success",
-                        "message": "User linked to company",
-                    })
+                    return JsonResponse(
+                        {
+                            "status": "success",
+                            "message": "User linked to company",
+                        }
+                    )
                 else:
-                    return JsonResponse({
-                        "status": "success",
-                        "message": "User invited",
-                    })
+                    return JsonResponse(
+                        {
+                            "status": "success",
+                            "message": "User invited",
+                        }
+                    )
 
         except Exception as e:
-            return JsonResponse({"error": f"Internal processing error: {str(e)}"}, status=500)
-
+            return JsonResponse(
+                {"error": f"Internal processing error: {str(e)}"}, status=500
+            )

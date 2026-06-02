@@ -1,6 +1,5 @@
 """Tests for Help Center view."""
 
-import pytest
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
@@ -27,15 +26,12 @@ class TestHelpCenterView:
 
     def test_help_center_evaluates_access_demo(self, client):
         """Verify that a user on DEMO_TIER sees active/demo statuses."""
-        user = AccountFactory(
-            email="demouser@example.com",
-            subscription="DEMO_TIER"
-        )
+        user = AccountFactory(email="demouser@example.com", subscription="DEMO_TIER")
         client.force_login(user)
         url = reverse("help_center")
         response = client.get(url)
         assert response.status_code == 200
-        
+
         # Check context modules
         modules = response.context["help_modules"]
         business_mod = next(m for m in modules if m["id"] == "business_dashboard")

@@ -224,4 +224,3 @@ VAT_RATE = Decimal(os.getenv("VAT_RATE", "0.15"))
 
 # SedgePro Integration Settings
 SEDGEPRO_API_KEY = os.getenv("SEDGEPRO_API_KEY", "test-sedgepro-key")
-
