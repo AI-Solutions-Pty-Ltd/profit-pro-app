@@ -54,9 +54,9 @@ def import_boq_from_excel(project, excel_file):
         "pay_ref": "Pay Ref",
         "description": "Description",
         "unit": "Unit",
-        "contract_quantity": "Contract Quantity",
-        "contract_rate": "Contract Rate",
-        "contract_amount": "Contract Amount",
+        "contract_quantity": "Quantity",
+        "contract_rate": "Rate",
+        "contract_amount": "Amount",
     }
 
     # Normalize DataFrame column names to allow flexible headers

@@ -481,9 +481,9 @@ class TestBOQExcelImporter(TestCase):
                 "Item No.": "2.1",
                 "Description": "Piling",
                 "Unit": "no",
-                "Contract Quantity": 5,
-                "Contract Rate": 2000.0,
-                "Contract Amount": 10000.0,
+                "Quantity": 5,
+                "Rate": 2000.0,
+                "Amount": 10000.0,
                 # 'Package' and 'Pay Ref' columns are omitted entirely
             }
         ]
