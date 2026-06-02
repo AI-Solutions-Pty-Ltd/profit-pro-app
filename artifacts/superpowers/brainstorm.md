@@ -1,54 +1,77 @@
-# Brainstorm: Setup Cards Get-Started Help Tooltips
+# SedgePro Integration Brainstorming - User Invitation Flow
 
 ## Goal
-Add a premium, visually appealing information icon button next to each setup card's heading on the Project Setup page. Clicking the icon opens a toggleable, secure, and beautifully styled tooltip detailing step-by-step help for getting started with that specific setup step.
+Establish a secure, automated integration that allows the third-party application **SedgePro** to trigger a user invitation in **Profit Pro** immediately after a successful customer payment. The invitation will associate the user (identified by their email) with their specific organization (identified by a client reference code) and launch the standard account activation workflow.
+
+---
 
 ## Constraints
-- **Tailwind Compatibility**: Tooltips must utilize pure Tailwind CSS classes and Vanilla Javascript for smooth, lightweight transitions (no external JQuery or tooltip framework dependencies).
-- **No Overflow Clipping**: Tooltips must be positioned defensively to ensure they are never cut off by the `overflow-hidden` properties of parent dashboard panels.
-- **Icon Style**: Use standard Heroicon outlines already registered in the template for consistency.
-- **Responsive Layout**: Tooltip cards must render perfectly on both mobile screens (single-column) and larger grid screens (up to 3 columns).
+1. **Third-Party Initiation**: The invitation must be triggered dynamically by SedgePro immediately following payment success.
+2. **Security**: We must prevent unauthorized or malicious invitation requests (e.g. spoofed payment triggers). Requires cryptographic verification or secure API tokens.
+3. **Data Requirements**: The payload must include at least an `email` and a `client_reference` to accurately resolve the organization and provision the user account.
+4. **No Code Implementation**: At this stage, the task is purely architectural brainstorming and plan creation; no actual application code should be written.
+5. **No Existing Sign-Up Endpoint**: Standard registration requires interactive form validation; this flow must support headless, unattended account generation.
 
-## Known context
-- **Setup Cards Location**: `app/Project/templates/project/project_setup.html` renders the grid of cards under the "Project Information" panel.
-- **Card Elements**: Card headings like "Setup Project", "Allocate Client", "Allocate Contractor", "Allocate Lead Consultant", "Upload BOQ (CSV)", "Attach BOQ (Optional)", and "Allocate Signatory".
-- **Global Styles & Templates**: Core assets are defined in `layout.html` and static stylesheets.
+---
+
+## Known Context
+1. **Existing Invite System**: The system already supports invite flows for Project Signatories, Client Users, and standard Project Users via `urlsafe_base64_encode(force_bytes(user.pk))` and standard `default_token_generator.make_token(user)`.
+2. **Company/Client Records**: Companies are stored in the database via the `Company` model (`app/Project/company/company_models.py`) and identified by `registration_number` or other reference fields. They have a ManyToMany relationship with `Account` (`users`).
+3. **Account Model**: Accounts are represented by the custom `Account` model, which uses email as the username. It has an `email_verified` boolean flag.
+4. **Onboarding Email Templates**: Reusable welcome templates exist at `client/password_reset_email.html` and `portfolio/emails/project_user_welcome.html`.
+
+---
 
 ## Risks
-- **Visual Clutter**: Adding info buttons to 7 different cards in a small grid can look cluttered if not designed with micro-spacing and subtle styling.
-  - *Mitigation*: We will use a small, elegant `text-gray-400` color for the icon, matching standard layout tokens, and make it highlight in `text-indigo-600` only on hover/active toggle.
-- **Clipping on Grid Edges**: Tooltips near the left/right boundaries of the grid could overflow the container.
-  - *Mitigation*: We will position the tooltips relative to the heading text with safe padding and center-align or edge-align them (`left-0` or `right-0`) so they stay contained within the respective card boundaries.
+1. **Orphaned Accounts**: If SedgePro references a client code that does not exist in Profit Pro, the system must handle the failure gracefully without creating orphaned, unlinked users.
+2. **Rate Limiting and Abuse**: Public-facing webhooks are vulnerable to Denial of Service (DoS) or spam if not properly throttled, authenticated, and rate-limited.
+3. **Email Delivery Failure**: If the invitation email fails to send due to downstream mailer issues, the transaction must not lock up SedgePro's payment completion confirmation page.
+4. **Duplicate Invitations**: If SedgePro sends multiple webhook retries due to connection timeouts, the system must be idempotent (i.e. ensure only one user invitation is processed).
+
+---
 
 ## Options (2–4)
 
-### Option 1: Standard Hover Tooltips (CSS Group)
-- **Summary**: Add an absolute-positioned hidden tooltip element inside a relative container. Show it on hover using Tailwind `group-hover:block` or `group-hover:opacity-100` classes.
-- **Pros**: Super fast, no JS required, light footprint.
-- **Cons**: Cannot be accessed easily by mobile touch-events. Hard to read step-by-step instructions because the tooltip immediately vanishes as soon as the mouse cursor moves a millimeter away.
-- **Complexity / risk**: Low complexity / Low risk.
+### Option 1: Direct Secure Webhook API Endpoint (Recommended)
+Profit Pro exposes a secure, lightweight POST endpoint (e.g., `/api/v1/integrations/sedgepro/invite/`).
+* **Security**: The endpoint is secured via an API key shared between Profit Pro and SedgePro, transmitted in the headers (e.g., `X-SedgePro-API-Key`).
+* **Payload**: SedgePro triggers this webhook upon successful payment with a JSON body:
+  ```json
+  {
+    "email": "user@example.com",
+    "client_reference": "CLIENT-REF-123",
+    "first_name": "John",
+    "last_name": "Doe",
+    "primary_contact": "+27821234567"
+  }
+  ```
+* **Process**: Profit Pro processes the request synchronously: it finds/creates the user, links them to the company, generates an onboarding token, and sends the standard client activation email.
 
-### Option 2: Interactive Click-to-Toggle Tooltip Cards (Recommended)
-- **Summary**: Implement a click-to-toggle tooltip card for each setup step. The help card is positioned absolute to the heading, showing a clean checkmark list of getting-started steps, a step title, and a small close cross button. We will write a tiny, global inline JS function (`toggleSetupTooltip`) to show/hide the tooltips and close them when clicking outside or clicking the close button.
-- **Pros**:
-  - Extremely premium feel: feels like a fully interactive guide.
-  - Excellent for mobile: works seamlessly on touch devices.
-  - User friendly: stays open while the user performs the actions or reads the steps.
-- **Cons**: Requires adding a simple toggle script.
-- **Complexity / risk**: Low-Medium complexity / Very low risk.
+### Option 2: Asynchronous Event-Queue Webhook (Celery Worker)
+Similar webhook endpoint structure as Option 1, but the request handler simply validates the API token, enqueues a background celery task (e.g., `process_sedgepro_invite.delay(...)`), and returns an immediate `202 Accepted` response.
+* **Process**: The background worker takes care of resolving the Company model, creating the account, and sending the activation email.
+* **Pros**: High resilience, decoupling, and fast response times.
+* **Cons**: Slightly higher operational and queuing complexity.
 
-### Option 3: Inline Expandable Help Drawers (Accordion style)
-- **Summary**: Add an inline help drawer inside the card itself. Clicking the info icon expands the drawer vertically within the card, shifting content down.
-- **Pros**: 100% immune to clipping since it lives in the normal document flow.
-- **Cons**: Modifies the height of individual cards dynamically, creating uneven grid alignment across the columns (ruining the pristine symmetrical dashboard grid look).
-- **Complexity / risk**: Medium complexity / Medium risk (aesthetic inconsistency).
+### Option 3: Cryptographically Signed Redirect (Claims-Based)
+Upon successful payment, SedgePro redirects the user's browser directly to Profit Pro via a parameterized URL: `/invite/claim/?email=...&ref=...&sig=...`.
+* **Process**: The signature `sig` is an HMAC-SHA256 hash generated by SedgePro using a shared secret. When the user lands on Profit Pro, the server validates the signature. If valid, it presents a password setup screen. The user account and client link are provisioned upon password submission.
+* **Pros**: Bypasses the need for background webhook retries or headless account generation; guarantees the user's email is valid and they are present.
+* **Cons**: Relies entirely on the user's client-side redirection; if the user closes their browser post-payment, the invitation is not generated.
+
+---
 
 ## Recommendation
-We recommend **Option 2 (Interactive Click-to-Toggle Tooltips)**. It delivers a premium visual experience, functions flawlessly on touch devices, and maintains grid symmetry without altering card heights dynamically.
+**Option 1 (Direct Secure Webhook)** is recommended for the initial implementation phase, with a roadmap to transition to **Option 2 (Asynchronous Queueing)** if payment volume scales. Option 1 provides the cleanest separation of systems (server-to-server webhook) and ensures invitations are dispatched immediately upon payment confirmation without relying on the user completing a manual browser redirect. It leverages existing token and email services, requires minimal new infrastructure, and is easy to implement securely using standard Django views and API key validation in a middleware/mixin.
 
-## Acceptance criteria
-- [ ] Every card inside the Project Setup section has a small inline Info Icon button next to its heading.
-- [ ] Clicking the icon toggles a structured tooltip containing clear getting-started steps.
-- [ ] The tooltip layout is styled with a dark glassmorphism aesthetic (`bg-slate-900 text-white rounded-xl shadow-xl`), custom checkmark bullet points, and an explicit close button.
-- [ ] Clicking outside the tooltip or clicking another tooltip closes the open one.
-- [ ] Fully responsive: fits cleanly within card borders on all device sizes.
+---
+
+## Acceptance Criteria
+1. **Secure Access**: The new endpoint rejects all requests without a valid `X-SedgePro-API-Key` header with a `401 Unauthorized` status.
+2. **Client Code Validation**: If the `client_reference` provided does not match a valid `Company` registration number or reference in the database, the endpoint returns a `400 Bad Request` with an explicit error message, and no user account is created.
+3. **Idempotent Account Processing**:
+   - If the user does not exist, the system creates the account with an unusable password, joins them to the target company, and sends the activation email.
+   - If the user exists and is already joined to the company, the endpoint returns a `200 OK` indicating no action is needed.
+   - If the user exists but is not joined to the company, the system joins the user to the company and sends a welcome notification email.
+4. **Transaction Integrity**: The operation runs within a database transaction block (`transaction.atomic`) to ensure that if email sending or user linking fails, all database changes are rolled back.
+5. **Detailed Logging**: Logs are generated for all successful invitations, unrecognized client references, and failed verification attempts for traceability.

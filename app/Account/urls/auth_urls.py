@@ -64,4 +64,9 @@ urlpatterns = [
         auth_views.RegisterView.as_view(),
         name="register",
     ),
+    path(
+        "sedgepro/webhook/",
+        auth_views.SedgeProWebhookView.as_view(),
+        name="sedgepro_webhook",
+    ),
 ]
