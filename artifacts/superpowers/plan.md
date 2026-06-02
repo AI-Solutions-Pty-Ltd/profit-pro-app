@@ -1,63 +1,108 @@
-# Plan - Adding "demo 123" Project to Demo Tier Users as Read-Only
+# SedgePro Webhook Invitation Flow Implementation Plan
 
 ## Goal
-Enable active `DEMO_TIER` users to dynamically see a project named "demo 123" in their project lists, while enforcing strict read-only access (GET/HEAD/OPTIONS permitted, write operations blocked) across all views and permission mixins.
+Develop a secure API webhook endpoint in the Django backend of Profit Pro that allows **SedgePro** to trigger a user invitation after a successful payment. This endpoint will receive an email and a client reference, find/create the corresponding `Account` with an unusable password, link the user to the associated `Company` matching the client reference, and send a customized activation/onboarding email.
 
-## Assumptions
-* Active demo-tier users are identified by the `has_demo_permission` property on `Account`.
-* General write operations on demo projects are already blocked by checking `getattr(project, "is_demo", False)` in dispatch/permission mixins.
-* Superusers/staff retain full read/write access to "demo 123" projects.
+---
+
+## User Review Required
+We will configure SedgePro to authenticate using a shared API key passed via the custom HTTP header `X-SedgePro-API-Key`. This key should be kept securely in environment variables on your servers.
+
+---
+
+## Open Questions
+No open questions at this stage. We have established that the client reference provided by SedgePro corresponds to the `registration_number` field of the `Company` model.
+
+---
+
+## Proposed Changes
+
+### Goal
+Implement secure integration via webhook.
+
+### Assumptions
+1. SedgePro will authenticate with Profit Pro using a shared API key passed via the HTTP header `X-SedgePro-API-Key`.
+2. The shared API key is stored in Django settings as `settings.SEDGEPRO_API_KEY` (configured via environment variables).
+3. The client reference provided by SedgePro corresponds to the `registration_number` field of the `Company` model.
+4. Python 3.13 virtual environment is active in the workspace at `.venv`.
+
+---
 
 ## Plan
 
-### 1. Update Account Model Projects and Role Bypass Logic
-* **Files**: [models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/models.py)
+### 1. Write Webhook Tests (TDD First)
+* **Files**: [NEW] [test_sedgepro_webhook.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_sedgepro_webhook.py)
 * **Change**:
-  * In `get_projects`, dynamically include any project named `"demo 123"` if the user is in the `DEMO_TIER`.
-  * In `has_project_role`, bypass role checks for projects named `"demo 123"` if the user has `has_demo_permission`.
+  - Implement comprehensive integration tests validating SedgePro signature authentication (missing, invalid, valid).
+  - Test successful user invitations for:
+    - A completely new user (should create user with unusable password and send invitation email).
+    - An existing user not currently linked to the client (should link user and send welcome notification email).
+    - An existing user already linked to the client (idempotent path; returns success without duplicate actions).
+  - Test validation errors (invalid client reference/company, malformed payload).
 * **Verify**:
-  * Run `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_tier.py` to ensure existing demo tests pass.
+  - Run: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_sedgepro_webhook.py`
+  - Expected: Fail with `NoReverseMatch` (since route is not registered).
 
-### 2. Refactor View Queries to Leverage `get_projects`
-* **Files**:
-  * [project_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/project_views.py)
-  * [portfolio_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/views/portfolio_views.py)
-  * [project_role_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/views/project_role_views.py)
+### 2. Register Webhook URL Pattern
+* **Files**: [MODIFY] [auth_urls.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/urls/auth_urls.py)
 * **Change**:
-  * In `ProjectMixin.get_queryset()`, use `self.request.user.get_projects.order_by("-created_at")` instead of the hardcoded `Q(users=self.request.user) | Q(is_demo=True)`.
-  * In `PortfolioReportMixin.get_active_projects()`, use `self.request.user.get_projects` instead of the hardcoded queryset filter.
-  * In `BaseRoleListView.get_project()`, `BaseRoleAddView.get_project()`, and `BaseRoleRemoveView.get_project()`, fetch projects from `self.request.user.get_projects` (or all projects if staff/superuser) instead of the hardcoded queryset.
+  - Add path `sedgepro/webhook/` routing to `auth_views.SedgeProWebhookView.as_view()`.
 * **Verify**:
-  * Run Django check: `.venv\Scripts\python.exe manage.py check` to verify syntax and MRO.
+  - Run: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_sedgepro_webhook.py`
+  - Expected: Fail with `ImportError: cannot import name 'SedgeProWebhookView'`.
 
-### 3. Update Permission Mixins for Read-Only Scoping
-* **Files**:
-  * [permissions.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/core/Utilities/permissions.py)
-  * [subscription_and_role_mixin.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/core/Utilities/subscription_and_role_mixin.py)
-  * [subscriptions.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/core/Utilities/subscriptions.py)
-  * [mixins.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/mixins.py)
+### 3. Define SedgePro API Credentials in Settings
+* **Files**: [MODIFY] [base.py](file:///c:/Users/nebst/Projects/profit-pro-app/settings/base.py)
 * **Change**:
-  * In `UserHasProjectRoleGenericMixin` (`permissions.py`), treat `project.name == "demo 123"` identically to `is_demo=True` for read-only checks.
-  * In `SubscriptionAndRoleRequiredMixin` (`subscription_and_role_mixin.py`), treat `project.name == "demo 123"` identically to `is_demo=True` for read-only bypasses.
-  * In `SubscriptionRequiredMixin` (`subscriptions.py`), treat `project.name == "demo 123"` identically to `is_demo=True` for read-only checks.
-  * In `PaymentCertMixin.get_project()` (`mixins.py`), allow `DEMO_TIER` users to bypass consultant checks if `self.project.name == "demo 123"`.
+  - Define `SEDGEPRO_API_KEY = os.environ.get("SEDGEPRO_API_KEY", "test-sedgepro-key")`.
 * **Verify**:
-  * Run `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_tier.py`
+  - Check syntax: `.venv\Scripts\python.exe -m ruff check settings/base.py`
 
-### 4. Implement Unit Tests for "demo 123" Project Scoping
-* **Files**: [test_demo_tier.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_demo_tier.py)
+### 4. Implement SedgeProWebhookView
+* **Files**: [MODIFY] [auth_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/views/auth_views.py)
 * **Change**:
-  * Implement `test_demo_123_visible_to_demo_tier_user` asserting "demo 123" is listed in active `DEMO_TIER` projects.
-  * Implement `test_demo_123_not_visible_to_other_users` asserting "demo 123" is omitted from other user tiers.
-  * Implement `test_demo_123_read_only_for_demo_tier_user` asserting read-only access (safe GETs pass, mutation POSTs/PUTs block).
+  - Define `SedgeProWebhookView` as a class-based view extending `View`.
+  - Apply `method_decorator(csrf_exempt, name='dispatch')` to bypass CSRF token checks for server-to-server webhook requests.
+  - Implement API key verification: validate `X-SedgePro-API-Key` matches `settings.SEDGEPRO_API_KEY`.
+  - Validate and decode the JSON payload (required keys: `email` and `client_reference`).
+  - Resolve the target `Company` matching `registration_number=client_reference` and `type=Company.Type.CLIENT`. Return 400 if not found.
+  - In a `transaction.atomic()` database context:
+    - Attempt to fetch existing `Account` by lowercase email.
+    - If new: create user using `Account.objects.create_user(...)` with an unusable password.
+    - Add user to `consultant` permission group.
+    - Link user to target `Company` (`company.users.add(user)`).
+    - Send activation token link or notification email based on whether user is new or existing.
 * **Verify**:
-  * Run `.venv\Scripts\python.exe -m pytest app/Account/tests/test_demo_tier.py`
+  - Run: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_sedgepro_webhook.py -v`
+  - Expected: PASS
 
-## Risks & mitigations
-* **Risk**: High frequency database creation of "demo 123" inside standard tests might cause namespace collision.
-  * *Mitigation*: Ensure "demo 123" is created dynamically inside unit tests via the `ProjectFactory` or query parameters and soft-deleted/cleaned up.
-* **Risk**: Non-demo tier paid users might see "demo 123" if they share identical project query logic.
-  * *Mitigation*: Explicitly check `self.subscription == Subscription.DEMO_TIER` when evaluating the "demo 123" project append in the model.
+### 5. Verify Entire Codebase Integrity
+* **Files**: None
+* **Change**: Run full test suites and code formatting tools to ensure everything is correct and has no lint issues.
+* **Verify**:
+  - Run: `.venv\Scripts\python.exe -m ruff check .`
+  - Run: `.venv\Scripts\python.exe -m pytest`
+  - Expected: Pass ruff check and all unit tests.
 
-## Rollback plan
-* Restore modified files from git HEAD (`git checkout -- <filepath>`) to revert any query modifications.
+---
+
+## Verification Plan
+
+### Automated Tests
+- Integration tests: `.venv\Scripts\python.exe -m pytest app/Account/tests/test_sedgepro_webhook.py -v`
+- Full test suite: `.venv\Scripts\python.exe -m pytest`
+
+---
+
+## Risks & Mitigations
+* **Risk**: API key exposed in repository logs.
+  - *Mitigation*: API key is parsed via standard environment variables and defaulted safely for local test validation.
+* **Risk**: Duplicate webhook posts during network delay retries.
+  - *Mitigation*: Webhook view is designed to be fully idempotent. If the user is already linked to the target client, it returns a 200 OK without sending duplicate activation emails.
+
+---
+
+## Rollback Plan
+- Revert routing changes in [auth_urls.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/urls/auth_urls.py).
+- Revert custom view implementations in [auth_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/views/auth_views.py).
+- Remove [test_sedgepro_webhook.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_sedgepro_webhook.py).

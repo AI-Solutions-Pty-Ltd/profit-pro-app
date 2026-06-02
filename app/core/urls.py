@@ -10,6 +10,7 @@ from app.core.dynamic_quick_create import QuickCreateFormView, QuickCreateSubmit
 from .views import (
     AboutView,
     FeaturesView,
+    HelpCenterView,
     HomeView,
 )
 
@@ -18,6 +19,7 @@ urlpatterns = (
         path("admin/", admin.site.urls),
         path("features/", FeaturesView.as_view(), name="features"),
         path("about/", AboutView.as_view(), name="about"),
+        path("help/", HelpCenterView.as_view(), name="help_center"),
         path("", HomeView.as_view(), name="home"),
         path(
             "quick-create/form/",

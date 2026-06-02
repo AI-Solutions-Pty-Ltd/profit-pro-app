@@ -14,6 +14,11 @@ structure_urls = [
         name="structure-upload",
     ),
     path(
+        "project/<int:project_pk>/wbs/download-template/",
+        structure_views.DownloadBOQTemplateView.as_view(),
+        name="structure-template-download",
+    ),
+    path(
         "project/<int:project_pk>/structures/",
         structure_views.StructureListView.as_view(),
         name="structure-list",
