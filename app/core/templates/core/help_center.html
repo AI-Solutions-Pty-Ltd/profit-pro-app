@@ -1,147 +1,151 @@
 {% extends "layout.html" %}
 {% load template_extras %}
-
 {% block content %}
-<div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 py-8">
-    <!-- Header Banner -->
-    <div class="bg-gradient-to-r from-indigo-800 to-indigo-600 rounded-3xl p-8 md:p-12 shadow-xl mb-8 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-200 via-indigo-900 to-slate-900"></div>
-        <div class="relative z-10 max-w-2xl">
-            <span class="bg-indigo-500/30 text-indigo-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Help & Onboarding</span>
-            <h1 class="text-3xl md:text-5xl font-black text-white mt-4 mb-4 tracking-tight">Interactive User Guides</h1>
-            <p class="text-indigo-100 text-sm md:text-base font-medium leading-relaxed">
-                Learn how to navigate and make the most out of every module in Profit Pro. Follow simple setup checklists to get started immediately.
-            </p>
-            
-            <!-- Dynamic Search -->
-            <div class="mt-8 relative max-w-md">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-indigo-300">
-                    {% heroicon_outline "magnifying-glass" size="18" %}
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 py-8">
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-indigo-800 to-indigo-600 rounded-3xl p-8 md:p-12 shadow-xl mb-8 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-200 via-indigo-900 to-slate-900">
+            </div>
+            <div class="relative z-10 max-w-2xl">
+                <span class="bg-indigo-500/30 text-indigo-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Help & Onboarding</span>
+                <h1 class="text-3xl md:text-5xl font-black text-white mt-4 mb-4 tracking-tight">Interactive User Guides</h1>
+                <p class="text-indigo-100 text-sm md:text-base font-medium leading-relaxed">
+                    Learn how to navigate and make the most out of every module in Profit Pro. Follow simple setup checklists to get started immediately.
+                </p>
+                <!-- Dynamic Search -->
+                <div class="mt-8 relative max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-indigo-300">
+                        {% heroicon_outline "magnifying-glass" size="18" %}
+                    </div>
+                    <input type="text"
+                           id="help-search"
+                           placeholder="Search guides, setup checklists, or modules..."
+                           class="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all sm:text-sm backdrop-blur-md">
                 </div>
-                <input type="text" 
-                       id="help-search" 
-                       placeholder="Search guides, setup checklists, or modules..." 
-                       class="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all sm:text-sm backdrop-blur-md">
             </div>
         </div>
-    </div>
-
-    <div class="lg:grid lg:grid-cols-4 lg:gap-8">
-        <!-- Sidebar Navigation Filters -->
-        <div class="mb-6 lg:mb-0 lg:col-span-1">
-            <nav class="space-y-1" aria-label="Sidebar">
-                <button onclick="filterCategory('all')" id="tab-all" class="w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all bg-indigo-600 text-white shadow-sm hover:bg-indigo-700">
-                    {% heroicon_outline "squares-2x2" size="16" class="mr-3 text-indigo-200" %}
-                    All Modules
-                </button>
-                <button onclick="filterCategory('projects')" id="tab-projects" class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
-                    {% heroicon_outline "building-office-2" size="16" class="mr-3 text-gray-400" %}
-                    Projects Setup
-                </button>
-                <button onclick="filterCategory('boq')" id="tab-boq" class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
-                    {% heroicon_outline "document-text" size="16" class="mr-3 text-gray-400" %}
-                    BOQ & Forecasts
-                </button>
-                <button onclick="filterCategory('site')" id="tab-site" class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
-                    {% heroicon_outline "clipboard-document-check" size="16" class="mr-3 text-gray-400" %}
-                    Site Logbooks
-                </button>
-                <button onclick="filterCategory('business')" id="tab-business" class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
-                    {% heroicon_outline "building-office" size="16" class="mr-3 text-gray-400" %}
-                    Enterprise Dashboard
-                </button>
-            </nav>
-        </div>
-
-        <!-- Modules Grid -->
-        <div class="lg:col-span-3">
-            <div id="modules-container" class="grid gap-6 md:grid-cols-2">
-                {% for mod in help_modules %}
-                <div class="help-card bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-indigo-100 transition-all" 
-                     data-id="{{ mod.id }}"
-                     data-category="{{ mod.category }}"
-                     data-title="{{ mod.title|lower }}"
-                     data-description="{{ mod.description|lower }}">
-                    <div>
-                        <!-- Header -->
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-                                {% if mod.icon == "building-office-2" %}
-                                    {% heroicon_outline "building-office-2" size="20" %}
-                                {% elif mod.icon == "document-text" %}
-                                    {% heroicon_outline "document-text" size="20" %}
-                                {% elif mod.icon == "clipboard-document-check" %}
-                                    {% heroicon_outline "clipboard-document-check" size="20" %}
+        <div class="lg:grid lg:grid-cols-4 lg:gap-8">
+            <!-- Sidebar Navigation Filters -->
+            <div class="mb-6 lg:mb-0 lg:col-span-1">
+                <nav class="space-y-1" aria-label="Sidebar">
+                    <button onclick="filterCategory('all')"
+                            id="tab-all"
+                            class="w-full flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all bg-indigo-600 text-white shadow-sm hover:bg-indigo-700">
+                        {% heroicon_outline "squares-2x2" size="16" class="mr-3 text-indigo-200" %}
+                        All Modules
+                    </button>
+                    <button onclick="filterCategory('projects')"
+                            id="tab-projects"
+                            class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
+                        {% heroicon_outline "building-office-2" size="16" class="mr-3 text-gray-400" %}
+                        Projects Setup
+                    </button>
+                    <button onclick="filterCategory('boq')"
+                            id="tab-boq"
+                            class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
+                        {% heroicon_outline "document-text" size="16" class="mr-3 text-gray-400" %}
+                        BOQ & Forecasts
+                    </button>
+                    <button onclick="filterCategory('site')"
+                            id="tab-site"
+                            class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
+                        {% heroicon_outline "clipboard-document-check" size="16" class="mr-3 text-gray-400" %}
+                        Site Logbooks
+                    </button>
+                    <button onclick="filterCategory('business')"
+                            id="tab-business"
+                            class="w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all text-gray-700 hover:bg-gray-100 hover:text-indigo-600">
+                        {% heroicon_outline "building-office" size="16" class="mr-3 text-gray-400" %}
+                        Enterprise Dashboard
+                    </button>
+                </nav>
+            </div>
+            <!-- Modules Grid -->
+            <div class="lg:col-span-3">
+                <div id="modules-container" class="grid gap-6 md:grid-cols-2">
+                    {% for mod in help_modules %}
+                        <div class="help-card bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-indigo-100 transition-all"
+                             data-id="{{ mod.id }}"
+                             data-category="{{ mod.category }}"
+                             data-title="{{ mod.title|lower }}"
+                             data-description="{{ mod.description|lower }}">
+                            <div>
+                                <!-- Header -->
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                                        {% if mod.icon == "building-office-2" %}
+                                            {% heroicon_outline "building-office-2" size="20" %}
+                                        {% elif mod.icon == "document-text" %}
+                                            {% heroicon_outline "document-text" size="20" %}
+                                        {% elif mod.icon == "clipboard-document-check" %}
+                                            {% heroicon_outline "clipboard-document-check" size="20" %}
+                                        {% else %}
+                                            {% heroicon_outline "building-office" size="20" %}
+                                        {% endif %}
+                                    </div>
+                                    <!-- Status Badges -->
+                                    {% if mod.status == "Active" %}
+                                        <span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full">Active</span>
+                                    {% elif mod.status == "Demo Available" %}
+                                        <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full">Demo Active</span>
+                                    {% else %}
+                                        <span class="bg-amber-50 text-amber-700 border border-amber-100 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full">Locked</span>
+                                    {% endif %}
+                                </div>
+                                <!-- Card Body -->
+                                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ mod.title }}</h3>
+                                <p class="text-sm font-medium text-gray-500 mb-6 leading-relaxed">{{ mod.description }}</p>
+                                <!-- Expandable Quick-Start Accordion -->
+                                <div class="border-t border-gray-100 pt-4 mt-4">
+                                    <button onclick="toggleAccordion('{{ mod.id }}')"
+                                            class="w-full flex justify-between items-center text-xs font-bold text-gray-700 hover:text-indigo-600 focus:outline-none transition-colors">
+                                        <span>GET STARTED CHECKLIST</span>
+                                        <span id="chevron-{{ mod.id }}"
+                                              class="transform transition-transform duration-200">
+                                            {% heroicon_outline "chevron-down" size="14" %}
+                                        </span>
+                                    </button>
+                                    <div id="accordion-body-{{ mod.id }}" class="hidden mt-3 space-y-2">
+                                        {% for step in mod.checklist %}
+                                            <div class="flex items-start gap-2.5 text-xs text-gray-600 font-medium">
+                                                <span class="text-emerald-500 flex-shrink-0 mt-0.5">{% heroicon_outline "check-circle" size="14" %}</span>
+                                                <span>{{ step }}</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Actions Footer -->
+                            <div class="mt-8 border-t border-gray-100 pt-4">
+                                {% if mod.has_access %}
+                                    <a href="{% url mod.url_name %}"
+                                       class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm gap-1.5">
+                                        {% heroicon_outline "rocket-launch" size="16" %}
+                                        Launch Module
+                                    </a>
                                 {% else %}
-                                    {% heroicon_outline "building-office" size="20" %}
+                                    <a href="https://sedgepro.co.za/#prelaunch-promotion"
+                                       target="_blank"
+                                       class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-sm gap-1.5">
+                                        {% heroicon_outline "sparkles" size="16" %}
+                                        Upgrade Plan to Unlock
+                                    </a>
                                 {% endif %}
                             </div>
-                            <!-- Status Badges -->
-                            {% if mod.status == "Active" %}
-                                <span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full">Active</span>
-                            {% elif mod.status == "Demo Available" %}
-                                <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full">Demo Active</span>
-                            {% else %}
-                                <span class="bg-amber-50 text-amber-700 border border-amber-100 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full">Locked</span>
-                            {% endif %}
                         </div>
-
-                        <!-- Card Body -->
-                        <h3 class="text-lg font-bold text-gray-900 mb-2">{{ mod.title }}</h3>
-                        <p class="text-sm font-medium text-gray-500 mb-6 leading-relaxed">{{ mod.description }}</p>
-
-                        <!-- Expandable Quick-Start Accordion -->
-                        <div class="border-t border-gray-100 pt-4 mt-4">
-                            <button onclick="toggleAccordion('{{ mod.id }}')" class="w-full flex justify-between items-center text-xs font-bold text-gray-700 hover:text-indigo-600 focus:outline-none transition-colors">
-                                <span>GET STARTED CHECKLIST</span>
-                                <span id="chevron-{{ mod.id }}" class="transform transition-transform duration-200">
-                                    {% heroicon_outline "chevron-down" size="14" %}
-                                </span>
-                            </button>
-                            <div id="accordion-body-{{ mod.id }}" class="hidden mt-3 space-y-2">
-                                {% for step in mod.checklist %}
-                                <div class="flex items-start gap-2.5 text-xs text-gray-600 font-medium">
-                                    <span class="text-emerald-500 flex-shrink-0 mt-0.5">
-                                        {% heroicon_outline "check-circle" size="14" %}
-                                    </span>
-                                    <span>{{ step }}</span>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Actions Footer -->
-                    <div class="mt-8 border-t border-gray-100 pt-4">
-                        {% if mod.has_access %}
-                            <a href="{% url mod.url_name %}" class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm gap-1.5">
-                                {% heroicon_outline "rocket-launch" size="16" %}
-                                Launch Module
-                            </a>
-                        {% else %}
-                            <a href="https://sedgepro.co.za/#prelaunch-promotion" target="_blank" class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-sm gap-1.5">
-                                {% heroicon_outline "sparkles" size="16" %}
-                                Upgrade Plan to Unlock
-                            </a>
-                        {% endif %}
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Empty Search State -->
-            <div id="search-empty-state" class="hidden text-center py-16 bg-gray-50 border border-dashed border-gray-300 rounded-3xl">
-                <div class="text-gray-400 mb-3 flex justify-center">
-                    {% heroicon_outline "face-frown" size="36" %}
+                <!-- Empty Search State -->
+                <div id="search-empty-state"
+                     class="hidden text-center py-16 bg-gray-50 border border-dashed border-gray-300 rounded-3xl">
+                    <div class="text-gray-400 mb-3 flex justify-center">{% heroicon_outline "face-frown" size="36" %}</div>
+                    <h4 class="text-base font-bold text-gray-900">No guides found</h4>
+                    <p class="text-sm font-medium text-gray-500 mt-1">Try adjusting your search keywords or choosing another category.</p>
                 </div>
-                <h4 class="text-base font-bold text-gray-900">No guides found</h4>
-                <p class="text-sm font-medium text-gray-500 mt-1">Try adjusting your search keywords or choosing another category.</p>
             </div>
         </div>
     </div>
-</div>
-
-<script>
+    <script>
     // Live Search Filter Logic
     const searchInput = document.getElementById('help-search');
     const cards = document.querySelectorAll('.help-card');
@@ -218,5 +222,5 @@
             chevron.classList.remove('rotate-180');
         }
     }
-</script>
+    </script>
 {% endblock %}
