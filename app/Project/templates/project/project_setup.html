@@ -24,7 +24,7 @@
             </div>
         </div>
         <!-- Project Information -->
-        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div class="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hiddn">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Project Information</h2>
                 <p class="mt-1 text-sm text-gray-600">Basic project details and settings</p>
@@ -35,19 +35,19 @@
                     <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
                         <div class="flex justify-between items-center mb-1">
                             <h3 class="text-sm font-semibold text-gray-900">Setup Project</h3>
-                            <div class="relative inline-block text-left">
+                            <div class="inline-block relative text-left">
                                 <button type="button"
                                         onclick="toggleSetupTooltip(event, 'tooltip-setup-project')"
-                                        class="text-gray-400 hover:text-indigo-600 focus:outline-none transition-colors"
+                                        class="text-gray-400 transition-colors hover:text-indigo-600 focus:outline-none"
                                         aria-label="Help">
                                     {% heroicon_outline "information-circle" class="w-4 h-4" %}
                                 </button>
                                 <div id="tooltip-setup-project"
-                                     class="hidden setup-tooltip absolute right-0 mt-2 w-72 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-4 border border-slate-800 z-50 text-xs font-normal leading-relaxed pointer-events-auto">
-                                    <div class="absolute bottom-full right-2 border-8 border-transparent border-b-slate-900"></div>
-                                    <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                                        <h4 class="font-bold text-slate-200 flex items-center">
-                                            {% heroicon_outline "light-bulb" class="w-4 h-4 mr-1 text-yellow-400" %}
+                                     class="hidden absolute right-0 z-50 p-4 mt-2 w-72 text-xs font-normal leading-relaxed rounded-xl border shadow-2xl pointer-events-auto setup-tooltip bg-slate-900 text-slate-100 border-slate-800">
+                                    <div class="absolute right-2 bottom-full border-8 border-transparent border-b-slate-900"></div>
+                                    <div class="flex justify-between items-center pb-1.5 mb-2 border-b border-slate-800">
+                                        <h4 class="flex items-center font-bold text-slate-200">
+                                            {% heroicon_outline "light-bulb" class="mr-1 w-4 h-4 text-yellow-400" %}
                                             Setup Project Help
                                         </h4>
                                         <button type="button"
@@ -85,19 +85,19 @@
                         <div class="p-4 bg-amber-50 rounded-lg border border-amber-200 transition-all duration-200 hover:border-amber-300 hover:shadow-md">
                             <div class="flex justify-between items-center mb-1">
                                 <h3 class="text-sm font-semibold text-amber-900">Allocate Client</h3>
-                                <div class="relative inline-block text-left">
+                                <div class="inline-block relative text-left">
                                     <button type="button"
                                             onclick="toggleSetupTooltip(event, 'tooltip-allocate-client')"
-                                            class="text-amber-500 hover:text-amber-700 focus:outline-none transition-colors"
+                                            class="text-amber-500 transition-colors hover:text-amber-700 focus:outline-none"
                                             aria-label="Help">
                                         {% heroicon_outline "information-circle" class="w-4 h-4" %}
                                     </button>
                                     <div id="tooltip-allocate-client"
-                                         class="hidden setup-tooltip absolute right-0 mt-2 w-72 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-4 border border-slate-800 z-50 text-xs font-normal leading-relaxed pointer-events-auto">
-                                        <div class="absolute bottom-full right-2 border-8 border-transparent border-b-slate-900"></div>
-                                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                                            <h4 class="font-bold text-slate-200 flex items-center">
-                                                {% heroicon_outline "light-bulb" class="w-4 h-4 mr-1 text-yellow-400" %}
+                                         class="hidden absolute right-0 z-50 p-4 mt-2 w-72 text-xs font-normal leading-relaxed rounded-xl border shadow-2xl pointer-events-auto setup-tooltip bg-slate-900 text-slate-100 border-slate-800">
+                                        <div class="absolute right-2 bottom-full border-8 border-transparent border-b-slate-900"></div>
+                                        <div class="flex justify-between items-center pb-1.5 mb-2 border-b border-slate-800">
+                                            <h4 class="flex items-center font-bold text-slate-200">
+                                                {% heroicon_outline "light-bulb" class="mr-1 w-4 h-4 text-yellow-400" %}
                                                 Allocate Client Help
                                             </h4>
                                             <button type="button"
@@ -136,19 +136,19 @@
                         <div class="p-4 bg-blue-50 rounded-lg border border-blue-200 transition-all duration-200 hover:border-blue-300 hover:shadow-md">
                             <div class="flex justify-between items-center mb-1">
                                 <h3 class="text-sm font-semibold text-blue-900">Allocate Contractor</h3>
-                                <div class="relative inline-block text-left">
+                                <div class="inline-block relative text-left">
                                     <button type="button"
                                             onclick="toggleSetupTooltip(event, 'tooltip-allocate-contractor')"
-                                            class="text-blue-500 hover:text-blue-700 focus:outline-none transition-colors"
+                                            class="text-blue-500 transition-colors hover:text-blue-700 focus:outline-none"
                                             aria-label="Help">
                                         {% heroicon_outline "information-circle" class="w-4 h-4" %}
                                     </button>
                                     <div id="tooltip-allocate-contractor"
-                                         class="hidden setup-tooltip absolute right-0 mt-2 w-72 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-4 border border-slate-800 z-50 text-xs font-normal leading-relaxed pointer-events-auto">
-                                        <div class="absolute bottom-full right-2 border-8 border-transparent border-b-slate-900"></div>
-                                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                                            <h4 class="font-bold text-slate-200 flex items-center">
-                                                {% heroicon_outline "light-bulb" class="w-4 h-4 mr-1 text-yellow-400" %}
+                                         class="hidden absolute right-0 z-50 p-4 mt-2 w-72 text-xs font-normal leading-relaxed rounded-xl border shadow-2xl pointer-events-auto setup-tooltip bg-slate-900 text-slate-100 border-slate-800">
+                                        <div class="absolute right-2 bottom-full border-8 border-transparent border-b-slate-900"></div>
+                                        <div class="flex justify-between items-center pb-1.5 mb-2 border-b border-slate-800">
+                                            <h4 class="flex items-center font-bold text-slate-200">
+                                                {% heroicon_outline "light-bulb" class="mr-1 w-4 h-4 text-yellow-400" %}
                                                 Allocate Contractor Help
                                             </h4>
                                             <button type="button"
@@ -187,19 +187,19 @@
                         <div class="p-4 bg-purple-50 rounded-lg border border-purple-200 transition-all duration-200 hover:border-purple-300 hover:shadow-md">
                             <div class="flex justify-between items-center mb-1">
                                 <h3 class="text-sm font-semibold text-purple-900">Allocate Lead Consultant</h3>
-                                <div class="relative inline-block text-left">
+                                <div class="inline-block relative text-left">
                                     <button type="button"
                                             onclick="toggleSetupTooltip(event, 'tooltip-allocate-consultant')"
-                                            class="text-purple-500 hover:text-purple-700 focus:outline-none transition-colors"
+                                            class="text-purple-500 transition-colors hover:text-purple-700 focus:outline-none"
                                             aria-label="Help">
                                         {% heroicon_outline "information-circle" class="w-4 h-4" %}
                                     </button>
                                     <div id="tooltip-allocate-consultant"
-                                         class="hidden setup-tooltip absolute right-0 mt-2 w-72 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-4 border border-slate-800 z-50 text-xs font-normal leading-relaxed pointer-events-auto">
-                                        <div class="absolute bottom-full right-2 border-8 border-transparent border-b-slate-900"></div>
-                                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                                            <h4 class="font-bold text-slate-200 flex items-center">
-                                                {% heroicon_outline "light-bulb" class="w-4 h-4 mr-1 text-yellow-400" %}
+                                         class="hidden absolute right-0 z-50 p-4 mt-2 w-72 text-xs font-normal leading-relaxed rounded-xl border shadow-2xl pointer-events-auto setup-tooltip bg-slate-900 text-slate-100 border-slate-800">
+                                        <div class="absolute right-2 bottom-full border-8 border-transparent border-b-slate-900"></div>
+                                        <div class="flex justify-between items-center pb-1.5 mb-2 border-b border-slate-800">
+                                            <h4 class="flex items-center font-bold text-slate-200">
+                                                {% heroicon_outline "light-bulb" class="mr-1 w-4 h-4 text-yellow-400" %}
                                                 Allocate Consultant Help
                                             </h4>
                                             <button type="button"
@@ -237,19 +237,19 @@
                         <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-200 transition-all duration-200 hover:border-emerald-300 hover:shadow-md">
                             <div class="flex justify-between items-center mb-1">
                                 <h3 class="mb-1 text-sm font-semibold text-emerald-900">Upload BOQ (CSV)</h3>
-                                <div class="relative inline-block text-left">
+                                <div class="inline-block relative text-left">
                                     <button type="button"
                                             onclick="toggleSetupTooltip(event, 'tooltip-upload-boq')"
-                                            class="text-emerald-500 hover:text-emerald-700 focus:outline-none transition-colors"
+                                            class="text-emerald-500 transition-colors hover:text-emerald-700 focus:outline-none"
                                             aria-label="Help">
                                         {% heroicon_outline "information-circle" class="w-4 h-4" %}
                                     </button>
                                     <div id="tooltip-upload-boq"
-                                         class="hidden setup-tooltip absolute right-0 mt-2 w-72 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-4 border border-slate-800 z-50 text-xs font-normal leading-relaxed pointer-events-auto">
-                                        <div class="absolute bottom-full right-2 border-8 border-transparent border-b-slate-900"></div>
-                                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                                            <h4 class="font-bold text-slate-200 flex items-center">
-                                                {% heroicon_outline "light-bulb" class="w-4 h-4 mr-1 text-yellow-400" %}
+                                         class="hidden absolute right-0 z-50 p-4 mt-2 w-72 text-xs font-normal leading-relaxed rounded-xl border shadow-2xl pointer-events-auto setup-tooltip bg-slate-900 text-slate-100 border-slate-800">
+                                        <div class="absolute right-2 bottom-full border-8 border-transparent border-b-slate-900"></div>
+                                        <div class="flex justify-between items-center pb-1.5 mb-2 border-b border-slate-800">
+                                            <h4 class="flex items-center font-bold text-slate-200">
+                                                {% heroicon_outline "light-bulb" class="mr-1 w-4 h-4 text-yellow-400" %}
                                                 Upload BOQ Help
                                             </h4>
                                             <button type="button"
@@ -303,7 +303,7 @@
                                     </a>
                                 {% endif %}
                                 <a href="{% url 'bill_of_quantities:structure-template-download' project.pk %}"
-                                   class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 rounded-md border border-emerald-300 shadow-sm transition-colors hover:bg-emerald-100 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                   class="inline-flex justify-center items-center px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 rounded-md border border-emerald-300 shadow-sm transition-colors hover:bg-emerald-100 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                                     {% heroicon_outline "arrow-down-tray" size="16" %}
                                     <span class="ml-2">Download Template</span>
                                 </a>
@@ -314,19 +314,19 @@
                         <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
                             <div class="flex justify-between items-center mb-1">
                                 <h3 class="text-sm font-semibold text-gray-900">Attach BOQ (Optional)</h3>
-                                <div class="relative inline-block text-left">
+                                <div class="inline-block relative text-left">
                                     <button type="button"
                                             onclick="toggleSetupTooltip(event, 'tooltip-attach-boq')"
-                                            class="text-gray-400 hover:text-indigo-600 focus:outline-none transition-colors"
+                                            class="text-gray-400 transition-colors hover:text-indigo-600 focus:outline-none"
                                             aria-label="Help">
                                         {% heroicon_outline "information-circle" class="w-4 h-4" %}
                                     </button>
                                     <div id="tooltip-attach-boq"
-                                         class="hidden setup-tooltip absolute right-0 mt-2 w-72 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-4 border border-slate-800 z-50 text-xs font-normal leading-relaxed pointer-events-auto">
-                                        <div class="absolute bottom-full right-2 border-8 border-transparent border-b-slate-900"></div>
-                                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                                            <h4 class="font-bold text-slate-200 flex items-center">
-                                                {% heroicon_outline "light-bulb" class="w-4 h-4 mr-1 text-yellow-400" %}
+                                         class="hidden absolute right-0 z-50 p-4 mt-2 w-72 text-xs font-normal leading-relaxed rounded-xl border shadow-2xl pointer-events-auto setup-tooltip bg-slate-900 text-slate-100 border-slate-800">
+                                        <div class="absolute right-2 bottom-full border-8 border-transparent border-b-slate-900"></div>
+                                        <div class="flex justify-between items-center pb-1.5 mb-2 border-b border-slate-800">
+                                            <h4 class="flex items-center font-bold text-slate-200">
+                                                {% heroicon_outline "light-bulb" class="mr-1 w-4 h-4 text-yellow-400" %}
                                                 Attach BOQ Help
                                             </h4>
                                             <button type="button"
@@ -419,19 +419,19 @@
                         <div class="p-4 bg-purple-50 rounded-lg border border-purple-200 transition-all duration-200 hover:border-purple-300 hover:shadow-md">
                             <div class="flex justify-between items-center mb-1">
                                 <h3 class="text-sm font-semibold text-purple-900">Allocate Signatory</h3>
-                                <div class="relative inline-block text-left">
+                                <div class="inline-block relative text-left">
                                     <button type="button"
                                             onclick="toggleSetupTooltip(event, 'tooltip-allocate-signatory')"
-                                            class="text-purple-500 hover:text-purple-700 focus:outline-none transition-colors"
+                                            class="text-purple-500 transition-colors hover:text-purple-700 focus:outline-none"
                                             aria-label="Help">
                                         {% heroicon_outline "information-circle" class="w-4 h-4" %}
                                     </button>
                                     <div id="tooltip-allocate-signatory"
-                                         class="hidden setup-tooltip absolute right-0 mt-2 w-72 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-4 border border-slate-800 z-50 text-xs font-normal leading-relaxed pointer-events-auto">
-                                        <div class="absolute bottom-full right-2 border-8 border-transparent border-b-slate-900"></div>
-                                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                                            <h4 class="font-bold text-slate-200 flex items-center">
-                                                {% heroicon_outline "light-bulb" class="w-4 h-4 mr-1 text-yellow-400" %}
+                                         class="hidden absolute right-0 z-10 p-4 mt-2 w-72 text-xs font-normal leading-relaxed rounded-xl border shadow-2xl pointer-events-auto setup-tooltip bg-slate-900 text-slate-100 border-slate-800">
+                                        <div class="absolute right-2 bottom-full border-8 border-transparent border-b-slate-900"></div>
+                                        <div class="flex justify-between items-center pb-1.5 mb-2 border-b border-slate-800">
+                                            <h4 class="flex items-center font-bold text-slate-200">
+                                                {% heroicon_outline "light-bulb" class="mr-1 w-4 h-4 text-yellow-400" %}
                                                 Allocate Signatory Help
                                             </h4>
                                             <button type="button"
@@ -465,7 +465,6 @@
                             </a>
                         </div>
                     {% endif %}
-                    %}
                 </div>
             </div>
         </div>
@@ -942,6 +941,40 @@
         document.getElementById('deleteModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeDeleteModal();
+            }
+        });
+
+        // Setup Tooltip functions
+        function toggleSetupTooltip(event, tooltipId) {
+            event.stopPropagation();
+            const targetTooltip = document.getElementById(tooltipId);
+            
+            // Hide all other tooltips first
+            document.querySelectorAll('.setup-tooltip').forEach(tooltip => {
+                if (tooltip.id !== tooltipId) {
+                    tooltip.classList.add('hidden');
+                }
+            });
+
+            if (targetTooltip) {
+                targetTooltip.classList.toggle('hidden');
+            }
+        }
+
+        function closeSetupTooltip(event, tooltipId) {
+            event.stopPropagation();
+            const targetTooltip = document.getElementById(tooltipId);
+            if (targetTooltip) {
+                targetTooltip.classList.add('hidden');
+            }
+        }
+
+        // Close all tooltips when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.setup-tooltip')) {
+                document.querySelectorAll('.setup-tooltip').forEach(tooltip => {
+                    tooltip.classList.add('hidden');
+                });
             }
         });
     </script>
