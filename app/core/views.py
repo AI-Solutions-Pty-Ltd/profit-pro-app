@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, cast
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 
@@ -112,6 +113,109 @@ class AboutView(TemplateView):
             }
         )
         context["admin_email"] = settings.ADMIN_EMAIL
+        return context
+
+
+class HelpCenterView(LoginRequiredMixin, TemplateView):
+    """View for interactive user onboarding guides and navigation hub."""
+
+    template_name = "core/help_center.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        # Programmatic module metadata
+        help_modules_data = [
+            {
+                "id": "projects",
+                "title": "Project Management",
+                "category": "projects",
+                "description": "Create and manage construction projects, track WBS stages, and allocate key team members.",
+                "icon": "building-office-2",
+                "url_name": "project:project-list",
+                "required_subscription": "BASIC",
+                "checklist": [
+                    "Navigate to Project List & click 'Add Project'",
+                    "Fill in project coordinates, town, and client info",
+                    "Launch the Project Setup screen to allocate roles"
+                ]
+            },
+            {
+                "id": "boq",
+                "title": "Bill of Quantities (BOQ)",
+                "category": "boq",
+                "description": "Upload BOQ templates, configure trade rates, track client forecasts, contractual correspondence, and payment claims.",
+                "icon": "document-text",
+                "url_name": "bill_of_quantities:dashboard",
+                "required_subscription": "BASIC",
+                "checklist": [
+                    "Download the standard Excel BOQ Setup Template",
+                    "Upload the populated BOQ CSV template to the WBS uploader",
+                    "Set up payment certificate cycles and track contractual letters"
+                ]
+            },
+            {
+                "id": "site_management",
+                "title": "Site Management",
+                "category": "site",
+                "description": "Log daily diaries, register site weather conditions, manage subcontractor site logs, and assign site-specific tasks.",
+                "icon": "clipboard-document-check",
+                "url_name": "site_management:dashboard",
+                "required_subscription": "BASIC",
+                "checklist": [
+                    "Create a daily diary entry for labor attendance",
+                    "Log weather reports directly from the project site",
+                    "Assign weekly tasks to subcontractors and track progress"
+                ]
+            },
+            {
+                "id": "business_dashboard",
+                "title": "Business & Enterprise Controls",
+                "category": "business",
+                "description": "Access multi-company controls, business portfolios, and high-level client financial performance charts.",
+                "icon": "building-office",
+                "url_name": "project:company-dashboard",
+                "required_subscription": "BUSINESS_MANAGEMENT",
+                "checklist": [
+                    "Configure master tenant accounts for your organization",
+                    "Set up enterprise billing rules and currency settings",
+                    "Review high-level aggregated cashflow charts across all projects"
+                ]
+            }
+        ]
+
+        evaluated_modules = []
+        is_demo = getattr(user, "subscription", None) == "DEMO_TIER" or getattr(user, "has_demo_permission", False)
+        is_superuser = user.is_superuser
+
+        for module in help_modules_data:
+            mod = module.copy()
+            req_sub = module["required_subscription"]
+
+            if is_superuser:
+                mod["status"] = "Active"
+                mod["has_access"] = True
+            elif req_sub == "BUSINESS_MANAGEMENT":
+                if is_demo:
+                    mod["status"] = "Demo Available"
+                    mod["has_access"] = True
+                elif getattr(user, "subscription", None) == "BUSINESS_MANAGEMENT":
+                    mod["status"] = "Active"
+                    mod["has_access"] = True
+                else:
+                    mod["status"] = "Locked"
+                    mod["has_access"] = False
+            else:
+                mod["status"] = "Active"
+                mod["has_access"] = True
+
+            evaluated_modules.append(mod)
+
+        context.update({
+            "page_title": "Help Center & Onboarding Guides",
+            "help_modules": evaluated_modules,
+        })
         return context
 
 

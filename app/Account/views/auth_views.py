@@ -27,9 +27,11 @@ from django.core.mail import send_mail
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from django.views.generic import CreateView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import CreateView, View
 
 from app.Account.models import Account
 from app.Account.services import send_verification_email
@@ -343,3 +345,149 @@ class PasswordResetConfirmView(BasePasswordResetConfirmView):
         )
 
         return response
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class SedgeProWebhookView(View):
+    """Secure webhook endpoint for SedgePro user invitations."""
+
+    def post(self, request, *args, **kwargs):
+        import json
+
+        from django.contrib.auth.models import Group
+        from django.contrib.auth.tokens import default_token_generator
+        from django.db import transaction
+        from django.http import JsonResponse
+
+        from app.Project.models import Company
+
+        # 1. Authenticate with X-SedgePro-API-Key
+        api_key = request.headers.get("X-SedgePro-API-Key")
+        if not api_key or api_key != settings.SEDGEPRO_API_KEY:
+            return JsonResponse({"error": "Unauthorized"}, status=401)
+
+        # 2. Parse and validate JSON payload
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, TypeError):
+            return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+
+        # Support Supabase Database Webhook wrapper format
+        if isinstance(data, dict) and "record" in data:
+            data = data["record"] or {}
+
+        email = data.get("email") or data.get("user_email")
+        client_reference = data.get("client_reference")
+
+        if not email or not client_reference:
+            return JsonResponse(
+                {"error": "Missing email or client_reference"}, status=400
+            )
+
+        # 3. Resolve target company client
+        try:
+            company = Company.objects.get(
+                registration_number=client_reference, type=Company.Type.CLIENT
+            )
+        except Company.DoesNotExist:
+            return JsonResponse({"error": "Company not found"}, status=400)
+
+        first_name = data.get("first_name", "")
+        last_name = data.get("last_name", "")
+        primary_contact = data.get("primary_contact", "")
+
+        # 4. Atomic transaction block
+        try:
+            with transaction.atomic():
+                # Check if user already exists
+                email_lower = email.lower()
+                user_exists = True
+                try:
+                    user = Account.objects.get(email=email_lower)
+                except Account.DoesNotExist:
+                    # Create new user
+                    user = Account.objects.create_user(
+                        email=email_lower,
+                        first_name=first_name,
+                        last_name=last_name,
+                        primary_contact=primary_contact or "+27820000000",
+                        type=Account.Type.CLIENT,
+                    )
+                    user.set_unusable_password()
+                    user.save()
+                    user_exists = False
+
+                # Ensure added to consultant group
+                consultant_group, _ = Group.objects.get_or_create(name="consultant")
+                user.groups.add(consultant_group)
+
+                # Ensure linked to Company
+                if company.users.filter(pk=user.pk).exists():
+                    # Idempotent case: already linked
+                    return JsonResponse({
+                        "status": "success",
+                        "message": "User already associated with company",
+                    })
+
+                company.users.add(user)
+
+                # 5. Send onboarding/invitation email
+                if settings.USE_EMAIL:
+                    protocol = "https" if request.is_secure() else "http"
+                    domain = request.get_host()
+
+                    if user_exists:
+                        # Existing user: send notification
+                        context = {
+                            "user": user,
+                            "site_name": settings.SITE_NAME,
+                            "client_name": company.name,
+                            "protocol": protocol,
+                            "domain": domain,
+                        }
+                        subject = f"You've been added to {company.name} on {settings.SITE_NAME}"
+                        html_message = render_to_string(
+                            "client/client_added_email.html", context
+                        )
+                    else:
+                        # New user: send setup password invite
+                        token = default_token_generator.make_token(user)
+                        uid = urlsafe_base64_encode(force_bytes(user.pk))
+                        context = {
+                            "user": user,
+                            "protocol": protocol,
+                            "domain": domain,
+                            "uid": uid,
+                            "token": token,
+                            "site_name": settings.SITE_NAME,
+                            "expiry_hours": 24,
+                            "client_name": company.name,
+                        }
+                        subject = f"You've been invited to {company.name} on {settings.SITE_NAME}"
+                        html_message = render_to_string(
+                            "client/password_reset_email.html", context
+                        )
+
+                    send_mail(
+                        subject=subject,
+                        message="",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+
+                if user_exists:
+                    return JsonResponse({
+                        "status": "success",
+                        "message": "User linked to company",
+                    })
+                else:
+                    return JsonResponse({
+                        "status": "success",
+                        "message": "User invited",
+                    })
+
+        except Exception as e:
+            return JsonResponse({"error": f"Internal processing error: {str(e)}"}, status=500)
+

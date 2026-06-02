@@ -221,3 +221,7 @@ TAILWIND_APP_NAME = "app.theme"
 NPM_BIN_PATH = os.getenv("NPM_BIN_PATH", "C:/Program Files/nodejs/npm.cmd")
 
 VAT_RATE = Decimal(os.getenv("VAT_RATE", "0.15"))
+
+# SedgePro Integration Settings
+SEDGEPRO_API_KEY = os.getenv("SEDGEPRO_API_KEY", "test-sedgepro-key")
+
