@@ -124,9 +124,9 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        
+
         # Programmatic module metadata
-        HELP_MODULES = [
+        help_modules_data = [
             {
                 "id": "projects",
                 "title": "Project Management",
@@ -189,7 +189,7 @@ class HelpCenterView(LoginRequiredMixin, TemplateView):
         is_demo = getattr(user, "subscription", None) == "DEMO_TIER" or getattr(user, "has_demo_permission", False)
         is_superuser = user.is_superuser
 
-        for module in HELP_MODULES:
+        for module in help_modules_data:
             mod = module.copy()
             req_sub = module["required_subscription"]
 
