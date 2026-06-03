@@ -228,6 +228,11 @@ def import_boq_from_excel(project, excel_file):
     if errors:
         return 0, errors
 
+    if len(valid_forms) == 0:
+        return 0, [
+            "Excel file is empty. Please ensure it contains at least one valid line item row."
+        ]
+
     # No errors, erase previous data and save in transaction
     with transaction.atomic():
         Structure.objects.filter(project=project).delete()
