@@ -21,7 +21,7 @@ class TestSedgeProWebhookView:
         # Create a client company with a specific registration number
         self.company = ClientFactory.create(registration_number="SEDGE-REF-12345")
         self.url = reverse("users:auth:sedgepro_webhook")
-        self.api_key = "test-sedgepro-key"
+        self.api_key = settings.SEDGEPRO_API_KEY
         self.headers = {"HTTP_X_SEDGEPRO_API_KEY": self.api_key}
 
     def test_webhook_unauthorized_missing_header(self, client):

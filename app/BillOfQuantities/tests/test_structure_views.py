@@ -368,6 +368,46 @@ class TestStructureExcelUploadView(TestCase):
         assert breadcrumbs[0]["title"] == "Structures"
         assert breadcrumbs[1]["title"] == "Upload Structures"
 
+    def test_upload_invalid_excel_renders_validation_errors(self):
+        """Test uploading an invalid Excel file renders the page with errors."""
+        import io
+
+        import pandas as pd
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        data = [
+            {
+                "Structure": "Phase 1",
+                "Bill No.": "001",
+                "Item No.": "1.1",
+                "Description": "Trenching",
+                "Unit": "m³",
+                "Quantity": 10,
+                "Rate": 150.0,
+                "Amount": 2000.0,  # 10 * 150 = 1500 != 2000, mismatch error!
+            }
+        ]
+        df = pd.DataFrame(data)
+        excel_buffer = io.BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+            df.to_excel(writer, sheet_name="Setup Template", index=False)
+        excel_buffer.seek(0)
+
+        uploaded_file = SimpleUploadedFile(
+            "invalid_template.xlsx",
+            excel_buffer.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+        # Post the invalid file to the upload view
+        response = self.client.post(self.url, {"excel_file": uploaded_file})
+
+        # It should return a 200 OK since it failed validation and re-rendered the form
+        assert response.status_code == 200
+        self.assertTemplateUsed(response, "structure/structure_excel_upload.html")
+        assert "upload_errors" in response.context
+        assert len(response.context["upload_errors"]) > 0
+
 
 class TestDownloadBOQTemplateView(TestCase):
     """Test cases for DownloadBOQTemplateView."""
