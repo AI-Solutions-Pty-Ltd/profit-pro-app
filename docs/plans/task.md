@@ -1,7 +1,6 @@
-# Task Progress: Fix Setup Tooltip Uncaught ReferenceError
+# Task Progress: Clean WBS Excel File and Integrate as Template
 
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Define `toggleSetupTooltip` and `closeSetupTooltip` in `project_setup.html` script block | `[x]` | Manual review of template code |
-| **TSK-02** | Add outside-click close behavior for all tooltips | `[x]` | Verify Javascript logic and event handlers |
-| **TSK-03** | Verify template syntax and run Django checks | `[x]` | Run `.venv\Scripts\python.exe manage.py check` |
+| **TSK-01** | Discard helper columns and integrate clean data into Example sheet | `[x]` | Execution of Python cleaning script |
+| **TSK-02** | Execute Django system checks and full pytest verification suite | `[x]` | `.venv\Scripts\python.exe -m pytest` |
