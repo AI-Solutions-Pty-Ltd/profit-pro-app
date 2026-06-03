@@ -12,7 +12,7 @@ from app.Account.subscription_config import Subscription
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import LineItem, Structure
 from app.BillOfQuantities.services import import_boq_from_excel
-from app.BillOfQuantities.tests.factories import StructureFactory
+from app.BillOfQuantities.tests.factories import LineItemFactory, StructureFactory
 from app.Project.models import ProjectRole, Role
 from app.Project.tests.factories import ProjectFactory
 
@@ -556,3 +556,81 @@ class TestBOQExcelImporter(TestCase):
         assert created_count == 0
         assert len(errors) == 1
         assert "Calculation mismatch" in errors[0]
+
+    def test_import_with_empty_rows(self):
+        """Test import succeeds and skips completely empty rows (even if extra columns have data)."""
+        data = [
+            {
+                "Structure": "Phase 1",
+                "Bill No.": "001",
+                "Item No.": "1.1",
+                "Description": "Trenching",
+                "Unit": "m³",
+                "Quantity": 10,
+                "Rate": 150.0,
+                "Amount": 1500.0,
+                "ExtraCol": 1.0,
+            },
+            # Empty row for standard columns, but has value in ExtraCol
+            {
+                "Structure": "",
+                "Bill No.": None,
+                "Item No.": float("nan"),
+                "Description": "",
+                "Unit": None,
+                "Quantity": None,
+                "Rate": None,
+                "Amount": None,
+                "ExtraCol": 1.0,
+            },
+        ]
+        excel_file = self._create_excel_file(data)
+        created_count, errors = import_boq_from_excel(self.project, excel_file)
+
+        # It should succeed because the empty row is skipped!
+        assert len(errors) == 0
+        assert created_count == 1
+
+    def test_import_empty_file_returns_error_and_does_not_delete(self):
+        """Test import fails if Excel file contains no valid line item rows, and existing data is kept."""
+        # 1. Create existing structure and line item
+        structure = StructureFactory.create(
+            project=self.project, name="Existing Structure"
+        )
+        LineItemFactory.create(
+            project=self.project,
+            structure=structure,
+            description="Existing Line Item",
+        )
+
+        # Confirm database has the data
+        assert Structure.objects.filter(project=self.project).count() == 1
+        assert LineItem.objects.filter(project=self.project).count() == 1
+
+        # 2. Prepare an empty excel file (only headers or formatted empty rows)
+        data = [
+            {
+                "Structure": "",
+                "Bill No.": None,
+                "Item No.": float("nan"),
+                "Description": "",
+                "Unit": None,
+                "Quantity": None,
+                "Rate": None,
+                "Amount": None,
+                "ExtraCol": 1.0,
+            }
+        ]
+        excel_file = self._create_excel_file(data)
+
+        # 3. Try to import
+        created_count, errors = import_boq_from_excel(self.project, excel_file)
+
+        # 4. Assertions
+        assert created_count == 0
+        assert len(errors) == 1
+        assert "Excel file is empty" in errors[0]
+
+        # Confirm database STILL has the original data and has NOT been cleared/deleted
+        assert Structure.objects.filter(project=self.project).count() == 1
+        assert LineItem.objects.filter(project=self.project).count() == 1

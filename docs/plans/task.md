@@ -1,7 +1,7 @@
-# Task Progress: Fix Payment Certificate PDF Download 404 Error
+# Task Progress: Fix Excel BOQ Empty Upload Validation
 
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Add reproduction/regression test cases for PDF download views (superuser & project role users) | `[x]` | View the test file and check for new test assertions |
-| **TSK-02** | Remove incorrect `project__users=request.user` query filter from the download, abridged download, status, and email views | `[x]` | View changes in `payment_certificate_views.py` |
-| **TSK-03** | Run the pytest suite to verify all payment certificate views tests pass | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_views.py -v` |
+| **TSK-01** | Add regression test case `test_import_empty_file_returns_error_and_does_not_delete` to verify empty file uploads fail and preserve database records | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -k test_import_empty_file_returns_error_and_does_not_delete -v` |
+| **TSK-02** | Add empty check in `import_boq_from_excel` before database deletion transaction starts | `[x]` | View changes in `services.py` |
+| **TSK-03** | Run full pytest test suite and ruff checks and formatting | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -v` and `ruff check` |

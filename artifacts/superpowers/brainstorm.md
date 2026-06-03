@@ -1,77 +1,40 @@
-# SedgePro Integration Brainstorming - User Invitation Flow
-
 ## Goal
-Establish a secure, automated integration that allows the third-party application **SedgePro** to trigger a user invitation in **Profit Pro** immediately after a successful customer payment. The invitation will associate the user (identified by their email) with their specific organization (identified by a client reference code) and launch the standard account activation workflow.
-
----
+Prevent users from uploading a completely empty Excel sheet (or one where all rows are empty) by detecting this state during upload and returning a clear validation warning/error instead of silently clearing the project's existing BOQ data.
 
 ## Constraints
-1. **Third-Party Initiation**: The invitation must be triggered dynamically by SedgePro immediately following payment success.
-2. **Security**: We must prevent unauthorized or malicious invitation requests (e.g. spoofed payment triggers). Requires cryptographic verification or secure API tokens.
-3. **Data Requirements**: The payload must include at least an `email` and a `client_reference` to accurately resolve the organization and provision the user account.
-4. **No Code Implementation**: At this stage, the task is purely architectural brainstorming and plan creation; no actual application code should be written.
-5. **No Existing Sign-Up Endpoint**: Standard registration requires interactive form validation; this flow must support headless, unattended account generation.
+1. Must use Django's validation/errors framework.
+2. Must prevent deletion of existing data if the uploaded file is empty.
+3. Must remain compatible with single-sheet files and files with a "Setup Template" sheet.
+4. Validation should happen in the service layer or form validation layer.
 
----
-
-## Known Context
-1. **Existing Invite System**: The system already supports invite flows for Project Signatories, Client Users, and standard Project Users via `urlsafe_base64_encode(force_bytes(user.pk))` and standard `default_token_generator.make_token(user)`.
-2. **Company/Client Records**: Companies are stored in the database via the `Company` model (`app/Project/company/company_models.py`) and identified by `registration_number` or other reference fields. They have a ManyToMany relationship with `Account` (`users`).
-3. **Account Model**: Accounts are represented by the custom `Account` model, which uses email as the username. It has an `email_verified` boolean flag.
-4. **Onboarding Email Templates**: Reusable welcome templates exist at `client/password_reset_email.html` and `portfolio/emails/project_user_welcome.html`.
-
----
+## Known context
+- If `import_boq_from_excel` returns `created_count = 0` and `errors = []` (i.e. no parsing errors, but no rows parsed), the database is currently wiped (Structure, Bill, Package, and LineItem are deleted).
+- In `import_boq_from_excel`, standard column mapping and empty row checking are already done.
+- If all rows are empty, `valid_forms` is empty.
 
 ## Risks
-1. **Orphaned Accounts**: If SedgePro references a client code that does not exist in Profit Pro, the system must handle the failure gracefully without creating orphaned, unlinked users.
-2. **Rate Limiting and Abuse**: Public-facing webhooks are vulnerable to Denial of Service (DoS) or spam if not properly throttled, authenticated, and rate-limited.
-3. **Email Delivery Failure**: If the invitation email fails to send due to downstream mailer issues, the transaction must not lock up SedgePro's payment completion confirmation page.
-4. **Duplicate Invitations**: If SedgePro sends multiple webhook retries due to connection timeouts, the system must be idempotent (i.e. ensure only one user invitation is processed).
-
----
+- Users who intentionally want to clear all data by uploading an empty sheet won't be able to do so this way. (Mitigation: If they want to clear data, they should use a dedicated "Clear BOQ" button/action in the UI, rather than uploading an empty spreadsheet.)
+- We need to make sure we don't accidentally treat a valid sheet with temporary parsing issues (or header matching errors) as "empty" without returning the proper header missing errors. (Mitigation: Check if required columns are missing first, which is already handled and returns specific errors.)
 
 ## Options (2–4)
+### Option 1: service-level validation in `import_boq_from_excel`
+If `len(valid_forms) == 0` after parsing all rows, return `0, ["Excel file is empty. Please ensure it contains at least one valid line item row."]`. This is simple and prevents the deletion transaction from executing since we return an error before the database clear command.
 
-### Option 1: Direct Secure Webhook API Endpoint (Recommended)
-Profit Pro exposes a secure, lightweight POST endpoint (e.g., `/api/v1/integrations/sedgepro/invite/`).
-* **Security**: The endpoint is secured via an API key shared between Profit Pro and SedgePro, transmitted in the headers (e.g., `X-SedgePro-API-Key`).
-* **Payload**: SedgePro triggers this webhook upon successful payment with a JSON body:
-  ```json
-  {
-    "email": "user@example.com",
-    "client_reference": "CLIENT-REF-123",
-    "first_name": "John",
-    "last_name": "Doe",
-    "primary_contact": "+27821234567"
-  }
-  ```
-* **Process**: Profit Pro processes the request synchronously: it finds/creates the user, links them to the company, generates an onboarding token, and sends the standard client activation email.
+### Option 2: form-level validation in `StructureExcelUploadForm`
+Read the Excel file inside the form class's `clean` method and raise a `ValidationError` if the sheet is empty.
+- *Pros*: Aligns with Django's standard form validation.
+- *Cons*: Re-reads the file twice (once in `clean` and once in `import_boq_from_excel`), which is inefficient and duplicates column normalisation/cleaning code.
 
-### Option 2: Asynchronous Event-Queue Webhook (Celery Worker)
-Similar webhook endpoint structure as Option 1, but the request handler simply validates the API token, enqueues a background celery task (e.g., `process_sedgepro_invite.delay(...)`), and returns an immediate `202 Accepted` response.
-* **Process**: The background worker takes care of resolving the Company model, creating the account, and sending the activation email.
-* **Pros**: High resilience, decoupling, and fast response times.
-* **Cons**: Slightly higher operational and queuing complexity.
-
-### Option 3: Cryptographically Signed Redirect (Claims-Based)
-Upon successful payment, SedgePro redirects the user's browser directly to Profit Pro via a parameterized URL: `/invite/claim/?email=...&ref=...&sig=...`.
-* **Process**: The signature `sig` is an HMAC-SHA256 hash generated by SedgePro using a shared secret. When the user lands on Profit Pro, the server validates the signature. If valid, it presents a password setup screen. The user account and client link are provisioned upon password submission.
-* **Pros**: Bypasses the need for background webhook retries or headless account generation; guarantees the user's email is valid and they are present.
-* **Cons**: Relies entirely on the user's client-side redirection; if the user closes their browser post-payment, the invitation is not generated.
-
----
+### Option 3: service-level check with a custom warning/error flag
+Return a specific code or raise an exception when the sheet has 0 data rows, letting the view decide how to handle it (e.g. show a specific modal or warning message instead of a standard form error).
 
 ## Recommendation
-**Option 1 (Direct Secure Webhook)** is recommended for the initial implementation phase, with a roadmap to transition to **Option 2 (Asynchronous Queueing)** if payment volume scales. Option 1 provides the cleanest separation of systems (server-to-server webhook) and ensures invitations are dispatched immediately upon payment confirmation without relying on the user completing a manual browser redirect. It leverages existing token and email services, requires minimal new infrastructure, and is easy to implement securely using standard Django views and API key validation in a middleware/mixin.
+**Option 1** is highly recommended. It is simple, extremely safe, avoids parsing/reading the file multiple times, and directly prevents data deletion in a single place without modifying view-level logic.
 
----
-
-## Acceptance Criteria
-1. **Secure Access**: The new endpoint rejects all requests without a valid `X-SedgePro-API-Key` header with a `401 Unauthorized` status.
-2. **Client Code Validation**: If the `client_reference` provided does not match a valid `Company` registration number or reference in the database, the endpoint returns a `400 Bad Request` with an explicit error message, and no user account is created.
-3. **Idempotent Account Processing**:
-   - If the user does not exist, the system creates the account with an unusable password, joins them to the target company, and sends the activation email.
-   - If the user exists and is already joined to the company, the endpoint returns a `200 OK` indicating no action is needed.
-   - If the user exists but is not joined to the company, the system joins the user to the company and sends a welcome notification email.
-4. **Transaction Integrity**: The operation runs within a database transaction block (`transaction.atomic`) to ensure that if email sending or user linking fails, all database changes are rolled back.
-5. **Detailed Logging**: Logs are generated for all successful invitations, unrecognized client references, and failed verification attempts for traceability.
+## Acceptance criteria
+1. Uploading a completely empty Excel sheet (or one with only empty/formatted blank rows) returns a validation error: `"Excel file is empty. Please ensure it contains at least one valid line item row."`.
+2. Existing BOQ data (Structures, Bills, Line Items) is **not** deleted when an empty file is uploaded.
+3. Uploading a valid Excel sheet with data continues to succeed and updates the BOQ correctly.
+4. Unit tests are added to verify that:
+   - Uploading an empty file returns the correct validation error.
+   - Uploading an empty file does not delete existing project database records.
