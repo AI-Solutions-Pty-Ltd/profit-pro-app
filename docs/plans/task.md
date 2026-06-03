@@ -1,7 +1,7 @@
-# Task Progress: Fix Setup Tooltip Uncaught ReferenceError
+# Task Progress: Fix Payment Certificate PDF Download 404 Error
 
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Define `toggleSetupTooltip` and `closeSetupTooltip` in `project_setup.html` script block | `[x]` | Manual review of template code |
-| **TSK-02** | Add outside-click close behavior for all tooltips | `[x]` | Verify Javascript logic and event handlers |
-| **TSK-03** | Verify template syntax and run Django checks | `[x]` | Run `.venv\Scripts\python.exe manage.py check` |
+| **TSK-01** | Add reproduction/regression test cases for PDF download views (superuser & project role users) | `[x]` | View the test file and check for new test assertions |
+| **TSK-02** | Remove incorrect `project__users=request.user` query filter from the download, abridged download, status, and email views | `[x]` | View changes in `payment_certificate_views.py` |
+| **TSK-03** | Run the pytest suite to verify all payment certificate views tests pass | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_views.py -v` |

@@ -835,7 +835,7 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate, pk=pk, project=project, project__users=request.user
+            PaymentCertificate, pk=pk, project=project
         )
 
         # Check if PDF is currently being generated
@@ -878,7 +878,7 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate, pk=pk, project=project, project__users=request.user
+            PaymentCertificate, pk=pk, project=project
         )
 
         # Check if abridged PDF is currently being generated
@@ -921,7 +921,7 @@ class PaymentCertificatePDFStatusView(PaymentCertificateMixin, View):
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate, pk=pk, project=project, project__users=request.user
+            PaymentCertificate, pk=pk, project=project
         )
 
         return JsonResponse(
@@ -940,7 +940,7 @@ class PaymentCertificateEmailView(PaymentCertificateMixin, View):
     def post(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate, pk=pk, project=project, project__users=request.user
+            PaymentCertificate, pk=pk, project=project
         )
 
         # Check if payment certificate is approved
