@@ -556,3 +556,37 @@ class TestBOQExcelImporter(TestCase):
         assert created_count == 0
         assert len(errors) == 1
         assert "Calculation mismatch" in errors[0]
+
+    def test_import_with_empty_rows(self):
+        """Test import succeeds and skips completely empty rows (even if extra columns have data)."""
+        data = [
+            {
+                "Structure": "Phase 1",
+                "Bill No.": "001",
+                "Item No.": "1.1",
+                "Description": "Trenching",
+                "Unit": "m³",
+                "Quantity": 10,
+                "Rate": 150.0,
+                "Amount": 1500.0,
+                "ExtraCol": 1.0,
+            },
+            # Empty row for standard columns, but has value in ExtraCol
+            {
+                "Structure": "",
+                "Bill No.": None,
+                "Item No.": float("nan"),
+                "Description": "",
+                "Unit": None,
+                "Quantity": None,
+                "Rate": None,
+                "Amount": None,
+                "ExtraCol": 1.0,
+            },
+        ]
+        excel_file = self._create_excel_file(data)
+        created_count, errors = import_boq_from_excel(self.project, excel_file)
+
+        # It should succeed because the empty row is skipped!
+        assert len(errors) == 0
+        assert created_count == 1

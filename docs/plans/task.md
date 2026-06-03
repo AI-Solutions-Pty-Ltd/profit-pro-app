@@ -1,7 +1,7 @@
-# Task Progress: Fix Payment Certificate PDF Download 404 Error
+# Task Progress: Fix Excel BOQ Setup Template Validation Errors (Empty Rows)
 
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Add reproduction/regression test cases for PDF download views (superuser & project role users) | `[x]` | View the test file and check for new test assertions |
-| **TSK-02** | Remove incorrect `project__users=request.user` query filter from the download, abridged download, status, and email views | `[x]` | View changes in `payment_certificate_views.py` |
-| **TSK-03** | Run the pytest suite to verify all payment certificate views tests pass | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_views.py -v` |
+| **TSK-01** | Add reproduction test case in `test_structure_views.py` that reproduces Excel upload failing on empty rows | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -k test_import_with_empty_rows -v` |
+| **TSK-02** | Update `import_boq_from_excel` in `services.py` to skip completely empty rows | `[x]` | View changes in `services.py` |
+| **TSK-03** | Run all structure views tests to verify everything passes | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -v` |

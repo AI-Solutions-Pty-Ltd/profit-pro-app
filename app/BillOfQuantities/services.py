@@ -129,6 +129,23 @@ def import_boq_from_excel(project, excel_file):
             unit_price = clean_pd_data(row["contract_rate"])
             total_price = clean_pd_data(row["contract_amount"])
 
+            # Skip completely empty rows
+            if not any(
+                [
+                    structure_name,
+                    bill_name,
+                    package_name,
+                    item_number,
+                    payment_reference,
+                    description,
+                    unit_measurement,
+                    budgeted_quantity,
+                    unit_price,
+                    total_price,
+                ]
+            ):
+                continue
+
             # Clean "rate only" or empty values
             is_rate_only = str(budgeted_quantity).lower().strip() == "rate only"
 
