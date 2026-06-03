@@ -7,7 +7,7 @@ from dateutil.utils import today
 from django.urls import reverse
 
 from app.Account.models import Account
-from app.Account.tests.factories import AccountFactory
+from app.Account.tests.factories import AccountFactory, SuperuserFactory
 from app.BillOfQuantities.models import PaymentCertificate
 from app.BillOfQuantities.tests.factories import (
     ActualTransactionFactory,
@@ -591,3 +591,96 @@ class TestPaymentCertificateWorkflow:
         assert certificate.status == PaymentCertificate.Status.REJECTED
         assert transaction.approved is False
         assert transaction.claimed is False
+
+
+@pytest.mark.django_db
+class TestPaymentCertificatePDFDownloadAccess:
+    """Test cases for PDF download views access control."""
+
+    def test_download_pdf_view_allows_superuser_not_in_project_users(self, client):
+        """Test that a superuser can access PDF download even if not in project users."""
+        superuser = SuperuserFactory.create()
+        project = ProjectFactory.create()  # superuser not explicitly in project.users
+        LineItemFactory.create(project=project)  # Need at least one line item
+        certificate = PaymentCertificateFactory.create(project=project)
+
+        client.force_login(superuser)
+        url = reverse(
+            "bill_of_quantities:payment-certificate-download-pdf",
+            kwargs={"project_pk": project.pk, "pk": certificate.pk},
+        )
+        response = client.get(url)
+        assert (
+            response.status_code == 302
+        )  # redirects to detail page because PDF does not exist yet
+
+    def test_download_pdf_view_allows_role_user_not_in_project_users(self, client):
+        """Test that a user with the required project role can access PDF download even if not in project users."""
+        user = AccountFactory.create()
+        project = ProjectFactory.create()  # user not explicitly in project.users
+        LineItemFactory.create(project=project)  # Need at least one line item
+        ProjectRole.objects.create(
+            user=user, project=project, role=Role.PAYMENT_CERTIFICATES
+        )
+        certificate = PaymentCertificateFactory.create(project=project)
+
+        client.force_login(user)
+        url = reverse(
+            "bill_of_quantities:payment-certificate-download-pdf",
+            kwargs={"project_pk": project.pk, "pk": certificate.pk},
+        )
+        response = client.get(url)
+        assert (
+            response.status_code == 302
+        )  # redirects to detail page because PDF does not exist yet
+
+    def test_download_abridged_pdf_view_allows_superuser_not_in_project_users(
+        self, client
+    ):
+        """Test that a superuser can access abridged PDF download even if not in project users."""
+        superuser = SuperuserFactory.create()
+        project = ProjectFactory.create()
+        LineItemFactory.create(project=project)
+        certificate = PaymentCertificateFactory.create(project=project)
+
+        client.force_login(superuser)
+        url = reverse(
+            "bill_of_quantities:payment-certificate-download-abridged-pdf",
+            kwargs={"project_pk": project.pk, "pk": certificate.pk},
+        )
+        response = client.get(url)
+        assert (
+            response.status_code == 302
+        )  # redirects to detail page because PDF does not exist yet
+
+    def test_pdf_status_view_allows_superuser_not_in_project_users(self, client):
+        """Test that a superuser can access PDF status check even if not in project users."""
+        superuser = SuperuserFactory.create()
+        project = ProjectFactory.create()
+        LineItemFactory.create(project=project)
+        certificate = PaymentCertificateFactory.create(project=project)
+
+        client.force_login(superuser)
+        url = reverse(
+            "bill_of_quantities:payment-certificate-pdf-status",
+            kwargs={"project_pk": project.pk, "pk": certificate.pk},
+        )
+        response = client.get(url)
+        assert response.status_code == 200
+
+    def test_email_view_allows_superuser_not_in_project_users(self, client):
+        """Test that a superuser can access email view even if not in project users."""
+        superuser = SuperuserFactory.create()
+        project = ProjectFactory.create()
+        LineItemFactory.create(project=project)
+        certificate = PaymentCertificateFactory.create(project=project)
+
+        client.force_login(superuser)
+        url = reverse(
+            "bill_of_quantities:payment-certificate-email",
+            kwargs={"project_pk": project.pk, "pk": certificate.pk},
+        )
+        response = client.post(url)
+        assert (
+            response.status_code == 302
+        )  # redirects because certificate is not approved
