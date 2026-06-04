@@ -119,7 +119,6 @@
                         </th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Item Code</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Trade Code</th>
-                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Component</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Description</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Unit</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Material</th>
@@ -157,13 +156,6 @@
                                         </option>
                                     {% endfor %}
                                 </select>
-                            </td>
-                            <td class="px-2 py-1.5">
-                                <input type="text"
-                                       class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
-                                       data-entry-id="{{ e.id }}"
-                                       data-field="component"
-                                       value="{{ e.component }}">
                             </td>
                             <td class="px-2 py-1.5 min-w-[260px]">
                                 <input type="text"
@@ -256,7 +248,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">
+                            <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">
                                 No entries yet. Click <em>Add Item</em>, sync from System, or upload an Excel sheet.
                             </td>
                         </tr>
