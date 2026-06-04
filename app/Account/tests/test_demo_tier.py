@@ -49,7 +49,13 @@ class TestDemoTier:
         """Test the human-readable time left string."""
         # 2 days left
         expiry = timezone.now() + timedelta(days=2, hours=1)
-        user: Account = cast(Account, AccountFactory(subscription_expires_at=expiry))
+        user: Account = cast(
+            Account,
+            AccountFactory(
+                subscription=Subscription.DEMO_TIER,
+                subscription_expires_at=expiry,
+            ),
+        )
         assert "2 days remaining" in user.demo_time_left_str
 
         # 5 hours left

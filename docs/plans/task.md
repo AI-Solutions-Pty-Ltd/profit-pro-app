@@ -1,8 +1,7 @@
-| Task | Status | Description |
-| :--- | :--- | :--- |
-| **Step 1: Add `FULL_ACCESS` to `Subscription` Choice Enum** | [x] | Add FULL_ACCESS choice to Subscription TextChoices in subscription_config.py |
-| **Step 2: Configure Limits for the `FULL_ACCESS` Tier** | [x] | Map limits for FULL_ACCESS in SubscriptionConfig.LIMITS in subscription_config.py |
-| **Step 3: Implement Bypass Checks in `Account` Model** | [x] | Refactor has_subscription_tier and has_demo_permission in models.py |
-| **Step 4: Generate and Apply Database Migration** | [x] | Run makemigrations and migrate to update Subscription choices in DB |
-| **Step 5: Write and Run Unit Tests for `FULL_ACCESS` Tier** | [x] | Implement TestFullAccessTier in test_demo_tier.py and run pytest |
-| **Step 6: Verify Full System Suite Passes** | [x] | Run the complete project test suite to verify no regressions |
+# Task Progress: Fix Excel BOQ Empty Upload Validation
+
+| Task ID | Task Description | Status | Verification Command / Method |
+| :--- | :--- | :--- | :--- |
+| **TSK-01** | Add regression test case `test_import_empty_file_returns_error_and_does_not_delete` to verify empty file uploads fail and preserve database records | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -k test_import_empty_file_returns_error_and_does_not_delete -v` |
+| **TSK-02** | Add empty check in `import_boq_from_excel` before database deletion transaction starts | `[x]` | View changes in `services.py` |
+| **TSK-03** | Run full pytest test suite and ruff checks and formatting | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -v` and `ruff check` |
