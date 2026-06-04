@@ -1599,10 +1599,10 @@ class ItemLibraryImporter:
                 project=self.project, name=name
             ).first()
         if self.company:
-            return ContractorMaterialSpec.objects.filter(
+            return ContractorSpecification.objects.filter(
                 company=self.company, name=name
             ).first()
-        return SystemMaterialSpec.objects.filter(name=name).first()
+        return SystemSpecification.objects.filter(name=name).first()
 
     def _get_labour_spec(self, name):
         if not name:
@@ -1705,6 +1705,16 @@ class ItemLibraryImporter:
                 "labour_spec": labour_spec,
                 "plant_spec": plant_spec,
                 "preliminary_spec": prelim_spec,
+                # Preserve the raw names so unmatched values stay visible and
+                # can be flagged as unlinked in the UI. When a spec matched,
+                # store its canonical name so the value reads as linked.
+                "material_spec_name": (
+                    material_spec.name if material_spec else material_spec_name
+                ),
+                "labour_plant_spec_name": labour_plant_name,
+                "preliminary_spec_name": (
+                    prelim_spec.name if prelim_spec else prelim_spec_name
+                ),
                 "display_order": idx,
             }
 

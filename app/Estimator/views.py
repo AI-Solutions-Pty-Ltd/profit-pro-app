@@ -8077,13 +8077,13 @@ class ContractorItemLibraryListView(ContractorLibraryMixin, ListView):
         company = self.get_company()
         if company is None:
             ctx["trade_codes"] = ContractorTradeCode.objects.none()
-            ctx["material_specs"] = ContractorMaterialSpec.objects.none()
+            ctx["material_specs"] = ContractorSpecification.objects.none()
             ctx["labour_specs"] = ContractorLabourSpecification.objects.none()
             ctx["plant_specs"] = ContractorPlantSpecification.objects.none()
             ctx["preliminary_specs"] = ContractorPreliminarySpecification.objects.none()
         else:
             ctx["trade_codes"] = ContractorTradeCode.objects.filter(company=company)
-            ctx["material_specs"] = ContractorMaterialSpec.objects.filter(
+            ctx["material_specs"] = ContractorSpecification.objects.filter(
                 company=company
             ).order_by("name")
             ctx["labour_specs"] = ContractorLabourSpecification.objects.filter(
@@ -8191,7 +8191,7 @@ class SystemItemLibraryListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["trade_codes"] = SystemTradeCode.objects.all()
-        ctx["material_specs"] = SystemMaterialSpec.objects.all().order_by("name")
+        ctx["material_specs"] = SystemSpecification.objects.all().order_by("name")
         ctx["labour_specs"] = SystemLabourSpecification.objects.all().order_by("name")
         ctx["plant_specs"] = SystemPlantSpecification.objects.all().order_by("name")
         ctx["labour_plant_spec_names"] = sorted(
@@ -8262,6 +8262,12 @@ _ITEM_LIBRARY_TEXT_FIELDS = {
     "unit",
 }
 _ITEM_LIBRARY_INT_FIELDS = {"display_order"}
+# FK field → raw-name mirror field, kept in sync so the UI can flag unlinked
+# spec values in red while preserving the originally uploaded name.
+_ITEM_LIBRARY_SPEC_NAME_ATTRS = {
+    "material_spec": "material_spec_name",
+    "preliminary_spec": "preliminary_spec_name",
+}
 
 
 def _apply_item_library_field(entry, field, value, fk_models):
@@ -8285,6 +8291,7 @@ def _apply_item_library_field(entry, field, value, fk_models):
         if value in (None, "", 0, "0"):
             entry.labour_spec = None
             entry.plant_spec = None
+            entry.labour_plant_spec_name = ""
             return None
         name = str(value).strip()
         entry.labour_spec = (
@@ -8297,11 +8304,17 @@ def _apply_item_library_field(entry, field, value, fk_models):
             if plant_model
             else None
         )
+        entry.labour_plant_spec_name = name
         return None
     if field in fk_models:
         model_cls, scope_filter = fk_models[field]
+        # Keep the raw-name mirror in sync so the column reads as linked
+        # (no red flag) once a spec is chosen, and reverts to blank when cleared.
+        name_attr = _ITEM_LIBRARY_SPEC_NAME_ATTRS.get(field)
         if value in (None, "", 0, "0"):
             setattr(entry, field, None)
+            if name_attr:
+                setattr(entry, name_attr, "")
             return None
         try:
             obj = model_cls.objects.filter(pk=int(value), **scope_filter).first()
@@ -8310,6 +8323,8 @@ def _apply_item_library_field(entry, field, value, fk_models):
         if obj is None:
             return JsonResponse({"error": f"{field} not found"}, status=404)
         setattr(entry, field, obj)
+        if name_attr:
+            setattr(entry, name_attr, obj.name)
         return None
     return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
 
@@ -8467,7 +8482,7 @@ class UpdateContractorItemLibraryEntryView(View):
         scope = {"company": company}
         fk_models = {
             "trade_code": (ContractorTradeCode, scope),
-            "material_spec": (ContractorMaterialSpec, scope),
+            "material_spec": (ContractorSpecification, scope),
             "labour_spec": (ContractorLabourSpecification, scope),
             "plant_spec": (ContractorPlantSpecification, scope),
             "preliminary_spec": (ContractorPreliminarySpecification, scope),
@@ -8529,7 +8544,7 @@ class UpdateSystemItemLibraryEntryView(View):
 
         fk_models = {
             "trade_code": (SystemTradeCode, {}),
-            "material_spec": (SystemMaterialSpec, {}),
+            "material_spec": (SystemSpecification, {}),
             "labour_spec": (SystemLabourSpecification, {}),
             "plant_spec": (SystemPlantSpecification, {}),
             "preliminary_spec": (SystemPreliminarySpecification, {}),

@@ -1561,7 +1561,7 @@ def sync_item_library_to_contractor(company):
     ):
         trade_code = _resolve_contractor_trade_code(company, sysentry.trade_code)
         material_spec = (
-            ContractorMaterialSpec.objects.filter(
+            ContractorSpecification.objects.filter(
                 company=company, name=sysentry.material_spec.name
             ).first()
             if sysentry.material_spec
