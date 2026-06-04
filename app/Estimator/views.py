@@ -1612,6 +1612,7 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                 {
                     "section": item.section,
                     "bill_no": item.bill_no,
+                    "description": item.description,
                     "amount_a": amount_a,
                     "amount_b": amount_b,
                     "variance_amount": variance_amt,
