@@ -309,10 +309,10 @@ class TestAccountModel:
 class TestAccountSubscription:
     """Test cases for Account subscription defaults and expiry."""
 
-    def test_default_subscription_is_demo(self):
-        """Test that a new account defaults to DEMO_TIER."""
+    def test_default_subscription_is_full_access(self):
+        """Test that a new account defaults to FULL_ACCESS."""
         account = AccountFactory.create(email="newdemo@example.com")
-        assert account.subscription == Subscription.DEMO_TIER
+        assert account.subscription == Subscription.FULL_ACCESS
 
     def test_demo_expiry_is_set_on_creation(self):
         """Test that a new DEMO_TIER account has an expiry date set (7 days)."""
@@ -320,7 +320,9 @@ class TestAccountSubscription:
 
         from django.utils import timezone
 
-        account = AccountFactory.create(email="expirytest@example.com")
+        account = AccountFactory.create(
+            email="expirytest@example.com", subscription=Subscription.DEMO_TIER
+        )
         assert account.subscription_expires_at is not None
 
         # Verify it's approximately 7 days in the future
@@ -333,10 +335,9 @@ class TestAccountSubscription:
 
     def test_non_demo_tier_creation_no_expiry(self):
         """Test that non-DEMO_TIER accounts do not get an auto-expiry date."""
-        # Note: Since default is now DEMO_TIER, we explicitly set it to something else
+        # Note: Since default is now FULL_ACCESS, we explicitly set it to another non-demo tier
         account = AccountFactory.create(
             email="nodemo@example.com", subscription=Subscription.BUSINESS_MANAGEMENT
         )
         # It shouldn't have an expiry set automatically by the signal
-        # Unless it was already set in the factory or elsewhere
         assert account.subscription_expires_at is None
