@@ -5,20 +5,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0028_contractoritemlibraryentry_labour_plant_spec_name_and_more'),
+        (
+            "estimator",
+            "0028_contractoritemlibraryentry_labour_plant_spec_name_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='contractoritemlibraryentry',
-            name='material_spec',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='library_entries', to='estimator.contractorspecification'),
+            model_name="contractoritemlibraryentry",
+            name="material_spec",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="library_entries",
+                to="estimator.contractorspecification",
+            ),
         ),
         migrations.AlterField(
-            model_name='systemitemlibraryentry',
-            name='material_spec',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='library_entries', to='estimator.systemspecification'),
+            model_name="systemitemlibraryentry",
+            name="material_spec",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="library_entries",
+                to="estimator.systemspecification",
+            ),
         ),
     ]

@@ -4,7 +4,6 @@ from app.Estimator.models import (
     ContractorLabourCrew,
     ContractorLabourSpecification,
     ContractorMaterial,
-    ContractorMaterialSpec,
     ContractorPlantCost,
     ContractorPlantSpecification,
     ContractorPlantSpecificationComponent,

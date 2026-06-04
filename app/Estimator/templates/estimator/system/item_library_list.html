@@ -162,67 +162,73 @@
                                        value="{{ e.unit }}">
                             </td>
                             {% with mat_unlinked=e.material_spec_name|default:"" %}
-                            <td class="px-2 py-1.5">
-                                {% if not e.material_spec_id and mat_unlinked %}
-                                    <div class="unlinked-flag text-[10px] font-medium text-red-600 truncate max-w-[170px] mb-0.5"
-                                         title="“{{ mat_unlinked }}” isn’t linked to a material spec — pick one below">{{ mat_unlinked }}</div>
-                                {% endif %}
-                                <select class="entry-edit-select w-full rounded text-xs focus:border-indigo-500 focus:ring-indigo-500 {% if not e.material_spec_id and mat_unlinked %}border-red-400 bg-red-50 text-red-700{% else %}border-gray-300{% endif %}"
-                                        data-entry-id="{{ e.id }}"
-                                        data-field="material_spec">
-                                    <option value="">—</option>
-                                    {% for s in material_specs %}
-                                        {% if s.is_active or e.material_spec_id == s.id %}
-                                            <option value="{{ s.id }}"
-                                                    {% if e.material_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}
-                                                {% if not s.is_active %}(inactive){% endif %}
-                                            </option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </td>
+                                <td class="px-2 py-1.5">
+                                    {% if not e.material_spec_id and mat_unlinked %}
+                                        <div class="unlinked-flag text-[10px] font-medium text-red-600 truncate max-w-[170px] mb-0.5"
+                                             title="“{{ mat_unlinked }}” isn’t linked to a material spec — pick one below">
+                                            {{ mat_unlinked }}
+                                        </div>
+                                    {% endif %}
+                                    <select class="entry-edit-select w-full rounded text-xs focus:border-indigo-500 focus:ring-indigo-500 {% if not e.material_spec_id and mat_unlinked %}border-red-400 bg-red-50 text-red-700{% else %}border-gray-300{% endif %}"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="material_spec">
+                                        <option value="">—</option>
+                                        {% for s in material_specs %}
+                                            {% if s.is_active or e.material_spec_id == s.id %}
+                                                <option value="{{ s.id }}"
+                                                        {% if e.material_spec_id == s.id %}selected{% endif %}>
+                                                    {{ s.name }}
+                                                    {% if not s.is_active %}(inactive){% endif %}
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </td>
                             {% endwith %}
                             {% with lp_unlinked=e.labour_plant_spec_name|default:"" %}
-                            <td class="px-2 py-1.5">
-                                {% if not e.labour_spec_id and not e.plant_spec_id and lp_unlinked %}
-                                    <div class="unlinked-flag text-[10px] font-medium text-red-600 truncate max-w-[170px] mb-0.5"
-                                         title="“{{ lp_unlinked }}” isn’t linked to a labour/plant spec — pick one below">{{ lp_unlinked }}</div>
-                                {% endif %}
-                                <select class="entry-edit-select w-full rounded text-xs focus:border-indigo-500 focus:ring-indigo-500 {% if not e.labour_spec_id and not e.plant_spec_id and lp_unlinked %}border-red-400 bg-red-50 text-red-700{% else %}border-gray-300{% endif %}"
-                                        data-entry-id="{{ e.id }}"
-                                        data-field="labour_plant_spec">
-                                    <option value="">—</option>
-                                    {% for name in labour_plant_spec_names %}
-                                        <option value="{{ name }}"
-                                                {% if e.labour_spec and e.labour_spec.name == name %}selected{% elif e.plant_spec and e.plant_spec.name == name %}selected{% endif %}>
-                                            {{ name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </td>
+                                <td class="px-2 py-1.5">
+                                    {% if not e.labour_spec_id and not e.plant_spec_id and lp_unlinked %}
+                                        <div class="unlinked-flag text-[10px] font-medium text-red-600 truncate max-w-[170px] mb-0.5"
+                                             title="“{{ lp_unlinked }}” isn’t linked to a labour/plant spec — pick one below">
+                                            {{ lp_unlinked }}
+                                        </div>
+                                    {% endif %}
+                                    <select class="entry-edit-select w-full rounded text-xs focus:border-indigo-500 focus:ring-indigo-500 {% if not e.labour_spec_id and not e.plant_spec_id and lp_unlinked %}border-red-400 bg-red-50 text-red-700{% else %}border-gray-300{% endif %}"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="labour_plant_spec">
+                                        <option value="">—</option>
+                                        {% for name in labour_plant_spec_names %}
+                                            <option value="{{ name }}"
+                                                    {% if e.labour_spec and e.labour_spec.name == name %}selected{% elif e.plant_spec and e.plant_spec.name == name %}selected{% endif %}>
+                                                {{ name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
                             {% endwith %}
                             {% with prelim_unlinked=e.preliminary_spec_name|default:"" %}
-                            <td class="px-2 py-1.5">
-                                {% if not e.preliminary_spec_id and prelim_unlinked %}
-                                    <div class="unlinked-flag text-[10px] font-medium text-red-600 truncate max-w-[170px] mb-0.5"
-                                         title="“{{ prelim_unlinked }}” isn’t linked to a preliminary spec — pick one below">{{ prelim_unlinked }}</div>
-                                {% endif %}
-                                <select class="entry-edit-select w-full rounded text-xs focus:border-indigo-500 focus:ring-indigo-500 {% if not e.preliminary_spec_id and prelim_unlinked %}border-red-400 bg-red-50 text-red-700{% else %}border-gray-300{% endif %}"
-                                        data-entry-id="{{ e.id }}"
-                                        data-field="preliminary_spec">
-                                    <option value="">—</option>
-                                    {% for s in preliminary_specs %}
-                                        {% if s.is_active or e.preliminary_spec_id == s.id %}
-                                            <option value="{{ s.id }}"
-                                                    {% if e.preliminary_spec_id == s.id %}selected{% endif %}>
-                                                {{ s.name }}
-                                                {% if not s.is_active %}(inactive){% endif %}
-                                            </option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </td>
+                                <td class="px-2 py-1.5">
+                                    {% if not e.preliminary_spec_id and prelim_unlinked %}
+                                        <div class="unlinked-flag text-[10px] font-medium text-red-600 truncate max-w-[170px] mb-0.5"
+                                             title="“{{ prelim_unlinked }}” isn’t linked to a preliminary spec — pick one below">
+                                            {{ prelim_unlinked }}
+                                        </div>
+                                    {% endif %}
+                                    <select class="entry-edit-select w-full rounded text-xs focus:border-indigo-500 focus:ring-indigo-500 {% if not e.preliminary_spec_id and prelim_unlinked %}border-red-400 bg-red-50 text-red-700{% else %}border-gray-300{% endif %}"
+                                            data-entry-id="{{ e.id }}"
+                                            data-field="preliminary_spec">
+                                        <option value="">—</option>
+                                        {% for s in preliminary_specs %}
+                                            {% if s.is_active or e.preliminary_spec_id == s.id %}
+                                                <option value="{{ s.id }}"
+                                                        {% if e.preliminary_spec_id == s.id %}selected{% endif %}>
+                                                    {{ s.name }}
+                                                    {% if not s.is_active %}(inactive){% endif %}
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </td>
                             {% endwith %}
                             <td class="px-2 py-1.5 text-right">
                                 <form method="post"
