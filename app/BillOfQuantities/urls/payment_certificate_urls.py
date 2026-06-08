@@ -38,6 +38,11 @@ payment_certificate_urls = [
         name="payment-certificate-download-pdf",
     ),
     path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-excel/",
+        payment_certificate_views.PaymentCertificateDownloadExcelView.as_view(),
+        name="payment-certificate-download-excel",
+    ),
+    path(
         "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-pdf/",
         payment_certificate_views.PaymentCertificateDownloadAbridgedPDFView.as_view(),
         name="payment-certificate-download-abridged-pdf",

@@ -228,6 +228,7 @@ class LineItem(BaseModel):
                 # LineItem fields
                 "id",
                 "item_number",
+                "payment_reference",
                 "description",
                 "unit_price",
                 "unit_measurement",

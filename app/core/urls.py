@@ -12,10 +12,12 @@ from .views import (
     FeaturesView,
     HelpCenterView,
     HomeView,
+    favicon_view,
 )
 
 urlpatterns = (
     [
+        path("favicon.ico", favicon_view),
         path("admin/", admin.site.urls),
         path("features/", FeaturesView.as_view(), name="features"),
         path("about/", AboutView.as_view(), name="about"),

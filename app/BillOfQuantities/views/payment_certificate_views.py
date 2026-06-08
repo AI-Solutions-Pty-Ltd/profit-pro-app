@@ -830,13 +830,86 @@ class PaymentCertificateSubmitView(
 
 
 class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
-    """Download payment certificate as PDF."""
+    """Download payment certificate as PDF or Excel."""
 
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
             PaymentCertificate, pk=pk, project=project
         )
+
+        # Serve Excel if format is specified as excel
+        if request.GET.get("format") == "excel":
+            from io import BytesIO
+
+            from app.BillOfQuantities.exporters.excel_exporter import (
+                generate_payment_certificate_excel,
+            )
+
+            try:
+                wb = generate_payment_certificate_excel(
+                    payment_certificate, is_abridged=False
+                )
+                output = BytesIO()
+                wb.save(output)
+                output.seek(0)
+                response = FileResponse(
+                    output,
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    as_attachment=True,
+                    filename=f"payment_certificate_{payment_certificate.certificate_number}.xlsx",
+                )
+                return response
+            except Exception as e:
+                messages.error(request, f"Error generating Excel: {str(e)}")
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+        # Check if custom sections are specified via checkboxes
+        has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+
+        if has_selections:
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+
+            if not (include_front or include_summary or include_detailed):
+                messages.warning(
+                    request, "Please select at least one section to include in the PDF."
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+            from app.BillOfQuantities.tasks import compile_pdf_for_certificate
+
+            try:
+                pdf_file = compile_pdf_for_certificate(
+                    payment_certificate,
+                    include_front=include_front,
+                    include_summary=include_summary,
+                    include_detailed=include_detailed,
+                    is_abridged=False,
+                )
+                response = FileResponse(
+                    pdf_file,
+                    content_type="application/pdf",
+                    as_attachment=True,
+                    filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",
+                )
+                return response
+            except Exception as e:
+                messages.error(request, f"Error compiling PDF: {str(e)}")
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
 
         # Check if PDF is currently being generated
         if payment_certificate.pdf_generating:
@@ -872,14 +945,124 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
         return response
 
 
-class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
-    """Download abridged payment certificate as PDF."""
+class PaymentCertificateDownloadExcelView(PaymentCertificateMixin, View):
+    """Download payment certificate as Excel workbook."""
 
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
             PaymentCertificate, pk=pk, project=project
         )
+
+        from io import BytesIO
+
+        from app.BillOfQuantities.exporters.excel_exporter import (
+            generate_payment_certificate_excel,
+        )
+
+        try:
+            wb = generate_payment_certificate_excel(payment_certificate)
+            output = BytesIO()
+            wb.save(output)
+            output.seek(0)
+
+            response = FileResponse(
+                output,
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                as_attachment=True,
+                filename=f"payment_certificate_{payment_certificate.certificate_number}.xlsx",
+            )
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating Excel file: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+
+class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
+    """Download abridged payment certificate as PDF or Excel."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        # Serve Excel if format is specified as excel
+        if request.GET.get("format") == "excel":
+            from io import BytesIO
+
+            from app.BillOfQuantities.exporters.excel_exporter import (
+                generate_payment_certificate_excel,
+            )
+
+            try:
+                wb = generate_payment_certificate_excel(
+                    payment_certificate, is_abridged=True
+                )
+                output = BytesIO()
+                wb.save(output)
+                output.seek(0)
+                response = FileResponse(
+                    output,
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    as_attachment=True,
+                    filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.xlsx",
+                )
+                return response
+            except Exception as e:
+                messages.error(request, f"Error generating Excel: {str(e)}")
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+        # Check if custom sections are specified via checkboxes
+        has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+
+        if has_selections:
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+
+            if not (include_front or include_summary or include_detailed):
+                messages.warning(
+                    request, "Please select at least one section to include in the PDF."
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+            from app.BillOfQuantities.tasks import compile_pdf_for_certificate
+
+            try:
+                pdf_file = compile_pdf_for_certificate(
+                    payment_certificate,
+                    include_front=include_front,
+                    include_summary=include_summary,
+                    include_detailed=include_detailed,
+                    is_abridged=True,
+                )
+                response = FileResponse(
+                    pdf_file,
+                    content_type="application/pdf",
+                    as_attachment=True,
+                    filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf",
+                )
+                return response
+            except Exception as e:
+                messages.error(request, f"Error compiling PDF: {str(e)}")
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
 
         # Check if abridged PDF is currently being generated
         if payment_certificate.abridged_pdf_generating:

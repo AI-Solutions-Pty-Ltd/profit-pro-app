@@ -410,6 +410,9 @@ class ProjectSetupView(ProjectMixin, DetailView):
             .select_related("uploaded_by")
             .order_by("-created_at")[:5]
         )
+        import json
+
+        context["project_columns_json"] = json.dumps(project.get_column_config())
         return context
 
     def post(self, request, *args, **kwargs):
@@ -514,6 +517,50 @@ class ProjectSetupView(ProjectMixin, DetailView):
                     )
             except Exception as e:
                 messages.error(request, f"Error loading demo data: {e}")
+
+        elif action == "save_report_config":
+            layout = request.POST.get("certificate_layout")
+            column_config_str = request.POST.get("column_config")
+
+            if layout in Project.CertificateLayout.values:
+                # Clear certificate caches if layout changed
+                if project.certificate_layout != layout:
+                    for cert in project.payment_certificates.all():
+                        if cert.pdf:
+                            cert.pdf.delete(save=False)
+                        if cert.abridged_pdf:
+                            cert.abridged_pdf.delete(save=False)
+                        cert.pdf = None
+                        cert.abridged_pdf = None
+                        cert.pdf_generating = False
+                        cert.abridged_pdf_generating = False
+                        cert.save(
+                            update_fields=[
+                                "pdf",
+                                "abridged_pdf",
+                                "pdf_generating",
+                                "abridged_pdf_generating",
+                            ]
+                        )
+                project.certificate_layout = layout
+
+            import json
+
+            try:
+                if column_config_str:
+                    project.column_config = json.loads(column_config_str)
+                else:
+                    project.column_config = {}
+            except ValueError:
+                messages.error(request, "Invalid column configuration format.")
+                return HttpResponseRedirect(
+                    reverse("project:project-setup", kwargs={"pk": project.pk})
+                )
+
+            project.save()
+            messages.success(
+                request, "Report layout and column configuration saved successfully!"
+            )
 
         return HttpResponseRedirect(
             reverse("project:project-setup", kwargs={"pk": project.pk})

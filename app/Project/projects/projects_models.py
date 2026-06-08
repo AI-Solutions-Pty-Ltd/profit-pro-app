@@ -52,6 +52,11 @@ class Project(BaseModel):
         DAYS_60 = "60_DAYS", "60 Days"
         DAYS_90 = "90_DAYS", "90 Days"
 
+    class CertificateLayout(models.TextChoices):
+        STANDARD = "STANDARD", "Standard"
+        VALTERRA_RPM = "VALTERRA_RPM", "Valterra/RPM"
+        LEPHADIMISHA = "LEPHADIMISHA", "Lephadimisha BOQ Report"
+
     portfolio = models.ForeignKey(
         "Project.Portfolio",
         on_delete=models.SET_NULL,
@@ -77,6 +82,17 @@ class Project(BaseModel):
     )
     status = models.CharField(
         max_length=255, choices=Status.choices, default=Status.SETUP
+    )
+    certificate_layout = models.CharField(
+        max_length=50,
+        choices=CertificateLayout.choices,
+        default=CertificateLayout.STANDARD,
+        help_text="Select the layout style for payment certificates",
+    )
+    column_config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Custom configuration for report columns (name, visibility, and order)",
     )
     start_date = models.DateField(null=True, blank=True)
 
@@ -279,6 +295,83 @@ class Project(BaseModel):
         """Alias for area for backward compatibility."""
         return self.area
 
+    def get_column_config(self) -> list[dict]:
+        """Get the resolved column configuration for the project, falling back to defaults."""
+        default_columns = [
+            {"id": "item_number", "label": "Item No.", "enabled": True},
+            {"id": "payment_reference", "label": "Pay Ref", "enabled": True},
+            {"id": "description", "label": "Description", "enabled": True},
+            {"id": "unit_measurement", "label": "Unit", "enabled": True},
+            {"id": "budgeted_quantity", "label": "Quantity", "enabled": True},
+            {"id": "unit_price", "label": "Rate", "enabled": True},
+            {"id": "total_price", "label": "Amount", "enabled": True},
+            {
+                "id": "total_qty",
+                "label": "Cumulative Quantity Certified",
+                "enabled": True,
+            },
+            {
+                "id": "total_claimed",
+                "label": "Cumulative Amount Certified",
+                "enabled": True,
+            },
+            {"id": "previous_qty", "label": "Previous Quantity", "enabled": True},
+            {
+                "id": "previous_claimed",
+                "label": "Previous Amount Certified",
+                "enabled": True,
+            },
+            {"id": "current_qty", "label": "Current Quantity", "enabled": True},
+            {"id": "current_claim", "label": "Amount Due", "enabled": True},
+        ]
+
+        if self.certificate_layout == self.CertificateLayout.LEPHADIMISHA:
+            custom_defaults = {
+                "item_number": {"label": "ITEM", "enabled": True},
+                "payment_reference": {"label": "PAY REF", "enabled": True},
+                "description": {"label": "DESCRIPTION", "enabled": True},
+                "unit_measurement": {"label": "UNIT", "enabled": True},
+                "budgeted_quantity": {"label": "QTY", "enabled": True},
+                "unit_price": {"label": "RATE (R)", "enabled": True},
+                "total_price": {"label": "TENDER AMT (R)", "enabled": True},
+                "total_qty": {"label": "CUMUL. CERT (R)", "enabled": False},
+                "total_claimed": {"label": "CUMUL. CERT (R)", "enabled": True},
+                "previous_qty": {"label": "PREV. CERT (R)", "enabled": False},
+                "previous_claimed": {"label": "PREV. CERT (R)", "enabled": True},
+                "current_qty": {"label": "AMT DUE (R)", "enabled": False},
+                "current_claim": {"label": "AMT DUE (R)", "enabled": True},
+            }
+            for col in default_columns:
+                if col["id"] in custom_defaults:
+                    col.update(custom_defaults[col["id"]])
+
+        if (
+            self.column_config
+            and isinstance(self.column_config, dict)
+            and "columns" in self.column_config
+        ):
+            custom_cols = self.column_config["columns"]
+
+            resolved = []
+            for c in custom_cols:
+                cid = c.get("id")
+                default_col = next((x for x in default_columns if x["id"] == cid), None)
+                if default_col:
+                    resolved.append(
+                        {
+                            "id": cid,
+                            "label": c.get("label", default_col["label"]),
+                            "enabled": c.get("enabled", default_col["enabled"]),
+                        }
+                    )
+
+            for d in default_columns:
+                if d["id"] not in [r["id"] for r in resolved]:
+                    resolved.append(d)
+            return resolved
+
+        return default_columns
+
     def __str__(self):
         return self.name
 
@@ -296,6 +389,7 @@ class Project(BaseModel):
         dates_changed = False
         old_start_date = None
         old_end_date = None
+        layout_changed = False
 
         if self.pk:
             try:
@@ -305,27 +399,48 @@ class Project(BaseModel):
                 dates_changed = (
                     old_start_date != self.start_date or old_end_date != self.end_date
                 )
+                layout_changed = (
+                    old_instance.certificate_layout != self.certificate_layout
+                )
             except Project.DoesNotExist:
                 pass
 
+        if layout_changed:
+            for cert in self.payment_certificates.all():
+                if cert.pdf:
+                    cert.pdf.delete(save=False)
+                if cert.abridged_pdf:
+                    cert.abridged_pdf.delete(save=False)
+                cert.pdf = None
+                cert.abridged_pdf = None
+                cert.pdf_generating = False
+                cert.abridged_pdf_generating = False
+                cert.save(
+                    update_fields=[
+                        "pdf",
+                        "abridged_pdf",
+                        "pdf_generating",
+                        "abridged_pdf_generating",
+                    ]
+                )
+
         if not self.logo:
-            return super().save(*args, **kwargs)
+            super().save(*args, **kwargs)
+        else:
+            # check if logo changed
+            if self.pk:
+                old_instance = Project.objects.get(pk=self.pk)
+                if old_instance.logo != self.logo:
+                    # Logo field has changed
+                    self.logo = ImageResize().resize_image(self.logo)
+            elif self.logo:
+                # no pk and logo present
+                logo = ImageResize().resize_image(self.logo)
+                super().save(*args, **kwargs)  # set pk, save without logo
+                self.logo = logo
 
-        # check if logo changed
-        if self.pk:
-            old_instance = Project.objects.get(pk=self.pk)
-            if old_instance.logo != self.logo:
-                # Logo field has changed
-                self.logo = ImageResize().resize_image(self.logo)
-
-        elif self.logo:
-            # no pk and logo present
-            logo = ImageResize().resize_image(self.logo)
-            super().save(*args, **kwargs)  # set pk, save without logo
-            self.logo = logo
-
-        # Save the project with / without logo
-        super().save(*args, **kwargs)
+            # Save the project with logo
+            super().save(*args, **kwargs)
 
         # Only manage PlannedValue instances if dates changed and we have valid dates
         if dates_changed and self.start_date and self.end_date:

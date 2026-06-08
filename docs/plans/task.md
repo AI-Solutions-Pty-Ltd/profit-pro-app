@@ -1,7 +1,14 @@
-# Task Progress: Fix Excel BOQ Empty Upload Validation
+# Task Progress: Report Selection and Configuration Customization
 
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Add regression test case `test_import_empty_file_returns_error_and_does_not_delete` to verify empty file uploads fail and preserve database records | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -k test_import_empty_file_returns_error_and_does_not_delete -v` |
-| **TSK-02** | Add empty check in `import_boq_from_excel` before database deletion transaction starts | `[x]` | View changes in `services.py` |
-| **TSK-03** | Run full pytest test suite and ruff checks and formatting | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -v` and `ruff check` |
+| **TSK-01** | Extend Project Model and Create Migration | `[x]` | `.venv\Scripts\python.exe -m pytest app/Project/tests/test_models.py -k test_project_has_report_configuration` |
+| **TSK-02** | Build Report Configuration Form and Setup UI | `[x]` | `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k test_project_setup_view_includes_layout_config` |
+| **TSK-03** | Implement Dynamic Column Configuration in PDF Generation | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_compile_pdf_with_custom_columns` |
+| **TSK-04** | Implement Dynamic Column Configuration in Excel Generation | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_excel_exporter_with_custom_columns` |
+| **TSK-05** | Refactor Download PDF Reports Interface | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k TestDownloadViews` |
+| **TSK-06** | Fix Type Checker Errors in app/BillOfQuantities/tasks.py | `[x]` | `.venv\Scripts\python.exe -m ty check .` |
+| **TSK-07** | Exclude PDF Templates from djlint | `[x]` | `.venv\Scripts\python.exe -m djlint --lint .` |
+| **TSK-08** | Verify All Checks Pass successfully | `[x]` | Run checks commands combined |
+
+

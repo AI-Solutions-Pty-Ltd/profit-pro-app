@@ -95,6 +95,7 @@ class TestSedgeProWebhookView:
             "first_name": first_name,
             "last_name": last_name,
             "primary_contact": primary_contact,
+            "send_email": True,
         }
 
         response = client.post(
@@ -102,7 +103,12 @@ class TestSedgeProWebhookView:
         )
 
         assert response.status_code == 200
-        assert response.json() == {"status": "success", "message": "User invited"}
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["message"] == "User invited"
+        assert "signup_url" in data
+        assert data["signup_url"] is not None
+        assert "/users/auth/reset/" in data["signup_url"]
 
         # Verify user created with correct details
         user = Account.objects.get(email=email)
@@ -124,6 +130,43 @@ class TestSedgeProWebhookView:
             assert len(mail.outbox) == 1
             assert "invited" in mail.outbox[0].subject
 
+    def test_webhook_success_new_user_no_email(self, client):
+        """Test inviting a brand new user without sending an email (default or send_email=False)."""
+        email = "newinvitee_noemail@example.com"
+        first_name = "NoEmail"
+        last_name = "User"
+
+        # Ensure user does not exist
+        assert not Account.objects.filter(email=email).exists()
+        mail.outbox.clear()
+
+        payload = {
+            "email": email,
+            "client_reference": "SEDGE-REF-12345",
+            "first_name": first_name,
+            "last_name": last_name,
+            # send_email omitted, should default to False
+        }
+
+        response = client.post(
+            self.url, payload, content_type="application/json", **self.headers
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["message"] == "User invited"
+        assert "signup_url" in data
+        assert data["signup_url"] is not None
+        assert "/users/auth/reset/" in data["signup_url"]
+
+        # Verify user created
+        user = Account.objects.get(email=email)
+        assert user.first_name == first_name
+
+        # Verify no email was sent
+        assert len(mail.outbox) == 0
+
     def test_webhook_success_existing_user_not_linked(self, client):
         """Test inviting an existing user who is not currently associated with the client."""
         # Create existing user
@@ -134,6 +177,7 @@ class TestSedgeProWebhookView:
         payload = {
             "email": user.email,
             "client_reference": "SEDGE-REF-12345",
+            "send_email": True,
         }
 
         response = client.post(
@@ -141,10 +185,10 @@ class TestSedgeProWebhookView:
         )
 
         assert response.status_code == 200
-        assert response.json() == {
-            "status": "success",
-            "message": "User linked to company",
-        }
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["message"] == "User linked to company"
+        assert data["signup_url"] is None
 
         # Verify associated with company
         assert self.company.users.filter(pk=user.pk).exists()
@@ -157,6 +201,34 @@ class TestSedgeProWebhookView:
         if settings.USE_EMAIL:
             assert len(mail.outbox) == 1
             assert "added" in mail.outbox[0].subject
+
+    def test_webhook_success_existing_user_not_linked_no_email(self, client):
+        """Test linking existing user without sending email."""
+        user = AccountFactory.create(email="existing_noemail@example.com")
+        assert not self.company.users.filter(pk=user.pk).exists()
+        mail.outbox.clear()
+
+        payload = {
+            "email": user.email,
+            "client_reference": "SEDGE-REF-12345",
+            "send_email": False,
+        }
+
+        response = client.post(
+            self.url, payload, content_type="application/json", **self.headers
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["message"] == "User linked to company"
+        assert data["signup_url"] is None
+
+        # Verify linked
+        assert self.company.users.filter(pk=user.pk).exists()
+
+        # Verify no email was sent
+        assert len(mail.outbox) == 0
 
     def test_webhook_success_existing_user_already_linked(self, client):
         """Test inviting an existing user who is already associated with the client (idempotency)."""
@@ -176,10 +248,10 @@ class TestSedgeProWebhookView:
         )
 
         assert response.status_code == 200
-        assert response.json() == {
-            "status": "success",
-            "message": "User already associated with company",
-        }
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["message"] == "User already associated with company"
+        assert data["signup_url"] is None
 
         # Verify email was NOT sent
         assert len(mail.outbox) == 0
@@ -214,7 +286,12 @@ class TestSedgeProWebhookView:
         )
 
         assert response.status_code == 200
-        assert response.json() == {"status": "success", "message": "User invited"}
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["message"] == "User invited"
+        assert "signup_url" in data
+        assert data["signup_url"] is not None
+        assert "/users/auth/reset/" in data["signup_url"]
 
         # Verify user created
         user = Account.objects.get(email=email)

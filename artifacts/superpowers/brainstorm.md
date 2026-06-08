@@ -1,40 +1,58 @@
 ## Goal
-Prevent users from uploading a completely empty Excel sheet (or one where all rows are empty) by detecting this state during upload and returning a clear validation warning/error instead of silently clearing the project's existing BOQ data.
+Implement a report selection and column configuration system in the Project Setup, allowing users to:
+1. Select a default report layout style (Standard vs. Lephadimisha BOQ Report).
+2. Preview their layout selection visually.
+3. Rename, reorder, and customize the visibility of columns.
+4. Download reports matching this configuration under a simplified "2-card" layout in the PDF/Excel download interface, with page selectors and dual PDF/Excel download options.
 
 ## Constraints
-1. Must use Django's validation/errors framework.
-2. Must prevent deletion of existing data if the uploaded file is empty.
-3. Must remain compatible with single-sheet files and files with a "Setup Template" sheet.
-4. Validation should happen in the service layer or form validation layer.
+- **OS**: Windows environment.
+- **Python Runtime**: Python 3.13+ within the `.venv` virtual environment.
+- **Base Model Rules**: Any new database entities must inherit from `BaseModel`.
+- **Testing Rules**: All test objects must be created using `factory_boy` factories.
+- **Layout Fidelity**: The output reports must match the exact structures of `Lephadimisha_BOQ_Report.pdf` and `Lephadimisha_BOQ_Report .xlsx` when that layout is selected.
 
 ## Known context
-- If `import_boq_from_excel` returns `created_count = 0` and `errors = []` (i.e. no parsing errors, but no rows parsed), the database is currently wiped (Structure, Bill, Package, and LineItem are deleted).
-- In `import_boq_from_excel`, standard column mapping and empty row checking are already done.
-- If all rows are empty, `valid_forms` is empty.
+- **Project Model**: Defined in `app/Project/projects/projects_models.py` with `certificate_layout` choices (`STANDARD`, `VALTERRA_RPM`).
+- **PDF Generation Task**: In `app/BillOfQuantities/tasks.py` (`compile_pdf_for_certificate`), which uses HTML templates in `pdf_templates/`.
+- **Excel Generation**: In `app/BillOfQuantities/exporters/excel_exporter.py` (`generate_payment_certificate_excel`), which generates sheets for Front, Summary, and detailed structures.
+- **UI Details**: The current payment certificate detail page (`payment_certificate_detail.html`) renders 4 distinct download cards.
 
 ## Risks
-- Users who intentionally want to clear all data by uploading an empty sheet won't be able to do so this way. (Mitigation: If they want to clear data, they should use a dedicated "Clear BOQ" button/action in the UI, rather than uploading an empty spreadsheet.)
-- We need to make sure we don't accidentally treat a valid sheet with temporary parsing issues (or header matching errors) as "empty" without returning the proper header missing errors. (Mitigation: Check if required columns are missing first, which is already handled and returns specific errors.)
+1. **Broken Excel Formulas**: The Excel exporter currently writes formulas referencing hardcoded columns (e.g. `SUM(G{start}:G{end})`). If columns are reordered or disabled, the column letters (like G, I, K, M) change, which would break static references.
+   *Mitigation*: Implement dynamic column letter resolution in `excel_exporter.py` based on the active sorted position of each enabled column.
+2. **PDF Width Constraints**: Reordering or enabling too many columns could cause tables in the PDF to stretch or wrap awkwardly.
+   *Mitigation*: Limit maximum columns or auto-scale widths based on visible columns using CSS flex/table sizing.
+3. **Template Complexities**: Standard vs Valterra vs Lephadimisha templates must support the customizable column ordering and labels.
+   *Mitigation*: Pass the resolved column structure from Django views into HTML templates and loop over columns dynamically.
 
 ## Options (2–4)
-### Option 1: service-level validation in `import_boq_from_excel`
-If `len(valid_forms) == 0` after parsing all rows, return `0, ["Excel file is empty. Please ensure it contains at least one valid line item row."]`. This is simple and prevents the deletion transaction from executing since we return an error before the database clear command.
-
-### Option 2: form-level validation in `StructureExcelUploadForm`
-Read the Excel file inside the form class's `clean` method and raise a `ValidationError` if the sheet is empty.
-- *Pros*: Aligns with Django's standard form validation.
-- *Cons*: Re-reads the file twice (once in `clean` and once in `import_boq_from_excel`), which is inefficient and duplicates column normalisation/cleaning code.
-
-### Option 3: service-level check with a custom warning/error flag
-Return a specific code or raise an exception when the sheet has 0 data rows, letting the view decide how to handle it (e.g. show a specific modal or warning message instead of a standard form error).
+- **Option A (Recommended)**: 
+  - Add `LEPHADIMISHA` choice to `certificate_layout` choices in `Project.CertificateLayout`.
+  - Add a JSONField `column_config` to the `Project` model storing a list of column definitions: `[{'id': 'item_no', 'label': 'Item No.', 'enabled': True, 'order': 1}, ...]`.
+  - Build a sleek, interactive drag-and-drop/sortable table interface using vanilla JS in the Setup tab, with a live mock table preview.
+  - Update `compile_pdf_for_certificate` and `excel_exporter.py` to dynamically resolve active columns, labels, and Excel formula coordinate letters.
+- **Option B**:
+  - Define a separate model `ReportColumnConfig` linked to `Project` with fields for each column's name, ordering, and state.
+  - While normalized, this increases DB queries and complicates test factory setup.
+- **Option C**:
+  - Implement predefined static layouts (Standard, RPM, Lephadimisha) without allowing reordering or renaming.
+  - This is rejected because it fails to satisfy the user's explicit customization requirements.
 
 ## Recommendation
-**Option 1** is highly recommended. It is simple, extremely safe, avoids parsing/reading the file multiple times, and directly prevents data deletion in a single place without modifying view-level logic.
+We recommend **Option A**. Storing the column config in a `JSONField` directly on the `Project` model is lightweight, easy to serialize/deserialize, keeps database queries to a minimum, and integrates cleanly with django-crispy-forms. It allows us to supply standard defaults and fallbacks when rendering, preventing breaking changes.
 
 ## Acceptance criteria
-1. Uploading a completely empty Excel sheet (or one with only empty/formatted blank rows) returns a validation error: `"Excel file is empty. Please ensure it contains at least one valid line item row."`.
-2. Existing BOQ data (Structures, Bills, Line Items) is **not** deleted when an empty file is uploaded.
-3. Uploading a valid Excel sheet with data continues to succeed and updates the BOQ correctly.
-4. Unit tests are added to verify that:
-   - Uploading an empty file returns the correct validation error.
-   - Uploading an empty file does not delete existing project database records.
+1. **Project Setup**:
+   - A dedicated "Report Layout & Column Configuration" section in setup.
+   - Layout selector (Standard vs Lephadimisha) with layout previews.
+   - Interactive column configuration: reorder (drag/drop or up/down), rename, and toggle visibility.
+   - Real-time live header preview showing custom names and order.
+2. **Download Interface**:
+   - "Download PDF Reports" screen shows exactly 2 cards: "Full Payment Certificate" and "Abridged Certificate".
+   - Each card embeds checkboxes to select sections (Cover Page, Valuation Summary, Detailed Report) and has "Download PDF" and "Download Excel" buttons.
+3. **Fidelity and Alignment**:
+   - Downloaded PDFs/Excels reflect the selected layout, custom column headings, custom column order, and only show enabled columns.
+   - Excel formulas evaluate correctly regardless of column order/existence.
+4. **Validation**:
+   - Existing unit and view tests pass, and new tests are written using factories to verify saving and rendering of configs.
