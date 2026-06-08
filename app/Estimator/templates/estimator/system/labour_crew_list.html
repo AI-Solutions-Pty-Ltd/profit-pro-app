@@ -168,7 +168,8 @@
                                 </td>
                                 <td class="whitespace-nowrap py-3 px-3 text-sm font-medium text-gray-900">
                                     <input type="text"
-                                           class="inline-edit-crew w-32 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           style="field-sizing: content"
+                                           class="inline-edit-crew min-w-[16rem] max-w-[48rem] border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ crew.id }}"
                                            data-field="crew_type"
                                            value="{{ crew.crew_type }}">
@@ -181,7 +182,7 @@
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                     <input type="number"
                                            step="1"
-                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-crew w-10 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ crew.id }}"
                                            data-field="skilled"
                                            value="{{ crew.skilled|num }}">
@@ -189,7 +190,7 @@
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                     <input type="number"
                                            step="1"
-                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-crew w-10 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ crew.id }}"
                                            data-field="semi_skilled"
                                            value="{{ crew.semi_skilled|num }}">
@@ -197,7 +198,7 @@
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                     <input type="number"
                                            step="1"
-                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-crew w-10 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ crew.id }}"
                                            data-field="general"
                                            value="{{ crew.general|num }}">
@@ -205,7 +206,7 @@
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                     <input type="number"
                                            step="0.01"
-                                           class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ crew.id }}"
                                            data-field="skilled_rate"
                                            value="{{ crew.skilled_rate|num }}">
@@ -213,7 +214,7 @@
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                     <input type="number"
                                            step="0.01"
-                                           class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ crew.id }}"
                                            data-field="semi_skilled_rate"
                                            value="{{ crew.semi_skilled_rate|num }}">
@@ -221,7 +222,7 @@
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                     <input type="number"
                                            step="0.01"
-                                           class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ crew.id }}"
                                            data-field="general_rate"
                                            value="{{ crew.general_rate|num }}">

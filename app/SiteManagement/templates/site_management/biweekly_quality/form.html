@@ -35,9 +35,7 @@
                             <div class="md:col-span-5">{{ f.activity_or_work_package|as_crispy_field }}</div>
                             <div class="md:col-span-3">{{ f.approval_status|as_crispy_field }}</div>
                             <div class="md:col-span-3">{{ f.remarks|as_crispy_field }}</div>
-                            <div class="md:col-span-1">
-                                {% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}
-                            </div>
+                            <div class="md:col-span-1">{% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}</div>
                         </div>
                     {% endfor %}
                 </div>
@@ -51,9 +49,7 @@
                             <div class="md:col-span-3">{{ f.date|as_crispy_field }}</div>
                             <div class="md:col-span-6">{{ f.material|as_crispy_field }}</div>
                             <div class="md:col-span-2">{{ f.quantity|as_crispy_field }}</div>
-                            <div class="md:col-span-1">
-                                {% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}
-                            </div>
+                            <div class="md:col-span-1">{% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}</div>
                         </div>
                     {% endfor %}
                 </div>
@@ -68,9 +64,7 @@
                             <div class="md:col-span-2">{{ f.is_compliant|as_crispy_field }}</div>
                             <div class="md:col-span-4">{{ f.snag_defect|as_crispy_field }}</div>
                             <div class="md:col-span-1">{{ f.snag_date|as_crispy_field }}</div>
-                            <div class="md:col-span-1">
-                                {% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}
-                            </div>
+                            <div class="md:col-span-1">{% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}</div>
                         </div>
                     {% endfor %}
                 </div>
@@ -84,9 +78,7 @@
                             <div class="md:col-span-3">{{ f.date|as_crispy_field }}</div>
                             <div class="md:col-span-3">{{ f.inspector|as_crispy_field }}</div>
                             <div class="md:col-span-5">{{ f.audit_findings|as_crispy_field }}</div>
-                            <div class="md:col-span-1">
-                                {% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}
-                            </div>
+                            <div class="md:col-span-1">{% if f.instance.pk %}{{ f.DELETE|as_crispy_field }}{% endif %}</div>
                         </div>
                     {% endfor %}
                 </div>
