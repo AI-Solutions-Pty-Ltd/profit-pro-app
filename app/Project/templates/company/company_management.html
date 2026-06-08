@@ -371,87 +371,89 @@
                     {% heroicon_outline "book-open" class="mb-2 w-6 h-6 text-emerald-500 transition-transform group-hover:scale-110" %}
                     <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-emerald-700">Daily Diaries</span>
                 </a>
-                {% comment %} <a href="{% url 'site_management:productivity-log-list' company.pk %}" {% endcomment %}
-                <a href="{% url 'project:production-daily-log-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-purple-200 transition-all duration-200 group hover:border-purple-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "chart-bar" class="mb-2 w-6 h-6 text-purple-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-purple-700">Productivity Log</span>
-                </a>
-                <a href="{% url 'site_management:subcontractor-log-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-orange-200 transition-all duration-200 group hover:border-orange-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "briefcase" class="mb-2 w-6 h-6 text-orange-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-orange-700">Subcontractor Log</span>
-                </a>
-                <a href="{% url 'site_management:snag-list-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-red-200 transition-all duration-200 group hover:border-red-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "exclamation-circle" class="mb-2 w-6 h-6 text-red-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-red-700">Snag List</span>
-                </a>
-                <a href="{% url 'site_management:progress-tracker-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-cyan-200 transition-all duration-200 group hover:border-cyan-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "chart-pie" class="mb-2 w-6 h-6 text-cyan-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-cyan-700">Progress Tracker</span>
-                </a>
-                <a href="{% url 'site_management:delay-log-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-yellow-200 transition-all duration-200 group hover:border-yellow-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "clock" class="mb-2 w-6 h-6 text-yellow-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-yellow-700">Delays Log</span>
-                </a>
-                <a href="{% url 'site_management:photo-log-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-pink-200 transition-all duration-200 group hover:border-pink-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "camera" class="mb-2 w-6 h-6 text-pink-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-pink-700">Photo Log</span>
-                </a>
-                <a href="{% url 'site_management:procurement-tracker-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-indigo-200 transition-all duration-200 group hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "shopping-cart" class="mb-2 w-6 h-6 text-indigo-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-indigo-700">Procurement Tracker</span>
-                </a>
-                <a href="{% url 'site_management:delivery-tracker-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-green-200 transition-all duration-200 group hover:border-green-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "truck" class="mb-2 w-6 h-6 text-green-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-green-700">Delivery Tracker</span>
-                </a>
-                <a href="{% url 'site_management:plant-equipment-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border transition-all duration-200 group border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "cog-6-tooth" class="mb-2 w-6 h-6 transition-transform text-slate-500 group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-slate-700">Plant & Equipment</span>
-                </a>
-                <a href="{% url 'site_management:quality-control-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-teal-200 transition-all duration-200 group hover:border-teal-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "shield-check" class="mb-2 w-6 h-6 text-teal-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-teal-700">Quality Control</span>
-                </a>
-                <a href="{% url 'site_management:labour-log-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-violet-200 transition-all duration-200 group hover:border-violet-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "user-group" class="mb-2 w-6 h-6 text-violet-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-violet-700">Labour Log</span>
-                </a>
-                <a href="{% url 'site_management:offsite-log-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-lime-200 transition-all duration-200 group hover:border-lime-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "arrow-right-on-rectangle" class="mb-2 w-6 h-6 text-lime-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-lime-700">Off-Site Log</span>
-                </a>
-                <a href="{% url 'site_management:safety-observation-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-red-200 transition-all duration-200 group hover:border-red-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "shield-exclamation" class="mb-2 w-6 h-6 text-red-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-red-700">Safety Observations</span>
-                </a>
-                <a href="{% url 'site_management:overhead-log-list' company.pk %}"
-                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-amber-200 transition-all duration-200 group hover:border-amber-300 hover:shadow-md hover:-translate-y-0.5">
-                    {% heroicon_outline "banknotes" class="mb-2 w-6 h-6 text-amber-500 transition-transform group-hover:scale-110" %}
-                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-amber-700">Overhead Log</span>
-                </a>
-            </div>
-        </div>
-    </div>
-    <!-- Footer -->
-    <div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
-        <div class="flex justify-between items-center">
-            <a href="{% url 'project:company-dashboard' %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
-                {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %} Back to Business Dashboard
+                {% comment %} <a href="{% url 'site_management:productivity-log-list' company.pk %}"
+    {% endcomment %}
+    a
+    href="{% url 'project:production-daily-log-list' company.pk %}"
+    class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-purple-200 transition-all duration-200 group hover:border-purple-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "chart-bar" class="mb-2 w-6 h-6 text-purple-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-purple-700">Productivity Log</span>
+            </a>
+            <a href="{% url 'site_management:subcontractor-log-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-orange-200 transition-all duration-200 group hover:border-orange-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "briefcase" class="mb-2 w-6 h-6 text-orange-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-orange-700">Subcontractor Log</span>
+            </a>
+            <a href="{% url 'site_management:snag-list-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-red-200 transition-all duration-200 group hover:border-red-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "exclamation-circle" class="mb-2 w-6 h-6 text-red-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-red-700">Snag List</span>
+            </a>
+            <a href="{% url 'site_management:progress-tracker-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-cyan-200 transition-all duration-200 group hover:border-cyan-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "chart-pie" class="mb-2 w-6 h-6 text-cyan-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-cyan-700">Progress Tracker</span>
+            </a>
+            <a href="{% url 'site_management:delay-log-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-yellow-200 transition-all duration-200 group hover:border-yellow-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "clock" class="mb-2 w-6 h-6 text-yellow-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-yellow-700">Delays Log</span>
+            </a>
+            <a href="{% url 'site_management:photo-log-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-pink-200 transition-all duration-200 group hover:border-pink-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "camera" class="mb-2 w-6 h-6 text-pink-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-pink-700">Photo Log</span>
+            </a>
+            <a href="{% url 'site_management:procurement-tracker-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-indigo-200 transition-all duration-200 group hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "shopping-cart" class="mb-2 w-6 h-6 text-indigo-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-indigo-700">Procurement Tracker</span>
+            </a>
+            <a href="{% url 'site_management:delivery-tracker-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-green-200 transition-all duration-200 group hover:border-green-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "truck" class="mb-2 w-6 h-6 text-green-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-green-700">Delivery Tracker</span>
+            </a>
+            <a href="{% url 'site_management:plant-equipment-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border transition-all duration-200 group border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "cog-6-tooth" class="mb-2 w-6 h-6 transition-transform text-slate-500 group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-slate-700">Plant & Equipment</span>
+            </a>
+            <a href="{% url 'site_management:quality-control-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-teal-200 transition-all duration-200 group hover:border-teal-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "shield-check" class="mb-2 w-6 h-6 text-teal-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-teal-700">Quality Control</span>
+            </a>
+            <a href="{% url 'site_management:labour-log-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-violet-200 transition-all duration-200 group hover:border-violet-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "user-group" class="mb-2 w-6 h-6 text-violet-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-violet-700">Labour Log</span>
+            </a>
+            <a href="{% url 'site_management:offsite-log-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-lime-200 transition-all duration-200 group hover:border-lime-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "arrow-right-on-rectangle" class="mb-2 w-6 h-6 text-lime-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-lime-700">Off-Site Log</span>
+            </a>
+            <a href="{% url 'site_management:safety-observation-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-red-200 transition-all duration-200 group hover:border-red-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "shield-exclamation" class="mb-2 w-6 h-6 text-red-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-red-700">Safety Observations</span>
+            </a>
+            <a href="{% url 'site_management:overhead-log-list' company.pk %}"
+               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-amber-200 transition-all duration-200 group hover:border-amber-300 hover:shadow-md hover:-translate-y-0.5">
+                {% heroicon_outline "banknotes" class="mb-2 w-6 h-6 text-amber-500 transition-transform group-hover:scale-110" %}
+                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-amber-700">Overhead Log</span>
             </a>
         </div>
     </div>
+</div>
+<!-- Footer -->
+<div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
+    <div class="flex justify-between items-center">
+        <a href="{% url 'project:company-dashboard' %}"
+           class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
+            {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %} Back to Business Dashboard
+        </a>
+    </div>
+</div>
 {% endblock content %}

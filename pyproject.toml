@@ -104,5 +104,7 @@ extend_exclude = """
 ./app/Project/templates/client/password_reset_email.html,
 ./app/Project/templates/portfolio/emails/project_user_welcome.html,
 ./app/BillOfQuantities/templates/payment_certificate/email_payment_certificate.html,
-./app/BillOfQuantities/templates/payments/payment_statement_pdf.html
+./app/BillOfQuantities/templates/payments/payment_statement_pdf.html,
+./app/BillOfQuantities/templates/pdf_templates
 """
+

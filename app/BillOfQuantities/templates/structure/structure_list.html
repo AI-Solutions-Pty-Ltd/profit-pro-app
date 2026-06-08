@@ -55,13 +55,17 @@
                                                 {% if structure.description %}{{ structure.description|truncatewords:20 }}{% endif %}
                                             </p>
                                             <div class="flex items-center text-sm text-gray-500">
-                                                <p>{% with bills=structure.bills.all %}{{ bills|length }} bill{{ bills|length|pluralize }}{% endwith %}</p>
+                                                <p>
+                                                    {% with bills=structure.bills.all %}{{ bills|length }} bill{{ bills|length|pluralize }}{% endwith %}
+                                                </p>
                                                 <span class="mx-2">•</span>
                                                 <p>
                                                     {% with total_items=structure.get_total_line_items %}{{ total_items }} item{{ total_items|pluralize }}{% endwith %}
                                                 </p>
                                                 <span class="mx-2">•</span>
-                                                <p>{% with total_value=structure.get_total_value %}Total: R {{ total_value|floatformat:2|intcomma }}{% endwith %}</p>
+                                                <p>
+                                                    {% with total_value=structure.get_total_value %}Total: R {{ total_value|floatformat:2|intcomma }}{% endwith %}
+                                                </p>
                                             </div>
                                         </div>
                                         <div class="flex items-center space-x-2">

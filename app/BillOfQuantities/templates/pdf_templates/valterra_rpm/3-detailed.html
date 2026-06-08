@@ -88,29 +88,36 @@
     <body>
         {% if project.logo %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.logo.url }}" style="max-height: 50px; max-width: 180px;">
+                <img src="{{ project.logo.url }}"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% elif project.contractor.logo %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.contractor.logo.url }}" style="max-height: 50px; max-width: 180px;">
+                <img src="{{ project.contractor.logo.url }}"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% elif project.client.logo %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.client.logo.url }}" style="max-height: 50px; max-width: 180px;">
+                <img src="{{ project.client.logo.url }}"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% else %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="/media/project_logos/logo.png" style="max-height: 50px; max-width: 180px;">
+                <img src="/media/project_logos/logo.png"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% endif %}
         <div class="title">
             DETAILED CERTIFICATE REPORT: &nbsp; {{ project.name|upper }} (CERTIFICATE NO. {{ payment_certificate.certificate_number|stringformat:"02d" }})
         </div>
-
         {% define "13" as colSpan %}
         <table class="items-table">
             <thead>
@@ -169,20 +176,16 @@
                                         <td class="text-center">{{ line_item.payment_reference|default:"" }}</td>
                                         <td class="text-left">{{ line_item.description }}</td>
                                         <td class="text-center">{{ line_item.unit_measurement|default:"-" }}</td>
-                                        
                                         <!-- Tender values -->
                                         <td class="text-right">{{ line_item.budgeted_quantity|default:0|floatformat:2|intcomma }}</td>
                                         <td class="text-right">R {{ line_item.unit_price|default:0|floatformat:2|intcomma }}</td>
                                         <td class="text-right">R {{ line_item.total_price|default:0|floatformat:2|intcomma }}</td>
-                                        
                                         <!-- Cumulative values -->
                                         <td class="text-right">{{ line_item.total_qty|default:0|floatformat:2|intcomma }}</td>
                                         <td class="text-right">R {{ line_item.total_claimed|default:0|floatformat:2|intcomma }}</td>
-                                        
                                         <!-- Previous values -->
                                         <td class="text-right">{{ line_item.previous_qty|default:0|floatformat:2|intcomma }}</td>
                                         <td class="text-right">R {{ line_item.previous_claimed|default:0|floatformat:2|intcomma }}</td>
-                                        
                                         <!-- Current values -->
                                         <td class="text-right">{{ line_item.current_qty|default:0|floatformat:2|intcomma }}</td>
                                         <td class="text-right">R {{ line_item.current_claim|default:0|floatformat:2|intcomma }}</td>
@@ -206,16 +209,15 @@
                     <td colspan="4" class="text-right bold">Total Excluding VAT</td>
                     <!-- Tender Total -->
                     <td colspan="2"></td>
-                    <td class="text-right bold">R {{ payment_certificate.contract_value|default:project.original_contract_value|floatformat:2|intcomma }}</td>
-                    
+                    <td class="text-right bold">
+                        R {{ payment_certificate.contract_value|default:project.original_contract_value|floatformat:2|intcomma }}
+                    </td>
                     <!-- Cumulative Total -->
                     <td></td>
                     <td class="text-right bold">R {{ payment_certificate.progressive_to_date|default:0|floatformat:2|intcomma }}</td>
-                    
                     <!-- Previous Total -->
                     <td></td>
                     <td class="text-right bold">R {{ payment_certificate.progressive_previous|default:0|floatformat:2|intcomma }}</td>
-                    
                     <!-- Current Total -->
                     <td></td>
                     <td class="text-right bold">R {{ payment_certificate.current_claim_total|default:0|floatformat:2|intcomma }}</td>

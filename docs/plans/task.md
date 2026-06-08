@@ -7,3 +7,7 @@
 | **TSK-03** | Implement Dynamic Column Configuration in PDF Generation | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_compile_pdf_with_custom_columns` |
 | **TSK-04** | Implement Dynamic Column Configuration in Excel Generation | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_excel_exporter_with_custom_columns` |
 | **TSK-05** | Refactor Download PDF Reports Interface | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k TestDownloadViews` |
+| **TSK-06** | Fix Type Checker Errors in app/BillOfQuantities/tasks.py | `[x]` | `.venv\Scripts\python.exe -m ty check .` |
+| **TSK-07** | Exclude PDF Templates from djlint | `[x]` | `.venv\Scripts\python.exe -m djlint --lint .` |
+| **TSK-08** | Verify All Checks Pass successfully | `[/]` | Run checks commands combined |
+

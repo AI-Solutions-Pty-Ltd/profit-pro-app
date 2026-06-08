@@ -79,9 +79,7 @@
                                                 </div>
                                             </label>
                                         </div>
-                                        {% if field.help_text %}
-                                            <p class="mt-1 text-xs italic text-gray-500">{{ field.help_text }}</p>
-                                        {% endif %}
+                                        {% if field.help_text %}<p class="mt-1 text-xs italic text-gray-500">{{ field.help_text }}</p>{% endif %}
                                         <!-- Attachment Preview Container -->
                                         <div id="attachment-preview-container"
                                              class="{% if not field.value %}hidden{% endif %} mt-4 animate-in fade-in duration-300">
@@ -116,9 +114,7 @@
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        {% if field.errors %}
-                                            <div class="mt-1 text-xs font-medium text-red-600">{{ field.errors.0 }}</div>
-                                        {% endif %}
+                                        {% if field.errors %}<div class="mt-1 text-xs font-medium text-red-600">{{ field.errors.0 }}</div>{% endif %}
                                     </div>
                                 {% else %}
                                     {{ field|as_crispy_field }}

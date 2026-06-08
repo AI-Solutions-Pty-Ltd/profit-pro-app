@@ -4,9 +4,8 @@
     <thead class="text-bold">
         <tr>
             {% for col in columns %}
-                <th class="subsection-header {% if col.id == 'description' %}text-left{% else %}text-center{% endif %}" {% if col.id == 'description' %}style="width: 250px;"{% endif %}>
-                    {{ col.label }}
-                </th>
+                <th class="subsection-header {% if col.id == 'description' %}text-left{% else %}text-center{% endif %}"
+                    {% if col.id == 'description' %}style="width: 250px;"{% endif %}>{{ col.label }}</th>
             {% endfor %}
         </tr>
     </thead>

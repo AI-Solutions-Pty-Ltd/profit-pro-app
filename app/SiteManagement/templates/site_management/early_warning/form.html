@@ -83,9 +83,7 @@
                     {{ form.response|as_crispy_field }}
                     {{ form.response_attachment|as_crispy_field }}
                     {{ form.status|as_crispy_field }}
-                    {% if object.date_closed %}
-                        <p class="text-xs text-gray-500">Closed on {{ object.date_closed }}</p>
-                    {% endif %}
+                    {% if object.date_closed %}<p class="text-xs text-gray-500">Closed on {{ object.date_closed }}</p>{% endif %}
                 </div>
             {% endif %}
             <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">

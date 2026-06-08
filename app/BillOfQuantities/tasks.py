@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
-from typing import Literal
+from typing import Any, Literal
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -72,7 +72,7 @@ def get_valuation_summary_data(payment_certificate):
     """
     line_items = LineItem.construct_payment_certificate(payment_certificate)
 
-    structures_data = {}
+    structures_data: dict[Any, dict[str, Any]] = {}
     for item in line_items:
         if not item.is_work:
             continue

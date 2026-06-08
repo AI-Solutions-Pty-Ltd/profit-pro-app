@@ -61,29 +61,34 @@
     <body>
         {% if project.logo %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.logo.url }}" style="max-height: 50px; max-width: 180px;">
+                <img src="{{ project.logo.url }}"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% elif project.contractor.logo %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.contractor.logo.url }}" style="max-height: 50px; max-width: 180px;">
+                <img src="{{ project.contractor.logo.url }}"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% elif project.client.logo %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.client.logo.url }}" style="max-height: 50px; max-width: 180px;">
+                <img src="{{ project.client.logo.url }}"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% else %}
             <div style="float: right; margin-bottom: 10px;">
-                <img src="/media/project_logos/logo.png" style="max-height: 50px; max-width: 180px;">
+                <img src="/media/project_logos/logo.png"
+                     style="max-height: 50px;
+                            max-width: 180px">
             </div>
             <div style="clear: both;"></div>
         {% endif %}
-        <div class="title">
-            VALUATION SUMMARY: &nbsp; {{ project.name|upper }}
-        </div>
-
+        <div class="title">VALUATION SUMMARY: &nbsp; {{ project.name|upper }}</div>
         <table class="summary-table">
             <thead>
                 <tr>
@@ -120,7 +125,6 @@
                         <td colspan="6" style="height: 10px; border: none;"></td>
                     </tr>
                 {% endfor %}
-                
                 <tr class="total-row">
                     <td></td>
                     <td>TOTAL EXCLUDING VAT</td>
