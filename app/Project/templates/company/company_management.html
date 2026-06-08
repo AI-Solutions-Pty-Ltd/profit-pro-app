@@ -359,7 +359,7 @@
         <!-- Site Management Buttons -->
         <!-- Site Management Buttons -->
         <div class="relative">
-            <div class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 text-center group/overlay"></div>
+            {% comment %} <div class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 text-center group/overlay"></div> {% endcomment %}
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <a href="{% url 'site_management:materials-log-list' company.pk %}"
                    class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-blue-200 transition-all duration-200 group hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5">
@@ -371,7 +371,8 @@
                     {% heroicon_outline "book-open" class="mb-2 w-6 h-6 text-emerald-500 transition-transform group-hover:scale-110" %}
                     <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-emerald-700">Daily Diaries</span>
                 </a>
-                <a href="{% url 'site_management:productivity-log-list' company.pk %}"
+                {% comment %} <a href="{% url 'site_management:productivity-log-list' company.pk %}" {% endcomment %}
+                <a href="{% url 'project:production-daily-log-list' company.pk %}"
                    class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-purple-200 transition-all duration-200 group hover:border-purple-300 hover:shadow-md hover:-translate-y-0.5">
                     {% heroicon_outline "chart-bar" class="mb-2 w-6 h-6 text-purple-500 transition-transform group-hover:scale-110" %}
                     <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-purple-700">Productivity Log</span>
