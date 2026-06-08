@@ -176,10 +176,6 @@
                             </th>
                             <th scope="col"
                                 class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                Section
-                            </th>
-                            <th scope="col"
-                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                                 Trade Name
                             </th>
                             <th scope="col"
@@ -231,13 +227,6 @@
                                            value="{{ ls.id }}"
                                            class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
                                 </td>
-                                <td class="whitespace-nowrap py-3 px-3 text-sm text-gray-500">
-                                    <input type="text"
-                                           class="inline-edit-ls w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                           data-item-id="{{ ls.id }}"
-                                           data-field="section"
-                                           value="{{ ls.section }}">
-                                </td>
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
                                     <input type="text"
                                            class="inline-edit-ls w-32 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
@@ -247,7 +236,7 @@
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
                                     <input type="text"
-                                           class="inline-edit-ls w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                           class="inline-edit-ls w-96 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
                                            data-item-id="{{ ls.id }}"
                                            data-field="name"
                                            value="{{ ls.name }}">
@@ -329,7 +318,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="12" class="px-6 py-12 text-center text-sm text-gray-500">
+                                <td colspan="11" class="px-6 py-12 text-center text-sm text-gray-500">
                                     No labour specifications found. Add one using the button above or upload from a template.
                                 </td>
                             </tr>

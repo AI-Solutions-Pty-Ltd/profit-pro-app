@@ -246,7 +246,9 @@
                                     <td class="px-4 py-2 font-medium text-gray-900">{{ v.variation_number }}</td>
                                     <td class="px-4 py-2 text-gray-700">
                                         <div class="font-medium">{{ v.title }}</div>
-                                        {% if v.description %}<div class="text-xs text-gray-500 mt-1">{{ v.description }}</div>{% endif %}
+                                        {% if v.description %}
+                                            <div class="text-xs text-gray-500 mt-1">{{ v.description }}</div>
+                                        {% endif %}
                                     </td>
                                     <td class="px-4 py-2 text-gray-700">
                                         {% if v.date_identified %}

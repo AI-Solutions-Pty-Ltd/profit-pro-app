@@ -548,7 +548,7 @@ class SystemItemLibraryEntry(models.Model):
     description = models.CharField(max_length=500)
     unit = models.CharField(max_length=20, blank=True)
     material_spec = models.ForeignKey(
-        SystemMaterialSpec,
+        SystemSpecification,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -575,6 +575,12 @@ class SystemItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    # Raw spec names from the uploaded sheet, preserved even when they don't
+    # resolve to an existing spec so the UI can show the value and flag it as
+    # unlinked (highlighted red) while still offering the dropdown to link it.
+    material_spec_name = models.CharField(max_length=200, blank=True)
+    labour_plant_spec_name = models.CharField(max_length=200, blank=True)
+    preliminary_spec_name = models.CharField(max_length=200, blank=True)
     display_order = models.IntegerField(default=0)
 
     class Meta:
@@ -1249,7 +1255,7 @@ class ContractorItemLibraryEntry(models.Model):
     description = models.CharField(max_length=500)
     unit = models.CharField(max_length=20, blank=True)
     material_spec = models.ForeignKey(
-        ContractorMaterialSpec,
+        ContractorSpecification,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -1276,6 +1282,12 @@ class ContractorItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    # Raw spec names from the uploaded sheet, preserved even when they don't
+    # resolve to an existing spec so the UI can show the value and flag it as
+    # unlinked (highlighted red) while still offering the dropdown to link it.
+    material_spec_name = models.CharField(max_length=200, blank=True)
+    labour_plant_spec_name = models.CharField(max_length=200, blank=True)
+    preliminary_spec_name = models.CharField(max_length=200, blank=True)
     display_order = models.IntegerField(default=0)
 
     class Meta:
@@ -1894,6 +1906,12 @@ class ProjectItemLibraryEntry(models.Model):
         blank=True,
         related_name="library_entries",
     )
+    # Raw spec names from the uploaded sheet, preserved even when they don't
+    # resolve to an existing spec so the UI can show the value and flag it as
+    # unlinked (highlighted red) while still offering the dropdown to link it.
+    material_spec_name = models.CharField(max_length=200, blank=True)
+    labour_plant_spec_name = models.CharField(max_length=200, blank=True)
+    preliminary_spec_name = models.CharField(max_length=200, blank=True)
     display_order = models.IntegerField(default=0)
 
     class Meta:
