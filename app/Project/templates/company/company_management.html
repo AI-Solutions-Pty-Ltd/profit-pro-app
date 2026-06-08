@@ -361,6 +361,7 @@
         <div class="relative">
             {% comment %} <div class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 text-center group/overlay"></div> {% endcomment %}
             {% comment %} <div class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 text-center group/overlay"></div> {% endcomment %}
+            {% comment %} <div class="flex absolute inset-0 z-10 flex-col justify-center items-center p-6 text-center group/overlay"></div> {% endcomment %}
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <a href="{% url 'site_management:materials-log-list' company.pk %}"
                    class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-blue-200 transition-all duration-200 group hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5">
@@ -441,6 +442,16 @@
                    class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-amber-200 transition-all duration-200 group hover:border-amber-300 hover:shadow-md hover:-translate-y-0.5">
                     {% heroicon_outline "banknotes" class="mb-2 w-6 h-6 text-amber-500 transition-transform group-hover:scale-110" %}
                     <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-amber-700">Overhead Log</span>
+                </a>
+                <a href="{% url 'site_management:biweekly-safety-list' company.pk %}"
+                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-indigo-200 transition-all duration-200 group hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5">
+                    {% heroicon_outline "shield-exclamation" class="mb-2 w-6 h-6 text-indigo-600 transition-transform group-hover:scale-110" %}
+                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-indigo-700">Bi-Weekly Safety</span>
+                </a>
+                <a href="{% url 'site_management:ncr-list' company.pk %}"
+                   class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-amber-200 transition-all duration-200 group hover:border-amber-300 hover:shadow-md hover:-translate-y-0.5">
+                    {% heroicon_outline "document-check" class="mb-2 w-6 h-6 text-amber-500 transition-transform group-hover:scale-110" %}
+                    <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-amber-700">NCR Register</span>
                 </a>
             </div>
         </div>

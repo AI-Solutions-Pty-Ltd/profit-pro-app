@@ -1,57 +1,39 @@
-# TDD Implementation Plan: SedgePro Webhook Invitation Refactor
+# Implementation Plan - Add Bi-Weekly Safety and NCR Cards to Company Management
 
-> **For Antigravity:** REQUIRED WORKFLOW: Use `.agent/workflows/execute-plan.md` to execute this plan in single-flow mode.
+## Goal
+Add "Bi-Weekly Safety" and "NCR Register" cards to the "Site Management" grid in the Business Management Center dashboard (`company_management.html`), specifically appending them at the end of the site cards list (Option 1).
 
-### Goal
-Refactor the SedgePro user invitation webhook (`SedgeProWebhookView`) to return the generated user setup URL (containing `uidb64` and `token` parameters) in the JSON response payload, and make the automated email notification conditional on a new boolean request parameter `"send_email"`.
+## Assumptions
+- The template context represents the active project under the variable name `company`.
+- The Django URL namespaces are:
+  - Bi-Weekly Safety: `site_management:biweekly-safety-list`
+  - NCR Register: `site_management:ncr-list`
+- The project has `.venv` correctly configured, and pytest tests can run.
 
-### Assumptions
-1. The webhook view is `SedgeProWebhookView` in `app/Account/views/auth_views.py`.
-2. Existing tests are defined in `app/Account/tests/test_sedgepro_webhook.py`.
-3. The custom onboarding/setup URL points to Django's standard reset/activation url pattern: `reset/<uidb64>/<token>/` which maps to `users:auth:password_reset_confirm`.
-4. We must support both new users (who need a signup token & activation URL) and existing users (who already have an account setup, returning `signup_url: null`).
-5. By default, `"send_email"` in the request payload is `False`. If omitted or `False`, no email is sent. If `True`, we send the email using Django's email backend.
+## Plan
 
-### Plan
+### Step 1: Update Company Management Template
+- **Files**: `app/Project/templates/company/company_management.html`
+- **Change**: Append "Bi-Weekly Safety" and "NCR Register" cards to the end of the `<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">` in the Site Management section (around lines 440-445).
+- **Verify**: Read the modified template file to check for correct URL resolution tags and class styling.
 
-1. **Step 1: Update existing tests and add new tests in test_sedgepro_webhook.py (TDD First)**
-   - **Files**: `app/Account/tests/test_sedgepro_webhook.py`
-   - **Change**:
-     - Update `test_webhook_success_new_user` and `test_webhook_success_existing_user_not_linked` to pass `"send_email": True` in the post payload, keeping their email assertion logic valid. Also assert that the response JSON contains `"signup_url"`.
-     - Add `test_webhook_success_new_user_no_email` where `"send_email"` is omitted (or `False`). Assert that:
-       - Response status is 200 OK.
-       - `"signup_url"` in the response JSON is a valid URL containing `/users/auth/reset/<uidb64>/<token>/`.
-       - No emails are sent (`len(mail.outbox) == 0`).
-     - Add `test_webhook_success_existing_user_not_linked_no_email` where `"send_email"` is `False`. Assert that:
-       - Response status is 200 OK.
-       - `"signup_url"` in the response JSON is `None`.
-       - No emails are sent (`len(mail.outbox) == 0`).
-     - Update all existing success test cases to expect `"signup_url"` (which can be a string or null) in the JSON response for consistency.
-   - **Verify**: Run `.venv\Scripts\python.exe -m pytest app/Account/tests/test_sedgepro_webhook.py -v` (expected to fail on new assertions).
+### Step 2: Add View Unit Test
+- **Files**: `app/Project/tests/test_views.py`
+- **Change**: Add a new test case `TestCompanyManagementSiteCards` that verifies rendering of `company_management.html` and checks that the HTML response content includes:
+  - The URL targeting `site_management:biweekly-safety-list` with `company.pk`
+  - The URL targeting `site_management:ncr-list` with `company.pk`
+- **Verify**: Run the new test case with pytest:
+  `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k TestCompanyManagementSiteCards`
 
-2. **Step 2: Implement conditional emailing and token return in SedgeProWebhookView**
-   - **Files**: `app/Account/views/auth_views.py`
-   - **Change**:
-     - Extract `send_email` from the request JSON payload (check both the root and the `record` wrapper if present), coercing/defaulting it to `False`.
-     - Refactor the token/uid generation out of the `settings.USE_EMAIL` block so that we always generate `token`, `uid`, and the absolute `signup_url` for new users regardless of whether the email is sent.
-     - Restructure the email sending block to only execute when `settings.USE_EMAIL` is `True` AND `send_email` is `True`.
-     - Update successful JSON responses to return the `"signup_url"` parameter:
-       - For newly invited users: the generated absolute signup URL.
-       - For existing users or already linked users: `None`.
-   - **Verify**: Run `.venv\Scripts\python.exe -m pytest app/Account/tests/test_sedgepro_webhook.py -v` (expected to PASS).
+### Step 3: Run Full View Tests & Linting
+- **Files**: None
+- **Change**: None
+- **Verify**: Run the full suite of Project views tests and ruff lint check:
+  `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py`
 
-3. **Step 3: Run full verification**
-   - **Files**: None
-   - **Change**: Run ruff check and all pytest tests across the workspace.
-   - **Verify**:
-     - `.venv\Scripts\python.exe -m ruff check .`
-     - `.venv\Scripts\python.exe -m pytest`
+## Risks & mitigations
+- **Risk**: Missing `project` or `company` subscription permissions during testing.
+- **Mitigation**: Use `AccountFactory` which defaults to `FULL_ACCESS` subscription, or set `subscription = Subscription.FULL_ACCESS` explicitly on the user during tests.
 
-### Risks & mitigations
-- **Risk**: Returning signup token in API response payload increases attack surface.
-  - *Mitigation*: The endpoint is secured by custom `X-SedgePro-API-Key` headers and only sent over HTTPS/SSL. The token only works once and is valid for a short lifespan (24 hours).
-- **Risk**: Retroactive changes breaking other parts of the system.
-  - *Mitigation*: Full test suite execution verifies that no regressions are introduced.
-
-### Rollback plan
-- Revert changes using `git checkout` for `app/Account/views/auth_views.py` and `app/Account/tests/test_sedgepro_webhook.py`.
+## Rollback plan
+- Revert changes to `app/Project/templates/company/company_management.html` and `app/Project/tests/test_views.py` using `git checkout`.
