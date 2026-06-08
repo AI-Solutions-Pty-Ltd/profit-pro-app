@@ -442,12 +442,8 @@
                         <tr class="{% if entry.type == 'debit' %}debit{% else %}credit{% endif %}">
                             <td>{{ entry.date|date:"d M Y" }}</td>
                             <td>{{ entry.description }}</td>
-                            <td class="text-right">
-                                {% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}
-                            </td>
-                            <td class="text-right">
-                                {% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}
-                            </td>
+                            <td class="text-right">{% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}</td>
+                            <td class="text-right">{% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}</td>
                             <td class="text-right font-bold">
                                 {% if entry.balance is not None %}
                                     {% if entry.balance > 0 %}
@@ -529,7 +525,9 @@
                         <li>Payment is due {{ project.get_payment_terms_display|default:"30 days" }} of certificate date.</li>
                     {% endif %}
                     <li>This statement shows all transactions up to date.</li>
-                    {% if final_balance > 0 %}<li class="text-red font-bold">OUTSTANDING AMOUNT - Payment is overdue!</li>{% endif %}
+                    {% if final_balance > 0 %}
+                        <li class="text-red font-bold">OUTSTANDING AMOUNT - Payment is overdue!</li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
