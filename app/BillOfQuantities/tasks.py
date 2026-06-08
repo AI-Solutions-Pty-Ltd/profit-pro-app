@@ -1,6 +1,7 @@
 import threading
 from collections import defaultdict
 from datetime import datetime
+from decimal import Decimal
 from io import BytesIO
 from typing import Literal
 
@@ -64,30 +65,168 @@ def group_line_items_by_hierarchy(line_items):
     return grouped
 
 
-def generate_payment_certificate_pdf(context) -> ContentFile:
-    """Generate payment certificate PDF in memory.
-
-    Args:
-        context: Context to generate PDF for
-
-    Returns:
-        ContentFile: In-memory PDF file
+def get_valuation_summary_data(payment_certificate):
     """
-    # add current date to context
-    context["now"] = datetime.now()
-    context["vat_rate"] = settings.VAT_RATE
-    front_page_template = get_template("pdf_templates/1-front-page.html")
-    line_items_template = get_template("pdf_templates/2-line-items.html")
+    Get aggregated data for the Valuation Summary page (Valterra/RPM layout).
+    Groups line items by structure (section) -> bill and calculates totals.
+    """
+    line_items = LineItem.construct_payment_certificate(payment_certificate)
 
-    # Generate individual PDFs in memory
-    front_page_pdf = generate_pdf(front_page_template.render(context))
-    line_items_pdf = generate_pdf(line_items_template.render(context))
+    structures_data = {}
+    for item in line_items:
+        if not item.is_work:
+            continue
+        struct_id = item.structure_id
+        bill_id = item.bill_id
+        if not struct_id or not bill_id:
+            continue
+
+        if struct_id not in structures_data:
+            structures_data[struct_id] = {
+                "name": item.structure.name,
+                "budget": Decimal("0.00"),
+                "cumulative": Decimal("0.00"),
+                "previous": Decimal("0.00"),
+                "current": Decimal("0.00"),
+                "bills": {},
+            }
+
+        struct = structures_data[struct_id]
+        if bill_id not in struct["bills"]:
+            struct["bills"][bill_id] = {
+                "name": item.bill.name,
+                "budget": Decimal("0.00"),
+                "cumulative": Decimal("0.00"),
+                "previous": Decimal("0.00"),
+                "current": Decimal("0.00"),
+            }
+
+        bill = struct["bills"][bill_id]
+
+        budget_val = Decimal(str(item.total_price or "0.00"))
+        cum_val = Decimal(str(item.total_claimed or "0.00"))
+        prev_val = Decimal(str(item.previous_claimed or "0.00"))
+        curr_val = Decimal(str(item.current_claim or "0.00"))
+
+        bill["budget"] += budget_val
+        bill["cumulative"] += cum_val
+        bill["previous"] += prev_val
+        bill["current"] += curr_val
+
+        struct["budget"] += budget_val
+        struct["cumulative"] += cum_val
+        struct["previous"] += prev_val
+        struct["current"] += curr_val
+
+    # Convert to list structure sorted by name
+    grouped_sections = []
+    sorted_structs = sorted(structures_data.values(), key=lambda s: s["name"])
+
+    total_budget = Decimal("0.00")
+    total_cumulative = Decimal("0.00")
+    total_previous = Decimal("0.00")
+    total_current = Decimal("0.00")
+
+    for s_data in sorted_structs:
+        sorted_bills = sorted(s_data["bills"].values(), key=lambda b: b["name"])
+        s_data["bills"] = sorted_bills
+        grouped_sections.append(s_data)
+
+        total_budget += s_data["budget"]
+        total_cumulative += s_data["cumulative"]
+        total_previous += s_data["previous"]
+        total_current += s_data["current"]
+
+    return {
+        "grouped_sections": grouped_sections,
+        "total_budget": total_budget,
+        "total_cumulative": total_cumulative,
+        "total_previous": total_previous,
+        "total_current": total_current,
+    }
+
+
+def compile_pdf_for_certificate(
+    payment_certificate,
+    include_front: bool = True,
+    include_summary: bool = True,
+    include_detailed: bool = True,
+    is_abridged: bool = False,
+    layout: str | None = None,
+) -> ContentFile:
+    """
+    Compile a payment certificate PDF with optional layout and sections.
+    """
+    project = payment_certificate.project
+    if not layout:
+        layout = getattr(project, "certificate_layout", "standard") or "standard"
+    layout = layout.lower()
+
+    # Context initialization
+    all_columns = project.get_column_config()
+    active_columns = [col for col in all_columns if col.get("enabled", True)]
+
+    context = {
+        "payment_certificate": payment_certificate,
+        "project": project,
+        "now": datetime.now(),
+        "vat_rate": settings.VAT_RATE,
+        "is_abridged": is_abridged,
+        "columns": active_columns,
+    }
+
+    # Gather data based on abridged flag
+    if is_abridged:
+        all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
+        line_items = all_line_items.filter(addendum=False, special_item=False)
+        special_items = all_line_items.filter(addendum=False, special_item=True)
+        addendum_items = all_line_items.filter(addendum=True)
+        context.update(
+            {
+                "grouped_line_items": group_line_items_by_hierarchy(line_items),
+                "addendum_items": group_line_items_by_hierarchy(addendum_items),
+                "special_items": special_items,
+            }
+        )
+    else:
+        line_items = LineItem.construct_payment_certificate(payment_certificate)
+        context.update(
+            {
+                "grouped_line_items": group_line_items_by_hierarchy(line_items),
+            }
+        )
+
+    # Add summary data if summary is requested and layout is valterra_rpm
+    if include_summary and layout == "valterra_rpm":
+        summary_data = get_valuation_summary_data(payment_certificate)
+        context.update(summary_data)
+
+    # Compile the individual PDFs
+    merger = PdfWriter()
+    pdf_parts = []
+
+    if layout == "valterra_rpm":
+        if include_front:
+            front_tpl = get_template("pdf_templates/valterra_rpm/1-front-page.html")
+            pdf_parts.append(generate_pdf(front_tpl.render(context)))
+        if include_summary:
+            sum_tpl = get_template("pdf_templates/valterra_rpm/2-summary.html")
+            pdf_parts.append(generate_pdf(sum_tpl.render(context)))
+        if include_detailed:
+            det_tpl = get_template("pdf_templates/valterra_rpm/3-detailed.html")
+            pdf_parts.append(generate_pdf(det_tpl.render(context)))
+    else:
+        # Standard Layout
+        if include_front:
+            front_tpl = get_template("pdf_templates/1-front-page.html")
+            pdf_parts.append(generate_pdf(front_tpl.render(context)))
+        # Standard layout has no separate summary page, but if detailed is checked we render 2-line-items
+        if include_detailed:
+            det_tpl = get_template("pdf_templates/2-line-items.html")
+            pdf_parts.append(generate_pdf(det_tpl.render(context)))
 
     # Merge PDFs using pypdf
-    merger = PdfWriter()
-
-    # Read each ContentFile and append to merger
-    for pdf_content in [front_page_pdf, line_items_pdf]:
+    for pdf_content in pdf_parts:
         pdf_reader = PdfReader(BytesIO(pdf_content.read()))
         for page in pdf_reader.pages:
             merger.add_page(page)
@@ -97,40 +236,64 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
     merger.write(merged_output)
     merged_output.seek(0)
 
-    # Return as ContentFile
+    return ContentFile(merged_output.getvalue())
+
+
+def generate_payment_certificate_pdf(context) -> ContentFile:
+    """Generate payment certificate PDF in memory (for backwards compatibility)."""
+    payment_certificate = context.get("payment_certificate")
+    if payment_certificate:
+        layout = getattr(payment_certificate.project, "certificate_layout", "standard")
+        is_abridged = context.get("is_abridged", False)
+        return compile_pdf_for_certificate(
+            payment_certificate,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=is_abridged,
+            layout=layout,
+        )
+
+    # Fallback to standard logic if no payment_certificate is in context
+    context["now"] = datetime.now()
+    context["vat_rate"] = settings.VAT_RATE
+    front_page_template = get_template("pdf_templates/1-front-page.html")
+    line_items_template = get_template("pdf_templates/2-line-items.html")
+
+    front_page_pdf = generate_pdf(front_page_template.render(context))
+    line_items_pdf = generate_pdf(line_items_template.render(context))
+
+    merger = PdfWriter()
+    for pdf_content in [front_page_pdf, line_items_pdf]:
+        pdf_reader = PdfReader(BytesIO(pdf_content.read()))
+        for page in pdf_reader.pages:
+            merger.add_page(page)
+
+    merged_output = BytesIO()
+    merger.write(merged_output)
+    merged_output.seek(0)
     return ContentFile(merged_output.getvalue())
 
 
 def generate_full_payment_certificate_pdf(payment_certificate) -> ContentFile:
-    project = payment_certificate.project
-    line_items = LineItem.construct_payment_certificate(payment_certificate)
-
-    context = {
-        "payment_certificate": payment_certificate,
-        "project": project,
-        "grouped_line_items": group_line_items_by_hierarchy(line_items),
-        "is_abridged": False,
-    }
-    return generate_payment_certificate_pdf(context)
+    return compile_pdf_for_certificate(
+        payment_certificate,
+        include_front=True,
+        include_summary=True,
+        include_detailed=True,
+        is_abridged=False,
+    )
 
 
 def generate_abridged_payment_certificate_pdf(payment_certificate) -> ContentFile:
     """Generate abridged payment certificate PDF in memory."""
-    project = payment_certificate.project
-    all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
-    line_items = all_line_items.filter(addendum=False, special_item=False)
-    special_items = all_line_items.filter(addendum=False, special_item=True)
-    addendum_items = all_line_items.filter(addendum=True)
-
-    context = {
-        "payment_certificate": payment_certificate,
-        "project": project,
-        "grouped_line_items": group_line_items_by_hierarchy(line_items),
-        "addendum_items": group_line_items_by_hierarchy(addendum_items),
-        "is_abridged": True,
-        "special_items": special_items,
-    }
-    return generate_payment_certificate_pdf(context)
+    return compile_pdf_for_certificate(
+        payment_certificate,
+        include_front=True,
+        include_summary=True,
+        include_detailed=True,
+        is_abridged=True,
+    )
 
 
 def generate_and_save_pdf(

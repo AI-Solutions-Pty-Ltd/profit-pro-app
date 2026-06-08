@@ -1,0 +1,226 @@
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Detailed Certificate Report - {{ project.name }}</title>
+        <style>
+            @page {
+                size: A4 landscape;
+                margin: 8mm;
+            }
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 7.5pt;
+                line-height: 1.25;
+                margin: 0;
+                padding: 0;
+            }
+            .title {
+                font-size: 12pt;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 15px;
+                background-color: #EAEAEA;
+                padding: 6px;
+                border: 1px solid #000;
+            }
+            table.items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }
+            table.items-table th, table.items-table td {
+                border: 1px solid #000;
+                padding: 3px 2px;
+                vertical-align: middle;
+            }
+            table.items-table th {
+                background-color: #F2F2F2;
+                font-weight: bold;
+                text-align: center;
+            }
+            .section-header {
+                font-weight: bold;
+                background-color: #EAEAEA;
+                font-size: 8.5pt;
+                padding: 5px;
+            }
+            .bill-header {
+                font-weight: bold;
+                background-color: #F9F9F9;
+                font-size: 8pt;
+                padding: 4px;
+            }
+            .item-row {
+                background-color: #FFFFFF;
+            }
+            .heading-row {
+                font-weight: bold;
+                background-color: #FFFFFF;
+            }
+            .subtotal-row {
+                font-weight: bold;
+                background-color: #F2F2F2;
+            }
+            .text-left {
+                text-align: left;
+            }
+            .text-right {
+                text-align: right;
+            }
+            .text-center {
+                text-align: center;
+            }
+            .bold {
+                font-weight: bold;
+            }
+            .double-underline {
+                border-bottom: 3px double #000 !important;
+            }
+            .small-text {
+                font-size: 6.5pt;
+                color: #555;
+            }
+        </style>
+    </head>
+    <body>
+        {% if project.logo %}
+            <div style="float: right; margin-bottom: 10px;">
+                <img src="{{ project.logo.url }}" style="max-height: 50px; max-width: 180px;">
+            </div>
+            <div style="clear: both;"></div>
+        {% elif project.contractor.logo %}
+            <div style="float: right; margin-bottom: 10px;">
+                <img src="{{ project.contractor.logo.url }}" style="max-height: 50px; max-width: 180px;">
+            </div>
+            <div style="clear: both;"></div>
+        {% elif project.client.logo %}
+            <div style="float: right; margin-bottom: 10px;">
+                <img src="{{ project.client.logo.url }}" style="max-height: 50px; max-width: 180px;">
+            </div>
+            <div style="clear: both;"></div>
+        {% else %}
+            <div style="float: right; margin-bottom: 10px;">
+                <img src="/media/project_logos/logo.png" style="max-height: 50px; max-width: 180px;">
+            </div>
+            <div style="clear: both;"></div>
+        {% endif %}
+        <div class="title">
+            DETAILED CERTIFICATE REPORT: &nbsp; {{ project.name|upper }} (CERTIFICATE NO. {{ payment_certificate.certificate_number|stringformat:"02d" }})
+        </div>
+
+        {% define "13" as colSpan %}
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width: 5%;">ITEM NO.</th>
+                    <th rowspan="2" style="width: 6%;">PAY REF</th>
+                    <th rowspan="2" style="width: 24%;">DESCRIPTION</th>
+                    <th rowspan="2" style="width: 4%;">Unit</th>
+                    <th colspan="3" style="width: 19%;">TENDER AMOUNT</th>
+                    <th colspan="6" style="width: 42%;">CERTIFICATE AMOUNTS</th>
+                </tr>
+                <tr>
+                    <th>Quantity</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                    <th>Cumulative Certified Quantity</th>
+                    <th>Cumulative Amount Certified</th>
+                    <th>Previous Quantity</th>
+                    <th>Previous Amount Certified</th>
+                    <th>Current Quantity</th>
+                    <th>Amount Due</th>
+                </tr>
+                <tr class="small-text">
+                    <th colspan="4"></th>
+                    <th>A</th>
+                    <th>B</th>
+                    <th>C</th>
+                    <th>D</th>
+                    <th>E</th>
+                    <th>F</th>
+                    <th>G</th>
+                    <th>H</th>
+                    <th>J</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for structure_group in grouped_line_items %}
+                    <tr>
+                        <td colspan="{{ colSpan }}" class="section-header">Section No. {{ structure_group.structure.name|upper }}</td>
+                    </tr>
+                    {% for bill_group in structure_group.bills %}
+                        <tr>
+                            <td colspan="{{ colSpan }}" class="bill-header">BILL NO. {{ bill_group.bill.name|upper }}</td>
+                        </tr>
+                        {% for package_group in bill_group.packages %}
+                            {% for line_item in package_group.line_items %}
+                                {% if not line_item.is_work %}
+                                    <tr class="heading-row">
+                                        <td class="text-center">{{ line_item.item_number|default:"" }}</td>
+                                        <td class="text-center">{{ line_item.payment_reference|default:"" }}</td>
+                                        <td colspan="11" class="text-left">{{ line_item.description }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr class="item-row">
+                                        <td class="text-center">{{ line_item.item_number|default:"" }}</td>
+                                        <td class="text-center">{{ line_item.payment_reference|default:"" }}</td>
+                                        <td class="text-left">{{ line_item.description }}</td>
+                                        <td class="text-center">{{ line_item.unit_measurement|default:"-" }}</td>
+                                        
+                                        <!-- Tender values -->
+                                        <td class="text-right">{{ line_item.budgeted_quantity|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right">R {{ line_item.unit_price|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right">R {{ line_item.total_price|default:0|floatformat:2|intcomma }}</td>
+                                        
+                                        <!-- Cumulative values -->
+                                        <td class="text-right">{{ line_item.total_qty|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right">R {{ line_item.total_claimed|default:0|floatformat:2|intcomma }}</td>
+                                        
+                                        <!-- Previous values -->
+                                        <td class="text-right">{{ line_item.previous_qty|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right">R {{ line_item.previous_claimed|default:0|floatformat:2|intcomma }}</td>
+                                        
+                                        <!-- Current values -->
+                                        <td class="text-right">{{ line_item.current_qty|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right">R {{ line_item.current_claim|default:0|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    {% empty %}
+                        <tr>
+                            <td colspan="{{ colSpan }}" class="text-center">No line items in this section</td>
+                        </tr>
+                    {% endfor %}
+                {% empty %}
+                    <tr>
+                        <td colspan="{{ colSpan }}" class="text-center">No line items in this payment certificate</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="subtotal-row double-underline">
+                    <td colspan="4" class="text-right bold">Total Excluding VAT</td>
+                    <!-- Tender Total -->
+                    <td colspan="2"></td>
+                    <td class="text-right bold">R {{ payment_certificate.contract_value|default:project.original_contract_value|floatformat:2|intcomma }}</td>
+                    
+                    <!-- Cumulative Total -->
+                    <td></td>
+                    <td class="text-right bold">R {{ payment_certificate.progressive_to_date|default:0|floatformat:2|intcomma }}</td>
+                    
+                    <!-- Previous Total -->
+                    <td></td>
+                    <td class="text-right bold">R {{ payment_certificate.progressive_previous|default:0|floatformat:2|intcomma }}</td>
+                    
+                    <!-- Current Total -->
+                    <td></td>
+                    <td class="text-right bold">R {{ payment_certificate.current_claim_total|default:0|floatformat:2|intcomma }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </body>
+</html>

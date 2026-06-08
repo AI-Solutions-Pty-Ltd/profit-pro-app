@@ -368,13 +368,27 @@ class SedgeProWebhookView(View):
 
         # 2. Parse and validate JSON payload
         try:
-            data = json.loads(request.body)
+            raw_data = json.loads(request.body)
         except (json.JSONDecodeError, TypeError):
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
 
+        # Extract send_email from root payload if present
+        send_email = raw_data.get("send_email", False) if isinstance(raw_data, dict) else False
+
         # Support Supabase Database Webhook wrapper format
-        if isinstance(data, dict) and "record" in data:
-            data = data["record"] or {}
+        if isinstance(raw_data, dict) and "record" in raw_data:
+            data = raw_data["record"] or {}
+            # If send_email wasn't in root, check inside record
+            if not send_email:
+                send_email = data.get("send_email", False)
+        else:
+            data = raw_data
+
+        # Coerce send_email to boolean
+        if isinstance(send_email, str):
+            send_email = send_email.lower() == "true"
+        else:
+            send_email = bool(send_email)
 
         email = data.get("email") or data.get("user_email")
         client_reference = data.get("client_reference")
@@ -428,13 +442,29 @@ class SedgeProWebhookView(View):
                         {
                             "status": "success",
                             "message": "User already associated with company",
+                            "signup_url": None,
                         }
                     )
 
                 company.users.add(user)
 
-                # 5. Send onboarding/invitation email
-                if settings.USE_EMAIL:
+                # Generate onboarding signup URL/token for new users
+                signup_url = None
+                token = None
+                uid = None
+                if not user_exists:
+                    token = default_token_generator.make_token(user)
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    protocol = "https" if request.is_secure() else "http"
+                    domain = request.get_host()
+                    relative_url = reverse(
+                        "users:auth:password_reset_confirm",
+                        kwargs={"uidb64": uid, "token": token},
+                    )
+                    signup_url = f"{protocol}://{domain}{relative_url}"
+
+                # 5. Send onboarding/invitation email conditionally
+                if settings.USE_EMAIL and send_email:
                     protocol = "https" if request.is_secure() else "http"
                     domain = request.get_host()
 
@@ -453,8 +483,6 @@ class SedgeProWebhookView(View):
                         )
                     else:
                         # New user: send setup password invite
-                        token = default_token_generator.make_token(user)
-                        uid = urlsafe_base64_encode(force_bytes(user.pk))
                         context = {
                             "user": user,
                             "protocol": protocol,
@@ -484,6 +512,7 @@ class SedgeProWebhookView(View):
                         {
                             "status": "success",
                             "message": "User linked to company",
+                            "signup_url": None,
                         }
                     )
                 else:
@@ -491,6 +520,7 @@ class SedgeProWebhookView(View):
                         {
                             "status": "success",
                             "message": "User invited",
+                            "signup_url": signup_url,
                         }
                     )
 

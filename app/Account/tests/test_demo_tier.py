@@ -297,3 +297,105 @@ class TestDemo123Project:
         request_post.user = demo_user
         view.request = request_post
         assert view.test_func() is False
+
+
+@pytest.mark.django_db
+class TestProjectSetupBOQUploadOptions:
+    """Test cases for BOQ upload/attach options visibility based on subscription."""
+
+    def test_full_access_user_sees_both_upload_options(self, client):
+        """Test that a FULL_ACCESS user sees both demo load and custom upload/attach options."""
+        from django.urls import reverse
+
+        from app.Project.models import ProjectRole, Role
+        from app.Project.tests.factories import ProjectFactory
+
+        project = ProjectFactory()
+        user = AccountFactory(subscription=Subscription.FULL_ACCESS)
+        project.users.add(user)
+        ProjectRole.objects.create(project=project, user=user, role=Role.ADMIN)
+
+        client.force_login(user)
+        url = reverse("project:project-setup", kwargs={"pk": project.pk})
+        response = client.get(url)
+
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+
+        # Should see the demo upload button
+        assert 'name="action" value="load_demo_boq"' in content
+
+        # Should see the real upload link
+        real_upload_url = reverse(
+            "bill_of_quantities:structure-upload", kwargs={"project_pk": project.pk}
+        )
+        assert real_upload_url in content
+
+        # Should see the Attach BOQ form (since line items do not exist)
+        assert "Attach BOQ (Optional)" in content
+
+    def test_demo_tier_user_sees_only_demo_option(self, client):
+        """Test that a DEMO_TIER user sees only the demo load option and not custom upload/attach."""
+        from django.urls import reverse
+
+        from app.Project.models import ProjectRole, Role
+        from app.Project.tests.factories import ProjectFactory
+
+        project = ProjectFactory()
+        # Set future expiry so demo permission is active
+        expiry = timezone.now() + timedelta(days=7)
+        user = AccountFactory(
+            subscription=Subscription.DEMO_TIER, subscription_expires_at=expiry
+        )
+        project.users.add(user)
+        ProjectRole.objects.create(project=project, user=user, role=Role.ADMIN)
+
+        client.force_login(user)
+        url = reverse("project:project-setup", kwargs={"pk": project.pk})
+        response = client.get(url)
+
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+
+        # Should see the demo upload button
+        assert 'name="action" value="load_demo_boq"' in content
+
+        # Should NOT see the real upload link
+        real_upload_url = reverse(
+            "bill_of_quantities:structure-upload", kwargs={"project_pk": project.pk}
+        )
+        assert real_upload_url not in content
+
+        # Should NOT see the Attach BOQ form
+        assert "Attach BOQ (Optional)" not in content
+
+    def test_other_tier_user_sees_only_real_option(self, client):
+        """Test that a standard tier user sees only custom upload/attach and not demo load."""
+        from django.urls import reverse
+
+        from app.Project.models import ProjectRole, Role
+        from app.Project.tests.factories import ProjectFactory
+
+        project = ProjectFactory()
+        user = AccountFactory(subscription=Subscription.FREE_TIER)
+        project.users.add(user)
+        ProjectRole.objects.create(project=project, user=user, role=Role.ADMIN)
+
+        client.force_login(user)
+        url = reverse("project:project-setup", kwargs={"pk": project.pk})
+        response = client.get(url)
+
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+
+        # Should NOT see the demo upload button
+        assert 'name="action" value="load_demo_boq"' not in content
+
+        # Should see the real upload link
+        real_upload_url = reverse(
+            "bill_of_quantities:structure-upload", kwargs={"project_pk": project.pk}
+        )
+        assert real_upload_url in content
+
+        # Should see the Attach BOQ form
+        assert "Attach BOQ (Optional)" in content
