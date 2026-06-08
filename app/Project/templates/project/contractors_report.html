@@ -513,7 +513,9 @@
                                     <td class="px-4 py-2 font-medium text-gray-900">{{ ncr.reference_number }}</td>
                                     <td class="px-4 py-2 text-gray-700">
                                         <div>{{ ncr.description }}</div>
-                                        {% if ncr.defect_description %}<div class="mt-0.5 text-xs text-gray-500">{{ ncr.defect_description }}</div>{% endif %}
+                                        {% if ncr.defect_description %}
+                                            <div class="mt-0.5 text-xs text-gray-500">{{ ncr.defect_description }}</div>
+                                        {% endif %}
                                     </td>
                                     <td class="px-4 py-2 text-gray-700">{{ ncr.root_cause|default:"-" }}</td>
                                     <td class="px-4 py-2 text-gray-700">
