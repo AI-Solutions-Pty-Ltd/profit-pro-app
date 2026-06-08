@@ -243,8 +243,10 @@ def custom_403(request, exception):
 def favicon_view(request):
     """Serve favicon.ico directly from the static directory to prevent 404s when static files are not collected."""
     import os
-    favicon_path = os.path.join(settings.BASE_DIR, "app", "core", "static", "favicon.ico")
+
+    favicon_path = os.path.join(
+        settings.BASE_DIR, "app", "core", "static", "favicon.ico"
+    )
     if os.path.exists(favicon_path):
         return FileResponse(open(favicon_path, "rb"), content_type="image/x-icon")
     return HttpResponse(status=204)
-

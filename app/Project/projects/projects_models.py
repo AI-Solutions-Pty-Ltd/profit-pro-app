@@ -305,10 +305,22 @@ class Project(BaseModel):
             {"id": "budgeted_quantity", "label": "Quantity", "enabled": True},
             {"id": "unit_price", "label": "Rate", "enabled": True},
             {"id": "total_price", "label": "Amount", "enabled": True},
-            {"id": "total_qty", "label": "Cumulative Quantity Certified", "enabled": True},
-            {"id": "total_claimed", "label": "Cumulative Amount Certified", "enabled": True},
+            {
+                "id": "total_qty",
+                "label": "Cumulative Quantity Certified",
+                "enabled": True,
+            },
+            {
+                "id": "total_claimed",
+                "label": "Cumulative Amount Certified",
+                "enabled": True,
+            },
             {"id": "previous_qty", "label": "Previous Quantity", "enabled": True},
-            {"id": "previous_claimed", "label": "Previous Amount Certified", "enabled": True},
+            {
+                "id": "previous_claimed",
+                "label": "Previous Amount Certified",
+                "enabled": True,
+            },
             {"id": "current_qty", "label": "Current Quantity", "enabled": True},
             {"id": "current_claim", "label": "Amount Due", "enabled": True},
         ]
@@ -333,7 +345,11 @@ class Project(BaseModel):
                 if col["id"] in custom_defaults:
                     col.update(custom_defaults[col["id"]])
 
-        if self.column_config and isinstance(self.column_config, dict) and "columns" in self.column_config:
+        if (
+            self.column_config
+            and isinstance(self.column_config, dict)
+            and "columns" in self.column_config
+        ):
             custom_cols = self.column_config["columns"]
 
             resolved = []
@@ -341,11 +357,13 @@ class Project(BaseModel):
                 cid = c.get("id")
                 default_col = next((x for x in default_columns if x["id"] == cid), None)
                 if default_col:
-                    resolved.append({
-                        "id": cid,
-                        "label": c.get("label", default_col["label"]),
-                        "enabled": c.get("enabled", default_col["enabled"]),
-                    })
+                    resolved.append(
+                        {
+                            "id": cid,
+                            "label": c.get("label", default_col["label"]),
+                            "enabled": c.get("enabled", default_col["enabled"]),
+                        }
+                    )
 
             for d in default_columns:
                 if d["id"] not in [r["id"] for r in resolved]:

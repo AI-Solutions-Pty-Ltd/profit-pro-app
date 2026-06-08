@@ -16,6 +16,7 @@ class TestProjectSetupReportConfig:
         self.project.users.add(self.user)
         # Assign user a project role to pass permission checking if needed
         from app.Project.models import ProjectRole, Role
+
         ProjectRole.objects.get_or_create(
             project=self.project, user=self.user, role=Role.ADMIN
         )

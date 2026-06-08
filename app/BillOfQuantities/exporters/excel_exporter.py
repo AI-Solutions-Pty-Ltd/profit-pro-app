@@ -60,7 +60,10 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
 
     # Map column id to its 1-based index and letter coordinate
     col_index_map = {col["id"]: idx for idx, col in enumerate(active_columns, start=1)}
-    col_letter_map = {col["id"]: get_column_letter(idx) for idx, col in enumerate(active_columns, start=1)}
+    col_letter_map = {
+        col["id"]: get_column_letter(idx)
+        for idx, col in enumerate(active_columns, start=1)
+    }
 
     if is_abridged:
         annotated_line_items = LineItem.abridged_payment_certificate(
@@ -135,14 +138,19 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
             ).font = font_bold
 
             # Write SUM formulas only for columns that are enabled
-            for key in ["total_price", "total_claimed", "previous_claimed", "current_claim"]:
+            for key in [
+                "total_price",
+                "total_claimed",
+                "previous_claimed",
+                "current_claim",
+            ]:
                 if key in col_index_map:
                     col_idx = col_index_map[key]
                     col_let = col_letter_map[key]
                     ws.cell(
                         row=subtotal_row,
                         column=col_idx,
-                        value=f"=SUM({col_let}{start}:{col_let}{end})"
+                        value=f"=SUM({col_let}{start}:{col_let}{end})",
                     ).font = font_bold
                     ws.cell(row=subtotal_row, column=col_idx).number_format = "#,##0.00"
 
@@ -208,7 +216,10 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
                     cell.alignment = align_right
                 elif cid == "total_price":
                     if item.is_work:
-                        if "budgeted_quantity" in col_letter_map and "unit_price" in col_letter_map:
+                        if (
+                            "budgeted_quantity" in col_letter_map
+                            and "unit_price" in col_letter_map
+                        ):
                             cell.value = f"={col_letter_map['budgeted_quantity']}{row_idx}*{col_letter_map['unit_price']}{row_idx}"
                         else:
                             cell.value = float(item.total_price or 0)
@@ -221,7 +232,10 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
                     cell.alignment = align_right
                 elif cid == "total_claimed":
                     if item.is_work:
-                        if "total_qty" in col_letter_map and "unit_price" in col_letter_map:
+                        if (
+                            "total_qty" in col_letter_map
+                            and "unit_price" in col_letter_map
+                        ):
                             cell.value = f"={col_letter_map['total_qty']}{row_idx}*{col_letter_map['unit_price']}{row_idx}"
                         else:
                             cell.value = float(item.total_claimed or 0)
@@ -234,7 +248,10 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
                     cell.alignment = align_right
                 elif cid == "previous_claimed":
                     if item.is_work:
-                        if "previous_qty" in col_letter_map and "unit_price" in col_letter_map:
+                        if (
+                            "previous_qty" in col_letter_map
+                            and "unit_price" in col_letter_map
+                        ):
                             cell.value = f"={col_letter_map['previous_qty']}{row_idx}*{col_letter_map['unit_price']}{row_idx}"
                         else:
                             cell.value = float(item.previous_claimed or 0)
@@ -242,7 +259,10 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
                     cell.alignment = align_right
                 elif cid == "current_qty":
                     if item.is_work:
-                        if "total_qty" in col_letter_map and "previous_qty" in col_letter_map:
+                        if (
+                            "total_qty" in col_letter_map
+                            and "previous_qty" in col_letter_map
+                        ):
                             cell.value = f"={col_letter_map['total_qty']}{row_idx}-{col_letter_map['previous_qty']}{row_idx}"
                         else:
                             cell.value = float(item.current_qty or 0)
@@ -250,7 +270,10 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
                     cell.alignment = align_right
                 elif cid == "current_claim":
                     if item.is_work:
-                        if "current_qty" in col_letter_map and "unit_price" in col_letter_map:
+                        if (
+                            "current_qty" in col_letter_map
+                            and "unit_price" in col_letter_map
+                        ):
                             cell.value = f"={col_letter_map['current_qty']}{row_idx}*{col_letter_map['unit_price']}{row_idx}"
                         else:
                             cell.value = float(item.current_claim or 0)
@@ -338,22 +361,30 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
                 ws_sum.cell(
                     row=row_idx,
                     column=3,
-                    value=f"='{sheet_name}'!{total_price_let}{sub_row}" if "total_price" in col_letter_map else 0
+                    value=f"='{sheet_name}'!{total_price_let}{sub_row}"
+                    if "total_price" in col_letter_map
+                    else 0,
                 ).number_format = "#,##0.00"
                 ws_sum.cell(
                     row=row_idx,
                     column=4,
-                    value=f"='{sheet_name}'!{total_claimed_let}{sub_row}" if "total_claimed" in col_letter_map else 0
+                    value=f"='{sheet_name}'!{total_claimed_let}{sub_row}"
+                    if "total_claimed" in col_letter_map
+                    else 0,
                 ).number_format = "#,##0.00"
                 ws_sum.cell(
                     row=row_idx,
                     column=5,
-                    value=f"='{sheet_name}'!{previous_claimed_let}{sub_row}" if "previous_claimed" in col_letter_map else 0
+                    value=f"='{sheet_name}'!{previous_claimed_let}{sub_row}"
+                    if "previous_claimed" in col_letter_map
+                    else 0,
                 ).number_format = "#,##0.00"
                 ws_sum.cell(
                     row=row_idx,
                     column=6,
-                    value=f"='{sheet_name}'!{current_claim_let}{sub_row}" if "current_claim" in col_letter_map else 0
+                    value=f"='{sheet_name}'!{current_claim_let}{sub_row}"
+                    if "current_claim" in col_letter_map
+                    else 0,
                 ).number_format = "#,##0.00"
 
                 for col in range(1, 7):
@@ -386,7 +417,6 @@ def generate_payment_certificate_excel(payment_certificate, is_abridged=False):
         ws_sum.cell(
             row=start_bill_row - 1,
             column=6,
-
             value=f"=SUM(F{start_bill_row}:F{end_bill_row})",
         ).number_format = "#,##0.00"
         ws_sum.cell(row=start_bill_row - 1, column=6).font = font_bold

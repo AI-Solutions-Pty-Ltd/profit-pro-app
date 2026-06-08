@@ -845,8 +845,11 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
             from app.BillOfQuantities.exporters.excel_exporter import (
                 generate_payment_certificate_excel,
             )
+
             try:
-                wb = generate_payment_certificate_excel(payment_certificate, is_abridged=False)
+                wb = generate_payment_certificate_excel(
+                    payment_certificate, is_abridged=False
+                )
                 output = BytesIO()
                 wb.save(output)
                 output.seek(0)
@@ -995,8 +998,11 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
             from app.BillOfQuantities.exporters.excel_exporter import (
                 generate_payment_certificate_excel,
             )
+
             try:
-                wb = generate_payment_certificate_excel(payment_certificate, is_abridged=True)
+                wb = generate_payment_certificate_excel(
+                    payment_certificate, is_abridged=True
+                )
                 output = BytesIO()
                 wb.save(output)
                 output.seek(0)

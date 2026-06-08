@@ -373,7 +373,9 @@ class SedgeProWebhookView(View):
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
 
         # Extract send_email from root payload if present
-        send_email = raw_data.get("send_email", False) if isinstance(raw_data, dict) else False
+        send_email = (
+            raw_data.get("send_email", False) if isinstance(raw_data, dict) else False
+        )
 
         # Support Supabase Database Webhook wrapper format
         if isinstance(raw_data, dict) and "record" in raw_data:

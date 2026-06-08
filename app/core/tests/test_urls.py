@@ -40,5 +40,3 @@ class TestUrls:
         response = client.get("/this-path-does-not-exist/")
         assert response.status_code == 404
         assert "Page Not Found" in response.content.decode()
-
-

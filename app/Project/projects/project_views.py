@@ -411,6 +411,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
             .order_by("-created_at")[:5]
         )
         import json
+
         context["project_columns_json"] = json.dumps(project.get_column_config())
         return context
 
@@ -544,6 +545,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
                 project.certificate_layout = layout
 
             import json
+
             try:
                 if column_config_str:
                     project.column_config = json.loads(column_config_str)
@@ -556,7 +558,9 @@ class ProjectSetupView(ProjectMixin, DetailView):
                 )
 
             project.save()
-            messages.success(request, "Report layout and column configuration saved successfully!")
+            messages.success(
+                request, "Report layout and column configuration saved successfully!"
+            )
 
         return HttpResponseRedirect(
             reverse("project:project-setup", kwargs={"pk": project.pk})

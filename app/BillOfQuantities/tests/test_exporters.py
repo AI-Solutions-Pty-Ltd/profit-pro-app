@@ -112,6 +112,7 @@ class TestExporters:
             PackageFactory,
             StructureFactory,
         )
+
         project = ProjectFactory.create(certificate_layout="standard")
         cert = PaymentCertificateFactory.create(project=project)
 
@@ -301,6 +302,7 @@ class TestExporters:
     def test_compile_pdf_with_custom_columns(self):
         """Test PDF compiler with custom column configuration."""
         from django.template.loader import render_to_string
+
         project = ProjectFactory.create(certificate_layout="standard")
         cert = PaymentCertificateFactory.create(project=project)
 
@@ -317,7 +319,9 @@ class TestExporters:
         project.save()
 
         # Get active columns
-        columns = [col for col in project.get_column_config() if col.get("enabled", True)]
+        columns = [
+            col for col in project.get_column_config() if col.get("enabled", True)
+        ]
 
         # Render standard line items table with columns in context
         context = {
@@ -337,8 +341,6 @@ class TestExporters:
         pdf_file = compile_pdf_for_certificate(cert)
         assert pdf_file is not None
         assert pdf_file.size > 0
-
-
 
 
 @pytest.mark.django_db
