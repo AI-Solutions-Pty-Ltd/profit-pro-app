@@ -45,3 +45,36 @@ class TestProjectSetupReportConfig:
         self.project.refresh_from_db()
         assert self.project.certificate_layout == "LEPHADIMISHA"
         assert self.project.column_config == column_data
+
+
+@pytest.mark.django_db
+class TestCompanyManagementSiteCards:
+    """Test cases for CompanyManagementView site management cards."""
+
+    def test_company_management_site_cards_rendering(self, client):
+        """Test that company management view renders biweekly safety and ncr cards."""
+        user = AccountFactory()
+        project = ProjectFactory()
+        project.users.add(user)
+
+        client.force_login(user)
+        url = reverse("project:company-management", kwargs={"pk": project.pk})
+        response = client.get(url)
+
+        assert response.status_code == 200
+
+        # Check for Bi-Weekly Safety Card
+        expected_safety_url = reverse(
+            "site_management:biweekly-safety-list",
+            kwargs={"project_pk": project.pk},
+        )
+        assert expected_safety_url in response.content.decode("utf-8")
+        assert "Bi-Weekly Safety" in response.content.decode("utf-8")
+
+        # Check for NCR Register Card
+        expected_ncr_url = reverse(
+            "site_management:ncr-list",
+            kwargs={"project_pk": project.pk},
+        )
+        assert expected_ncr_url in response.content.decode("utf-8")
+        assert "NCR Register" in response.content.decode("utf-8")

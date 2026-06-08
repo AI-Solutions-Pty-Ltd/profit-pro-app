@@ -1,9 +1,7 @@
 <div class="mb-4">
-    <button onclick="window.history.back()"
-            class="inline-flex items-center text-sm font-semibold text-gray-500 transition-all hover:text-indigo-600 group">
-        <div class="p-1.5 mr-2.5 bg-gray-100 rounded-lg transition-colors group-hover:bg-indigo-50">
-            {% heroicon_outline "arrow-left" size="16" %}
-        </div>
-        Back
-    </button>
+    <a href="{% url 'project:company-management' project.pk %}"
+       class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
+        {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
+        Back To Business Management
+    </a>
 </div>

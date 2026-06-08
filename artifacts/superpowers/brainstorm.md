@@ -1,58 +1,51 @@
+# Superpowers Brainstorm: Add Bi-Weekly Safety and NCR Cards to Company Management
+
 ## Goal
-Implement a report selection and column configuration system in the Project Setup, allowing users to:
-1. Select a default report layout style (Standard vs. Lephadimisha BOQ Report).
-2. Preview their layout selection visually.
-3. Rename, reorder, and customize the visibility of columns.
-4. Download reports matching this configuration under a simplified "2-card" layout in the PDF/Excel download interface, with page selectors and dual PDF/Excel download options.
+The goal is to add "Bi-Weekly Safety" and "Non-Conformance Report" (NCR) cards to the "Site Management" grid section of the Business Management Center dashboard (`company_management.html`), specifically appending them to the end of the site cards list (Option 1).
 
 ## Constraints
-- **OS**: Windows environment.
-- **Python Runtime**: Python 3.13+ within the `.venv` virtual environment.
-- **Base Model Rules**: Any new database entities must inherit from `BaseModel`.
-- **Testing Rules**: All test objects must be created using `factory_boy` factories.
-- **Layout Fidelity**: The output reports must match the exact structures of `Lephadimisha_BOQ_Report.pdf` and `Lephadimisha_BOQ_Report .xlsx` when that layout is selected.
+- **Styling**: The new cards must conform to the existing visual design system: Tailwind CSS layout (`flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-*-200`), transition/hover animations, and outline Heroicons style.
+- **Context Parameter**: The URL parameter must use `company.pk` because in `company_management.html`, the template context variable representing the active project is named `company`.
+- **URL Namespaces**: The correct Django URL patterns are:
+  - Bi-Weekly Safety: `site_management:biweekly-safety-list`
+  - NCR Register: `site_management:ncr-list`
 
 ## Known context
-- **Project Model**: Defined in `app/Project/projects/projects_models.py` with `certificate_layout` choices (`STANDARD`, `VALTERRA_RPM`).
-- **PDF Generation Task**: In `app/BillOfQuantities/tasks.py` (`compile_pdf_for_certificate`), which uses HTML templates in `pdf_templates/`.
-- **Excel Generation**: In `app/BillOfQuantities/exporters/excel_exporter.py` (`generate_payment_certificate_excel`), which generates sheets for Front, Summary, and detailed structures.
-- **UI Details**: The current payment certificate detail page (`payment_certificate_detail.html`) renders 4 distinct download cards.
+- The "Site Management" section in `company_management.html` contains a grid of links pointing to various site logs.
+- Currently, there are 16 cards in this grid, all rendered in `<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">`.
+- "Bi-Weekly Safety" is configured with the `shield-exclamation` icon and uses `indigo` accents.
+- "NCR Register" is configured with the `document-check` icon and uses `rose` or `amber` accents.
 
 ## Risks
-1. **Broken Excel Formulas**: The Excel exporter currently writes formulas referencing hardcoded columns (e.g. `SUM(G{start}:G{end})`). If columns are reordered or disabled, the column letters (like G, I, K, M) change, which would break static references.
-   *Mitigation*: Implement dynamic column letter resolution in `excel_exporter.py` based on the active sorted position of each enabled column.
-2. **PDF Width Constraints**: Reordering or enabling too many columns could cause tables in the PDF to stretch or wrap awkwardly.
-   *Mitigation*: Limit maximum columns or auto-scale widths based on visible columns using CSS flex/table sizing.
-3. **Template Complexities**: Standard vs Valterra vs Lephadimisha templates must support the customizable column ordering and labels.
-   *Mitigation*: Pass the resolved column structure from Django views into HTML templates and loop over columns dynamically.
+- **Mismatch in Context Variable**: Accidentally using `project.pk` instead of `company.pk` will cause Django's template engine to fail to resolve the URL at runtime.
+- **Visual Alignment**: Adding two new cards shifts the total count from 16 to 18 cards, which might leave an uneven grid row on larger screens (18 is not divisible by 4, leaving 2 cards on the last row). However, Tailwind's grid naturally centers/wraps elements seamlessly.
 
-## Options (2–4)
-- **Option A (Recommended)**: 
-  - Add `LEPHADIMISHA` choice to `certificate_layout` choices in `Project.CertificateLayout`.
-  - Add a JSONField `column_config` to the `Project` model storing a list of column definitions: `[{'id': 'item_no', 'label': 'Item No.', 'enabled': True, 'order': 1}, ...]`.
-  - Build a sleek, interactive drag-and-drop/sortable table interface using vanilla JS in the Setup tab, with a live mock table preview.
-  - Update `compile_pdf_for_certificate` and `excel_exporter.py` to dynamically resolve active columns, labels, and Excel formula coordinate letters.
-- **Option B**:
-  - Define a separate model `ReportColumnConfig` linked to `Project` with fields for each column's name, ordering, and state.
-  - While normalized, this increases DB queries and complicates test factory setup.
-- **Option C**:
-  - Implement predefined static layouts (Standard, RPM, Lephadimisha) without allowing reordering or renaming.
-  - This is rejected because it fails to satisfy the user's explicit customization requirements.
+## Options (2?4)
+
+### Option 1: Append both cards to the end of the grid list (Selected)
+Add the "Bi-Weekly Safety" and "NCR Register" cards at the very end of the list.
+*   **Pros**: Simplifies code modification and diff representation; no risk of breaking order logic.
+*   **Cons**: Groups items arbitrarily at the end of the list without thematic relationship to their neighbor cards.
+
+### Option 2: Place cards next to related items (Thematic Grouping)
+Insert the cards inline where they relate to other items:
+- Insert "NCR Register" directly after the "Quality Control" card.
+- Insert "Bi-Weekly Safety" directly after the "Safety Observations" card.
+*   **Pros**: Logical user interface flow. Users find NCR directly under Quality Control, and Bi-Weekly Safety directly next to Safety Observations.
+*   **Cons**: Requires non-contiguous template edits.
 
 ## Recommendation
-We recommend **Option A**. Storing the column config in a `JSONField` directly on the `Project` model is lightweight, easy to serialize/deserialize, keeps database queries to a minimum, and integrates cleanly with django-crispy-forms. It allows us to supply standard defaults and fallbacks when rendering, preventing breaking changes.
+The user selected Option 1: Append both cards to the end of the grid list. We will proceed with this option.
 
 ## Acceptance criteria
-1. **Project Setup**:
-   - A dedicated "Report Layout & Column Configuration" section in setup.
-   - Layout selector (Standard vs Lephadimisha) with layout previews.
-   - Interactive column configuration: reorder (drag/drop or up/down), rename, and toggle visibility.
-   - Real-time live header preview showing custom names and order.
-2. **Download Interface**:
-   - "Download PDF Reports" screen shows exactly 2 cards: "Full Payment Certificate" and "Abridged Certificate".
-   - Each card embeds checkboxes to select sections (Cover Page, Valuation Summary, Detailed Report) and has "Download PDF" and "Download Excel" buttons.
-3. **Fidelity and Alignment**:
-   - Downloaded PDFs/Excels reflect the selected layout, custom column headings, custom column order, and only show enabled columns.
-   - Excel formulas evaluate correctly regardless of column order/existence.
-4. **Validation**:
-   - Existing unit and view tests pass, and new tests are written using factories to verify saving and rendering of configs.
+1.  **Bi-Weekly Safety Card**:
+    *   Renders in the "Site Management" grid, appended to the end of the list (after Overhead Log).
+    *   Targets `{% url 'site_management:biweekly-safety-list' company.pk %}`.
+    *   Uses the `shield-exclamation` Heroicon and `indigo` styling.
+2.  **NCR Register Card**:
+    *   Renders in the "Site Management" grid, appended to the end of the list (after Bi-Weekly Safety).
+    *   Targets `{% url 'site_management:ncr-list' company.pk %}`.
+    *   Uses the `document-check` Heroicon and `rose` or `amber` styling.
+3.  **Correct Page Context**: All URLs resolve correctly using the `company.pk` key.
+4.  **Aesthetics**: The design and hover animations match the premium card design layout.
+5.  **Passing Tests**: All existing template rendering and view unit tests continue to pass.

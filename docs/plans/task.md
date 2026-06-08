@@ -1,14 +1,8 @@
-# Task Progress: Report Selection and Configuration Customization
-
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Extend Project Model and Create Migration | `[x]` | `.venv\Scripts\python.exe -m pytest app/Project/tests/test_models.py -k test_project_has_report_configuration` |
-| **TSK-02** | Build Report Configuration Form and Setup UI | `[x]` | `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k test_project_setup_view_includes_layout_config` |
-| **TSK-03** | Implement Dynamic Column Configuration in PDF Generation | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_compile_pdf_with_custom_columns` |
-| **TSK-04** | Implement Dynamic Column Configuration in Excel Generation | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_excel_exporter_with_custom_columns` |
-| **TSK-05** | Refactor Download PDF Reports Interface | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k TestDownloadViews` |
-| **TSK-06** | Fix Type Checker Errors in app/BillOfQuantities/tasks.py | `[x]` | `.venv\Scripts\python.exe -m ty check .` |
-| **TSK-07** | Exclude PDF Templates from djlint | `[x]` | `.venv\Scripts\python.exe -m djlint --lint .` |
-| **TSK-08** | Verify All Checks Pass successfully | `[x]` | Run checks commands combined |
-
-
+| **TSK-01** | Explore context and present brainstorming / design proposal | `[x]` | Review design proposal in response |
+| **TSK-02** | Create design document at `docs/plans/2026-06-08-back-button-design.md` | `[x]` | Check file existence |
+| **TSK-03** | Create implementation plan | `[x]` | Check `implementation_plan.md` existence |
+| **TSK-04** | Refactor `_back_button.html` to link to Business Management Center | `[x]` | Rendered HTML check / unit test |
+| **TSK-05** | Verify changes and run all project checks/tests | `[x]` | Run `.venv\Scripts\python.exe -m pytest app/SiteManagement/tests/` |
+| **TSK-06** | Finalize and update documentation | `[x]` | Verify walkthrough and update task list |
