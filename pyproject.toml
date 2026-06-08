@@ -90,19 +90,6 @@ directory = "htmlcov"
 
 [tool.djlint]
 ignore = "H037"
-extend_exclude = """
-./documentation,
-./htmlcov,
-./graphify-out,
-./app/theme/templates,
-./app/Account/templates/auth/email_verification_email.html,
-./app/Account/templates/auth/email_verification_thank_you.html,
-./app/Account/templates/auth/password_reset_email.html,
-./app/Consultant/templates/client/client_added_email.html,
-./app/Consultant/templates/client/password_reset_email.html,
-./app/Project/templates/client/client_added_email.html,
-./app/Project/templates/client/password_reset_email.html,
-./app/Project/templates/portfolio/emails/project_user_welcome.html,
-./app/BillOfQuantities/templates/payment_certificate/email_payment_certificate.html,
-./app/BillOfQuantities/templates/payments/payment_statement_pdf.html
-"""
+extend_exclude = "documentation,htmlcov,graphify-out,app/theme/templates,app/Account/templates/auth/email_verification_email.html,app/Account/templates/auth/email_verification_thank_you.html,app/Account/templates/auth/password_reset_email.html,app/Consultant/templates/client/client_added_email.html,app/Consultant/templates/client/password_reset_email.html,app/Project/templates/client/client_added_email.html,app/Project/templates/client/password_reset_email.html,app/Project/templates/portfolio/emails/project_user_welcome.html,app/BillOfQuantities/templates/payment_certificate/email_payment_certificate.html,app/BillOfQuantities/templates/payments/payment_statement_pdf.html,app/BillOfQuantities/templates/pdf_templates"
+
+

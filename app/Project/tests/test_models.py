@@ -135,3 +135,12 @@ class TestProjectModel:
         project: Project = ProjectFactory.create()
         assert project.get_absolute_url() == f"/project/{project.pk}/management/"
         assert project.get_update_url() == f"/project/{project.pk}/update/"
+
+    def test_project_has_report_configuration(self):
+        """Test that project supports layout configurations and custom columns."""
+        from app.Project.tests.factories import ProjectFactory
+
+        project = ProjectFactory.create(certificate_layout="LEPHADIMISHA")
+        assert project.certificate_layout == "LEPHADIMISHA"
+        assert hasattr(project, "column_config")
+        assert isinstance(project.column_config, dict)
