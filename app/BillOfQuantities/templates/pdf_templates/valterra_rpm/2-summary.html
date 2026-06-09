@@ -12,41 +12,52 @@
                 margin: 1cm;
             }
             body {
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 9pt;
-                line-height: 1.3;
+                font-family: 'Inter', Arial, Helvetica, sans-serif;
+                font-size: 8.5pt;
+                line-height: 1.4;
                 margin: 0;
                 padding: 10px;
+                color: #111827;
             }
             .title-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 20px;
-                border-bottom: 3px solid #000;
-                padding-bottom: 20px;
+                margin-bottom: 2px;
             }
             .title-table td {
                 vertical-align: middle;
             }
             .logo-box {
-                background-color: #F3F4F6;
                 text-align: center;
                 height: 80px;
-                border: 1px solid #D1D5DB;
                 width: 20%;
+                background-color: #f3f4f6;
+                border: 1px solid #e5e7eb;
             }
             .cert-box {
-                background-color: #F3F4F6;
+                background-color: #f3f4f6;
                 text-align: center;
                 height: 80px;
-                border: 1px solid #D1D5DB;
                 width: 20%;
-                color: #4B5563;
+                color: #4b5563;
+                border: 1px solid #e5e7eb;
             }
             .center-box {
                 width: 60%;
                 text-align: center;
                 padding: 0 15px;
+            }
+            .subtitle-row {
+                background-color: #f3f4f6;
+                text-align: center;
+                font-style: italic;
+                font-size: 8pt;
+                color: #6b7280;
+                padding: 4px;
+                margin-bottom: 10px;
+                border-left: 1px solid #e5e7eb;
+                border-right: 1px solid #e5e7eb;
+                border-bottom: 1px solid #e5e7eb;
             }
             table.summary-table {
                 width: 100%;
@@ -54,16 +65,17 @@
                 margin-top: 10px;
             }
             table.summary-table th, table.summary-table td {
-                padding: 8px 6px;
+                padding: 6px 4px;
                 vertical-align: middle;
                 border: none;
             }
             table.summary-table th {
-                background-color: #000000;
-                color: #FFFFFF;
+                background-color: #1e3a5f;
+                color: #ffffff;
                 font-weight: bold;
                 text-transform: uppercase;
                 text-align: center;
+                font-size: 8.5pt;
             }
             table.summary-table th.left-align {
                 text-align: left;
@@ -72,15 +84,22 @@
                 text-align: right;
             }
             .section-row {
-                background-color: #404040;
-                color: #FFFFFF;
+                background-color: #e5e7eb;
+                color: #111827;
                 font-weight: bold;
             }
             .bill-row-odd {
-                background-color: #FFFFFF;
+                background-color: #ffffff;
+                border-bottom: 1px solid #e5e7eb;
             }
             .bill-row-even {
-                background-color: #F9FAFB;
+                background-color: #f9fafb;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .grand-total-row {
+                background-color: #c5922e;
+                color: #ffffff;
+                font-weight: bold;
             }
             .text-right {
                 text-align: right;
@@ -90,6 +109,15 @@
             }
             .bold {
                 font-weight: bold;
+            }
+            .footer-text {
+                font-style: italic;
+                text-align: center;
+                font-size: 7.5pt;
+                color: #9ca3af;
+                margin-top: 20px;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 5px;
             }
         </style>
     </head>
@@ -104,99 +132,92 @@
                     {% elif project.client.logo %}
                         <img src="{{ project.client.logo.url }}" style="max-height: 60px; max-width: 150px">
                     {% else %}
-                        <span style="color: #6B7280; font-style: italic; font-size: 11pt;">[ LOGO ]</span>
+                        <span style="color: #9ca3af; font-style: italic; font-size: 11pt;">[ LOGO ]</span>
                     {% endif %}
                 </td>
                 <td class="center-box">
-                    <div style="font-size: 18pt; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px;">BILL OF QUANTITIES &mdash; SUMMARY</div>
-                    <div style="font-size: 9pt; color: #6B7280;">
-                        {{ project.name }} &middot; Infrastructure Upgrade &middot; Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} &middot; {{ now|date:"d M Y" }}
-                    </div>
+                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;">BILL OF QUANTITIES &mdash; SUMMARY</div>
                 </td>
                 <td class="cert-box">
-                    <div style="font-size: 10pt; margin-bottom: 4px;">Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }}</div>
-                    <div style="font-size: 10pt;">{{ now|date:"d M Y" }}</div>
+                    <div style="font-size: 8.5pt; margin-bottom: 2px;">Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }}</div>
+                    <div style="font-size: 8.5pt;">{{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}</div>
                 </td>
             </tr>
         </table>
 
+        <div class="subtitle-row">
+            {{ project.name }} - Infrastructure Upgrade - Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} - {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+        </div>
+
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th style="width: 12%;" class="left-align">SCHED</th>
-                    <th style="width: 32%;" class="left-align">DESCRIPTION</th>
-                    <th style="width: 14%;" class="right-align">TENDER AMT<br>(R)</th>
-                    <th style="width: 14%;" class="right-align">CUMUL.<br>CERT (R)</th>
-                    <th style="width: 14%;" class="right-align">PREV. CERT<br>(R)</th>
-                    <th style="width: 14%;" class="right-align">AMT DUE (R)</th>
+                    <th width="44%" class="left-align" style="padding-left: 10px;">DESCRIPTION</th>
+                    <th width="14%" class="right-align">TENDER AMOUNT (R)</th>
+                    <th width="14%" class="right-align">CUMULATIVE CERTIFIED<br>(R)</th>
+                    <th width="14%" class="right-align">PREVIOUS CERTIFIED<br>(R)</th>
+                    <th width="14%" class="right-align">AMOUNT DUE (R)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for section in grouped_sections %}
                     <tr class="section-row">
-                        <td>Section {{ forloop.counter }}</td>
-                        <td>{{ section.name|upper }}</td>
-                        <td class="text-right">{% if section.budget %}R {{ section.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                        <td class="text-right">{% if section.cumulative %}R {{ section.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                        <td class="text-right">{% if section.previous %}R {{ section.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                        <td class="text-right">{% if section.current %}R {{ section.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                        <td style="padding-left: 10px;">{{ section.name|upper }}</td>
+                        <td class="text-right">{% if section.budget %}{{ section.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                        <td class="text-right">{% if section.cumulative %}{{ section.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                        <td class="text-right">{% if section.previous %}{{ section.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                        <td class="text-right">{% if section.current %}{{ section.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                     </tr>
                     {% for bill in section.bills %}
                         <tr class="{% cycle 'bill-row-odd' 'bill-row-even' %}">
-                            <td style="padding-left: 10px; color: #4B5563;">Bill No. {{ forloop.counter }}</td>
-                            <td style="color: #4B5563;">{{ bill.name }}</td>
-                            <td class="text-right">{% if bill.budget %}R {{ bill.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                            <td class="text-right">{% if bill.cumulative %}R {{ bill.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                            <td class="text-right">{% if bill.previous %}R {{ bill.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                            <td class="text-right">{% if bill.current %}R {{ bill.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                            <td style="padding-left: 20px;">{{ bill.name }}</td>
+                            <td class="text-right">{% if bill.budget %}{{ bill.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                            <td class="text-right">{% if bill.cumulative %}{{ bill.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                            <td class="text-right">{% if bill.previous %}{{ bill.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                            <td class="text-right">{% if bill.current %}{{ bill.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                         </tr>
                     {% endfor %}
-                    <!-- separator row -->
-                    <tr>
-                        <td colspan="6" style="height: 10px; border: none;"></td>
-                    </tr>
                 {% endfor %}
-                <tr class="section-row">
-                    <td></td>
-                    <td>TOTAL EXCLUDING VAT</td>
-                    <td class="text-right">{% if total_budget %}R {{ total_budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_cumulative %}R {{ total_cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_previous %}R {{ total_previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_current %}R {{ total_current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                <tr class="bill-row-odd bold" style="border-top: 1px solid #e5e7eb;">
+                    <td style="padding-left: 10px;">TOTAL EXCLUDING VAT</td>
+                    <td class="text-right">{% if total_budget %}{{ total_budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_cumulative %}{{ total_cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_previous %}{{ total_previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_current %}{{ total_current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                 </tr>
-                <tr class="bill-row-odd">
-                    <td></td>
-                    <td>COMPENSATION EVENTS</td>
+                <tr class="bill-row-even bold">
+                    <td style="padding-left: 10px;">COMPENSATION EVENTS</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                 </tr>
-                <tr class="bill-row-even">
-                    <td></td>
-                    <td>MOS (Materials On Site)</td>
+                <tr class="bill-row-odd bold">
+                    <td style="padding-left: 10px;">MATERIAL ON SITE</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                 </tr>
-                <tr class="section-row" style="border-top: 2px solid #000;">
-                    <td></td>
-                    <td>GRAND TOTAL</td>
-                    <td class="text-right">{% if total_budget %}R {{ total_budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_cumulative %}R {{ total_cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_previous %}R {{ total_previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_current %}R {{ total_current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                <tr class="grand-total-row">
+                    <td style="padding-left: 10px;">GRAND TOTAL</td>
+                    <td class="text-right">{% if total_budget %}{{ total_budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_cumulative %}{{ total_cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_previous %}{{ total_previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_current %}{{ total_current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                 </tr>
-                <tr class="bill-row-odd">
-                    <td></td>
-                    <td>RETENTION ACCOUNT (10% / 5% Current)</td>
-                    <td class="text-right">{% if total_budget %}R {{ total_budget|mul:0.1|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_cumulative %}R {{ total_cumulative|mul:0.1|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_previous %}R {{ total_previous|mul:0.1|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                    <td class="text-right">{% if total_current %}R {{ total_current|mul:0.05|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                <tr class="bill-row-even bold">
+                    <td style="padding-left: 10px;">RETENTION ACCOUNT</td>
+                    <td class="text-right">{% if total_budget %}{{ total_budget|mul:0.1|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_cumulative %}{{ total_cumulative|mul:0.1|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_previous %}{{ total_previous|mul:0.1|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if total_current %}{{ total_current|mul:0.05|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                 </tr>
             </tbody>
         </table>
+
+        <div class="footer-text">
+            {% if project.contractor %}{{ project.contractor.name }}{% else %}NIX Quantity Surveyors (Pty) Ltd{% endif %} | {% if project.client %}{{ project.client.name }}{% else %}Rustenburg Platinum Mines (PTY) LTD, 144 Oxford St, Rosebank, 2196{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+        </div>
     </body>
 </html>

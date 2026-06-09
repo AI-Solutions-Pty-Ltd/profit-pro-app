@@ -91,7 +91,7 @@
                         {% for section in grouped_sections %}
                             <!-- Section Header Row -->
                             <tr class="bg-gray-50 font-semibold">
-                                <td class="px-4 py-2 text-gray-700">Section {{ forloop.counter }}</td>
+                                <td class="px-4 py-2"></td>
                                 <td class="px-4 py-2 text-gray-900 uppercase">{{ section.name }}</td>
                                 <td class="px-4 py-2 text-right font-mono text-gray-900">{{ section.budget|floatformat:2|intcomma }}</td>
                                 <td class="px-4 py-2 text-right font-mono text-gray-900">{{ section.cumulative|floatformat:2|intcomma }}</td>
@@ -101,8 +101,8 @@
                             <!-- Bill rows -->
                             {% for bill in section.bills %}
                                 <tr class="bg-white hover:bg-gray-50">
-                                    <td class="px-4 py-2 text-gray-500 pl-8">Bill No. {{ forloop.counter }}</td>
-                                    <td class="px-4 py-2 text-gray-700">{{ bill.name }}</td>
+                                    <td class="px-4 py-2"></td>
+                                    <td class="px-4 py-2 text-gray-700 pl-4">{{ bill.name }}</td>
                                     <td class="px-4 py-2 text-right font-mono text-gray-700">{{ bill.budget|floatformat:2|intcomma }}</td>
                                     <td class="px-4 py-2 text-right font-mono text-gray-700">{{ bill.cumulative|floatformat:2|intcomma }}</td>
                                     <td class="px-4 py-2 text-right font-mono text-gray-700">{{ bill.previous|floatformat:2|intcomma }}</td>
