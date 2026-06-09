@@ -65,12 +65,16 @@ def group_line_items_by_hierarchy(line_items):
     return grouped
 
 
-def get_valuation_summary_data(payment_certificate):
+def get_valuation_summary_data(payment_certificate, abridged=False):
     """
     Get aggregated data for the Valuation Summary page (Valterra/RPM layout).
     Groups line items by structure (section) -> bill and calculates totals.
     """
-    line_items = LineItem.construct_payment_certificate(payment_certificate)
+    if abridged:
+        line_items = LineItem.abridged_payment_certificate(payment_certificate)
+    else:
+        line_items = LineItem.construct_payment_certificate(payment_certificate)
+
 
     structures_data: dict[Any, dict[str, Any]] = {}
     for item in line_items:
@@ -196,8 +200,8 @@ def compile_pdf_for_certificate(
             }
         )
 
-    # Add summary data if summary is requested and layout is valterra_rpm
-    if include_summary and layout == "valterra_rpm":
+    # Add summary data if summary is requested and layout is valterra_rpm or lephadimisha
+    if include_summary and layout in ("valterra_rpm", "lephadimisha"):
         summary_data = get_valuation_summary_data(payment_certificate)
         context.update(summary_data)
 
@@ -205,7 +209,7 @@ def compile_pdf_for_certificate(
     merger = PdfWriter()
     pdf_parts = []
 
-    if layout == "valterra_rpm":
+    if layout in ("valterra_rpm", "lephadimisha"):
         if include_front:
             front_tpl = get_template("pdf_templates/valterra_rpm/1-front-page.html")
             pdf_parts.append(generate_pdf(front_tpl.render(context)))

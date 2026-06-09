@@ -67,4 +67,19 @@ payment_certificate_urls = [
         payment_certificate_views.PaymentCertificateUnmarkFinalView.as_view(),
         name="payment-certificate-unmark-final",
     ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/cover-page/",
+        payment_certificate_views.PaymentCertificateCoverPageView.as_view(),
+        name="payment-certificate-cover-page",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/valuation-summary/",
+        payment_certificate_views.PaymentCertificateValuationSummaryView.as_view(),
+        name="payment-certificate-valuation-summary",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/view-detailed/",
+        payment_certificate_views.PaymentCertificateDetailedView.as_view(),
+        name="payment-certificate-view-detailed",
+    ),
 ]

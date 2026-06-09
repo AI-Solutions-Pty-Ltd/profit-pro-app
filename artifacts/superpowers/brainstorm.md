@@ -1,51 +1,95 @@
-# Superpowers Brainstorm: Add Bi-Weekly Safety and NCR Cards to Company Management
+# Brainstorm: Payment Certificate Detail — In-Browser Section Views
 
 ## Goal
-The goal is to add "Bi-Weekly Safety" and "Non-Conformance Report" (NCR) cards to the "Site Management" grid section of the Business Management Center dashboard (`company_management.html`), specifically appending them to the end of the site cards list (Option 1).
+
+Add **in-browser (HTML) view buttons** to the Payment Certificate detail page
+(`bill-of-quantities/project/<pk>/payment-certificates/<pk>/detail/`) for three
+document sections that currently only exist inside the downloaded PDF:
+
+| Section | Description |
+|---|---|
+| **Cover Page** | Project details, contract summary, and payment certificate summary |
+| **Valuation Summary** | Budget vs cumulative vs current-claim grouped by Structure -> Bill (valterra_rpm layout) |
+| **Detailed Report** | The line-item table — full or abridged (claimed items only) |
+
+Users will be able to choose between **Full** and **Abridged** variants of the
+detailed page directly from the detail UI, without downloading a PDF.
 
 ## Constraints
-- **Styling**: The new cards must conform to the existing visual design system: Tailwind CSS layout (`flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-*-200`), transition/hover animations, and outline Heroicons style.
-- **Context Parameter**: The URL parameter must use `company.pk` because in `company_management.html`, the template context variable representing the active project is named `company`.
-- **URL Namespaces**: The correct Django URL patterns are:
-  - Bi-Weekly Safety: `site_management:biweekly-safety-list`
-  - NCR Register: `site_management:ncr-list`
+
+- No new models or migrations required.
+- Valuation Summary is only meaningful for valterra_rpm layout; guard with template check.
+- Permission boundary unchanged — all new views inherit PaymentCertificateMixin.
+- Must not break existing PDF download or async PDF generation.
+- Factories/tests must use factory_boy; no raw Model.objects.create().
 
 ## Known context
-- The "Site Management" section in `company_management.html` contains a grid of links pointing to various site logs.
-- Currently, there are 16 cards in this grid, all rendered in `<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">`.
-- "Bi-Weekly Safety" is configured with the `shield-exclamation` icon and uses `indigo` accents.
-- "NCR Register" is configured with the `document-check` icon and uses `rose` or `amber` accents.
+
+### Existing PDF pipeline
+- compile_pdf_for_certificate() in tasks.py
+- layouts: standard and valterra_rpm
+- front-page.html, 2-summary.html (valterra_rpm only), 2-line-items.html / 3-detailed.html
+
+### Helper functions already available
+- get_valuation_summary_data(payment_certificate) — tasks.py
+- group_line_items_by_hierarchy(line_items) — tasks.py
+- LineItem.abridged_payment_certificate(cert) — model manager
+- LineItem.construct_payment_certificate(cert) — model manager
+
+### What is missing today
+- No browser view of cover page
+- No browser view of valuation summary
+- No browser view of detailed report (full vs abridged)
+- No buttons for these in the detail page header
 
 ## Risks
-- **Mismatch in Context Variable**: Accidentally using `project.pk` instead of `company.pk` will cause Django's template engine to fail to resolve the URL at runtime.
-- **Visual Alignment**: Adding two new cards shifts the total count from 16 to 18 cards, which might leave an uneven grid row on larger screens (18 is not divisible by 4, leaving 2 cards on the last row). However, Tailwind's grid naturally centers/wraps elements seamlessly.
 
-## Options (2?4)
+| Risk | Likelihood | Mitigation |
+|---|---|---|
+| Valuation summary shown on non-VALTERRA_RPM | Medium | Guard: return 404 or redirect for wrong layout |
+| Large line-item tables cause slow browser render | Medium | Abridged limits to claimed items; full is opt-in |
+| Duplicate context assembly | Low | Reuse existing helper functions directly |
 
-### Option 1: Append both cards to the end of the grid list (Selected)
-Add the "Bi-Weekly Safety" and "NCR Register" cards at the very end of the list.
-*   **Pros**: Simplifies code modification and diff representation; no risk of breaking order logic.
-*   **Cons**: Groups items arbitrarily at the end of the list without thematic relationship to their neighbor cards.
+## Options
 
-### Option 2: Place cards next to related items (Thematic Grouping)
-Insert the cards inline where they relate to other items:
-- Insert "NCR Register" directly after the "Quality Control" card.
-- Insert "Bi-Weekly Safety" directly after the "Safety Observations" card.
-*   **Pros**: Logical user interface flow. Users find NCR directly under Quality Control, and Bi-Weekly Safety directly next to Safety Observations.
-*   **Cons**: Requires non-contiguous template edits.
+### Option A — New dedicated view pages (recommended)
+
+Three new CBV views:
+- PaymentCertificateCoverPageView — .../cover-page/
+- PaymentCertificateValuationSummaryView — .../valuation-summary/
+- PaymentCertificateDetailedView — .../view-detailed/?mode=full|abridged
+
+Four buttons added to detail page header.
+
+Pros: Bookmarkable URLs, clean separation, easy to test, follows project conventions.
+Cons: Three new templates needed.
+
+### Option B — HTMX tab panels inside the detail page
+
+Single URL; lazy-loaded tab panels via HTMX.
+
+Pros: Single-page feel.
+Cons: Codebase doesn't use HTMX for this pattern; harder to link to specific section.
+
+### Option C — Reuse PDF HTML templates as inline iframes
+
+Render existing PDF HTML inside iframes.
+
+Pros: Zero new templates.
+Cons: PDF print CSS looks bad in browser; complex to secure.
 
 ## Recommendation
-The user selected Option 1: Append both cards to the end of the grid list. We will proceed with this option.
+
+**Option A — Dedicated view pages.**
+
+Matches how the project is structured (Django CBV, one view per concern),
+gives bookmarkable URLs, reuses all existing helper functions.
 
 ## Acceptance criteria
-1.  **Bi-Weekly Safety Card**:
-    *   Renders in the "Site Management" grid, appended to the end of the list (after Overhead Log).
-    *   Targets `{% url 'site_management:biweekly-safety-list' company.pk %}`.
-    *   Uses the `shield-exclamation` Heroicon and `indigo` styling.
-2.  **NCR Register Card**:
-    *   Renders in the "Site Management" grid, appended to the end of the list (after Bi-Weekly Safety).
-    *   Targets `{% url 'site_management:ncr-list' company.pk %}`.
-    *   Uses the `document-check` Heroicon and `rose` or `amber` styling.
-3.  **Correct Page Context**: All URLs resolve correctly using the `company.pk` key.
-4.  **Aesthetics**: The design and hover animations match the premium card design layout.
-5.  **Passing Tests**: All existing template rendering and view unit tests continue to pass.
+
+1. Cover Page view (/cover-page/) renders project details, contract summary, cert summary. Auth-guarded.
+2. Valuation Summary view (/valuation-summary/) only accessible for valterra_rpm projects. Uses get_valuation_summary_data(). Returns 404 for wrong layout.
+3. Detailed view (/view-detailed/?mode=full|abridged) shows full or abridged line items. Default = full.
+4. Four new buttons on detail page: View Cover Page, Valuation Summary (conditional), View Detailed Full, View Detailed Abridged.
+5. Tests in test_payment_certificate_section_views.py: 200/403 auth, valuation summary layout guard, abridged vs full queryset.
+6. No regressions: existing tests pass, existing PDF download flow unchanged.

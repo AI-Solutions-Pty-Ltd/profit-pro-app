@@ -1273,3 +1273,200 @@ class PaymentCertificateUnmarkFinalView(PaymentCertificateMixin, DetailView):
             "bill_of_quantities:payment-certificate-list",
             project_pk=self.kwargs["project_pk"],
         )
+
+
+class PaymentCertificateCoverPageView(PaymentCertificateMixin, DetailView):
+    """Render the cover page (project details, contract summary, cert summary) in-browser."""
+
+    model = PaymentCertificate
+    template_name = "payment_certificate/section_views/cover_page.html"
+    context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for cover page view."""
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "pk": self.get_object().pk,
+                    },
+                ),
+            },
+            {
+                "title": "Cover Page",
+                "url": None,
+            },
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class PaymentCertificateValuationSummaryView(PaymentCertificateMixin, DetailView):
+    """Render the valuation summary page in-browser (valterra_rpm layout only)."""
+
+    model = PaymentCertificate
+    template_name = "payment_certificate/section_views/valuation_summary.html"
+    context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for valuation summary view."""
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "pk": self.get_object().pk,
+                    },
+                ),
+            },
+            {
+                "title": "Valuation Summary",
+                "url": None,
+            },
+        ]
+
+    def get(self, request, *args, **kwargs):
+        """Guard: only allow access for valterra_rpm or lephadimisha layout projects."""
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        layout = getattr(project, "certificate_layout", "") or ""
+        if layout.lower() not in ("valterra_rpm", "lephadimisha"):
+            messages.error(
+                request,
+                "Valuation Summary is only available for projects using the Valterra RPM layout.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project.pk,
+                pk=self.kwargs["pk"],
+            )
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        """Add valuation summary data to context."""
+        from app.BillOfQuantities.tasks import get_valuation_summary_data
+
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        
+        mode = self.request.GET.get("mode", "abridged")
+        context["mode"] = mode
+        context["is_abridged"] = (mode == "abridged")
+        
+        summary_data = get_valuation_summary_data(
+            self.get_object(), 
+            abridged=context["is_abridged"]
+        )
+        context.update(summary_data)
+        return context
+
+
+class PaymentCertificateDetailedView(PaymentCertificateMixin, DetailView):
+    """Render the detailed line-item report in-browser (full or abridged via ?mode= param)."""
+
+    model = PaymentCertificate
+    template_name = "payment_certificate/section_views/view_detailed.html"
+    context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for detailed view."""
+        mode = self.request.GET.get("mode", "abridged")
+        mode_label = "Full" if mode != "abridged" else "Abridged"
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "pk": self.get_object().pk,
+                    },
+                ),
+            },
+            {
+                "title": f"Detailed — {mode_label}",
+                "url": None,
+            },
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Build line-item context for full or abridged mode."""
+        from app.BillOfQuantities.tasks import group_line_items_by_hierarchy
+
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        payment_certificate = self.get_object()
+        mode = self.request.GET.get("mode", "abridged")
+        is_abridged = mode == "abridged"
+
+        context["project"] = project
+        context["is_abridged"] = is_abridged
+        context["mode"] = mode
+
+        if is_abridged:
+            all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
+            line_items = all_line_items.filter(addendum=False, special_item=False)
+            special_line_items = all_line_items.filter(special_item=True, addendum=False)
+            addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
+        else:
+            all_line_items = LineItem.construct_payment_certificate(payment_certificate)
+            line_items = all_line_items.filter(special_item=False, addendum=False)
+            special_line_items = all_line_items.filter(special_item=True, addendum=False)
+            addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
+
+        context["grouped_line_items"] = group_line_items_by_hierarchy(line_items)
+        context["special_line_items"] = special_line_items
+        context["addendum_line_items"] = group_line_items_by_hierarchy(addendum_line_items)
+        context["special_item_types"] = SpecialItemTransaction.SpecialItemType.choices
+
+        return context
