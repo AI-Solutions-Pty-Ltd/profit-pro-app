@@ -1,4 +1,4 @@
-# Brainstorm: Payment Certificate Detail — In-Browser Section Views
+# Brainstorm: Payment Certificate Detail ï¿½ In-Browser Section Views
 
 ## Goal
 
@@ -10,7 +10,7 @@ document sections that currently only exist inside the downloaded PDF:
 |---|---|
 | **Cover Page** | Project details, contract summary, and payment certificate summary |
 | **Valuation Summary** | Budget vs cumulative vs current-claim grouped by Structure -> Bill (valterra_rpm layout) |
-| **Detailed Report** | The line-item table — full or abridged (claimed items only) |
+| **Detailed Report** | The line-item table ï¿½ full or abridged (claimed items only) |
 
 Users will be able to choose between **Full** and **Abridged** variants of the
 detailed page directly from the detail UI, without downloading a PDF.
@@ -19,7 +19,7 @@ detailed page directly from the detail UI, without downloading a PDF.
 
 - No new models or migrations required.
 - Valuation Summary is only meaningful for valterra_rpm layout; guard with template check.
-- Permission boundary unchanged — all new views inherit PaymentCertificateMixin.
+- Permission boundary unchanged ï¿½ all new views inherit PaymentCertificateMixin.
 - Must not break existing PDF download or async PDF generation.
 - Factories/tests must use factory_boy; no raw Model.objects.create().
 
@@ -31,10 +31,10 @@ detailed page directly from the detail UI, without downloading a PDF.
 - front-page.html, 2-summary.html (valterra_rpm only), 2-line-items.html / 3-detailed.html
 
 ### Helper functions already available
-- get_valuation_summary_data(payment_certificate) — tasks.py
-- group_line_items_by_hierarchy(line_items) — tasks.py
-- LineItem.abridged_payment_certificate(cert) — model manager
-- LineItem.construct_payment_certificate(cert) — model manager
+- get_valuation_summary_data(payment_certificate) ï¿½ tasks.py
+- group_line_items_by_hierarchy(line_items) ï¿½ tasks.py
+- LineItem.abridged_payment_certificate(cert) ï¿½ model manager
+- LineItem.construct_payment_certificate(cert) ï¿½ model manager
 
 ### What is missing today
 - No browser view of cover page
@@ -52,26 +52,26 @@ detailed page directly from the detail UI, without downloading a PDF.
 
 ## Options
 
-### Option A — New dedicated view pages (recommended)
+### Option A ï¿½ New dedicated view pages (recommended)
 
 Three new CBV views:
-- PaymentCertificateCoverPageView — .../cover-page/
-- PaymentCertificateValuationSummaryView — .../valuation-summary/
-- PaymentCertificateDetailedView — .../view-detailed/?mode=full|abridged
+- PaymentCertificateCoverPageView ï¿½ .../cover-page/
+- PaymentCertificateValuationSummaryView ï¿½ .../valuation-summary/
+- PaymentCertificateDetailedView ï¿½ .../view-detailed/?mode=full|abridged
 
 Four buttons added to detail page header.
 
 Pros: Bookmarkable URLs, clean separation, easy to test, follows project conventions.
 Cons: Three new templates needed.
 
-### Option B — HTMX tab panels inside the detail page
+### Option B ï¿½ HTMX tab panels inside the detail page
 
 Single URL; lazy-loaded tab panels via HTMX.
 
 Pros: Single-page feel.
 Cons: Codebase doesn't use HTMX for this pattern; harder to link to specific section.
 
-### Option C — Reuse PDF HTML templates as inline iframes
+### Option C ï¿½ Reuse PDF HTML templates as inline iframes
 
 Render existing PDF HTML inside iframes.
 
@@ -80,7 +80,7 @@ Cons: PDF print CSS looks bad in browser; complex to secure.
 
 ## Recommendation
 
-**Option A — Dedicated view pages.**
+**Option A ï¿½ Dedicated view pages.**
 
 Matches how the project is structured (Django CBV, one view per concern),
 gives bookmarkable URLs, reuses all existing helper functions.
