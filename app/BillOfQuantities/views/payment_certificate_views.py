@@ -1443,3 +1443,105 @@ class PaymentCertificateDownloadAbridgedXLSXView(PaymentCertificateMixin, View):
                 project_pk=project_pk,
                 pk=pk,
             )
+
+
+class PaymentCertificateDownloadSummaryXLSXView(PaymentCertificateMixin, View):
+    """Download valuation summary as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.summary_report_exporter import (
+            export_summary_report_to_xlsx,
+        )
+
+        try:
+            wb = export_summary_report_to_xlsx(payment_certificate, is_abridged=False)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_summary.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-valuation-summary",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+
+class PaymentCertificateDownloadAbridgedSummaryXLSXView(PaymentCertificateMixin, View):
+    """Download abridged valuation summary as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.summary_report_exporter import (
+            export_summary_report_to_xlsx,
+        )
+
+        try:
+            wb = export_summary_report_to_xlsx(payment_certificate, is_abridged=True)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_summary_abridged.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-valuation-summary",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+
+class PaymentCertificateCoverPageDownloadXLSXView(PaymentCertificateMixin, View):
+    """Download cover page as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.cover_page_exporter import (
+            export_cover_page_to_xlsx,
+        )
+
+        try:
+            wb = export_cover_page_to_xlsx(payment_certificate)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_cover_page.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-cover-page",
+                project_pk=project_pk,
+                pk=pk,
+            )
