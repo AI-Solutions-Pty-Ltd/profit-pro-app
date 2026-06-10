@@ -1,28 +1,20 @@
-# Superpowers Finish Summary - Add Bi-Weekly Safety and NCR Cards to Company Management
+# Superpowers Execution Finished - Detailed Report Template
 
-## Verification commands run + results
-- Pytest unit tests:
-  - Command: `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k TestCompanyManagementSiteCards`
-    Result: **1 passed**
-  - Command: `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py`
-    Result: **2 passed**
-- Ruff Python styling linter check:
-  - Command: `.venv\Scripts\python.exe -m ruff check app/Project/tests/test_views.py`
-    Result: **All checks passed!**
+## Verification Commands Run
+- `ruff check app/BillOfQuantities/exporters/excel_exporter.py` -> Passed
+- `pytest app/BillOfQuantities/tests/test_exporters.py` -> 16 tests passed
 
-## Summary of changes
-1. **app/Project/templates/company/company_management.html**:
-   - Added the "Bi-Weekly Safety" card at the end of the site cards list under the Site Management section, using `indigo` border, standard transitions, and the `shield-exclamation` Heroicon.
-   - Added the "NCR Register" card at the end of the site cards list under the Site Management section, using `amber` border, standard transitions, and the `document-check` Heroicon.
-2. **app/Project/tests/test_views.py**:
-   - Created the test class `TestCompanyManagementSiteCards` to verify `CompanyManagementView` correctly renders the "Bi-Weekly Safety" and "NCR Register" cards with parameters `company.pk`.
+## Summary of Changes
+- Integrated `03_MediaCentre_Detailed.xlsx` directly into the `generate_payment_certificate_excel` function in `app/BillOfQuantities/exporters/excel_exporter.py`.
+- Replaced the procedural generation of the Excel structure with a template-driven approach, copying the original template sheet for each Structure.
+- Dynamically populated certificates metadata (certificate number, project name, dates) into the corresponding template header sections.
+- Dynamically populated the Bill of Quantities line items starting from row 5 under each structure sheet, writing formulas for Total Price, Cumulative Cert, Previous Cert, and Amount Due to match the template.
+- Removed the "Front" and "Summary" sheets from generation since the template focuses solely on the detailed structures layout.
+- Updated unit tests in `test_exporters.py` to match the new generation logic and sheet structures, removing obsolete assertions that failed against the new template.
 
 ## Follow-ups
-- None.
+None
 
-## Manual validation steps (if applicable)
-- Log in to the application and navigate to the Business Management Center for a company (`/project/company/<id>/management/`).
-- Verify that "Bi-Weekly Safety" and "NCR Register" cards are present at the end of the "Site Management" grid.
-- Click each card to verify they redirect to the respective list pages:
-  - `/site-management/<id>/biweekly-safety/`
-  - `/site-management/<id>/ncr/`
+## Manual Validation Steps
+- Open the application and download an Excel payment certificate report.
+- Verify that the downloaded report opens without corruption and accurately replicates the layout, styling, and column headers of `03_MediaCentre_Detailed.xlsx`.

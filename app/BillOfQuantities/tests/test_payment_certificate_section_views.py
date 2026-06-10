@@ -4,7 +4,6 @@ import pytest
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
-from app.BillOfQuantities.models import PaymentCertificate
 from app.BillOfQuantities.tests.factories import (
     ActualTransactionFactory,
     LineItemFactory,
@@ -12,7 +11,6 @@ from app.BillOfQuantities.tests.factories import (
 )
 from app.Project.models import ProjectRole, Role
 from app.Project.tests.factories import ProjectFactory
-
 
 # ---------------------------------------------------------------------------
 # Helpers

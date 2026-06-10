@@ -38,14 +38,19 @@ payment_certificate_urls = [
         name="payment-certificate-download-pdf",
     ),
     path(
-        "project/<int:project_pk>/payment-certificates/<int:pk>/download-excel/",
-        payment_certificate_views.PaymentCertificateDownloadExcelView.as_view(),
-        name="payment-certificate-download-excel",
-    ),
-    path(
         "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-pdf/",
         payment_certificate_views.PaymentCertificateDownloadAbridgedPDFView.as_view(),
         name="payment-certificate-download-abridged-pdf",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadXLSXView.as_view(),
+        name="payment-certificate-download-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadAbridgedXLSXView.as_view(),
+        name="payment-certificate-download-abridged-xlsx",
     ),
     path(
         "project/<int:project_pk>/payment-certificates/<int:pk>/pdf-status/",

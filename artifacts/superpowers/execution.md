@@ -1,28 +1,19 @@
-# Superpowers Execution Log - Add Bi-Weekly Safety and NCR Cards to Company Management
+# Superpowers Execution Log - Detailed Report Template
 
 This file records the execution progress of each step of the implementation plan.
 
-## Step 1: Update Company Management Template
-- **Files changed**: `app/Project/templates/company/company_management.html`
+## Step 1: Update Excel Exporter
+- **Files changed**: `app/BillOfQuantities/exporters/excel_exporter.py`
 - **What changed**:
-  - Appended "Bi-Weekly Safety" card at the end of the Site Management list, linking to `site_management:biweekly-safety-list` with parameters `company.pk`.
-  - Appended "NCR Register" card at the end of the Site Management list, linking to `site_management:ncr-list` with parameters `company.pk`.
-- **Verification**: HTML files changed successfully and visually inspected.
+  - Replaced the custom workbook generation with a process that loads `03_MediaCentre_Detailed.xlsx` as a template using `openpyxl.load_workbook()`.
+  - Configured the generation process to copy the template sheet for each structure, injecting project and structure data into the corresponding header cells.
+  - Placed line item data iteratively starting from row 5, with correct columns formatting matching the template layout.
+- **Verification**: `ruff check` and formatting.
 - **Result**: PASS
 
-## Step 2: Add View Unit Test
-- **Files changed**: `app/Project/tests/test_views.py`
+## Step 2: Fix Exporter Tests
+- **Files changed**: `app/BillOfQuantities/tests/test_exporters.py`
 - **What changed**:
-  - Added the `TestCompanyManagementSiteCards` class with `test_company_management_site_cards_rendering` method.
-  - Verifies that `company_management.html` renders correctly and includes the new "Bi-Weekly Safety" and "NCR Register" cards.
-- **Verification**: Run `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k TestCompanyManagementSiteCards`
-- **Result**: PASS (1 passed in 50.55s)
-
-## Step 3: Run Full View Tests & Linting
-- **Files changed**: None
-- **What changed**:
-  - Ran ruff format, ruff check, and full pytest on `app/Project/tests/test_views.py`.
-- **Verification**:
-  - `.venv\Scripts\python.exe -m ruff check app/Project/tests/test_views.py` (All checks passed)
-  - `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py` (2 passed in 64.36s)
-- **Result**: PASS
+  - Adjusted tests to match the new behavior (e.g. absence of Front/Summary sheets, template-driven hardcoded column headers).
+- **Verification**: `pytest app/BillOfQuantities/tests/test_exporters.py`
+- **Result**: PASS (16 tests passed).

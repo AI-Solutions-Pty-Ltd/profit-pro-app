@@ -1,39 +1,33 @@
-# Implementation Plan - Add Bi-Weekly Safety and NCR Cards to Company Management
-
 ## Goal
-Add "Bi-Weekly Safety" and "NCR Register" cards to the "Site Management" grid in the Business Management Center dashboard (`company_management.html`), specifically appending them at the end of the site cards list (Option 1).
+Update the detailed payment certificate Excel download to use `03_MediaCentre_Detailed.xlsx` as the template layout.
 
 ## Assumptions
-- The template context represents the active project under the variable name `company`.
-- The Django URL namespaces are:
-  - Bi-Weekly Safety: `site_management:biweekly-safety-list`
-  - NCR Register: `site_management:ncr-list`
-- The project has `.venv` correctly configured, and pytest tests can run.
+- The template file `03_MediaCentre_Detailed.xlsx` will be moved to `app/BillOfQuantities/templates/excel/` for better organization.
+- `openpyxl` can load the template without losing complex formatting.
+- The structure of the generated Excel should be one sheet per Structure, based on the template sheet.
 
 ## Plan
+1. **File**: `app/BillOfQuantities/exporters/excel_exporter.py`
+   **Change**: Modify `generate_payment_certificate_excel` to:
+   - Load `03_MediaCentre_Detailed.xlsx` as a workbook using `openpyxl.load_workbook`.
+   - Identify the base template sheet.
+   - For each Structure in the project, copy the template sheet.
+   - Inject project details (name, cert no, date) into the specific header cells.
+   - Iterate through line items and write values into the correct columns matching the template.
+   - Delete the original template sheet before returning the workbook.
+   **Verify**: Check for syntax errors by running `.venv\Scripts\python.exe -m ruff check app/BillOfQuantities/exporters/excel_exporter.py`.
 
-### Step 1: Update Company Management Template
-- **Files**: `app/Project/templates/company/company_management.html`
-- **Change**: Append "Bi-Weekly Safety" and "NCR Register" cards to the end of the `<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">` in the Site Management section (around lines 440-445).
-- **Verify**: Read the modified template file to check for correct URL resolution tags and class styling.
+2. **File**: `c:\Users\nebst\Projects\profit-pro-app`
+   **Change**: Move `03_MediaCentre_Detailed.xlsx` into `app/BillOfQuantities/templates/excel_templates/` so it is packaged correctly.
+   **Verify**: Ensure the file exists at the new path.
 
-### Step 2: Add View Unit Test
-- **Files**: `app/Project/tests/test_views.py`
-- **Change**: Add a new test case `TestCompanyManagementSiteCards` that verifies rendering of `company_management.html` and checks that the HTML response content includes:
-  - The URL targeting `site_management:biweekly-safety-list` with `company.pk`
-  - The URL targeting `site_management:ncr-list` with `company.pk`
-- **Verify**: Run the new test case with pytest:
-  `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k TestCompanyManagementSiteCards`
-
-### Step 3: Run Full View Tests & Linting
-- **Files**: None
-- **Change**: None
-- **Verify**: Run the full suite of Project views tests and ruff lint check:
-  `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py`
+3. **File**: `app/BillOfQuantities/tests/test_exporters.py` (or similar)
+   **Change**: Add or update a test to verify that the generated Excel contains the new sheets and headers.
+   **Verify**: Run `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/` to confirm.
 
 ## Risks & mitigations
-- **Risk**: Missing `project` or `company` subscription permissions during testing.
-- **Mitigation**: Use `AccountFactory` which defaults to `FULL_ACCESS` subscription, or set `subscription = Subscription.FULL_ACCESS` explicitly on the user during tests.
+- **Risk**: `openpyxl` dropping styles when copying sheets. **Mitigation**: Manually re-apply critical styles if they drop, or use the template sheet directly for the first structure and copy it for subsequent ones.
+- **Risk**: Formula calculation errors. **Mitigation**: Ensure formulas in the total/summary rows correctly reference the dynamically inserted row indices.
 
 ## Rollback plan
-- Revert changes to `app/Project/templates/company/company_management.html` and `app/Project/tests/test_views.py` using `git checkout`.
+Revert `app/BillOfQuantities/exporters/excel_exporter.py` to its previous state (git checkout) and move the template file back if necessary.

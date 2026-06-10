@@ -11,6 +11,12 @@ def link_callback(src_attr, *args):
     """
     Returns the image data for use by the pdf renderer
     """
+    # Strip query parameters and hash fragments
+    if '?' in src_attr:
+        src_attr = src_attr.split('?')[0]
+    if '#' in src_attr:
+        src_attr = src_attr.split('#')[0]
+
     # Handle data URLs (already base64 encoded)
     if src_attr.startswith("data:image"):
         return src_attr
@@ -52,6 +58,11 @@ def link_callback(src_attr, *args):
     # Load and encode file if it exists
     if full_path and os.path.exists(full_path):
         ext = os.path.splitext(full_path)[1].lower()
+
+        # xhtml2pdf handles css files natively if given the full path
+        if ext == ".css":
+            return full_path
+
         mime_type = "image/jpeg"
         if ext == ".png":
             mime_type = "image/png"

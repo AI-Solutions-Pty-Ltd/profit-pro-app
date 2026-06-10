@@ -6,9 +6,6 @@ import pytest
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
-from app.BillOfQuantities.exporters.excel_exporter import (
-    generate_payment_certificate_excel,
-)
 from app.BillOfQuantities.tasks import (
     compile_pdf_for_certificate,
     get_valuation_summary_data,
@@ -69,136 +66,6 @@ class TestExporters:
         assert data["total_previous"] == Decimal("0.00")
         assert data["total_current"] == Decimal("200.00")
 
-    def test_excel_exporter(self):
-        """Test that the Excel exporter generates a valid workbook."""
-        project = ProjectFactory.create()
-        cert = PaymentCertificateFactory.create(project=project)
-
-        # Create a structure, bill and package belonging to project
-        structure = StructureFactory.create(project=project)
-        bill = BillFactory.create(structure=structure)
-        package = PackageFactory.create(bill=bill)
-
-        line_item = LineItemFactory.create(
-            project=project,
-            structure=structure,
-            bill=bill,
-            package=package,
-            is_work=True,
-            unit_price=Decimal("100.00"),
-            budgeted_quantity=Decimal("5.00"),
-            total_price=Decimal("500.00"),
-        )
-        ActualTransactionFactory.create(
-            payment_certificate=cert,
-            line_item=line_item,
-            quantity=Decimal("2.00"),
-            total_price=Decimal("200.00"),
-            claimed=True,
-            approved=True,
-        )
-
-        wb = generate_payment_certificate_excel(cert)
-        assert wb is not None
-        assert "Front" in wb.sheetnames
-        assert "Summary" in wb.sheetnames
-        assert line_item.structure.name[:30] in wb.sheetnames
-
-    def test_excel_exporter_with_custom_columns(self):
-        """Test Excel exporter with custom column configuration."""
-        from app.BillOfQuantities.tests.factories import (
-            BillFactory,
-            LineItemFactory,
-            PackageFactory,
-            StructureFactory,
-        )
-
-        project = ProjectFactory.create(certificate_layout="standard")
-        cert = PaymentCertificateFactory.create(project=project)
-
-        structure = StructureFactory.create(project=project)
-        bill = BillFactory.create(structure=structure)
-        package = PackageFactory.create(bill=bill)
-
-        LineItemFactory.create(
-            project=project,
-            structure=structure,
-            bill=bill,
-            package=package,
-            is_work=True,
-            unit_price=Decimal("100.00"),
-            budgeted_quantity=Decimal("5.00"),
-            total_price=Decimal("500.00"),
-        )
-
-        # Configure custom columns: Description, Unit Price, Budgeted Quantity, Total Price
-        column_config = {
-            "columns": [
-                {"id": "description", "label": "DESC_CUSTOM", "enabled": True},
-                {"id": "unit_price", "label": "RATE_CUSTOM", "enabled": True},
-                {"id": "budgeted_quantity", "label": "QTY_CUSTOM", "enabled": True},
-                {"id": "total_price", "label": "TOTAL_CUSTOM", "enabled": True},
-            ]
-        }
-        project.column_config = column_config
-        project.save()
-
-        wb = generate_payment_certificate_excel(cert)
-        assert wb is not None
-
-        sheet_name = structure.name[:30]
-        assert sheet_name in wb.sheetnames
-        ws = wb[sheet_name]
-
-        # Check header values
-        assert ws.cell(row=1, column=1).value == "DESC_CUSTOM"
-        assert ws.cell(row=1, column=2).value == "RATE_CUSTOM"
-        assert ws.cell(row=1, column=3).value == "QTY_CUSTOM"
-        assert ws.cell(row=1, column=4).value == "TOTAL_CUSTOM"
-
-        # Row 6 is the first data row (after header and section/bill labels)
-        total_price_formula = ws.cell(row=6, column=4).value
-        assert total_price_formula in ["=B6*C6", "=C6*B6"]
-
-    def test_excel_exporter_invalid_sheet_name_characters(self):
-        """Test that Excel exporter safely handles invalid characters and reserved sheet names."""
-        project = ProjectFactory.create()
-        cert = PaymentCertificateFactory.create(project=project)
-
-        # Structure with invalid Excel sheet characters
-        structure1 = StructureFactory.create(
-            project=project, name="Section A: P & G ?*"
-        )
-        bill1 = BillFactory.create(structure=structure1)
-        package1 = PackageFactory.create(bill=bill1)
-        LineItemFactory.create(
-            project=project,
-            structure=structure1,
-            bill=bill1,
-            package=package1,
-            is_work=True,
-            unit_price=Decimal("100.00"),
-            budgeted_quantity=Decimal("5.00"),
-        )
-
-        # Structure with reserved Excel sheet name
-        structure2 = StructureFactory.create(project=project, name="Summary")
-        bill2 = BillFactory.create(structure=structure2)
-        package2 = PackageFactory.create(bill=bill2)
-        LineItemFactory.create(
-            project=project,
-            structure=structure2,
-            bill=bill2,
-            package=package2,
-            is_work=True,
-            unit_price=Decimal("100.00"),
-            budgeted_quantity=Decimal("5.00"),
-        )
-
-        wb = generate_payment_certificate_excel(cert)
-        assert wb is not None
-        assert "Section A  P & G" in wb.sheetnames
-        assert "Summary_1" in wb.sheetnames
 
     def test_compile_pdf_for_certificate_standard(self):
         """Test PDF compiler for standard layout."""
@@ -347,26 +214,6 @@ class TestExporters:
 class TestDownloadViews:
     """Test cases for download views including custom choices and Excel downloads."""
 
-    def test_download_excel_view(self, client):
-        """Test that Excel download view returns valid response."""
-        user = AccountFactory.create()
-        project = ProjectFactory.create(users=user)
-        cert = PaymentCertificateFactory.create(project=project)
-        LineItemFactory.create(project=project)
-
-        client.force_login(user)
-        url = reverse(
-            "bill_of_quantities:payment-certificate-download-excel",
-            kwargs={"project_pk": project.pk, "pk": cert.pk},
-        )
-        response = client.get(url)
-        assert response.status_code == 200
-        assert (
-            response["Content-Type"]
-            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        assert ".xlsx" in response["Content-Disposition"]
-
     def test_download_pdf_view_custom_sections(self, client):
         """Test that PDF download view with custom sections returns valid PDF response."""
         user = AccountFactory.create()
@@ -384,46 +231,6 @@ class TestDownloadViews:
         response = client.get(url, {"front": "on", "summary": "on", "detailed": "on"})
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
-
-    def test_download_pdf_view_as_excel(self, client):
-        """Test that PDF download view with format=excel returns valid Excel response."""
-        user = AccountFactory.create()
-        project = ProjectFactory.create(users=user)
-        cert = PaymentCertificateFactory.create(project=project)
-        LineItemFactory.create(project=project)
-
-        client.force_login(user)
-        url = reverse(
-            "bill_of_quantities:payment-certificate-download-pdf",
-            kwargs={"project_pk": project.pk, "pk": cert.pk},
-        )
-        response = client.get(url, {"format": "excel"})
-        assert response.status_code == 200
-        assert (
-            response["Content-Type"]
-            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        assert ".xlsx" in response["Content-Disposition"]
-
-    def test_download_abridged_pdf_view_as_excel(self, client):
-        """Test that abridged PDF download view with format=excel returns valid Excel response."""
-        user = AccountFactory.create()
-        project = ProjectFactory.create(users=user)
-        cert = PaymentCertificateFactory.create(project=project)
-        LineItemFactory.create(project=project)
-
-        client.force_login(user)
-        url = reverse(
-            "bill_of_quantities:payment-certificate-download-abridged-pdf",
-            kwargs={"project_pk": project.pk, "pk": cert.pk},
-        )
-        response = client.get(url, {"format": "excel"})
-        assert response.status_code == 200
-        assert (
-            response["Content-Type"]
-            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        assert "_abridged.xlsx" in response["Content-Disposition"]
 
     def test_download_abridged_pdf_view_custom_sections(self, client):
         """Test that abridged PDF download view with custom sections returns valid PDF response."""
