@@ -1,32 +1,28 @@
-# Superpowers Execution Log: Fix Excel BOQ Empty Upload Validation
+# Superpowers Execution Log - Add Bi-Weekly Safety and NCR Cards to Company Management
 
-This log tracks the step-by-step progress and verification status during the implementation.
+This file records the execution progress of each step of the implementation plan.
 
-## Step 1: Add failing test case
-- **Files changed**: `app/BillOfQuantities/tests/test_structure_views.py`
+## Step 1: Update Company Management Template
+- **Files changed**: `app/Project/templates/company/company_management.html`
 - **What changed**:
-  - Imported `LineItemFactory`.
-  - Added `test_import_empty_file_returns_error_and_does_not_delete` asserting that importing a file without valid rows fails with `"Excel file is empty..."` error and does not wipe out existing database records.
-- **Verification command**: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -k test_import_empty_file_returns_error_and_does_not_delete -v`
-- **Result**: FAILED as expected (AssertionError: `assert len(errors) == 1` failed since 0 errors were returned and database records were cleared).
+  - Appended "Bi-Weekly Safety" card at the end of the Site Management list, linking to `site_management:biweekly-safety-list` with parameters `company.pk`.
+  - Appended "NCR Register" card at the end of the Site Management list, linking to `site_management:ncr-list` with parameters `company.pk`.
+- **Verification**: HTML files changed successfully and visually inspected.
+- **Result**: PASS
 
-## Step 2: Implement empty validation check
-- **Files changed**: `app/BillOfQuantities/services.py`
+## Step 2: Add View Unit Test
+- **Files changed**: `app/Project/tests/test_views.py`
 - **What changed**:
-  - Added a check `if len(valid_forms) == 0:` before entering the database transaction block.
-  - Returns `0, ["Excel file is empty. Please ensure it contains at least one valid line item row."]` if no valid forms were parsed.
-- **Verification command**: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -k test_import_empty_file_returns_error_and_does_not_delete -v`
-- **Result**: PASSED.
+  - Added the `TestCompanyManagementSiteCards` class with `test_company_management_site_cards_rendering` method.
+  - Verifies that `company_management.html` renders correctly and includes the new "Bi-Weekly Safety" and "NCR Register" cards.
+- **Verification**: Run `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k TestCompanyManagementSiteCards`
+- **Result**: PASS (1 passed in 50.55s)
 
-## Step 3: Run full suite and verify linting
+## Step 3: Run Full View Tests & Linting
 - **Files changed**: None
 - **What changed**:
-  - Fixed unused variable `line_item` in `test_structure_views.py` reported by Ruff.
-- **Verification command**:
-  - `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -v`
-  - `.venv\Scripts\python.exe -m ruff check app/BillOfQuantities/`
-  - `.venv\Scripts\python.exe -m ruff format app/BillOfQuantities/`
-- **Result**: PASSED (All 37 tests passed, Ruff checks and format passed).
-
-
-
+  - Ran ruff format, ruff check, and full pytest on `app/Project/tests/test_views.py`.
+- **Verification**:
+  - `.venv\Scripts\python.exe -m ruff check app/Project/tests/test_views.py` (All checks passed)
+  - `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py` (2 passed in 64.36s)
+- **Result**: PASS

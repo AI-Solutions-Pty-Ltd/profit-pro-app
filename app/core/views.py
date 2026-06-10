@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, cast
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 
@@ -237,3 +238,15 @@ def custom_500(request):
 def custom_403(request, exception):
     """Custom 403 error handler."""
     return render(request, "403.html", status=403)
+
+
+def favicon_view(request):
+    """Serve favicon.ico directly from the static directory to prevent 404s when static files are not collected."""
+    import os
+
+    favicon_path = os.path.join(
+        settings.BASE_DIR, "app", "core", "static", "favicon.ico"
+    )
+    if os.path.exists(favicon_path):
+        return FileResponse(open(favicon_path, "rb"), content_type="image/x-icon")
+    return HttpResponse(status=204)

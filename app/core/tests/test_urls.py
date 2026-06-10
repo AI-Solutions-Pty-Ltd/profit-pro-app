@@ -30,3 +30,13 @@ class TestUrls:
             },
         )
         assert response.status_code == 302
+
+    def test_favicon(self, client):
+        response = client.get("/favicon.ico")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "image/x-icon"
+
+    def test_404_handler(self, client):
+        response = client.get("/this-path-does-not-exist/")
+        assert response.status_code == 404
+        assert "Page Not Found" in response.content.decode()

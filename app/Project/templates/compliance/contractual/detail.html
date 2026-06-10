@@ -91,14 +91,18 @@
                         <label for="{{ form.message.id_for_label }}"
                                class="block text-sm font-medium text-gray-700 mb-2">Message</label>
                         {{ form.message }}
-                        {% if form.message.errors %}<p class="mt-1 text-sm text-red-600">{{ form.message.errors }}</p>{% endif %}
+                        {% if form.message.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.message.errors }}</p>
+                        {% endif %}
                     </div>
                     <div class="mb-4">
                         <label for="{{ form.attachments.id_for_label }}"
                                class="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
                         {{ form.attachments|as_crispy_field }}
                         <p class="mt-1 text-sm text-gray-500">You can select multiple files</p>
-                        {% if form.attachments.errors %}<p class="mt-1 text-sm text-red-600">{{ form.attachments.errors }}</p>{% endif %}
+                        {% if form.attachments.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.attachments.errors }}</p>
+                        {% endif %}
                     </div>
                     <div class="flex justify-end">
                         <button type="submit"

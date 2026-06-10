@@ -1,7 +1,8 @@
-# Task Progress: Fix Excel BOQ Empty Upload Validation
-
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Add regression test case `test_import_empty_file_returns_error_and_does_not_delete` to verify empty file uploads fail and preserve database records | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -k test_import_empty_file_returns_error_and_does_not_delete -v` |
-| **TSK-02** | Add empty check in `import_boq_from_excel` before database deletion transaction starts | `[x]` | View changes in `services.py` |
-| **TSK-03** | Run full pytest test suite and ruff checks and formatting | `[x]` | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -v` and `ruff check` |
+| **TSK-01** | Explore context and present brainstorming / design proposal | `[x]` | Review design proposal in response |
+| **TSK-02** | Create design document at `docs/plans/2026-06-08-back-button-design.md` | `[x]` | Check file existence |
+| **TSK-03** | Create implementation plan | `[x]` | Check `implementation_plan.md` existence |
+| **TSK-04** | Refactor `_back_button.html` to link to Business Management Center | `[x]` | Rendered HTML check / unit test |
+| **TSK-05** | Verify changes and run all project checks/tests | `[x]` | Run `.venv\Scripts\python.exe -m pytest app/SiteManagement/tests/` |
+| **TSK-06** | Finalize and update documentation | `[x]` | Verify walkthrough and update task list |
