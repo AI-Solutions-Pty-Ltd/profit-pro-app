@@ -53,12 +53,40 @@ def group_line_items_by_hierarchy(line_items):
     # Convert to list format for template iteration
     grouped = []
     for structure, bills in hierarchy.items():
-        structure_data = {"structure": structure, "bills": []}
+        structure_data = {
+            "structure": structure, 
+            "bills": [],
+            "budget": Decimal("0.00"),
+            "cumulative": Decimal("0.00"),
+            "previous": Decimal("0.00"),
+            "current": Decimal("0.00")
+        }
         for bill, packages in bills.items():
-            bill_data = {"bill": bill, "packages": []}
+            bill_data = {
+                "bill": bill, 
+                "packages": [],
+                "budget": Decimal("0.00"),
+                "cumulative": Decimal("0.00"),
+                "previous": Decimal("0.00"),
+                "current": Decimal("0.00")
+            }
             for package, items in packages.items():
                 package_data = {"package": package, "line_items": items}
+                
+                for item in items:
+                    if getattr(item, 'is_work', False):
+                        bill_data["budget"] += Decimal(str(item.total_price or "0.00"))
+                        bill_data["cumulative"] += Decimal(str(item.total_claimed or "0.00"))
+                        bill_data["previous"] += Decimal(str(item.previous_claimed or "0.00"))
+                        bill_data["current"] += Decimal(str(item.current_claim or "0.00"))
+                        
                 bill_data["packages"].append(package_data)
+                
+            structure_data["budget"] += bill_data["budget"]
+            structure_data["cumulative"] += bill_data["cumulative"]
+            structure_data["previous"] += bill_data["previous"]
+            structure_data["current"] += bill_data["current"]
+            
             structure_data["bills"].append(bill_data)
         grouped.append(structure_data)
 
