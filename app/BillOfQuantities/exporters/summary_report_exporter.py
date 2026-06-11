@@ -10,6 +10,7 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
     Mirrors the layout of '02_Summary.xlsx' and the UI valuation summary.
     """
     from app.BillOfQuantities.tasks import get_valuation_summary_data
+
     mode_text = "Abridged" if is_abridged else "Full"
     if wb is None:
         wb = openpyxl.Workbook()
@@ -110,18 +111,18 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
             ws.cell(
                 row=current_row, column=2, value=str(section["name"]).upper()
             ).font = font_bold
-            ws.cell(row=current_row, column=3, value=section["budget"]).alignment = (
-                align_right
-            )
+            ws.cell(
+                row=current_row, column=3, value=section["budget"]
+            ).alignment = align_right
             ws.cell(
                 row=current_row, column=4, value=section["cumulative"]
             ).alignment = align_right
-            ws.cell(row=current_row, column=5, value=section["previous"]).alignment = (
-                align_right
-            )
-            ws.cell(row=current_row, column=6, value=section["current"]).alignment = (
-                align_right
-            )
+            ws.cell(
+                row=current_row, column=5, value=section["previous"]
+            ).alignment = align_right
+            ws.cell(
+                row=current_row, column=6, value=section["current"]
+            ).alignment = align_right
 
             for col in range(1, 7):
                 cell = ws.cell(row=current_row, column=col)
@@ -134,18 +135,18 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
             for bill in section["bills"]:
                 ws.cell(row=current_row, column=1, value="")
                 ws.cell(row=current_row, column=2, value=bill["name"])
-                ws.cell(row=current_row, column=3, value=bill["budget"]).alignment = (
-                    align_right
-                )
+                ws.cell(
+                    row=current_row, column=3, value=bill["budget"]
+                ).alignment = align_right
                 ws.cell(
                     row=current_row, column=4, value=bill["cumulative"]
                 ).alignment = align_right
-                ws.cell(row=current_row, column=5, value=bill["previous"]).alignment = (
-                    align_right
-                )
-                ws.cell(row=current_row, column=6, value=bill["current"]).alignment = (
-                    align_right
-                )
+                ws.cell(
+                    row=current_row, column=5, value=bill["previous"]
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row, column=6, value=bill["current"]
+                ).alignment = align_right
 
                 for col in range(1, 7):
                     cell = ws.cell(row=current_row, column=col)
@@ -158,9 +159,9 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
         # Totals
         ws.cell(row=current_row, column=2, value="TOTAL EXCLUDING VAT").font = font_bold
         ws.cell(row=current_row, column=3, value=total_budget).alignment = align_right
-        ws.cell(row=current_row, column=4, value=total_cumulative).alignment = (
-            align_right
-        )
+        ws.cell(
+            row=current_row, column=4, value=total_cumulative
+        ).alignment = align_right
         ws.cell(row=current_row, column=5, value=total_previous).alignment = align_right
         ws.cell(row=current_row, column=6, value=total_current).alignment = align_right
         for col in range(1, 7):

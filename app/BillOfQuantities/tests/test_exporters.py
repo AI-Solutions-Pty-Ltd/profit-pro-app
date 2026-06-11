@@ -66,7 +66,6 @@ class TestExporters:
         assert data["total_previous"] == Decimal("0.00")
         assert data["total_current"] == Decimal("200.00")
 
-
     def test_compile_pdf_for_certificate_standard(self):
         """Test PDF compiler for standard layout."""
         project = ProjectFactory.create(certificate_layout="standard")

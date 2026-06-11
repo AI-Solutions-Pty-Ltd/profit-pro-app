@@ -169,7 +169,12 @@ class TestPaymentCertificateValuationSummaryView:
             kwargs={"project_pk": project.pk, "pk": cert.pk},
         )
         response = client.get(url)
-        for key in ("total_budget", "total_cumulative", "total_previous", "total_current"):
+        for key in (
+            "total_budget",
+            "total_cumulative",
+            "total_previous",
+            "total_current",
+        ):
             assert key in response.context
 
     def test_returns_200_abridged_mode(self, client):
@@ -340,4 +345,6 @@ class TestSectionViewURLs:
 
         for url in urls:
             response = client.get(url)
-            assert response.status_code == 200, f"Expected 200 for {url}, got {response.status_code}"
+            assert response.status_code == 200, (
+                f"Expected 200 for {url}, got {response.status_code}"
+            )
