@@ -199,7 +199,14 @@
                                     {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
                                     <span id="full-pdf-button-text">Download PDF</span>
                                 </button>
-
+                                <button type="submit"
+                                        formaction="{% url 'bill_of_quantities:payment-certificate-download-unified-xlsx' project.pk payment_certificate.pk %}"
+                                        id="full-xlsx-button"
+                                        {% if payment_certificate.xlsx_generating %}disabled{% endif %}
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 {% if payment_certificate.xlsx_generating %}bg-gray-100 cursor-not-allowed{% else %}bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500{% endif %} transition-colors">
+                                    {% heroicon_outline "table-cells" class="w-4 h-4" %}
+                                    <span id="full-xlsx-button-text">Download XLSX</span>
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -291,7 +298,14 @@
                                     {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
                                     <span id="abridged-pdf-button-text">Download PDF</span>
                                 </button>
-
+                                <button type="submit"
+                                        formaction="{% url 'bill_of_quantities:payment-certificate-download-unified-abridged-xlsx' project.pk payment_certificate.pk %}"
+                                        id="abridged-xlsx-button"
+                                        {% if payment_certificate.abridged_xlsx_generating %}disabled{% endif %}
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 {% if payment_certificate.abridged_xlsx_generating %}bg-gray-100 cursor-not-allowed{% else %}bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500{% endif %} transition-colors">
+                                    {% heroicon_outline "table-cells" class="w-4 h-4" %}
+                                    <span id="abridged-xlsx-button-text">Download XLSX</span>
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -377,32 +391,22 @@
       document.addEventListener('DOMContentLoaded', function() {
           const statusUrl = "{% url 'bill_of_quantities:payment-certificate-pdf-status' project.pk payment_certificate.pk %}";
           
-          // Independent polling for each PDF type
-          const pdfPoller = {
-              interval: null,
-              isPolling: false,
-              type: 'pdf'
-          };
-          
-          const abridgedPdfPoller = {
-              interval: null,
-              isPolling: false,
-              type: 'abridged_pdf'
-          };
+          // Independent polling for each PDF/XLSX type
+          const pdfPoller = { interval: null, isPolling: false, type: 'pdf' };
+          const abridgedPdfPoller = { interval: null, isPolling: false, type: 'abridged_pdf' };
+          const xlsxPoller = { interval: null, isPolling: false, type: 'xlsx' };
+          const abridgedXlsxPoller = { interval: null, isPolling: false, type: 'abridged_xlsx' };
           
           // Check initial state and start polling if needed
           const pdfGenerating = {{ payment_certificate.pdf_generating|lower }};
           const abridgedPdfGenerating = {{ payment_certificate.abridged_pdf_generating|lower }};
+          const xlsxGenerating = {{ payment_certificate.xlsx_generating|lower }};
+          const abridgedXlsxGenerating = {{ payment_certificate.abridged_xlsx_generating|lower }};
           
-          if (pdfGenerating) {
-              console.log('Full PDF generation in progress, starting polling...');
-              startPolling(pdfPoller);
-          }
-          
-          if (abridgedPdfGenerating) {
-              console.log('Abridged PDF generation in progress, starting polling...');
-              startPolling(abridgedPdfPoller);
-          }
+          if (pdfGenerating) { startPolling(pdfPoller); }
+          if (abridgedPdfGenerating) { startPolling(abridgedPdfPoller); }
+          if (xlsxGenerating) { startPolling(xlsxPoller); }
+          if (abridgedXlsxGenerating) { startPolling(abridgedXlsxPoller); }
           
           function startPolling(poller) {
               if (poller.isPolling) return; // Already polling
@@ -429,31 +433,41 @@
                   console.log(`${poller.type} status update:`, data);
                   
                   if (poller.type === 'pdf') {
-                      // Update full PDF status
                       updatePDFStatus('pdf', data.pdf_generating, data.pdf_available);
-                      
-                      // Stop polling if generation complete
-                      if (!data.pdf_generating) {
-                          stopPolling(poller);
-                          // Reload page to show updated state
-
-                      }
+                      if (!data.pdf_generating) stopPolling(poller);
                   } else if (poller.type === 'abridged_pdf') {
-                      // Update abridged PDF status
                       updatePDFStatus('abridged_pdf', data.abridged_pdf_generating, data.abridged_pdf_available);
-                      
-                      // Stop polling if generation complete
-                      if (!data.abridged_pdf_generating) {
-                          stopPolling(poller);
-                          // Reload page to show updated state
-
-                      }
+                      if (!data.abridged_pdf_generating) stopPolling(poller);
+                  } else if (poller.type === 'xlsx') {
+                      updateXLSXStatus('xlsx', data.xlsx_generating, data.xlsx_available);
+                      if (!data.xlsx_generating) stopPolling(poller);
+                  } else if (poller.type === 'abridged_xlsx') {
+                      updateXLSXStatus('abridged_xlsx', data.abridged_xlsx_generating, data.abridged_xlsx_available);
+                      if (!data.abridged_xlsx_generating) stopPolling(poller);
                   }
               } catch (error) {
                   console.error(`Error checking ${poller.type} status:`, error);
               }
           }
           
+          function updateXLSXStatus(type, isGenerating, isAvailable) {
+              const formSelector = type === 'xlsx' ? 'form[action*="download-pdf"]' : 'form[action*="download-abridged-pdf"]';
+              const form = document.querySelector(formSelector);
+              if (!form) return;
+              const button = type === 'xlsx' ? form.querySelector('#full-xlsx-button') : form.querySelector('#abridged-xlsx-button');
+              if (!button) return;
+
+              if (isGenerating) {
+                  button.disabled = true;
+                  button.classList.remove('bg-white', 'hover:bg-gray-50', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500');
+                  button.classList.add('bg-gray-100', 'cursor-not-allowed');
+              } else {
+                  button.disabled = false;
+                  button.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                  button.classList.add('bg-white', 'hover:bg-gray-50', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500');
+              }
+          }
+
           function updatePDFStatus(type, isGenerating, isAvailable) {
               const formSelector = type === 'pdf' ? '#default-full-pdf-form' : 'form[action*="download-abridged-pdf"]';
               const form = document.querySelector(formSelector);
@@ -517,14 +531,18 @@
       const abridgedButtonText = document.getElementById('abridged-pdf-button-text');
 
       if (forceFullCheckbox && fullButtonText) {
+          const fullXlsxText = document.getElementById('full-xlsx-button-text');
           forceFullCheckbox.addEventListener('change', function() {
               fullButtonText.textContent = this.checked ? 'Regenerate PDF' : 'Download PDF';
+              if (fullXlsxText) fullXlsxText.textContent = this.checked ? 'Regenerate XLSX' : 'Download XLSX';
           });
       }
 
       if (forceAbridgedCheckbox && abridgedButtonText) {
+          const abridgedXlsxText = document.getElementById('abridged-xlsx-button-text');
           forceAbridgedCheckbox.addEventListener('change', function() {
               abridgedButtonText.textContent = this.checked ? 'Regenerate PDF' : 'Download PDF';
+              if (abridgedXlsxText) abridgedXlsxText.textContent = this.checked ? 'Regenerate XLSX' : 'Download XLSX';
           });
       }
     </script>

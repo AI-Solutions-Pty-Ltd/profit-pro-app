@@ -43,6 +43,16 @@ payment_certificate_urls = [
         name="payment-certificate-download-abridged-pdf",
     ),
     path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-unified-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadUnifiedXLSXView.as_view(),
+        name="payment-certificate-download-unified-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-unified-abridged-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadUnifiedAbridgedXLSXView.as_view(),
+        name="payment-certificate-download-unified-abridged-xlsx",
+    ),
+    path(
         "project/<int:project_pk>/payment-certificates/<int:pk>/download-xlsx/",
         payment_certificate_views.PaymentCertificateDownloadXLSXView.as_view(),
         name="payment-certificate-download-xlsx",

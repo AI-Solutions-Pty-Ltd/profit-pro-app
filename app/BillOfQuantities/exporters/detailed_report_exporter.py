@@ -4,15 +4,16 @@ import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 from app.BillOfQuantities.models import LineItem
-from app.BillOfQuantities.tasks import group_line_items_by_hierarchy
 
 
-def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False):
+def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=None):
     """
     Export the detailed report for a payment certificate to XLSX format.
     Mirrors the layout of '03_MediaCentre_Detailed (1).xlsx'.
     """
-    wb = openpyxl.Workbook()
+    from app.BillOfQuantities.tasks import group_line_items_by_hierarchy
+    if wb is None:
+        wb = openpyxl.Workbook()
 
     # We will create a sheet for each structure (section)
     if is_abridged:
@@ -55,9 +56,12 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False):
     # Remove the default sheet created by openpyxl
     default_sheet = wb.active
 
+    import re
+
     for structure_idx, structure_data in enumerate(grouped_data, 1):
         structure = structure_data["structure"]
-        sheet_name = structure.name[:31]  # Excel sheet names max 31 chars
+        # Excel sheet names max 31 chars and cannot contain \ * ? : / [ ]
+        sheet_name = re.sub(r'[\\*?:/\[\]]', '_', structure.name)[:31]
 
         # If it's the first sheet being added, we can rename the default or just create new and delete default later
         ws = wb.create_sheet(title=sheet_name)

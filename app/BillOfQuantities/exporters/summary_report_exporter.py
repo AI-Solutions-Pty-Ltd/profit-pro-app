@@ -3,23 +3,24 @@ from decimal import Decimal
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
-from app.BillOfQuantities.tasks import get_valuation_summary_data
 
-
-def export_summary_report_to_xlsx(payment_certificate, is_abridged=False):
+def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=None):
     """
     Export the summary report for a payment certificate to XLSX format.
     Mirrors the layout of '02_Summary.xlsx' and the UI valuation summary.
     """
-    wb = openpyxl.Workbook()
-    ws = wb.active
+    from app.BillOfQuantities.tasks import get_valuation_summary_data
+    mode_text = "Abridged" if is_abridged else "Full"
+    if wb is None:
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"Summary - {mode_text}"
+    else:
+        ws = wb.create_sheet(title=f"Summary - {mode_text}")
 
     cert_num = str(payment_certificate.certificate_number).zfill(2)
     cert_date = payment_certificate.created_at.strftime("%d %b %Y")
     project_name = payment_certificate.project.name
-
-    mode_text = "Abridged" if is_abridged else "Full"
-    ws.title = f"Summary - {mode_text}"
 
     # Styles
     font_bold = Font(bold=True)
