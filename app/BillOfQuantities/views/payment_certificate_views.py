@@ -1,5 +1,8 @@
+import logging
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+
+logger = logging.getLogger(__name__)
 
 from django.contrib import messages
 from django.db.models import Sum
@@ -960,7 +963,12 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                 )
                 return response
             except Exception as e:
-                messages.error(request, f"Error compiling PDF: {str(e)}")
+                logger.exception(
+                    "Error compiling abridged PDF for payment certificate pk=%s, project_pk=%s",
+                    pk,
+                    project_pk,
+                )
+                messages.error(request, f"Error compiling PDF: {e}")
                 return redirect(
                     "bill_of_quantities:payment-certificate-detail",
                     project_pk=project_pk,
