@@ -136,8 +136,6 @@ class TestPaymentCertificateValuationSummaryView:
         response = client.get(url)
         assert response.status_code == 200
 
-
-
     def test_context_contains_grouped_sections(self, client):
         """Valuation summary context includes grouped_sections key."""
         user, project, cert = _make_user_with_cert()

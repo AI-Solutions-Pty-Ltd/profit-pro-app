@@ -51,6 +51,7 @@ class Project(BaseModel):
         DAYS_30 = "30_DAYS", "30 Days"
         DAYS_60 = "60_DAYS", "60 Days"
         DAYS_90 = "90_DAYS", "90 Days"
+
     portfolio = models.ForeignKey(
         "Project.Portfolio",
         on_delete=models.SET_NULL,

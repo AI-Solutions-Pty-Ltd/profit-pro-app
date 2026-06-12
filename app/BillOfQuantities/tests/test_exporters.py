@@ -139,8 +139,6 @@ class TestExporters:
         pdf_file3 = compile_pdf_for_certificate(cert3)
         assert pdf_file3 is not None
 
-
-
     def test_compile_pdf_with_custom_columns(self):
         """Test PDF compiler with custom column configuration."""
         from django.template.loader import render_to_string
@@ -224,5 +222,3 @@ class TestDownloadViews:
         response = client.get(url, {"front": "on", "summary": "on", "detailed": "on"})
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
-
-
