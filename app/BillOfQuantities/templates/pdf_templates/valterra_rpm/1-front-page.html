@@ -6,9 +6,9 @@
         <title>Payment Certificate #{{ payment_certificate.certificate_number }} - {{ project.name }}</title>
         <style>
             body {
-                font-family: Arial, Helvetica, sans-serif;
+                font-family: 'Inter', Arial, Helvetica, sans-serif;
                 font-size: 8.5pt;
-                line-height: 1.35;
+                line-height: 1.4;
                 margin: 0;
                 padding: 10px;
                 color: #111827;
@@ -16,105 +16,131 @@
             .top-header-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 12px;
             }
             .top-header-table td {
-                padding: 8px;
                 vertical-align: middle;
             }
             .logo-box {
-                width: 120px;
-                border: 1px solid #cccccc;
-                text-align: center;
-                height: 70px;
-            }
-            .cert-box {
-                width: 120px;
-                border: 1px solid #cccccc;
+                width: 30%;
                 background-color: #f3f4f6;
                 text-align: center;
-                height: 70px;
+                height: 60px;
+                border: 1px solid #e5e7eb;
+            }
+            .title-box {
+                width: 40%;
+                text-align: center;
+                font-size: 14pt;
+                font-weight: bold;
+                border-top: 1px solid #e5e7eb;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .cert-box {
+                width: 30%;
+                background-color: #f3f4f6;
+                text-align: center;
+                height: 60px;
+                border: 1px solid #e5e7eb;
             }
             .cert-box .cert-title {
-                font-size: 10pt;
-                font-weight: bold;
-                margin-bottom: 4px;
+                font-size: 8.5pt;
+                color: #6b7280;
+                margin-bottom: 2px;
             }
             .cert-box .cert-date {
                 font-size: 8.5pt;
-                color: #374151;
+                color: #6b7280;
+            }
+            .subtitle-band {
+                background-color: #f3f4f6;
+                text-align: center;
+                padding: 4px;
+                font-size: 8pt;
+                color: #6b7280;
+                font-style: italic;
+                border-left: 1px solid #e5e7eb;
+                border-right: 1px solid #e5e7eb;
             }
             .header-divider {
                 border-top: 3px solid #111827;
+                border-bottom: 1px solid #111827;
+                height: 2px;
                 margin-bottom: 15px;
+            }
+            
+            .metadata-container {
+                width: 50%;
+                margin-left: 0;
+                margin-bottom: 16px;
+                margin-bottom: 16px;
             }
             table.metadata-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 20px;
             }
             table.metadata-table td {
-                border: 1px solid #cccccc;
-                padding: 6px 8px;
+                padding: 1px 8px;
                 vertical-align: middle;
+                border: none;
             }
             table.metadata-table td.label-cell {
-                width: 20%;
-                background-color: #eaeaea;
-                color: #000000;
-                font-weight: normal;
+                text-align: left;
+                color: #6b7280;
+                width: 40%;
             }
             table.metadata-table td.value-cell {
-                width: 30%;
                 font-weight: bold;
+                color: #111827;
+                width: 60%;
             }
-            table.metadata-table td.empty-cell {
-                background-color: #eaeaea;
-                border: 1px solid #cccccc;
-                width: 20%;
-            }
+            
             table.report-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 20px;
+                margin-bottom: 15px;
             }
             table.report-table th.section-title {
-                background-color: #eaeaea;
-                color: #000000;
-                border: 1px solid #cccccc;
+                background-color: #e5e7eb;
+                color: #111827;
                 padding: 6px 8px;
                 text-align: left;
                 font-weight: bold;
-                font-size: 9.5pt;
-                letter-spacing: 0.5px;
+                font-size: 9pt;
+                border: none;
             }
             table.report-table th.col-header {
-                border: 1px solid #cccccc;
-                padding: 5px 8px;
-                font-weight: bold;
-                font-size: 8.5pt;
-                color: #000000;
-                background-color: #ffffff;
+                padding: 6px 8px;
+                font-weight: normal;
+                font-size: 8pt;
+                color: #6b7280;
+                border-bottom: 1px solid #e5e7eb;
             }
             table.report-table td {
-                border: 1px solid #cccccc;
-                padding: 6px 8px;
-                color: #000000;
+                padding: 4px 8px;
+                color: #111827;
+                border: none;
+            }
+            table.report-table tr.row-light {
+                background-color: #f9fafb;
             }
             table.report-table tr.total-row {
                 font-weight: bold;
             }
-            table.report-table tr.total-row td {
-                color: #000000;
+            table.report-table tr.highlight-navy {
+                background-color: #1e3a5f;
+                color: #ffffff;
+                font-weight: bold;
             }
-            table.report-table tr.highlight-row {
+            table.report-table tr.highlight-navy td {
+                color: #ffffff;
+            }
+            table.report-table tr.highlight-orange {
                 background-color: #c5922e;
                 color: #ffffff;
                 font-weight: bold;
             }
-            table.report-table tr.highlight-row td {
+            table.report-table tr.highlight-orange td {
                 color: #ffffff;
-                font-size: 9.5pt;
             }
             .text-right {
                 text-align: right;
@@ -122,40 +148,71 @@
             .text-center {
                 text-align: center;
             }
+            .text-italic-gray {
+                font-style: italic;
+                color: #6b7280;
+            }
             .note-text {
                 font-size: 8pt;
                 font-style: italic;
-                color: #4b5563;
-                margin-top: -15px;
-                margin-bottom: 25px;
-                padding-left: 2px;
+                color: #6b7280;
+                margin-top: -10px;
+                margin-bottom: 15px;
+                padding-left: 8px;
             }
+            
             table.auth-table {
                 width: 100%;
                 border-collapse: collapse;
             }
+            table.auth-table th.section-title {
+                background-color: #e5e7eb;
+                color: #111827;
+                padding: 6px 8px;
+                text-align: left;
+                font-weight: bold;
+                font-size: 9pt;
+                border: none;
+            }
             table.auth-table td {
-                border: 1px solid #cccccc;
-                padding: 10px 8px;
+                padding: 6px 8px;
                 vertical-align: middle;
+                border: none;
             }
             table.auth-table td.role-cell {
-                width: 18%;
                 font-weight: bold;
-                color: #000000;
+                color: #111827;
+                width: 30%;
             }
-            table.auth-table td.name-cell {
-                width: 18%;
-                font-weight: bold;
-                color: #000000;
+            .gray-box {
+                background-color: #f3f4f6;
+                padding: 2px 8px;
+                display: inline-block;
+                min-width: 140px;
+                height: 16px;
             }
-            table.auth-table td.sig-cell {
-                width: 44%;
-                color: #4b5563;
+            .sig-line {
+                display: inline-block;
+                background-color: #f3f4f6;
+                width: 140px;
+                height: 16px;
+                vertical-align: bottom;
             }
-            table.auth-table td.date-cell {
-                width: 20%;
-                color: #4b5563;
+            .date-line {
+                display: inline-block;
+                background-color: #f3f4f6;
+                width: 80px;
+                height: 16px;
+                vertical-align: bottom;
+            }
+            .footer-text {
+                text-align: center;
+                font-style: italic;
+                color: #9ca3af;
+                font-size: 7.5pt;
+                margin-top: 20px;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 5px;
             }
         </style>
     </head>
@@ -165,38 +222,28 @@
                 <td class="logo-box">
                     {% if project.logo %}
                         <img src="{{ project.logo.url }}"
-                             style="max-height: 50px;
+                             style="max-height: 40px;
                                     max-width: 100px;
                                     display: block;
                                     margin: 0 auto">
                     {% elif project.contractor.logo %}
                         <img src="{{ project.contractor.logo.url }}"
-                             style="max-height: 50px;
+                             style="max-height: 40px;
                                     max-width: 100px;
                                     display: block;
                                     margin: 0 auto">
                     {% elif project.client.logo %}
                         <img src="{{ project.client.logo.url }}"
-                             style="max-height: 50px;
+                             style="max-height: 40px;
                                     max-width: 100px;
                                     display: block;
                                     margin: 0 auto">
                     {% else %}
-                        <img src="/media/project_logos/logo.png"
-                             style="max-height: 50px;
-                                    max-width: 100px;
-                                    display: block;
-                                    margin: 0 auto">
+                        <div style="color: #9ca3af; font-style: italic; font-size: 9pt;">[ LOGO ]</div>
                     {% endif %}
                 </td>
-                <td style="text-align: center; padding: 0 10px;">
-                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 0.5px;">PAYMENT CERTIFICATE</div>
-                    <div style="font-size: 8pt;
-                                color: #4b5563;
-                                margin-top: 5px;
-                                line-height: 1.2">
-                        {{ project.name }} | Contract No. {{ project.contract_number|default:"N/A" }}
-                    </div>
+                <td class="title-box">
+                    PAYMENT CERTIFICATE
                 </td>
                 <td class="cert-box">
                     <div class="cert-title">Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }}</div>
@@ -204,27 +251,37 @@
                 </td>
             </tr>
         </table>
+        
+        <div class="subtitle-band">
+            {{ project.description|default:"Infrastructure Upgrade" }} - {{ project.name }} - Contract No. {{ project.contract_number|default:"N/A" }}
+        </div>
         <div class="header-divider"></div>
-        <table class="metadata-table">
-            <tr>
-                <td class="label-cell">Certificate No.</td>
-                <td class="value-cell">{{ payment_certificate.certificate_number|stringformat:"02d" }}</td>
-                <td class="label-cell">Assessment Date</td>
-                <td class="value-cell">{{ payment_certificate.assessment_date|date:"d M Y"|default:now|date:"d M Y" }}</td>
-            </tr>
-            <tr>
-                <td class="label-cell">Date of Certificate</td>
-                <td class="value-cell">{{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}</td>
-                <td class="label-cell">Contract No.</td>
-                <td class="value-cell">{{ project.contract_number|default:"N/A" }}</td>
-            </tr>
-            <tr>
-                <td class="label-cell">Retention Free Amount</td>
-                <td class="value-cell">R {{ project.total_contract_value|mul:0.2|floatformat:2 }}</td>
-                <td class="empty-cell"></td>
-                <td></td>
-            </tr>
-        </table>
+        
+        <div class="metadata-container">
+            <table class="metadata-table">
+                <tr>
+                    <td class="label-cell">Certificate No.</td>
+                    <td class="value-cell">{{ payment_certificate.certificate_number|stringformat:"02d" }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Assessment Date</td>
+                    <td class="value-cell">{{ payment_certificate.assessment_date|date:"d M Y"|default:now|date:"d M Y" }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Date of Certificate</td>
+                    <td class="value-cell">{{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Contract No.</td>
+                    <td class="value-cell">{{ project.contract_number|default:"N/A" }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Retention Free Amount</td>
+                    <td class="value-cell">R {{ project.total_contract_value|mul:0.2|floatformat:2 }}</td>
+                </tr>
+            </table>
+        </div>
+        
         <table class="report-table">
             <thead>
                 <tr>
@@ -232,120 +289,135 @@
                 </tr>
                 <tr>
                     <th class="col-header" style="text-align: left;">Description</th>
-                    <th class="col-header text-right" style="width: 30%;">Value (R)</th>
+                    <th class="text-right col-header" style="width: 30%;">Value (R)</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
+                <tr class="row-light">
                     <td>Original Contract Value</td>
-                    <td class="text-right">R {{ project.original_contract_value|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.original_contract_value|floatformat:2 }}</td>
                 </tr>
                 <tr>
                     <td>Total Contract Amendments To Date</td>
                     <td class="text-right">
                         {% if project.addendum_contract_value and project.addendum_contract_value != 0 %}
-                            R {{ project.addendum_contract_value|floatformat:2 }}
+                            {{ project.addendum_contract_value|floatformat:2 }}
                         {% else %}
                             -
                         {% endif %}
                     </td>
                 </tr>
-                <tr class="total-row">
+                <tr class="row-light total-row">
                     <td>Sub Total</td>
-                    <td class="text-right">R {{ project.total_contract_value|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.total_contract_value|floatformat:2 }}</td>
                 </tr>
                 <tr>
                     <td>VAT at 15%</td>
-                    <td class="text-right">R {{ project.total_contract_value|mul:0.15|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.total_contract_value|mul:0.15|floatformat:2 }}</td>
                 </tr>
-                <tr class="total-row">
+                <tr class="highlight-navy">
                     <td>Total Contract Value (incl. VAT)</td>
-                    <td class="text-right">R {{ project.total_contract_value|mul:1.15|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.total_contract_value|mul:1.15|floatformat:2 }}</td>
                 </tr>
             </tbody>
         </table>
+        
         <table class="report-table">
             <thead>
                 <tr>
                     <th colspan="2" class="section-title">
-                        PAYMENT DUE — CERTIFICATE NO. {{ payment_certificate.certificate_number|stringformat:"02d" }}
+                        PAYMENT DUE &mdash; CERTIFICATE NO. {{ payment_certificate.certificate_number|stringformat:"02d" }}
                     </th>
                 </tr>
                 <tr>
                     <th class="col-header" style="text-align: left;">Description</th>
-                    <th class="col-header text-right" style="width: 30%;">Amount (R)</th>
+                    <th class="text-right col-header" style="width: 30%;">Amount (R)</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Value of Work Done (Cumulative – Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }})</td>
-                    <td class="text-right">R {{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
+                <tr class="row-light">
+                    <td>Value of Work Done (Cumulative &ndash; Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }})</td>
+                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
                 </tr>
                 <tr>
-                    <td>Plus: Compensation Events</td>
-                    <td class="text-right">-</td>
+                    <td class="text-italic-gray">Plus: Compensation Events</td>
+                    <td class="text-right text-italic-gray">-</td>
                 </tr>
-                <tr>
-                    <td>Plus: Material On Site</td>
-                    <td class="text-right">-</td>
-                </tr>
-                <tr>
-                    <td>Plus: Price Adjustment for Inflation</td>
-                    <td class="text-right">-</td>
+                <tr class="row-light">
+                    <td class="text-italic-gray">Plus: Material On Site</td>
+                    <td class="text-right text-italic-gray">-</td>
                 </tr>
                 <tr class="total-row">
                     <td>Total Value of Work Done</td>
-                    <td class="text-right">R {{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
                 </tr>
-                <tr>
-                    <td>Less: Retention</td>
-                    <td class="text-right">-</td>
-                </tr>
-                <tr class="total-row">
-                    <td>Sub Total</td>
-                    <td class="text-right">R {{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Less: Previous Amount Due</td>
-                    <td class="text-right">R {{ payment_certificate.progressive_previous|floatformat:2 }}</td>
+                <tr class="row-light">
+                    <td class="text-italic-gray">Less: Retention</td>
+                    <td class="text-right text-italic-gray">-</td>
                 </tr>
                 <tr class="total-row">
                     <td>Sub Total</td>
-                    <td class="text-right">R {{ payment_certificate.current_claim_total|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
                 </tr>
-                <tr>
-                    <td>Plus: V.A.T. at 15%</td>
-                    <td class="text-right">R {{ payment_certificate.current_claim_total|mul:0.15|floatformat:2 }}</td>
+                <tr class="row-light">
+                    <td class="text-italic-gray">Less: Previous Amount Due</td>
+                    <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2 }}</td>
                 </tr>
-                <tr class="highlight-row">
+                <tr class="total-row">
+                    <td>Sub Total</td>
+                    <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2 }}</td>
+                </tr>
+                <tr class="row-light">
+                    <td class="text-italic-gray">Plus: V.A.T. at 15%</td>
+                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:0.15|floatformat:2 }}</td>
+                </tr>
+                <tr class="highlight-orange">
                     <td>TOTAL AMOUNT NOW CERTIFIED (incl. VAT)</td>
-                    <td class="text-right">R {{ payment_certificate.current_claim_total|mul:1.15|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:1.15|floatformat:2 }}</td>
                 </tr>
             </tbody>
         </table>
+        
         <div class="note-text">
-            Note: 5% Retention not deducted on this Certificate — deduction done by Valterra GSS. Retention: R {{ payment_certificate.current_claim_total|mul:0.05|floatformat:2 }}
+            Note: 5% Retention not deducted &mdash; handled by Valterra GSS. Retention: R {{ payment_certificate.current_claim_total|mul:0.05|floatformat:2 }}
         </div>
-        <table class="report-table">
+        
+        <table class="auth-table">
             <thead>
                 <tr>
                     <th colspan="4" class="section-title">AUTHORISATION</th>
                 </tr>
             </thead>
+            <tbody>
+                <tr>
+                    <td class="role-cell">Project Manager</td>
+                    <td><div class="gray-box">M. Susela</div></td>
+                    <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
+                    <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
+                </tr>
+                <tr>
+                    <td class="role-cell">Quantity Surveyor</td>
+                    <td><div class="gray-box">M. Hachinavamwe</div></td>
+                    <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
+                    <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
+                </tr>
+                <tr>
+                    <td class="role-cell">Section Manager &ndash; Project Governance</td>
+                    <td><div class="gray-box">S. Tsokalamtengo</div></td>
+                    <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
+                    <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
+                </tr>
+                <tr>
+                    <td class="role-cell">Senior Manager PMU</td>
+                    <td><div class="gray-box">H. Sifeni</div></td>
+                    <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
+                    <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
+                </tr>
+            </tbody>
         </table>
-        <table class="auth-table">
-            <tr>
-                <td class="role-cell">Project Manager</td>
-                <td class="name-cell">M. Susela</td>
-                <td class="sig-cell">Signature: _____________________________________</td>
-                <td class="date-cell">Date: _______________</td>
-            </tr>
-            <tr>
-                <td class="role-cell">Quantity Surveyor</td>
-                <td class="name-cell">M. Hachinavamwe</td>
-                <td class="sig-cell">Signature: _____________________________________</td>
-                <td class="date-cell">Date: _______________</td>
-            </tr>
-        </table>
+        
+        <div class="footer-text">
+            NBI Quantity Surveyors (Pty) Ltd | Rustenburg Platinum Mines (PTY) LTD, 144 Oxford St, Rosebank, 2196 | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+        </div>
     </body>
 </html>

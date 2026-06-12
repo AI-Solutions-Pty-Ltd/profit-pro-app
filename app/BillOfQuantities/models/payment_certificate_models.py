@@ -54,10 +54,14 @@ class PaymentCertificate(BaseModel):
     # files
     pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
     abridged_pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
+    xlsx = models.FileField(upload_to=upload_to, blank=True, null=True)
+    abridged_xlsx = models.FileField(upload_to=upload_to, blank=True, null=True)
 
-    # PDF generation status tracking
+    # Generation status tracking
     pdf_generating = models.BooleanField(default=False)
     abridged_pdf_generating = models.BooleanField(default=False)
+    xlsx_generating = models.BooleanField(default=False)
+    abridged_xlsx_generating = models.BooleanField(default=False)
 
     if TYPE_CHECKING:
         # Type hint for reverse relationship from ActualTransaction
@@ -571,6 +575,12 @@ class ActualTransaction(BaseModel):
         if self.payment_certificate.abridged_pdf:
             # reset abridged pdf as it needs to be regenerated
             self.payment_certificate.abridged_pdf = None
+        if self.payment_certificate.xlsx:
+            # reset xlsx as it needs to be regenerated
+            self.payment_certificate.xlsx = None
+        if self.payment_certificate.abridged_xlsx:
+            # reset abridged xlsx as it needs to be regenerated
+            self.payment_certificate.abridged_xlsx = None
         self.payment_certificate.save()
         super().save(*args, **kwargs)
 

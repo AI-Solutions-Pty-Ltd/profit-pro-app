@@ -38,14 +38,44 @@ payment_certificate_urls = [
         name="payment-certificate-download-pdf",
     ),
     path(
-        "project/<int:project_pk>/payment-certificates/<int:pk>/download-excel/",
-        payment_certificate_views.PaymentCertificateDownloadExcelView.as_view(),
-        name="payment-certificate-download-excel",
-    ),
-    path(
         "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-pdf/",
         payment_certificate_views.PaymentCertificateDownloadAbridgedPDFView.as_view(),
         name="payment-certificate-download-abridged-pdf",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-unified-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadUnifiedXLSXView.as_view(),
+        name="payment-certificate-download-unified-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-unified-abridged-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadUnifiedAbridgedXLSXView.as_view(),
+        name="payment-certificate-download-unified-abridged-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadXLSXView.as_view(),
+        name="payment-certificate-download-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadAbridgedXLSXView.as_view(),
+        name="payment-certificate-download-abridged-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-summary-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadSummaryXLSXView.as_view(),
+        name="payment-certificate-download-summary-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-summary-xlsx/",
+        payment_certificate_views.PaymentCertificateDownloadAbridgedSummaryXLSXView.as_view(),
+        name="payment-certificate-download-abridged-summary-xlsx",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-cover-page-xlsx/",
+        payment_certificate_views.PaymentCertificateCoverPageDownloadXLSXView.as_view(),
+        name="payment-certificate-download-cover-page-xlsx",
     ),
     path(
         "project/<int:project_pk>/payment-certificates/<int:pk>/pdf-status/",
@@ -66,5 +96,20 @@ payment_certificate_urls = [
         "project/<int:project_pk>/payment-certificates/<int:pk>/unmark-final/",
         payment_certificate_views.PaymentCertificateUnmarkFinalView.as_view(),
         name="payment-certificate-unmark-final",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/cover-page/",
+        payment_certificate_views.PaymentCertificateCoverPageView.as_view(),
+        name="payment-certificate-cover-page",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/valuation-summary/",
+        payment_certificate_views.PaymentCertificateValuationSummaryView.as_view(),
+        name="payment-certificate-valuation-summary",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/view-detailed/",
+        payment_certificate_views.PaymentCertificateDetailedView.as_view(),
+        name="payment-certificate-view-detailed",
     ),
 ]

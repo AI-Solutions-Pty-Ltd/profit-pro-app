@@ -1,228 +1,307 @@
 {% load l10n %}
+{% load mathfilters %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Detailed Certificate Report - {{ project.name }}</title>
+        <title>Detailed Report - {{ project.name }}</title>
         <style>
             @page {
-                size: A4 landscape;
-                margin: 8mm;
+                size: a4 landscape;
+                margin: 1cm;
             }
             body {
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 7.5pt;
-                line-height: 1.25;
+                font-family: 'Inter', Arial, Helvetica, sans-serif;
+                font-size: 8pt;
+                line-height: 1.3;
                 margin: 0;
-                padding: 0;
+                padding: 10px;
+                color: #111827;
             }
-            .title {
-                font-size: 12pt;
-                font-weight: bold;
+            *, *::before, *::after {
+                box-sizing: border-box;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .title-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 2px;
+            }
+            .title-table td {
+                vertical-align: middle;
+            }
+            .logo-box {
                 text-align: center;
-                margin-bottom: 15px;
-                background-color: #EAEAEA;
-                padding: 6px;
-                border: 1px solid #000;
+                height: 80px;
+                width: 20%;
+                background-color: #ffffff;
+                border: 2px solid #2e7d32; /* Green border for logo box from image */
+            }
+            .cert-box {
+                background-color: #f3f4f6;
+                text-align: center;
+                height: 80px;
+                width: 20%;
+                color: #4b5563;
+                border: 1px solid #e5e7eb;
+            }
+            .center-box {
+                width: 60%;
+                text-align: center;
+                padding: 0 15px;
+            }
+            .subtitle-row {
+                background-color: #f3f4f6;
+                text-align: center;
+                font-style: italic;
+                font-size: 8pt;
+                color: #6b7280;
+                padding: 4px;
+                margin-bottom: 10px;
+                border-left: 1px solid #e5e7eb;
+                border-right: 1px solid #e5e7eb;
+                border-bottom: 1px solid #e5e7eb;
             }
             table.items-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 10px;
+                margin-top: 5px;
+                table-layout: fixed;
             }
             table.items-table th, table.items-table td {
-                border: 1px solid #000;
-                padding: 3px 2px;
+                padding: 4px;
                 vertical-align: middle;
+                border: none;
             }
             table.items-table th {
-                background-color: #F2F2F2;
+                background-color: #1e3a5f;
+                color: #ffffff;
                 font-weight: bold;
+                text-transform: uppercase;
                 text-align: center;
+                font-size: 7.5pt;
+                border-bottom: 1px solid #000;
             }
-            .section-header {
-                font-weight: bold;
-                background-color: #EAEAEA;
-                font-size: 8.5pt;
-                padding: 5px;
-            }
-            .bill-header {
-                font-weight: bold;
-                background-color: #F9F9F9;
-                font-size: 8pt;
-                padding: 4px;
-            }
-            .item-row {
-                background-color: #FFFFFF;
-            }
-            .heading-row {
-                font-weight: bold;
-                background-color: #FFFFFF;
-            }
-            .subtotal-row {
-                font-weight: bold;
-                background-color: #F2F2F2;
-            }
-            .text-left {
+            table.items-table th.left-align {
                 text-align: left;
             }
-            .text-right {
+            table.items-table th.right-align {
                 text-align: right;
             }
-            .text-center {
-                text-align: center;
+            
+            .bill-header-row {
+                background-color: #f3f4f6;
+                color: #6b7280;
+                font-weight: bold;
+                text-transform: uppercase;
             }
-            .bold {
+            .sub-heading-row {
+                background-color: #ffffff;
+                color: #6b7280;
+                font-style: italic;
+                font-weight: bold;
+                font-size: 7.5pt;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .item-row {
+                background-color: #ffffff;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .bill-total-row {
+                font-weight: bold;
+                background-color: #f9fafb;
+                border-top: 1px solid #111827;
+                border-bottom: 2px solid #111827;
+            }
+            .section-total-row {
+                background-color: #c5922e;
+                color: #ffffff;
                 font-weight: bold;
             }
-            .double-underline {
-                border-bottom: 3px double #000 !important;
+            .grand-total-row {
+                background-color: #1e3a5f;
+                color: #ffffff;
+                font-weight: bold;
             }
-            .small-text {
-                font-size: 6.5pt;
-                color: #555;
+            
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .bold { font-weight: bold; }
+            
+            .footer-text {
+                font-style: italic;
+                text-align: center;
+                font-size: 7.5pt;
+                color: #9ca3af;
+                margin-top: 20px;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 5px;
             }
         </style>
     </head>
     <body>
-        {% if project.logo %}
-            <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.logo.url }}"
-                     style="max-height: 50px;
-                            max-width: 180px">
-            </div>
-            <div style="clear: both;"></div>
-        {% elif project.contractor.logo %}
-            <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.contractor.logo.url }}"
-                     style="max-height: 50px;
-                            max-width: 180px">
-            </div>
-            <div style="clear: both;"></div>
-        {% elif project.client.logo %}
-            <div style="float: right; margin-bottom: 10px;">
-                <img src="{{ project.client.logo.url }}"
-                     style="max-height: 50px;
-                            max-width: 180px">
-            </div>
-            <div style="clear: both;"></div>
-        {% else %}
-            <div style="float: right; margin-bottom: 10px;">
-                <img src="/media/project_logos/logo.png"
-                     style="max-height: 50px;
-                            max-width: 180px">
-            </div>
-            <div style="clear: both;"></div>
-        {% endif %}
-        <div class="title">
-            DETAILED CERTIFICATE REPORT: &nbsp; {{ project.name|upper }} (CERTIFICATE NO. {{ payment_certificate.certificate_number|stringformat:"02d" }})
-        </div>
-        {% define "13" as colSpan %}
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th rowspan="2" style="width: 5%;">ITEM NO.</th>
-                    <th rowspan="2" style="width: 6%;">PAY REF</th>
-                    <th rowspan="2" style="width: 24%;">DESCRIPTION</th>
-                    <th rowspan="2" style="width: 4%;">Unit</th>
-                    <th colspan="3" style="width: 19%;">TENDER AMOUNT</th>
-                    <th colspan="6" style="width: 42%;">CERTIFICATE AMOUNTS</th>
-                </tr>
-                <tr>
-                    <th>Quantity</th>
-                    <th>Rate</th>
-                    <th>Amount</th>
-                    <th>Cumulative Certified Quantity</th>
-                    <th>Cumulative Amount Certified</th>
-                    <th>Previous Quantity</th>
-                    <th>Previous Amount Certified</th>
-                    <th>Current Quantity</th>
-                    <th>Amount Due</th>
-                </tr>
-                <tr class="small-text">
-                    <th colspan="4"></th>
-                    <th>A</th>
-                    <th>B</th>
-                    <th>C</th>
-                    <th>D</th>
-                    <th>E</th>
-                    <th>F</th>
-                    <th>G</th>
-                    <th>H</th>
-                    <th>J</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for structure_group in grouped_line_items %}
+        {% for structure_group in grouped_line_items %}
+            <div class="{% if not forloop.first %}page-break{% endif %}">
+                <table class="title-table">
                     <tr>
-                        <td colspan="{{ colSpan }}" class="section-header">Section No. {{ structure_group.structure.name|upper }}</td>
+                        <td class="logo-box">
+                            {% if project.logo %}
+                                <img src="{{ project.logo.url }}" style="max-height: 60px; max-width: 150px">
+                            {% elif project.contractor.logo %}
+                                <img src="{{ project.contractor.logo.url }}" style="max-height: 60px; max-width: 150px">
+                            {% elif project.client.logo %}
+                                <img src="{{ project.client.logo.url }}" style="max-height: 60px; max-width: 150px">
+                            {% else %}
+                                <span style="color: #9ca3af; font-style: italic; font-size: 11pt;">[ LOGO ]</span>
+                            {% endif %}
+                        </td>
+                        <td class="center-box">
+                            <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;">{{ structure_group.structure.name|upper }}</div>
+                        </td>
+                        <td class="cert-box">
+                            <div style="font-size: 8.5pt; margin-bottom: 2px;">Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }}</div>
+                            <div style="font-size: 8.5pt;">{{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}</div>
+                        </td>
                     </tr>
-                    {% for bill_group in structure_group.bills %}
+                </table>
+
+                <div class="subtitle-row">
+                    {{ project.name }} - Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} - {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                </div>
+
+                <table class="items-table">
+                  
+                    <thead>
                         <tr>
-                            <td colspan="{{ colSpan }}" class="bill-header">BILL NO. {{ bill_group.bill.name|upper }}</td>
-                        </tr>
-                        {% for package_group in bill_group.packages %}
-                            {% for line_item in package_group.line_items %}
-                                {% if not line_item.is_work %}
-                                    <tr class="heading-row">
-                                        <td class="text-center">{{ line_item.item_number|default:"" }}</td>
-                                        <td class="text-center">{{ line_item.payment_reference|default:"" }}</td>
-                                        <td colspan="11" class="text-left">{{ line_item.description }}</td>
-                                    </tr>
+                            {% for col in columns %}
+                                {% if col.id == 'item_number' %}
+                                    <th class="left-align" width="3%">{{ col.label }}</th>
+                                {% elif col.id == 'payment_reference' %}
+                                    <th class="left-align" width="7%">{{ col.label }}</th>
+                                {% elif col.id == 'description' %}
+                                    <th class="left-align" width="25%">{{ col.label }}</th>
+                                {% elif col.id == 'unit_measurement' %}
+                                    <th class="text-center" width="5%">{{ col.label }}</th>
+                                {% elif col.id == 'budgeted_quantity' %}
+                                    <th class="right-align" width="8%">{{ col.label }}</th>
+                                {% elif col.id == 'unit_price' %}
+                                    <th class="right-align" width="8%">{{ col.label }}</th>
                                 {% else %}
-                                    <tr class="item-row">
-                                        <td class="text-center">{{ line_item.item_number|default:"" }}</td>
-                                        <td class="text-center">{{ line_item.payment_reference|default:"" }}</td>
-                                        <td class="text-left">{{ line_item.description }}</td>
-                                        <td class="text-center">{{ line_item.unit_measurement|default:"-" }}</td>
-                                        <!-- Tender values -->
-                                        <td class="text-right">{{ line_item.budgeted_quantity|default:0|floatformat:2|intcomma }}</td>
-                                        <td class="text-right">R {{ line_item.unit_price|default:0|floatformat:2|intcomma }}</td>
-                                        <td class="text-right">R {{ line_item.total_price|default:0|floatformat:2|intcomma }}</td>
-                                        <!-- Cumulative values -->
-                                        <td class="text-right">{{ line_item.total_qty|default:0|floatformat:2|intcomma }}</td>
-                                        <td class="text-right">R {{ line_item.total_claimed|default:0|floatformat:2|intcomma }}</td>
-                                        <!-- Previous values -->
-                                        <td class="text-right">{{ line_item.previous_qty|default:0|floatformat:2|intcomma }}</td>
-                                        <td class="text-right">R {{ line_item.previous_claimed|default:0|floatformat:2|intcomma }}</td>
-                                        <!-- Current values -->
-                                        <td class="text-right">{{ line_item.current_qty|default:0|floatformat:2|intcomma }}</td>
-                                        <td class="text-right">R {{ line_item.current_claim|default:0|floatformat:2|intcomma }}</td>
-                                    </tr>
+                                    <th class="right-align">{{ col.label }}</th>
                                 {% endif %}
                             {% endfor %}
-                        {% endfor %}
-                    {% empty %}
-                        <tr>
-                            <td colspan="{{ colSpan }}" class="text-center">No line items in this section</td>
                         </tr>
-                    {% endfor %}
-                {% empty %}
-                    <tr>
-                        <td colspan="{{ colSpan }}" class="text-center">No line items in this payment certificate</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="subtotal-row double-underline">
-                    <td colspan="4" class="text-right bold">Total Excluding VAT</td>
-                    <!-- Tender Total -->
-                    <td colspan="2"></td>
-                    <td class="text-right bold">
-                        R {{ payment_certificate.contract_value|default:project.original_contract_value|floatformat:2|intcomma }}
-                    </td>
-                    <!-- Cumulative Total -->
-                    <td></td>
-                    <td class="text-right bold">R {{ payment_certificate.progressive_to_date|default:0|floatformat:2|intcomma }}</td>
-                    <!-- Previous Total -->
-                    <td></td>
-                    <td class="text-right bold">R {{ payment_certificate.progressive_previous|default:0|floatformat:2|intcomma }}</td>
-                    <!-- Current Total -->
-                    <td></td>
-                    <td class="text-right bold">R {{ payment_certificate.current_claim_total|default:0|floatformat:2|intcomma }}</td>
-                </tr>
-            </tfoot>
-        </table>
+                    </thead>
+                    <tbody>
+                        {% for bill_group in structure_group.bills %}
+                            <tr class="bill-header-row">
+                                <td colspan="{{ columns|length }}" style="padding-left: 15px;">{{ bill_group.bill.name|upper }}</td>
+                            </tr>
+                            {% for package_group in bill_group.packages %}
+                                {% for line_item in package_group.line_items %}
+                                    {% if not line_item.is_work %}
+                                        <tr class="sub-heading-row">
+                                            <td colspan="{{ columns|length }}" style="padding-left: 10px;">{{ line_item.description }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr class="item-row">
+                                            {% for col in columns %}
+                                                {% if col.id == 'item_number' %}
+                                                    <td class="left-align" width="3%">{{ line_item.item_number|default:"" }}</td>
+                                                {% elif col.id == 'payment_reference' %}
+                                                    <td class="left-align" width="7%">{{ line_item.payment_reference|default:"" }}</td>
+                                                {% elif col.id == 'description' %}
+                                                    <td width="25%">{{ line_item.description }}</td>
+                                                {% elif col.id == 'unit_measurement' %}
+                                                    <td class="text-center" width="5%">{{ line_item.unit_measurement|default:"-" }}</td>
+                                                {% elif col.id == 'budgeted_quantity' %}
+                                                    <td class="text-right" width="8%">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'unit_price' %}
+                                                    <td class="text-right">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'total_price' %}
+                                                    <td class="text-right">{% if line_item.total_price %}{{ line_item.total_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'total_claimed' %}
+                                                    <td class="text-right">{% if line_item.total_claimed %}{{ line_item.total_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'previous_claimed' %}
+                                                    <td class="text-right">{% if line_item.previous_claimed %}{{ line_item.previous_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'current_claim' %}
+                                                    <td class="text-right">{% if line_item.current_claim %}{{ line_item.current_claim|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% else %}
+                                                    <td class="text-right">-</td>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            <tr class="bill-total-row">
+                                {% for col in columns %}
+                                    {% if col.id == 'item_number' %}
+                                        <td></td>
+                                    {% elif col.id == 'payment_reference' %}
+                                        <td></td>
+                                    {% elif col.id == 'description' %}
+                                        <td class="text-right" style="padding-right: 10px;">Carried to Summary &mdash; Bill No. {{ bill_group.bill.name }}</td>
+                                    {% elif col.id == 'unit_measurement' %}
+                                        <td></td>
+                                    {% elif col.id == 'budgeted_quantity' %}
+                                        <td></td>
+                                    {% elif col.id == 'unit_price' %}
+                                        <td></td>
+                                    {% elif col.id == 'total_price' %}
+                                        <td class="text-right">{% if bill_group.budget %}{{ bill_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'total_claimed' %}
+                                        <td class="text-right">{% if bill_group.cumulative %}{{ bill_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'previous_claimed' %}
+                                        <td class="text-right">{% if bill_group.previous %}{{ bill_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'current_claim' %}
+                                        <td class="text-right">{% if bill_group.current %}{{ bill_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% else %}
+                                        <td class="text-right">-</td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                        <tr class="section-total-row">
+                            {% for col in columns %}
+                                {% if col.id == 'item_number' %}
+                                    <td></td>
+                                {% elif col.id == 'payment_reference' %}
+                                    <td></td>
+                                {% elif col.id == 'description' %}
+                                    <td class="text-right" style="padding-right: 10px;">{{ structure_group.structure.name|upper }} TOTAL</td>
+                                {% elif col.id == 'unit_measurement' %}
+                                    <td></td>
+                                {% elif col.id == 'budgeted_quantity' %}
+                                    <td></td>
+                                {% elif col.id == 'unit_price' %}
+                                    <td></td>
+                                {% elif col.id == 'total_price' %}
+                                    <td class="text-right">{% if structure_group.budget %}{{ structure_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'total_claimed' %}
+                                    <td class="text-right">{% if structure_group.cumulative %}{{ structure_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'previous_claimed' %}
+                                    <td class="text-right">{% if structure_group.previous %}{{ structure_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'current_claim' %}
+                                    <td class="text-right">{% if structure_group.current %}{{ structure_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% else %}
+                                    <td class="text-right">-</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </tbody> 
+                </table>
+                <div class="footer-text">
+                    {% if project.contractor %}{{ project.contractor.name }}{% else %}NIX Quantity Surveyors (Pty) Ltd{% endif %} | {% if project.client %}{{ project.client.name }}{% else %}Rustenburg Platinum Mines (PTY) LTD, 144 Oxford St, Rosebank, 2196{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                </div>
+            </div>
+        {% empty %}
+            <div style="text-align: center; margin-top: 50px;">
+                <h2>No Line Items Found</h2>
+            </div>
+        {% endfor %}
     </body>
 </html>

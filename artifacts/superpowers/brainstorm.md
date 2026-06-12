@@ -1,51 +1,31 @@
-# Superpowers Brainstorm: Add Bi-Weekly Safety and NCR Cards to Company Management
-
 ## Goal
-The goal is to add "Bi-Weekly Safety" and "Non-Conformance Report" (NCR) cards to the "Site Management" grid section of the Business Management Center dashboard (`company_management.html`), specifically appending them to the end of the site cards list (Option 1).
+Refactor the report configuration UI to improve the card inputs for layout selection and introduce a "Preview" button that opens a native print dialog to showcase the structure of the selected report layout.
 
 ## Constraints
-- **Styling**: The new cards must conform to the existing visual design system: Tailwind CSS layout (`flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-*-200`), transition/hover animations, and outline Heroicons style.
-- **Context Parameter**: The URL parameter must use `company.pk` because in `company_management.html`, the template context variable representing the active project is named `company`.
-- **URL Namespaces**: The correct Django URL patterns are:
-  - Bi-Weekly Safety: `site_management:biweekly-safety-list`
-  - NCR Register: `site_management:ncr-list`
+- Must align with the existing Django templates, Crispy Forms, and Tailwind CSS stack.
+- The preview must accurately reflect the structure of the selected report layout without needing full actual data (placeholder data is acceptable).
+- The print dialog preview should format well for printing (e.g., using @media print CSS where needed).
 
 ## Known context
-- The "Site Management" section in `company_management.html` contains a grid of links pointing to various site logs.
-- Currently, there are 16 cards in this grid, all rendered in `<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">`.
-- "Bi-Weekly Safety" is configured with the `shield-exclamation` icon and uses `indigo` accents.
-- "NCR Register" is configured with the `document-check` icon and uses `rose` or `amber` accents.
+- The application is a Django app called Profit Pro.
+- The UI contains a "Report Layout Style" selector, a visual layout preview card, a column configuration table, and a real-time column header preview.
+- The user wants to refactor the card inputs (likely making the layout cards more modular, responsive, or standardized) and add a preview capability via a print dialog.
 
 ## Risks
-- **Mismatch in Context Variable**: Accidentally using `project.pk` instead of `company.pk` will cause Django's template engine to fail to resolve the URL at runtime.
-- **Visual Alignment**: Adding two new cards shifts the total count from 16 to 18 cards, which might leave an uneven grid row on larger screens (18 is not divisible by 4, leaving 2 cards on the last row). However, Tailwind's grid naturally centers/wraps elements seamlessly.
+- Refactoring existing card inputs might break the current real-time HTMX or Javascript interactions for the previews.
+- Generating a realistic print layout directly from the configuration page might be complex if it requires rendering a separate view just for the preview.
+- Browser inconsistencies with window.print() behavior.
 
 ## Options (2?4)
-
-### Option 1: Append both cards to the end of the grid list (Selected)
-Add the "Bi-Weekly Safety" and "NCR Register" cards at the very end of the list.
-*   **Pros**: Simplifies code modification and diff representation; no risk of breaking order logic.
-*   **Cons**: Groups items arbitrarily at the end of the list without thematic relationship to their neighbor cards.
-
-### Option 2: Place cards next to related items (Thematic Grouping)
-Insert the cards inline where they relate to other items:
-- Insert "NCR Register" directly after the "Quality Control" card.
-- Insert "Bi-Weekly Safety" directly after the "Safety Observations" card.
-*   **Pros**: Logical user interface flow. Users find NCR directly under Quality Control, and Bi-Weekly Safety directly next to Safety Observations.
-*   **Cons**: Requires non-contiguous template edits.
+1.  **Option 1: Hidden Iframe Print.** Refactor the UI components. Add a "Preview" button that fetches the report HTML via an endpoint, loads it into a hidden iframe, and calls iframe.contentWindow.print().
+2.  **Option 2: New Tab Print.** Add a "Preview" button that opens a new browser tab with the report preview layout and immediately executes window.print() upon load.
+3.  **Option 3: In-page Modal Preview.** Refactor the cards and add a "Preview" button that opens a modal within the page showing the report structure, with a secondary "Print" button inside the modal that triggers the print dialog.
 
 ## Recommendation
-The user selected Option 1: Append both cards to the end of the grid list. We will proceed with this option.
+**Option 2 (New Tab Print)** is the most robust and easiest to implement for print previews. It provides a clean, isolated environment for print CSS without interfering with the complex configuration page. The refactoring of the card inputs should focus on creating reusable Django template inclusions with standard Tailwind utility classes.
 
 ## Acceptance criteria
-1.  **Bi-Weekly Safety Card**:
-    *   Renders in the "Site Management" grid, appended to the end of the list (after Overhead Log).
-    *   Targets `{% url 'site_management:biweekly-safety-list' company.pk %}`.
-    *   Uses the `shield-exclamation` Heroicon and `indigo` styling.
-2.  **NCR Register Card**:
-    *   Renders in the "Site Management" grid, appended to the end of the list (after Bi-Weekly Safety).
-    *   Targets `{% url 'site_management:ncr-list' company.pk %}`.
-    *   Uses the `document-check` Heroicon and `rose` or `amber` styling.
-3.  **Correct Page Context**: All URLs resolve correctly using the `company.pk` key.
-4.  **Aesthetics**: The design and hover animations match the premium card design layout.
-5.  **Passing Tests**: All existing template rendering and view unit tests continue to pass.
+1. The card inputs for report selection are refactored for better maintainability and visual consistency.
+2. A new "Preview" button is added to the UI.
+3. Clicking the "Preview" button successfully opens a print dialog.
+4. The print preview accurately displays the structural layout of the selected report style.

@@ -1,28 +1,21 @@
-# Superpowers Finish Summary - Add Bi-Weekly Safety and NCR Cards to Company Management
+# Execution Summary
 
-## Verification commands run + results
-- Pytest unit tests:
-  - Command: `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k TestCompanyManagementSiteCards`
-    Result: **1 passed**
-  - Command: `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py`
-    Result: **2 passed**
-- Ruff Python styling linter check:
-  - Command: `.venv\Scripts\python.exe -m ruff check app/Project/tests/test_views.py`
-    Result: **All checks passed!**
+## Verification
+- python manage.py check: Passed with no issues.
 
 ## Summary of changes
-1. **app/Project/templates/company/company_management.html**:
-   - Added the "Bi-Weekly Safety" card at the end of the site cards list under the Site Management section, using `indigo` border, standard transitions, and the `shield-exclamation` Heroicon.
-   - Added the "NCR Register" card at the end of the site cards list under the Site Management section, using `amber` border, standard transitions, and the `document-check` Heroicon.
-2. **app/Project/tests/test_views.py**:
-   - Created the test class `TestCompanyManagementSiteCards` to verify `CompanyManagementView` correctly renders the "Bi-Weekly Safety" and "NCR Register" cards with parameters `company.pk`.
+- Extracted layout cards from project_setup.html into project/includes/layout_cards.html for better maintainability.
+- Added a Preview button in the Layout Visual Preview area.
+- Added a bit of JavaScript to open a print dialog layout view dynamically based on the selected layout option.
+- Created ProjectReportLayoutPreviewView and routed it at project/<pk>/preview-layout/.
+- Created project_layout_preview.html to format the report layout with Tailwind print styles and an auto-firing window.print() script.
 
-## Follow-ups
-- None.
+## Manual validation steps
+1. Open a Project and go to the Edit / Setup page.
+2. Scroll to the Report Selection & Configuration section.
+3. Change the layout option in the dropdown (Standard, Valterra, Lephadimisha).
+4. Click the Preview button next to Layout Visual Preview.
+5. Observe that a new tab opens and immediately prompts a system print dialog showing the mock structure of that layout.
 
-## Manual validation steps (if applicable)
-- Log in to the application and navigate to the Business Management Center for a company (`/project/company/<id>/management/`).
-- Verify that "Bi-Weekly Safety" and "NCR Register" cards are present at the end of the "Site Management" grid.
-- Click each card to verify they redirect to the respective list pages:
-  - `/site-management/<id>/biweekly-safety/`
-  - `/site-management/<id>/ncr/`
+## Review Pass
+No blocking or major issues found. Implementation aligns with the approved plan.
