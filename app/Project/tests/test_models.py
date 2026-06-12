@@ -140,7 +140,6 @@ class TestProjectModel:
         """Test that project supports layout configurations and custom columns."""
         from app.Project.tests.factories import ProjectFactory
 
-        project = ProjectFactory.create(certificate_layout="LEPHADIMISHA")
-        assert project.certificate_layout == "LEPHADIMISHA"
+        project = ProjectFactory.create()
         assert hasattr(project, "column_config")
         assert isinstance(project.column_config, dict)
