@@ -23,7 +23,7 @@ class TestProjectSetupReportConfig:
         self.url = reverse("project:project-setup", kwargs={"pk": self.project.pk})
 
     def test_save_report_config_success(self, client):
-        """Test successfully saving certificate layout and column configuration."""
+        """Test successfully saving column configuration."""
         client.force_login(self.user)
 
         column_data = {
@@ -35,7 +35,6 @@ class TestProjectSetupReportConfig:
 
         data = {
             "action": "save_report_config",
-            "certificate_layout": "LEPHADIMISHA",
             "column_config": json.dumps(column_data),
         }
 
@@ -43,7 +42,6 @@ class TestProjectSetupReportConfig:
         assert response.status_code == 302
 
         self.project.refresh_from_db()
-        assert self.project.certificate_layout == "LEPHADIMISHA"
         assert self.project.column_config == column_data
 
 
