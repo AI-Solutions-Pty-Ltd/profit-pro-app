@@ -176,61 +176,121 @@
                   
                     <thead>
                         <tr>
-                            <th class="left-align" width="3%">ITEM</th>
-                            <th class="left-align" width="7%">PAY REF</th>
-                            <th class="left-align" width="25%">DESCRIPTION</th>
-                            <th class="text-center" width="5%">UNIT</th>
-                            <th class="right-align" width="8%">TENDER QTY</th>
-                            <th class="right-align" width="8%">RATE (R)</th>
-                            <th class="right-align">TENDER AMT (R)</th>
-                            <th class="right-align">CUMUL. CERT (R)</th>
-                            <th class="right-align">PREV. CERT (R)</th>
-                            <th class="right-align">AMOUNT DUE (R)</th>
+                            {% for col in columns %}
+                                {% if col.id == 'item_number' %}
+                                    <th class="left-align" width="3%">{{ col.label }}</th>
+                                {% elif col.id == 'payment_reference' %}
+                                    <th class="left-align" width="7%">{{ col.label }}</th>
+                                {% elif col.id == 'description' %}
+                                    <th class="left-align" width="25%">{{ col.label }}</th>
+                                {% elif col.id == 'unit_measurement' %}
+                                    <th class="text-center" width="5%">{{ col.label }}</th>
+                                {% elif col.id == 'budgeted_quantity' %}
+                                    <th class="right-align" width="8%">{{ col.label }}</th>
+                                {% elif col.id == 'unit_price' %}
+                                    <th class="right-align" width="8%">{{ col.label }}</th>
+                                {% else %}
+                                    <th class="right-align">{{ col.label }}</th>
+                                {% endif %}
+                            {% endfor %}
                         </tr>
                     </thead>
-                   <tbody>
+                    <tbody>
                         {% for bill_group in structure_group.bills %}
                             <tr class="bill-header-row">
-                                <td colspan="10" style="padding-left: 15px;">{{ bill_group.bill.name|upper }}</td>
+                                <td colspan="{{ columns|length }}" style="padding-left: 15px;">{{ bill_group.bill.name|upper }}</td>
                             </tr>
                             {% for package_group in bill_group.packages %}
                                 {% for line_item in package_group.line_items %}
                                     {% if not line_item.is_work %}
                                         <tr class="sub-heading-row">
-                                            <td colspan="10" style="padding-left: 10px;">{{ line_item.description }}</td>
+                                            <td colspan="{{ columns|length }}" style="padding-left: 10px;">{{ line_item.description }}</td>
                                         </tr>
                                     {% else %}
                                         <tr class="item-row">
-                                            <td class="left-align"  width="3%">{{ line_item.item_number|default:"" }}</td>
-                                            <td class="left-align"  width="7%">{{ line_item.payment_reference|default:"" }}</td>
-                                            <td width="25%">{{ line_item.description }}</td>
-                                            <td class="text-center" width="5%">{{ line_item.unit_measurement|default:"-" }}</td>
-                                            
-                                            <td class="text-right" width="8%">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                            <td class="text-right">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                            <td class="text-right">{% if line_item.total_price %}{{ line_item.total_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                            
-                                            <td class="text-right">{% if line_item.total_claimed %}{{ line_item.total_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                            <td class="text-right">{% if line_item.previous_claimed %}{{ line_item.previous_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                            <td class="text-right">{% if line_item.current_claim %}{{ line_item.current_claim|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                            {% for col in columns %}
+                                                {% if col.id == 'item_number' %}
+                                                    <td class="left-align" width="3%">{{ line_item.item_number|default:"" }}</td>
+                                                {% elif col.id == 'payment_reference' %}
+                                                    <td class="left-align" width="7%">{{ line_item.payment_reference|default:"" }}</td>
+                                                {% elif col.id == 'description' %}
+                                                    <td width="25%">{{ line_item.description }}</td>
+                                                {% elif col.id == 'unit_measurement' %}
+                                                    <td class="text-center" width="5%">{{ line_item.unit_measurement|default:"-" }}</td>
+                                                {% elif col.id == 'budgeted_quantity' %}
+                                                    <td class="text-right" width="8%">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'unit_price' %}
+                                                    <td class="text-right">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'total_price' %}
+                                                    <td class="text-right">{% if line_item.total_price %}{{ line_item.total_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'total_claimed' %}
+                                                    <td class="text-right">{% if line_item.total_claimed %}{{ line_item.total_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'previous_claimed' %}
+                                                    <td class="text-right">{% if line_item.previous_claimed %}{{ line_item.previous_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'current_claim' %}
+                                                    <td class="text-right">{% if line_item.current_claim %}{{ line_item.current_claim|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% else %}
+                                                    <td class="text-right">-</td>
+                                                {% endif %}
+                                            {% endfor %}
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
                             {% endfor %}
                             <tr class="bill-total-row">
-                                <td colspan="6" class="text-right" style="padding-right: 10px;">Carried to Summary &mdash; Bill No. {{ bill_group.bill.name }}</td>
-                                <td class="text-right">{% if bill_group.budget %}{{ bill_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                <td class="text-right">{% if bill_group.cumulative %}{{ bill_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                <td class="text-right">{% if bill_group.previous %}{{ bill_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                                <td class="text-right">{% if bill_group.current %}{{ bill_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% for col in columns %}
+                                    {% if col.id == 'item_number' %}
+                                        <td></td>
+                                    {% elif col.id == 'payment_reference' %}
+                                        <td></td>
+                                    {% elif col.id == 'description' %}
+                                        <td class="text-right" style="padding-right: 10px;">Carried to Summary &mdash; Bill No. {{ bill_group.bill.name }}</td>
+                                    {% elif col.id == 'unit_measurement' %}
+                                        <td></td>
+                                    {% elif col.id == 'budgeted_quantity' %}
+                                        <td></td>
+                                    {% elif col.id == 'unit_price' %}
+                                        <td></td>
+                                    {% elif col.id == 'total_price' %}
+                                        <td class="text-right">{% if bill_group.budget %}{{ bill_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'total_claimed' %}
+                                        <td class="text-right">{% if bill_group.cumulative %}{{ bill_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'previous_claimed' %}
+                                        <td class="text-right">{% if bill_group.previous %}{{ bill_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'current_claim' %}
+                                        <td class="text-right">{% if bill_group.current %}{{ bill_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% else %}
+                                        <td class="text-right">-</td>
+                                    {% endif %}
+                                {% endfor %}
                             </tr>
                         {% endfor %}
                         <tr class="section-total-row">
-                            <td colspan="6" class="text-right" style="padding-right: 10px;">{{ structure_group.structure.name|upper }} TOTAL</td>
-                            <td class="text-right">{% if structure_group.budget %}{{ structure_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                            <td class="text-right">{% if structure_group.cumulative %}{{ structure_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                            <td class="text-right">{% if structure_group.previous %}{{ structure_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-                            <td class="text-right">{% if structure_group.current %}{{ structure_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                            {% for col in columns %}
+                                {% if col.id == 'item_number' %}
+                                    <td></td>
+                                {% elif col.id == 'payment_reference' %}
+                                    <td></td>
+                                {% elif col.id == 'description' %}
+                                    <td class="text-right" style="padding-right: 10px;">{{ structure_group.structure.name|upper }} TOTAL</td>
+                                {% elif col.id == 'unit_measurement' %}
+                                    <td></td>
+                                {% elif col.id == 'budgeted_quantity' %}
+                                    <td></td>
+                                {% elif col.id == 'unit_price' %}
+                                    <td></td>
+                                {% elif col.id == 'total_price' %}
+                                    <td class="text-right">{% if structure_group.budget %}{{ structure_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'total_claimed' %}
+                                    <td class="text-right">{% if structure_group.cumulative %}{{ structure_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'previous_claimed' %}
+                                    <td class="text-right">{% if structure_group.previous %}{{ structure_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'current_claim' %}
+                                    <td class="text-right">{% if structure_group.current %}{{ structure_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% else %}
+                                    <td class="text-right">-</td>
+                                {% endif %}
+                            {% endfor %}
                         </tr>
                     </tbody> 
                 </table>

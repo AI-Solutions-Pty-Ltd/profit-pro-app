@@ -1,34 +1,31 @@
 ## Goal
-Add a feature to download payment certificates in XLSX format (both Full and Abridged versions), mirroring the existing PDF download functionality. This includes adding "Download XLSX" buttons to the Download Reports cards on the payment certificate detail page.
+Refactor the report configuration UI to improve the card inputs for layout selection and introduce a "Preview" button that opens a native print dialog to showcase the structure of the selected report layout.
 
 ## Constraints
-- Must align with the existing architecture used for PDF downloads (e.g., asynchronous generation, polling mechanism).
-- Must utilize the selected sections (Cover Page, Valuation Summary, Detailed Report) and the "Force regenerate" checkbox logic.
-- Must follow the project's Django rules, using standard models, and Tailwind UI conventions.
-- The generated XLSX must accurately map the data presented in the payment certificate.
+- Must align with the existing Django templates, Crispy Forms, and Tailwind CSS stack.
+- The preview must accurately reflect the structure of the selected report layout without needing full actual data (placeholder data is acceptable).
+- The print dialog preview should format well for printing (e.g., using @media print CSS where needed).
 
 ## Known context
-- The UI is defined in `payment_certificate_detail.html` using Tailwind CSS and Django templates.
-- PDF generation uses an asynchronous flow, tracked by model fields like `pdf_generating` and `abridged_pdf_generating`, with JavaScript polling for updates.
-- The user has provided a screenshot showing the current UI, which has dual cards ("Full Payment Certificate" and "Abridged Certificate") with single "Download PDF" buttons.
+- The application is a Django app called Profit Pro.
+- The UI contains a "Report Layout Style" selector, a visual layout preview card, a column configuration table, and a real-time column header preview.
+- The user wants to refactor the card inputs (likely making the layout cards more modular, responsive, or standardized) and add a preview capability via a print dialog.
 
 ## Risks
-- **UI Clutter:** Adding another button alongside "Download PDF" might crowd the UI on smaller screens. 
-- **Generation Performance:** Depending on the library (e.g., `openpyxl` or `xlsxwriter`), generating complex Excel files could be memory-intensive.
-- **Complex Polling Logic:** The frontend JavaScript polling will need to be carefully updated to track multiple concurrent generation tasks (e.g., generating PDF and XLSX simultaneously) without conflicts.
+- Refactoring existing card inputs might break the current real-time HTMX or Javascript interactions for the previews.
+- Generating a realistic print layout directly from the configuration page might be complex if it requires rendering a separate view just for the preview.
+- Browser inconsistencies with window.print() behavior.
 
-## Options (2???4)
-1. **Fully Asynchronous (Mirror PDF):** Add `xlsx`, `xlsx_generating`, `abridged_xlsx`, and `abridged_xlsx_generating` fields to the model. Use background tasks to generate the XLSX and update the polling JavaScript to handle both formats. (Consistent architecture).
-2. **Synchronous Generation:** Generate the XLSX on the fly and stream it back directly when the user clicks the button. (Simpler to implement, avoids model changes and polling, but risks server timeouts on large certificates).
-3. **Unified Export Dropdown:** Instead of adding more buttons, change the primary action to "Export..." and provide a dropdown to select either PDF or XLSX. (Cleaner UI, but slightly more clicks for the user).
+## Options (2?4)
+1.  **Option 1: Hidden Iframe Print.** Refactor the UI components. Add a "Preview" button that fetches the report HTML via an endpoint, loads it into a hidden iframe, and calls iframe.contentWindow.print().
+2.  **Option 2: New Tab Print.** Add a "Preview" button that opens a new browser tab with the report preview layout and immediately executes window.print() upon load.
+3.  **Option 3: In-page Modal Preview.** Refactor the cards and add a "Preview" button that opens a modal within the page showing the report structure, with a secondary "Print" button inside the modal that triggers the print dialog.
 
 ## Recommendation
-Implement **Option 1 (Fully Asynchronous)** to maintain architectural consistency with the existing PDF generation flow. Update the UI to display the "Download PDF" and "Download XLSX" buttons side-by-side using a grid or flexbox layout to ensure it remains responsive. We will need to update the model to store the XLSX files, create background tasks for generation, and enhance the frontend JavaScript polling logic to accommodate the new status checks.
+**Option 2 (New Tab Print)** is the most robust and easiest to implement for print previews. It provides a clean, isolated environment for print CSS without interfering with the complex configuration page. The refactoring of the card inputs should focus on creating reusable Django template inclusions with standard Tailwind utility classes.
 
 ## Acceptance criteria
-- Users see a "Download XLSX" button on both the "Full Payment Certificate" and "Abridged Certificate" cards.
-- Clicking the button downloads the XLSX file if available, or initiates the asynchronous generation process (displaying a "Generating..." state).
-- The downloaded XLSX file accurately reflects the certificate data and respects the selected sections (front, summary, detailed).
-- The "Force regenerate" option works for XLSX files just as it does for PDFs.
-- The frontend polling logic correctly updates the UI without requiring a manual page refresh.
-- The UI remains clean and responsive across device sizes.
+1. The card inputs for report selection are refactored for better maintainability and visual consistency.
+2. A new "Preview" button is added to the UI.
+3. Clicking the "Preview" button successfully opens a print dialog.
+4. The print preview accurately displays the structural layout of the selected report style.

@@ -1,39 +1,31 @@
 ## Goal
-Implement fully asynchronous XLSX generation for payment certificates (Full and Abridged) that mirrors the PDF generation functionality. Add "Download XLSX" buttons to the Download Reports cards allowing users to select specific sections (Cover Page, Valuation Summary, Detailed Report) to include in a unified XLSX file.
+Refactor the report configuration UI card inputs and add a preview button that opens a print dialog showing the structure of the report.
 
 ## Assumptions
-- The server environment has `openpyxl` installed and we can either combine the outputs of the existing XLSX exporters or modify them to append sheets to a single workbook.
-- Asynchronous task processing (Celery) is already configured and used for PDF generation, which we will reuse for XLSX.
+- The refactoring mainly involves organizing the HTML of the Layout Visual Previews in project_setup.html into cleaner, maintainable components.
+- The preview print dialog should be a new view that generates a dummy certificate/report matching the selected layout and triggers window.print() on load.
 
 ## Plan
-1. **Update Models (`app/BillOfQuantities/models/payment_certificate_models.py`)**
-   - **Change:** Add `xlsx`, `abridged_xlsx` (FileFields) and `xlsx_generating`, `abridged_xlsx_generating` (BooleanFields) to `PaymentCertificate`.
-   - **Verify:** Run `makemigrations` and ensure the migration file is created correctly. Run tests to ensure no model constraints are broken.
-
-2. **Create Unified XLSX Exporter (`app/BillOfQuantities/exporters/unified_xlsx_exporter.py`)**
-   - **Change:** Create a new function that takes the `PaymentCertificate` and a list of selected sections. It will use the logic from the existing `cover_page_exporter`, `summary_report_exporter`, and `detailed_report_exporter` to populate separate sheets in a single `openpyxl` Workbook.
-   - **Verify:** Write a quick test or script to generate a workbook and verify it contains the correct sheets without crashing.
-
-3. **Create Asynchronous Celery Tasks (`app/BillOfQuantities/tasks.py`)**
-   - **Change:** Add `generate_xlsx_async` and `generate_abridged_xlsx_async` tasks similar to the PDF ones. These will call the unified exporter, save the file to the model, and set the `_generating` flags to False.
-   - **Verify:** Run `pytest` and verify the background tasks properly save the file and update the model state.
-
-4. **Update Views and URLs (`app/BillOfQuantities/views/payment_certificate_views.py`, `app/BillOfQuantities/urls/payment_certificate_urls.py`)**
-   - **Change:** Add views to handle the unified XLSX download requests (triggering the Celery tasks and redirecting, or serving the file if ready) matching the PDF logic (`PaymentCertificateDownloadUnifiedXLSXView`). Also update the JSON status endpoint to include XLSX generation status.
-   - **Verify:** Hit the endpoints in a test to verify they trigger the tasks and return the correct JSON status.
-
-5. **Update Frontend UI (`app/BillOfQuantities/templates/payment_certificate/payment_certificate_detail.html`)**
-   - **Change:** Add the "Download XLSX" button next to "Download PDF" on both cards. Update the JavaScript polling mechanism to also check and update the UI based on `xlsx_generating` and `abridged_xlsx_generating` statuses.
-   - **Verify:** Visually verify the UI structure and ensure clicking the buttons correctly initiates the polling state.
+1. **Create Preview View**:
+   - Files: pp/Project/projects/project_views.py, pp/Project/urls.py
+   - Change: Add ProjectReportLayoutPreviewView that takes the project PK and optionally a layout_style query parameter. It renders a dummy layout template. Update urls.py to route to this view.
+   - Verify: Run .venv\Scripts\python.exe manage.py check to ensure URLs are valid.
+2. **Create Preview Templates**:
+   - Files: pp/Project/templates/project/project_layout_preview.html
+   - Change: Create the template that includes Tailwind CSS and a script to call window.print(). Render a structural representation of the report based on the layout_style.
+   - Verify: Check that the template is loadable.
+3. **Refactor Card Inputs in project_setup.html**:
+   - Files: pp/Project/templates/project/project_setup.html
+   - Change: Refactor the layout visual preview cards (Standard, Valterra, Lephadimisha) into a more modular structure, potentially extracting them into included partials if they are too long.
+   - Verify: Ensure the configuration page still loads correctly without errors.
+4. **Add Preview Button**:
+   - Files: pp/Project/templates/project/project_setup.html
+   - Change: Add a "Preview" button in the Layout Visual Preview area. Use Javascript to read the currently selected certificate_layout_select value and open the preview URL in a new tab with that layout.
+   - Verify: Test clicking the button to ensure it navigates to the correct preview URL.
 
 ## Risks & mitigations
-- **Combining Workbooks:** `openpyxl` does not easily merge separate workbooks with complex formatting. 
-  - **Mitigation:** The unified exporter may need to initialize a single workbook and pass it into refactored exporter functions that write to specific sheets, rather than combining completed workbooks.
-- **Frontend Polling Collisions:** Polling for both PDF and XLSX might overload the server or cause race conditions in the UI.
-  - **Mitigation:** Combine the status checks into a single JSON endpoint response and update the UI centrally to reduce requests.
+- **Risk:** The dummy layout might not accurately represent the real layout. **Mitigation:** Base the dummy layout on existing certificate PDF templates using Tailwind for print styling.
+- **Risk:** The "Preview" button might not capture the unsaved layout choice. **Mitigation:** Use client-side JavaScript on the button to dynamically construct the URL using the currently selected <select> value.
 
 ## Rollback plan
-- Revert the `PaymentCertificate` model changes and delete the new migration file.
-- Delete the `unified_xlsx_exporter.py` file.
-- Remove the new Celery tasks and views.
-- Revert changes to the `payment_certificate_detail.html` template.
+- Remove the new URL, view, and template. Revert project_setup.html to its previous git state.
