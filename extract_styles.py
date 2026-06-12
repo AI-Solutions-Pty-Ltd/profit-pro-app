@@ -6,7 +6,7 @@ ws = wb.active
 for row in range(1, 40):
     for col in range(1, 8):
         c = ws.cell(row=row, column=col)
-        if c.value and type(c.value) == str:
+        if c.value and isinstance(c.value, str):
             if (
                 "TOTAL" in c.value.upper()
                 or "SUMMARY" in c.value.upper()

@@ -1,6 +1,11 @@
 {% extends "base_full.html" %}
 {% block title %}
-    {% if is_abridged %}Abridged{% else %}Full{% endif %} Detailed Report — {{ project.name }} — PC #{{ payment_certificate.certificate_number }}
+    {% if is_abridged %}
+        Abridged
+    {% else %}
+        Full
+    {% endif %}
+    Detailed Report — {{ project.name }} — PC #{{ payment_certificate.certificate_number }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
@@ -50,45 +55,40 @@
                         Back to Detail
                     </a>
                     {% if is_abridged %}
-                    <a href="{% url 'bill_of_quantities:payment-certificate-download-abridged-pdf' project.pk payment_certificate.pk %}?detailed=true"
-                       class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1" %}
-                        Download PDF
-                    </a>
-                    <a href="{% url 'bill_of_quantities:payment-certificate-download-abridged-xlsx' project.pk payment_certificate.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                        {% heroicon_outline "document-arrow-down" class="w-4 h-4 mr-1" %}
-                        Download XLSX
-                    </a>
-
+                        <a href="{% url 'bill_of_quantities:payment-certificate-download-abridged-pdf' project.pk payment_certificate.pk %}?detailed=true"
+                           class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1" %}
+                            Download PDF
+                        </a>
+                        <a href="{% url 'bill_of_quantities:payment-certificate-download-abridged-xlsx' project.pk payment_certificate.pk %}"
+                           class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                            {% heroicon_outline "document-arrow-down" class="w-4 h-4 mr-1" %}
+                            Download XLSX
+                        </a>
                     {% else %}
-                    <a href="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}?detailed=true"
-                       class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1" %}
-                        Download PDF
-                    </a>
-                    <a href="{% url 'bill_of_quantities:payment-certificate-download-xlsx' project.pk payment_certificate.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                        {% heroicon_outline "document-arrow-down" class="w-4 h-4 mr-1" %}
-                        Download XLSX
-                    </a>
-
+                        <a href="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}?detailed=true"
+                           class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1" %}
+                            Download PDF
+                        </a>
+                        <a href="{% url 'bill_of_quantities:payment-certificate-download-xlsx' project.pk payment_certificate.pk %}"
+                           class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                            {% heroicon_outline "document-arrow-down" class="w-4 h-4 mr-1" %}
+                            Download XLSX
+                        </a>
                     {% endif %}
                 </div>
             </div>
-
             <!-- Contract Line Items -->
             <div id="contract-line-items" class="mb-6 border-b border-gray-200 pb-4">
                 <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
                 {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
             </div>
-
             <!-- Addendum Line Items -->
             <div id="addendum-line-items" class="mb-6 border-b border-gray-200 pb-4">
                 <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
                 {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
             </div>
-
             <!-- Special Items -->
             <div id="special-items" class="mb-6 border-b border-gray-200 pb-4">
                 <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
@@ -96,7 +96,6 @@
                 </h2>
                 {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
             </div>
-
             <!-- Ledger Totals -->
             <div id="ledger-totals" class="mb-4">
                 <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">

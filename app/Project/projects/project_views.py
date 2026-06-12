@@ -996,6 +996,8 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
             return self.render_to_response(context)
 
         return HttpResponseRedirect(request.path)
+
+
 class ProjectReportLayoutPreviewView(ProjectMixin, DetailView):
     """View to display a structural preview of the selected report layout."""
 

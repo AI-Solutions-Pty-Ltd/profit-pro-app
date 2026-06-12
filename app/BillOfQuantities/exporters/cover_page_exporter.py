@@ -39,7 +39,7 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
 
     align_center = Alignment(horizontal="center", vertical="center")
     align_right = Alignment(horizontal="right", vertical="center")
-    align_left = Alignment(horizontal="left", vertical="center")
+    Alignment(horizontal="left", vertical="center")
 
     fill_light_grey = PatternFill(
         start_color="FFF2F2F2", end_color="FFF2F2F2", fill_type="solid"

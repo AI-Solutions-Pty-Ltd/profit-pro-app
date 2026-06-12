@@ -31,7 +31,6 @@
                     </a>
                 </div>
             </div>
-
             <!-- Section A: Project Details -->
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
@@ -60,17 +59,17 @@
                             <tr class="bg-white hover:bg-gray-50">
                                 <th class="px-4 py-3 text-left font-medium text-gray-600">Client</th>
                                 <td class="px-4 py-3 text-gray-900">
-                                    {% if project.client %}{{ project.client.name }}{% else %}—{% endif %}
+                                    {% if project.client %}
+                                        {{ project.client.name }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr class="bg-white hover:bg-gray-50">
                                 <th class="px-4 py-3 text-left font-medium text-gray-600">Certificate Status</th>
                                 <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {% if payment_certificate.status == 'APPROVED' %}bg-green-100 text-green-800
-                                        {% elif payment_certificate.status == 'SUBMITTED' %}bg-amber-100 text-amber-800
-                                        {% elif payment_certificate.status == 'REJECTED' %}bg-red-100 text-red-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if payment_certificate.status == 'APPROVED' %}bg-green-100 text-green-800 {% elif payment_certificate.status == 'SUBMITTED' %}bg-amber-100 text-amber-800 {% elif payment_certificate.status == 'REJECTED' %}bg-red-100 text-red-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
                                         {{ payment_certificate.get_status_display }}
                                     </span>
                                 </td>
@@ -83,7 +82,6 @@
                     </table>
                 </div>
             </div>
-
             <!-- Section B: Contract Summary -->
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
@@ -112,22 +110,35 @@
                                 <td class="px-4 py-3 text-right text-gray-900 font-mono">R {{ project.total_contract_value|floatformat:2|intcomma }}</td>
                             </tr>
                             <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">{% if project.vat %}VAT 15%{% else %}No VAT{% endif %}</td>
+                                <td class="px-4 py-3 text-gray-900">
+                                    {% if project.vat %}
+                                        VAT 15%
+                                    {% else %}
+                                        No VAT
+                                    {% endif %}
+                                </td>
                                 <td class="px-4 py-3 text-right text-gray-900 font-mono">
-                                    {% if project.vat %}R {{ project.total_contract_value|multiply:0.15|floatformat:2|intcomma }}{% else %}R 0.00{% endif %}
+                                    {% if project.vat %}
+                                        R {{ project.total_contract_value|multiply:0.15|floatformat:2|intcomma }}
+                                    {% else %}
+                                        R 0.00
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr class="bg-indigo-50 font-bold">
                                 <td class="px-4 py-3 text-indigo-900">Total Contract Value (Incl. VAT)</td>
                                 <td class="px-4 py-3 text-right text-indigo-900 font-mono">
-                                    {% if project.vat %}R {{ project.total_contract_value|multiply:1.15|floatformat:2|intcomma }}{% else %}R {{ project.total_contract_value|floatformat:2|intcomma }}{% endif %}
+                                    {% if project.vat %}
+                                        R {{ project.total_contract_value|multiply:1.15|floatformat:2|intcomma }}
+                                    {% else %}
+                                        R {{ project.total_contract_value|floatformat:2|intcomma }}
+                                    {% endif %}
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-
             <!-- Section C: Payment Certificate Summary -->
             <div class="mb-4">
                 <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
@@ -163,7 +174,12 @@
                                 {% if special_item.total %}
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-4 py-3 text-gray-900">
-                                            {% if special_item.total > 0 %}ADD{% else %}LESS{% endif %}: {{ special_item.description }}
+                                            {% if special_item.total > 0 %}
+                                                ADD
+                                            {% else %}
+                                                LESS
+                                            {% endif %}
+                                            : {{ special_item.description }}
                                         </td>
                                         <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ special_item.total|default:0|floatformat:2|intcomma }}</td>
                                     </tr>
@@ -182,15 +198,29 @@
                                 <td class="px-4 py-3 text-right font-mono font-semibold text-gray-900">R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
                             </tr>
                             <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">{% if project.vat %}VAT 15%{% else %}No VAT{% endif %}</td>
+                                <td class="px-4 py-3 text-gray-900">
+                                    {% if project.vat %}
+                                        VAT 15%
+                                    {% else %}
+                                        No VAT
+                                    {% endif %}
+                                </td>
                                 <td class="px-4 py-3 text-right font-mono text-gray-900">
-                                    {% if project.vat %}R {{ payment_certificate.current_claim_total|multiply:0.15|floatformat:2|intcomma }}{% else %}R 0.00{% endif %}
+                                    {% if project.vat %}
+                                        R {{ payment_certificate.current_claim_total|multiply:0.15|floatformat:2|intcomma }}
+                                    {% else %}
+                                        R 0.00
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr class="bg-indigo-50 font-bold">
                                 <td class="px-4 py-4 text-indigo-900 text-base">TOTAL AMOUNT NOW CERTIFIED</td>
                                 <td class="px-4 py-4 text-right font-mono text-lg text-indigo-900">
-                                    {% if project.vat %}R {{ payment_certificate.current_claim_total|multiply:1.15|floatformat:2|intcomma }}{% else %}R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}{% endif %}
+                                    {% if project.vat %}
+                                        R {{ payment_certificate.current_claim_total|multiply:1.15|floatformat:2|intcomma }}
+                                    {% else %}
+                                        R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
+                                    {% endif %}
                                 </td>
                             </tr>
                         </tbody>

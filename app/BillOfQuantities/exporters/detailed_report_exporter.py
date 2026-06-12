@@ -35,16 +35,16 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
     # Styles
     font_bold = Font(bold=True)
     font_bold_white = Font(bold=True, color="FFFFFFFF")
-    font_italic_gray = Font(italic=True, color="FF666666")
+    Font(italic=True, color="FF666666")
     font_subtitle = Font(italic=True, color="FF666666")
-    font_header = Font(bold=True, size=11)
+    Font(bold=True, size=11)
     font_title = Font(bold=True, size=14)
     align_center = Alignment(horizontal="center", vertical="center")
     align_right = Alignment(horizontal="right", vertical="center")
     align_left = Alignment(horizontal="left", vertical="center")
     align_wrap = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
-    border_bottom = Border(bottom=Side(style="thin"))
+    Border(bottom=Side(style="thin"))
     border_bottom_thick = Border(bottom=Side(style="medium"))
     border_bottom_light = Border(bottom=Side(style="thin", color="FFE5E5E5"))
 
@@ -74,7 +74,6 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         return wb
 
     # Remove the default sheet created by openpyxl
-    default_sheet = wb.active
 
     import re
 
@@ -92,11 +91,11 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
 
         # Row 1: Header
         ws.cell(row=1, column=1, value="[ LOGO ]").font = font_bold
-        
+
         # Calculate merge ranges based on num_cols
         title_end_col = max(2, num_cols - 2)
         cert_start_col = title_end_col + 1
-        
+
         title_cell = ws.cell(
             row=1, column=2, value=f"SECTION {structure_idx} — {structure.name.upper()}"
         )
@@ -104,17 +103,21 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         title_cell.alignment = align_center
         ws.merge_cells(start_row=1, start_column=2, end_row=1, end_column=title_end_col)
 
-        cert_cell = ws.cell(row=1, column=cert_start_col, value=f"Cert No. {cert_num}\n{cert_date}")
+        cert_cell = ws.cell(
+            row=1, column=cert_start_col, value=f"Cert No. {cert_num}\n{cert_date}"
+        )
         cert_cell.alignment = Alignment(
             wrap_text=True, horizontal="right", vertical="center"
         )
         cert_cell.font = font_bold
         if cert_start_col < num_cols:
-            ws.merge_cells(start_row=1, start_column=cert_start_col, end_row=1, end_column=num_cols)
-        
+            ws.merge_cells(
+                start_row=1, start_column=cert_start_col, end_row=1, end_column=num_cols
+            )
+
         for col in range(cert_start_col, num_cols + 1):
             ws.cell(row=1, column=col).fill = fill_package_header
-            
+
         ws.row_dimensions[1].height = 60
 
         # Row 2: Subtitle
@@ -152,16 +155,32 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
                 column=1,
                 value=f"BILL NO. {bill_idx} — {bill.name.upper()}",
             )
-            
+
             if "total_price" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["total_price"], value=bill_data["budget"]).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["total_price"],
+                    value=bill_data["budget"],
+                ).alignment = align_right
             if "total_claimed" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["total_claimed"], value=bill_data["cumulative"]).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["total_claimed"],
+                    value=bill_data["cumulative"],
+                ).alignment = align_right
             if "previous_claimed" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["previous_claimed"], value=bill_data["previous"]).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["previous_claimed"],
+                    value=bill_data["previous"],
+                ).alignment = align_right
             if "current_claim" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["current_claim"], value=bill_data["current"]).alignment = align_right
-                
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["current_claim"],
+                    value=bill_data["current"],
+                ).alignment = align_right
+
             for col in range(1, num_cols + 1):
                 cell = ws.cell(row=current_row, column=col)
                 cell.fill = fill_bill_header
@@ -182,31 +201,31 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
                 item_row_count = 0
                 for item in package_data["line_items"]:
                     ws.row_dimensions[current_row].height = 20
-                    
+
                     val_map = {
-                        "item_number": getattr(item, 'item_number', ""),
-                        "payment_reference": getattr(item, 'payment_reference', ""),
-                        "description": getattr(item, 'description', ""),
-                        "unit_measurement": getattr(item, 'unit_measurement', ""),
-                        "budgeted_quantity": getattr(item, 'budgeted_quantity', None),
-                        "unit_price": getattr(item, 'unit_price', None),
-                        "total_price": getattr(item, 'total_price', None),
-                        "total_qty": getattr(item, 'total_qty', None),
-                        "total_claimed": getattr(item, 'total_claimed', None),
-                        "previous_qty": getattr(item, 'previous_qty', None),
-                        "previous_claimed": getattr(item, 'previous_claimed', None),
-                        "current_qty": getattr(item, 'current_qty', None),
-                        "current_claim": getattr(item, 'current_claim', None),
+                        "item_number": getattr(item, "item_number", ""),
+                        "payment_reference": getattr(item, "payment_reference", ""),
+                        "description": getattr(item, "description", ""),
+                        "unit_measurement": getattr(item, "unit_measurement", ""),
+                        "budgeted_quantity": getattr(item, "budgeted_quantity", None),
+                        "unit_price": getattr(item, "unit_price", None),
+                        "total_price": getattr(item, "total_price", None),
+                        "total_qty": getattr(item, "total_qty", None),
+                        "total_claimed": getattr(item, "total_claimed", None),
+                        "previous_qty": getattr(item, "previous_qty", None),
+                        "previous_claimed": getattr(item, "previous_claimed", None),
+                        "current_qty": getattr(item, "current_qty", None),
+                        "current_claim": getattr(item, "current_claim", None),
                     }
-                    
+
                     for col_idx, col_config in enumerate(active_columns, 1):
                         col_id = col_config["id"]
                         val = val_map.get(col_id)
                         if val is None:
                             val = ""
-                            
+
                         cell = ws.cell(row=current_row, column=col_idx, value=val)
-                        
+
                         if col_id in ("item_number", "unit_measurement"):
                             cell.alignment = align_center
                         elif col_id == "description":
@@ -234,28 +253,52 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
                 column=1,
                 value=f"Carried to Summary — Bill No. {bill_idx}",
             )
-            
+
             # Merge footer text up to right before amounts
-            footer_merge_end = min(col_idx_map.get("total_price", num_cols), 
-                                   col_idx_map.get("total_claimed", num_cols), 
-                                   col_idx_map.get("previous_claimed", num_cols), 
-                                   col_idx_map.get("current_claim", num_cols)) - 1
+            footer_merge_end = (
+                min(
+                    col_idx_map.get("total_price", num_cols),
+                    col_idx_map.get("total_claimed", num_cols),
+                    col_idx_map.get("previous_claimed", num_cols),
+                    col_idx_map.get("current_claim", num_cols),
+                )
+                - 1
+            )
             if footer_merge_end < 1:
                 footer_merge_end = 1
-                
+
             ws.merge_cells(
-                start_row=current_row, start_column=1, end_row=current_row, end_column=footer_merge_end
+                start_row=current_row,
+                start_column=1,
+                end_row=current_row,
+                end_column=footer_merge_end,
             )
             ws.cell(row=current_row, column=1).alignment = align_right
 
             if "total_price" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["total_price"], value=bill_data["budget"]).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["total_price"],
+                    value=bill_data["budget"],
+                ).alignment = align_right
             if "total_claimed" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["total_claimed"], value=bill_data["cumulative"]).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["total_claimed"],
+                    value=bill_data["cumulative"],
+                ).alignment = align_right
             if "previous_claimed" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["previous_claimed"], value=bill_data["previous"]).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["previous_claimed"],
+                    value=bill_data["previous"],
+                ).alignment = align_right
             if "current_claim" in col_idx_map:
-                ws.cell(row=current_row, column=col_idx_map["current_claim"], value=bill_data["current"]).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=col_idx_map["current_claim"],
+                    value=bill_data["current"],
+                ).alignment = align_right
 
             for col in range(1, num_cols + 1):
                 cell = ws.cell(row=current_row, column=col)
@@ -269,21 +312,40 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
             column=1,
             value=f"SECTION {structure_idx} TOTAL — {structure.name.upper()}",
         )
-        
+
         ws.merge_cells(
-            start_row=current_row, start_column=1, end_row=current_row, end_column=footer_merge_end
+            start_row=current_row,
+            start_column=1,
+            end_row=current_row,
+            end_column=footer_merge_end,
         )
         ws.cell(row=current_row, column=1).alignment = align_right
-        
+
         if "total_price" in col_idx_map:
-            ws.cell(row=current_row, column=col_idx_map["total_price"], value=structure_data["budget"]).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=col_idx_map["total_price"],
+                value=structure_data["budget"],
+            ).alignment = align_right
         if "total_claimed" in col_idx_map:
-            ws.cell(row=current_row, column=col_idx_map["total_claimed"], value=structure_data["cumulative"]).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=col_idx_map["total_claimed"],
+                value=structure_data["cumulative"],
+            ).alignment = align_right
         if "previous_claimed" in col_idx_map:
-            ws.cell(row=current_row, column=col_idx_map["previous_claimed"], value=structure_data["previous"]).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=col_idx_map["previous_claimed"],
+                value=structure_data["previous"],
+            ).alignment = align_right
         if "current_claim" in col_idx_map:
-            ws.cell(row=current_row, column=col_idx_map["current_claim"], value=structure_data["current"]).alignment = align_right
-            
+            ws.cell(
+                row=current_row,
+                column=col_idx_map["current_claim"],
+                value=structure_data["current"],
+            ).alignment = align_right
+
         for col in range(1, num_cols + 1):
             cell = ws.cell(row=current_row, column=col)
             cell.fill = fill_section_footer
@@ -297,7 +359,10 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         )
         ws.cell(row=current_row, column=1, value=footer_text)
         ws.merge_cells(
-            start_row=current_row, start_column=1, end_row=current_row, end_column=num_cols
+            start_row=current_row,
+            start_column=1,
+            end_row=current_row,
+            end_column=num_cols,
         )
 
         # Set Column Widths dynamically
@@ -318,7 +383,12 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         for row in ws.iter_rows(min_row=5, max_row=current_row):
             for col_idx, col_config in enumerate(active_columns, 1):
                 col_id = col_config["id"]
-                if col_id not in ("item_number", "payment_reference", "description", "unit_measurement"):
+                if col_id not in (
+                    "item_number",
+                    "payment_reference",
+                    "description",
+                    "unit_measurement",
+                ):
                     cell = row[col_idx - 1]
                     if isinstance(cell.value, (int, float, Decimal)):
                         cell.number_format = "#,##0.00"
