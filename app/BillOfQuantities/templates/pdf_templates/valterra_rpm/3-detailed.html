@@ -48,28 +48,27 @@
                 table-layout: fixed;
                 margin-top: 4px;
             }
-            table.items-table th,
+            /* th: background fills the FULL cell height regardless of content length */
+            table.items-table th {
+                padding: 0;
+                background: #1e3a5f;
+                color: #fff;
+                font-weight: bold;
+                font-size: 6.5pt;
+                border-bottom: 2px solid #fff;
+                vertical-align: bottom;
+            }
             table.items-table td {
-                padding: 0;          /* padding moved to inner div */
+                padding: 0;
                 vertical-align: middle;
             }
-            /* Inner div is a block element — overflow:hidden WORKS here in WeasyPrint */
+            /* Inner div is a block element — overflow:hidden WORKS here in WeasyPrint.
+               The div is transparent so the th/td background shows through fully. */
             table.items-table th > div,
             table.items-table td > div {
                 overflow: hidden;
                 width: 100%;
                 padding: 3px 4px;
-                word-break: break-word;
-            }
-            table.items-table th > div {
-                background: #1e3a5f;
-                color: #fff;
-                font-weight: bold;
-                font-size: 6.5pt;
-                text-align: center;
-                vertical-align: bottom;
-                border-bottom: 1px solid #000;
-                white-space: normal;
                 word-break: break-word;
             }
 
@@ -123,9 +122,7 @@
                 </div>
 
                 <table class="items-table" width="100%">
-                    {# <colgroup> with HTML width= attributes is the only reliable way
-                       WeasyPrint respects column widths in table-layout:fixed.
-                       All widths must sum to 100%. #}
+                
                     <colgroup>
                         {% for col in columns %}
                             {% if col.id == 'item_number' %}      <col width="6%">
