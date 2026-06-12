@@ -2,8 +2,6 @@ import logging
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
-logger = logging.getLogger(__name__)
-
 from django.contrib import messages
 from django.db.models import Sum
 from django.http import FileResponse, HttpResponse, JsonResponse
@@ -47,6 +45,8 @@ from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
 )
 from app.Project.models import PlannedValue, Project, Role
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentCertificateMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
