@@ -15,28 +15,28 @@
       }
     </style>
     <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex justify-between items-center mb-4">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                    <p class="text-sm text-gray-600 mt-1">Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
-                    <p class="text-sm text-gray-600 mt-1">Status: {{ payment_certificate.status }}</p>
-                    <p class="text-sm text-gray-600 mt-1">Date: {{ payment_certificate.approved_on }}</p>
+                    <p class="mt-1 text-sm text-gray-600">Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
+                    <p class="mt-1 text-sm text-gray-600">Status: {{ payment_certificate.status }}</p>
+                    <p class="mt-1 text-sm text-gray-600">Date: {{ payment_certificate.approved_on }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     {% if payment_certificate.status == "DRAFT" or payment_certificate.status == "REJECTED" %}
                         <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
-                           class="loading-btn inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm loading-btn hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                            data-loading-text="Editing...">
-                            {% heroicon_outline "pencil" class="w-4 h-4 mr-1" %}
+                            {% heroicon_outline "pencil" class="mr-1 w-4 h-4" %}
                             Edit Certificate
                         </a>
                     {% endif %}
                     {% if payment_certificate.actual_transactions.count %}
                         {% if payment_certificate.status == 'DRAFT' or payment_certificate.status == 'REJECTED' %}
                             <a href="{% url 'bill_of_quantities:payment-certificate-submit' project.pk payment_certificate.pk %}"
-                               class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 {% heroicon_outline "check" class="w-4 h-4" %}
                                 Submit Payment Certificate
                             </a>
@@ -44,14 +44,14 @@
                     {% endif %}
                     {% if payment_certificate.status == 'SUBMITTED' %}
                         <span class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-md border border-amber-200">
-                            {% heroicon_outline "clock" class="w-4 h-4 mr-1" %}
+                            {% heroicon_outline "clock" class="mr-1 w-4 h-4" %}
                             Awaiting Client Approval
                         </span>
                     {% endif %}
                     {% if payment_certificate.is_final %}
                         <a href="{% url 'bill_of_quantities:final-account-detail' project.pk payment_certificate.pk %}"
-                           class="inline-flex items-center px-3 py-2 border border-emerald-300 shadow-sm text-sm leading-4 font-medium rounded-md text-emerald-700 bg-emerald-50 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                            {% heroicon_outline "document-check" class="w-4 h-4 mr-1" %}
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-emerald-700 bg-emerald-50 rounded-md border border-emerald-300 shadow-sm hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                            {% heroicon_outline "document-check" class="mr-1 w-4 h-4" %}
                             View Final Account
                         </a>
                     {% endif %}
@@ -61,14 +61,14 @@
                                   action="{% url 'bill_of_quantities:payment-certificate-email' project.pk payment_certificate.pk %}">
                                 {% csrf_token %}
                                 <button type="submit"
-                                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white bg-green-600 rounded-md border border-gray-300 shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                     {% heroicon_outline "envelope" class="w-4 h-4" %}
                                     Email to Signatories
                                 </button>
                             </form>
                         {% else %}
                             <a href="{% url 'project:signatory-list' project.pk %}"
-                               class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-gray-50 rounded-md border border-gray-300 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                                 {% heroicon_outline "plus" class="w-4 h-4" %}
                                 Add signatories to send email
                             </a>
@@ -76,50 +76,50 @@
                     {% endif %}
                     <!-- Section View Buttons -->
                     <a href="{% url 'bill_of_quantities:payment-certificate-cover-page' project.pk payment_certificate.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                        title="View Cover Page in browser">
-                        {% heroicon_outline "document" class="w-4 h-4 mr-1" %}
+                        {% heroicon_outline "document" class="mr-1 w-4 h-4" %}
                         Cover Page
                     </a>
                     <a href="{% url 'bill_of_quantities:payment-certificate-valuation-summary' project.pk payment_certificate.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                        title="View Valuation Summary in browser">
-                        {% heroicon_outline "table-cells" class="w-4 h-4 mr-1" %}
+                        {% heroicon_outline "table-cells" class="mr-1 w-4 h-4" %}
                         Valuation Summary
                     </a>
                     <a href="{% url 'bill_of_quantities:payment-certificate-view-detailed' project.pk payment_certificate.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-indigo-300 shadow-sm text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-indigo-700 bg-indigo-50 rounded-md border border-indigo-300 shadow-sm hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                        title="View detailed report in browser">
-                        {% heroicon_outline "list-bullet" class="w-4 h-4 mr-1" %}
+                        {% heroicon_outline "list-bullet" class="mr-1 w-4 h-4" %}
                         View Detailed
                     </a>
                 </div>
             </div>
-            <div id="pdf-download" class="mt-6 pt-6 border-t border-gray-200">
-                <div class="flex items-center justify-between mb-4">
+            <div id="pdf-download" class="pt-6 mt-6 border-t border-gray-200">
+                <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Download Reports</h2>
                     {% if payment_certificate.status == "DRAFT" or payment_certificate.status == "REJECTED" %}
                         <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
-                           class="inline-flex items-center px-3 py-1.5 border border-indigo-600 shadow-sm text-xs font-medium rounded text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "pencil" class="w-3.5 h-3.5 mr-1" %}
+                           class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-white rounded border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "pencil" class="mr-1 w-3.5 h-3.5" %}
                             Edit Certificate Data
                         </a>
                     {% endif %}
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <!-- Card 1: Full Payment Certificate -->
                     <form method="get"
                           id="default-full-pdf-form"
-                          class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-indigo-300 transition-colors flex flex-col justify-between"
+                          class="flex flex-col justify-between p-5 bg-gray-50 rounded-lg border border-gray-200 transition-colors hover:border-indigo-300"
                           action="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}">
                         <div>
-                            <div class="flex items-start justify-between mb-3">
+                            <div class="flex justify-between items-start mb-3">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex gap-2 items-center">
                                         <h3 class="text-base font-semibold text-gray-900">Full Payment Certificate</h3>
                                         {% if payment_certificate.pdf_generating %}
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                <svg class="animate-spin h-3 w-3"
+                                            <span class="inline-flex gap-1 items-center px-2 py-0.5 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
+                                                <svg class="w-3 h-3 animate-spin"
                                                      xmlns="http://www.w3.org/2000/svg"
                                                      fill="none"
                                                      viewBox="0 0 24 24">
@@ -130,28 +130,28 @@
                                                 Generating...
                                             </span>
                                         {% elif payment_certificate.pdf %}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                                                 ✓ Available
                                             </span>
                                         {% else %}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
                                                 Not generated
                                             </span>
                                         {% endif %}
                                     </div>
-                                    <p class="text-xs text-gray-600 mt-1">Complete certificate with all line items</p>
+                                    <p class="mt-1 text-xs text-gray-600">Complete certificate with all line items</p>
                                 </div>
                             </div>
                             <!-- Custom Section Selectors -->
                             <div class="mb-4">
-                                <p class="text-xs font-medium text-gray-700 mb-2">Select sections to include:</p>
-                                <div class="space-y-1.5 bg-white p-3 rounded border border-gray-100 shadow-sm">
+                                <p class="mb-2 text-xs font-medium text-gray-700">Select sections to include:</p>
+                                <div class="p-3 space-y-1.5 bg-white rounded border border-gray-100 shadow-sm">
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
                                         <input type="checkbox"
                                                name="front"
                                                value="true"
                                                checked
-                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                               class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                         <span>Cover Page (Front)</span>
                                     </label>
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
@@ -159,7 +159,7 @@
                                                name="summary"
                                                value="true"
                                                checked
-                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                               class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                         <span>Valuation Summary</span>
                                     </label>
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
@@ -167,7 +167,7 @@
                                                name="detailed"
                                                value="true"
                                                checked
-                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                               class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                         <span>Detailed Report</span>
                                     </label>
                                 </div>
@@ -181,12 +181,12 @@
                                            name="force"
                                            value="true"
                                            id="force-full-pdf"
-                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                           class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                     <span>Force regenerate</span>
                                 </label>
                             </div>
                             <!-- Dual Buttons -->
-                            <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex flex-col gap-3 sm:flex-row">
                                 <button type="submit"
                                         id="full-pdf-button"
                                         {% if payment_certificate.pdf_generating %}disabled{% endif %}
@@ -207,16 +207,16 @@
                     </form>
                     <!-- Card 2: Abridged Certificate -->
                     <form method="get"
-                          class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-indigo-300 transition-colors flex flex-col justify-between"
+                          class="flex flex-col justify-between p-5 bg-gray-50 rounded-lg border border-gray-200 transition-colors hover:border-indigo-300"
                           action="{% url 'bill_of_quantities:payment-certificate-download-abridged-pdf' project.pk payment_certificate.pk %}">
                         <div>
-                            <div class="flex items-start justify-between mb-3">
+                            <div class="flex justify-between items-start mb-3">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex gap-2 items-center">
                                         <h3 class="text-base font-semibold text-gray-900">Abridged Certificate</h3>
                                         {% if payment_certificate.abridged_pdf_generating %}
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                <svg class="animate-spin h-3 w-3"
+                                            <span class="inline-flex gap-1 items-center px-2 py-0.5 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
+                                                <svg class="w-3 h-3 animate-spin"
                                                      xmlns="http://www.w3.org/2000/svg"
                                                      fill="none"
                                                      viewBox="0 0 24 24">
@@ -227,28 +227,28 @@
                                                 Generating...
                                             </span>
                                         {% elif payment_certificate.abridged_pdf %}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                                                 ✓ Available
                                             </span>
                                         {% else %}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
                                                 Not generated
                                             </span>
                                         {% endif %}
                                     </div>
-                                    <p class="text-xs text-gray-600 mt-1">Summary with claimed items only</p>
+                                    <p class="mt-1 text-xs text-gray-600">Summary with claimed items only</p>
                                 </div>
                             </div>
                             <!-- Custom Section Selectors -->
                             <div class="mb-4">
-                                <p class="text-xs font-medium text-gray-700 mb-2">Select sections to include:</p>
-                                <div class="space-y-1.5 bg-white p-3 rounded border border-gray-100 shadow-sm">
+                                <p class="mb-2 text-xs font-medium text-gray-700">Select sections to include:</p>
+                                <div class="p-3 space-y-1.5 bg-white rounded border border-gray-100 shadow-sm">
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
                                         <input type="checkbox"
                                                name="front"
                                                value="true"
                                                checked
-                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                               class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                         <span>Cover Page (Front)</span>
                                     </label>
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
@@ -256,7 +256,7 @@
                                                name="summary"
                                                value="true"
                                                checked
-                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                               class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                         <span>Valuation Summary</span>
                                     </label>
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
@@ -264,7 +264,7 @@
                                                name="detailed"
                                                value="true"
                                                checked
-                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                               class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                         <span>Detailed Report</span>
                                     </label>
                                 </div>
@@ -278,12 +278,12 @@
                                            name="force"
                                            value="true"
                                            id="force-abridged-pdf"
-                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                           class="mr-2 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                     <span>Force regenerate</span>
                                 </label>
                             </div>
                             <!-- Dual Buttons -->
-                            <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex flex-col gap-3 sm:flex-row">
                                 <button type="submit"
                                         id="abridged-pdf-button"
                                         {% if payment_certificate.abridged_pdf_generating %}disabled{% endif %}
@@ -306,40 +306,40 @@
             </div>
             <!-- Invoice and Statement Section -->
             {% if payment_certificate.status == payment_certificate.Status.APPROVED %}
-                <div id="invoice-statement" class="mt-6 pt-6 border-t border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Client Documents</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="invoice-statement" class="pt-6 mt-6 border-t border-gray-200">
+                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Client Documents</h2>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <!-- Invoice -->
                         <a href="{% url 'bill_of_quantities:payment-certificate-invoice' project.pk payment_certificate.pk %}"
                            target="_blank"
-                           class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors block">
-                            <div class="flex items-start justify-between mb-3">
+                           class="block p-4 bg-gray-50 rounded-lg border border-gray-200 transition-colors hover:border-indigo-300">
+                            <div class="flex justify-between items-start mb-3">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex gap-2 items-center">
                                         <h3 class="text-sm font-semibold text-gray-900">Invoice</h3>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
                                             {% heroicon_outline "document" class="w-3 h-3" %}
                                             PDF Available
                                         </span>
                                     </div>
-                                    <p class="text-xs text-gray-600 mt-1">Client invoice for payment</p>
+                                    <p class="mt-1 text-xs text-gray-600">Client invoice for payment</p>
                                 </div>
                                 {% heroicon_outline "arrow-down-tray" class="w-5 h-5 text-gray-400" %}
                             </div>
                         </a>
                         <!-- Payment Statement -->
                         <a href="{% url 'bill_of_quantities:payment-certificate-payment-statement' project.pk %}"
-                           class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors block">
-                            <div class="flex items-start justify-between mb-3">
+                           class="block p-4 bg-gray-50 rounded-lg border border-gray-200 transition-colors hover:border-indigo-300">
+                            <div class="flex justify-between items-start mb-3">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex gap-2 items-center">
                                         <h3 class="text-sm font-semibold text-gray-900">Payment Statement</h3>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                                             {% heroicon_outline "document-text" class="w-3 h-3" %}
                                             Interactive
                                         </span>
                                     </div>
-                                    <p class="text-xs text-gray-600 mt-1">View payment history and balance</p>
+                                    <p class="mt-1 text-xs text-gray-600">View payment history and balance</p>
                                 </div>
                                 {% heroicon_outline "arrow-right" class="w-5 h-5 text-gray-400" %}
                             </div>
@@ -350,29 +350,29 @@
         {% endif %}
     </div>
     <!-- Transactions Preview -->
-    <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
-        <div class="border-b border-gray-200 mb-4">
+    <div class="px-6 py-4 mb-6 bg-white rounded-lg shadow-sm">
+        <div class="mb-4 border-b border-gray-200">
             <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
-            <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
+            <p class="mb-2 text-sm text-gray-600">Review the transactions before approving</p>
         </div>
         <div id="contract-line-items" class="mb-6 border-b border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
+            <h2 class="mb-2 text-lg font-bold text-gray-900">Contract Line Items</h2>
             {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
         </div>
         <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
+            <h2 class="mb-2 text-lg font-bold text-gray-900">Addendum Line Items</h2>
             {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
         </div>
         <div id="special-items"
-             class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
-            <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+             class="flex flex-col gap-2 justify-center items-center mb-2 mb-6 border-b border-gray-200">
+            <h2 class="flex gap-2 items-center mb-2 text-lg font-bold text-gray-900">
                 {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
             </h2>
             {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
         </div>
         <!-- Ledger Totals Section -->
         <div id="ledger-totals" class="mb-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <h2 class="flex gap-2 items-center mb-4 text-lg font-bold text-gray-900">
                 {% heroicon_outline "calculator" size="20" class="text-indigo-600" %} Ledger Totals
             </h2>
             {% include "payment_certificate/tables/ledger_totals.html" %}
@@ -482,8 +482,8 @@
               let badgeHTML = '';
               if (isGenerating) {
                   badgeHTML = `
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <span class="inline-flex gap-1 items-center px-2 py-0.5 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
+                          <svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
@@ -495,7 +495,7 @@
                   button.classList.add('bg-gray-400', 'cursor-not-allowed');
               } else if (isAvailable) {
                   badgeHTML = `
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                           ✓ Available
                       </span>
                   `;
@@ -504,7 +504,7 @@
                   button.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500');
               } else {
                   badgeHTML = `
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
                           Not generated
                       </span>
                   `;
