@@ -15,8 +15,11 @@
                 font-family: 'Inter', Arial, Helvetica, sans-serif;
                 font-size: 8pt;
                 line-height: 1.3;
+                font-family: 'Inter', Arial, Helvetica, sans-serif;
+                font-size: 8pt;
+                line-height: 1.3;
                 margin: 0;
-                padding: 10px;
+                padding: 0;
                 color: #111827;
             }
             *, *::before, *::after {
@@ -73,8 +76,11 @@
             }
             table.items-table th, table.items-table td {
                 padding: 4px;
+                padding: 4px;
                 vertical-align: middle;
                 border: none;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
             table.items-table th {
                 background-color: #1e3a5f;
@@ -172,23 +178,37 @@
                     {{ project.name }} - Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} - {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
                 </div>
 
-                <table class="items-table">
+                <table class="items-table" width="100%">
                   
                     <thead>
                         <tr>
                             {% for col in columns %}
                                 {% if col.id == 'item_number' %}
-                                    <th class="left-align" width="3%">{{ col.label }}</th>
+                                    <th class="left-align" style="width: 5%;">{{ col.label }}</th>
                                 {% elif col.id == 'payment_reference' %}
-                                    <th class="left-align" width="7%">{{ col.label }}</th>
+                                    <th class="left-align" style="width: 6%;">{{ col.label }}</th>
                                 {% elif col.id == 'description' %}
-                                    <th class="left-align" width="25%">{{ col.label }}</th>
+                                    <th class="left-align" style="width: 20%;">{{ col.label }}</th>
                                 {% elif col.id == 'unit_measurement' %}
-                                    <th class="text-center" width="5%">{{ col.label }}</th>
+                                    <th class="text-center" style="width: 4%;">{{ col.label }}</th>
                                 {% elif col.id == 'budgeted_quantity' %}
-                                    <th class="right-align" width="8%">{{ col.label }}</th>
+                                    <th class="right-align" style="width: 6%;">{{ col.label }}</th>
                                 {% elif col.id == 'unit_price' %}
-                                    <th class="right-align" width="8%">{{ col.label }}</th>
+                                    <th class="right-align" style="width: 6%;">{{ col.label }}</th>
+                                {% elif col.id == 'total_price' %}
+                                    <th class="right-align" style="width: 7%;">{{ col.label }}</th>
+                                {% elif col.id == 'total_qty' %}
+                                    <th class="right-align" style="width: 7%;">{{ col.label }}</th>
+                                {% elif col.id == 'total_claimed' %}
+                                    <th class="right-align" style="width: 8%;">{{ col.label }}</th>
+                                {% elif col.id == 'previous_qty' %}
+                                    <th class="right-align" style="width: 7%;">{{ col.label }}</th>
+                                {% elif col.id == 'previous_claimed' %}
+                                    <th class="right-align" style="width: 8%;">{{ col.label }}</th>
+                                {% elif col.id == 'current_qty' %}
+                                    <th class="right-align" style="width: 7%;">{{ col.label }}</th>
+                                {% elif col.id == 'current_claim' %}
+                                    <th class="right-align" style="width: 9%;">{{ col.label }}</th>
                                 {% else %}
                                     <th class="right-align">{{ col.label }}</th>
                                 {% endif %}
@@ -210,23 +230,29 @@
                                         <tr class="item-row">
                                             {% for col in columns %}
                                                 {% if col.id == 'item_number' %}
-                                                    <td class="left-align" width="3%">{{ line_item.item_number|default:"" }}</td>
+                                                    <td class="left-align">{{ line_item.item_number|default:"" }}</td>
                                                 {% elif col.id == 'payment_reference' %}
-                                                    <td class="left-align" width="7%">{{ line_item.payment_reference|default:"" }}</td>
+                                                    <td class="left-align">{{ line_item.payment_reference|default:"" }}</td>
                                                 {% elif col.id == 'description' %}
-                                                    <td width="25%">{{ line_item.description }}</td>
+                                                    <td>{{ line_item.description }}</td>
                                                 {% elif col.id == 'unit_measurement' %}
-                                                    <td class="text-center" width="5%">{{ line_item.unit_measurement|default:"-" }}</td>
+                                                    <td class="text-center">{{ line_item.unit_measurement|default:"-" }}</td>
                                                 {% elif col.id == 'budgeted_quantity' %}
-                                                    <td class="text-right" width="8%">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                    <td class="text-right">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% elif col.id == 'unit_price' %}
                                                     <td class="text-right">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% elif col.id == 'total_price' %}
                                                     <td class="text-right">{% if line_item.total_price %}{{ line_item.total_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'total_qty' %}
+                                                    <td class="text-right">{% if line_item.total_qty %}{{ line_item.total_qty|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% elif col.id == 'total_claimed' %}
                                                     <td class="text-right">{% if line_item.total_claimed %}{{ line_item.total_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'previous_qty' %}
+                                                    <td class="text-right">{% if line_item.previous_qty %}{{ line_item.previous_qty|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% elif col.id == 'previous_claimed' %}
                                                     <td class="text-right">{% if line_item.previous_claimed %}{{ line_item.previous_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                {% elif col.id == 'current_qty' %}
+                                                    <td class="text-right">{% if line_item.current_qty %}{{ line_item.current_qty|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% elif col.id == 'current_claim' %}
                                                     <td class="text-right">{% if line_item.current_claim %}{{ line_item.current_claim|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% else %}
@@ -253,10 +279,16 @@
                                         <td></td>
                                     {% elif col.id == 'total_price' %}
                                         <td class="text-right">{% if bill_group.budget %}{{ bill_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'total_qty' %}
+                                        <td class="text-right">-</td>
                                     {% elif col.id == 'total_claimed' %}
                                         <td class="text-right">{% if bill_group.cumulative %}{{ bill_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'previous_qty' %}
+                                        <td class="text-right">-</td>
                                     {% elif col.id == 'previous_claimed' %}
                                         <td class="text-right">{% if bill_group.previous %}{{ bill_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                    {% elif col.id == 'current_qty' %}
+                                        <td class="text-right">-</td>
                                     {% elif col.id == 'current_claim' %}
                                         <td class="text-right">{% if bill_group.current %}{{ bill_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                     {% else %}
@@ -281,10 +313,16 @@
                                     <td></td>
                                 {% elif col.id == 'total_price' %}
                                     <td class="text-right">{% if structure_group.budget %}{{ structure_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'total_qty' %}
+                                    <td class="text-right">-</td>
                                 {% elif col.id == 'total_claimed' %}
                                     <td class="text-right">{% if structure_group.cumulative %}{{ structure_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'previous_qty' %}
+                                    <td class="text-right">-</td>
                                 {% elif col.id == 'previous_claimed' %}
                                     <td class="text-right">{% if structure_group.previous %}{{ structure_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                {% elif col.id == 'current_qty' %}
+                                    <td class="text-right">-</td>
                                 {% elif col.id == 'current_claim' %}
                                     <td class="text-right">{% if structure_group.current %}{{ structure_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                 {% else %}
@@ -295,7 +333,7 @@
                     </tbody> 
                 </table>
                 <div class="footer-text">
-                    {% if project.contractor %}{{ project.contractor.name }}{% else %}NIX Quantity Surveyors (Pty) Ltd{% endif %} | {% if project.client %}{{ project.client.name }}{% else %}Rustenburg Platinum Mines (PTY) LTD, 144 Oxford St, Rosebank, 2196{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                    {% if project.contractor %}{{ project.contractor.name }}{% endif %} | {% if project.client %}{{ project.client.name }}{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
                 </div>
             </div>
         {% empty %}

@@ -68,7 +68,6 @@ class ProjectForm(forms.ModelForm):
             "status",
             "vat",
             "payment_terms",
-            "certificate_layout",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -111,7 +110,6 @@ class ProjectForm(forms.ModelForm):
             "category": forms.Select(),
             "vat": forms.CheckboxInput(),
             "payment_terms": forms.Select(),
-            "certificate_layout": forms.Select(),
         }
         labels = {
             "name": "Project Name",
@@ -127,7 +125,6 @@ class ProjectForm(forms.ModelForm):
             "bank_branch_code": "Branch Code",
             "bank_swift_code": "SWIFT Code",
             "vat_number": "VAT/Tax Number",
-            "certificate_layout": "Payment Certificate Layout",
         }
         help_texts = {
             "logo": "Upload a logo for invoices and documents (JPG, PNG, GIF, SVG). Recommended size: 900x600px",
@@ -135,7 +132,6 @@ class ProjectForm(forms.ModelForm):
             "area": "Select the project area (Municipality)",
             "project_stage": "Select the project stage",
             "project_discipline": "Select the project discipline",
-            "certificate_layout": "Select the layout style for payment certificates",
         }
 
     def clean(self):

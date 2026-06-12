@@ -519,30 +519,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
                 messages.error(request, f"Error loading demo data: {e}")
 
         elif action == "save_report_config":
-            layout = request.POST.get("certificate_layout")
             column_config_str = request.POST.get("column_config")
-
-            if layout in Project.CertificateLayout.values:
-                # Clear certificate caches if layout changed
-                if project.certificate_layout != layout:
-                    for cert in project.payment_certificates.all():
-                        if cert.pdf:
-                            cert.pdf.delete(save=False)
-                        if cert.abridged_pdf:
-                            cert.abridged_pdf.delete(save=False)
-                        cert.pdf = None
-                        cert.abridged_pdf = None
-                        cert.pdf_generating = False
-                        cert.abridged_pdf_generating = False
-                        cert.save(
-                            update_fields=[
-                                "pdf",
-                                "abridged_pdf",
-                                "pdf_generating",
-                                "abridged_pdf_generating",
-                            ]
-                        )
-                project.certificate_layout = layout
 
             import json
 

@@ -190,15 +190,11 @@ def compile_pdf_for_certificate(
     include_summary: bool = True,
     include_detailed: bool = True,
     is_abridged: bool = False,
-    layout: str | None = None,
 ) -> ContentFile:
     """
-    Compile a payment certificate PDF with optional layout and sections.
+    Compile a payment certificate PDF with optional sections.
     """
     project = payment_certificate.project
-    if not layout:
-        layout = getattr(project, "certificate_layout", "standard") or "standard"
-    layout = layout.lower()
 
     # Context initialization
     all_columns = project.get_column_config()
@@ -234,8 +230,8 @@ def compile_pdf_for_certificate(
             }
         )
 
-    # Add summary data if summary is requested and layout is valterra_rpm or lephadimisha
-    if include_summary and layout in ("valterra_rpm", "lephadimisha"):
+    # Add summary data if summary is requested
+    if include_summary:
         summary_data = get_valuation_summary_data(payment_certificate)
         context.update(summary_data)
 
@@ -243,25 +239,15 @@ def compile_pdf_for_certificate(
     merger = PdfWriter()
     pdf_parts = []
 
-    if layout in ("valterra_rpm", "lephadimisha"):
-        if include_front:
-            front_tpl = get_template("pdf_templates/valterra_rpm/1-front-page.html")
-            pdf_parts.append(generate_pdf(front_tpl.render(context)))
-        if include_summary:
-            sum_tpl = get_template("pdf_templates/valterra_rpm/2-summary.html")
-            pdf_parts.append(generate_pdf(sum_tpl.render(context)))
-        if include_detailed:
-            det_tpl = get_template("pdf_templates/valterra_rpm/3-detailed.html")
-            pdf_parts.append(generate_pdf(det_tpl.render(context)))
-    else:
-        # Standard Layout
-        if include_front:
-            front_tpl = get_template("pdf_templates/1-front-page.html")
-            pdf_parts.append(generate_pdf(front_tpl.render(context)))
-        # Standard layout has no separate summary page, but if detailed is checked we render 2-line-items
-        if include_detailed:
-            det_tpl = get_template("pdf_templates/2-line-items.html")
-            pdf_parts.append(generate_pdf(det_tpl.render(context)))
+    if include_front:
+        front_tpl = get_template("pdf_templates/valterra_rpm/1-front-page.html")
+        pdf_parts.append(generate_pdf(front_tpl.render(context)))
+    if include_summary:
+        sum_tpl = get_template("pdf_templates/valterra_rpm/2-summary.html")
+        pdf_parts.append(generate_pdf(sum_tpl.render(context)))
+    if include_detailed:
+        det_tpl = get_template("pdf_templates/valterra_rpm/3-detailed.html")
+        pdf_parts.append(generate_pdf(det_tpl.render(context)))
 
     # Merge PDFs using pypdf
     for pdf_content in pdf_parts:
@@ -281,7 +267,6 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
     """Generate payment certificate PDF in memory (for backwards compatibility)."""
     payment_certificate = context.get("payment_certificate")
     if payment_certificate:
-        layout = getattr(payment_certificate.project, "certificate_layout", "standard")
         is_abridged = context.get("is_abridged", False)
         return compile_pdf_for_certificate(
             payment_certificate,
@@ -289,20 +274,21 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
             include_summary=True,
             include_detailed=True,
             is_abridged=is_abridged,
-            layout=layout,
         )
 
     # Fallback to standard logic if no payment_certificate is in context
     context["now"] = datetime.now()
     context["vat_rate"] = settings.VAT_RATE
-    front_page_template = get_template("pdf_templates/1-front-page.html")
-    line_items_template = get_template("pdf_templates/2-line-items.html")
+    front_page_template = get_template("pdf_templates/valterra_rpm/1-front-page.html")
+    summary_template = get_template("pdf_templates/valterra_rpm/2-summary.html")
+    line_items_template = get_template("pdf_templates/valterra_rpm/3-detailed.html")
 
     front_page_pdf = generate_pdf(front_page_template.render(context))
+    summary_pdf = generate_pdf(summary_template.render(context))
     line_items_pdf = generate_pdf(line_items_template.render(context))
 
     merger = PdfWriter()
-    for pdf_content in [front_page_pdf, line_items_pdf]:
+    for pdf_content in [front_page_pdf, summary_pdf, line_items_pdf]:
         pdf_reader = PdfReader(BytesIO(pdf_content.read()))
         for page in pdf_reader.pages:
             merger.add_page(page)
