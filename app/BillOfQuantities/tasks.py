@@ -11,7 +11,6 @@ from django.template.loader import get_template, render_to_string
 from pypdf import PdfReader, PdfWriter
 
 from app.BillOfQuantities.exporters.unified_xlsx_exporter import export_unified_xlsx
-from app.BillOfQuantities.exporters.unified_xlsx_exporter import export_unified_xlsx
 from app.BillOfQuantities.models import LineItem, PaymentCertificate
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.generate_pdf import generate_pdf
