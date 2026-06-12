@@ -81,14 +81,12 @@
                         {% heroicon_outline "document" class="w-4 h-4 mr-1" %}
                         Cover Page
                     </a>
-                    {% if project.certificate_layout == "VALTERRA_RPM" or project.certificate_layout == "LEPHADIMISHA" %}
-                        <a href="{% url 'bill_of_quantities:payment-certificate-valuation-summary' project.pk payment_certificate.pk %}"
-                           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                           title="View Valuation Summary in browser">
-                            {% heroicon_outline "table-cells" class="w-4 h-4 mr-1" %}
-                            Valuation Summary
-                        </a>
-                    {% endif %}
+                    <a href="{% url 'bill_of_quantities:payment-certificate-valuation-summary' project.pk payment_certificate.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       title="View Valuation Summary in browser">
+                        {% heroicon_outline "table-cells" class="w-4 h-4 mr-1" %}
+                        Valuation Summary
+                    </a>
                     <a href="{% url 'bill_of_quantities:payment-certificate-view-detailed' project.pk payment_certificate.pk %}"
                        class="inline-flex items-center px-3 py-2 border border-indigo-300 shadow-sm text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                        title="View detailed report in browser">
@@ -156,16 +154,14 @@
                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
                                         <span>Cover Page (Front)</span>
                                     </label>
-                                    {% if project.certificate_layout == "VALTERRA_RPM" or project.certificate_layout == "LEPHADIMISHA" %}
-                                        <label class="flex items-center text-xs text-gray-700 cursor-pointer">
-                                            <input type="checkbox"
-                                                   name="summary"
-                                                   value="true"
-                                                   checked
-                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
-                                            <span>Valuation Summary</span>
-                                        </label>
-                                    {% endif %}
+                                    <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                        <input type="checkbox"
+                                               name="summary"
+                                               value="true"
+                                               checked
+                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                        <span>Valuation Summary</span>
+                                    </label>
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
                                         <input type="checkbox"
                                                name="detailed"
@@ -255,16 +251,14 @@
                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
                                         <span>Cover Page (Front)</span>
                                     </label>
-                                    {% if project.certificate_layout == "VALTERRA_RPM" or project.certificate_layout == "LEPHADIMISHA" %}
-                                        <label class="flex items-center text-xs text-gray-700 cursor-pointer">
-                                            <input type="checkbox"
-                                                   name="summary"
-                                                   value="true"
-                                                   checked
-                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
-                                            <span>Valuation Summary</span>
-                                        </label>
-                                    {% endif %}
+                                    <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                        <input type="checkbox"
+                                               name="summary"
+                                               value="true"
+                                               checked
+                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                        <span>Valuation Summary</span>
+                                    </label>
                                     <label class="flex items-center text-xs text-gray-700 cursor-pointer">
                                         <input type="checkbox"
                                                name="detailed"

@@ -51,12 +51,6 @@ class Project(BaseModel):
         DAYS_30 = "30_DAYS", "30 Days"
         DAYS_60 = "60_DAYS", "60 Days"
         DAYS_90 = "90_DAYS", "90 Days"
-
-    class CertificateLayout(models.TextChoices):
-        STANDARD = "STANDARD", "Standard"
-        VALTERRA_RPM = "VALTERRA_RPM", "Valterra/RPM"
-        LEPHADIMISHA = "LEPHADIMISHA", "Lephadimisha BOQ Report"
-
     portfolio = models.ForeignKey(
         "Project.Portfolio",
         on_delete=models.SET_NULL,
@@ -82,12 +76,6 @@ class Project(BaseModel):
     )
     status = models.CharField(
         max_length=255, choices=Status.choices, default=Status.SETUP
-    )
-    certificate_layout = models.CharField(
-        max_length=50,
-        choices=CertificateLayout.choices,
-        default=CertificateLayout.STANDARD,
-        help_text="Select the layout style for payment certificates",
     )
     column_config = models.JSONField(
         default=dict,
@@ -325,26 +313,6 @@ class Project(BaseModel):
             {"id": "current_claim", "label": "Amount Due", "enabled": True},
         ]
 
-        if self.certificate_layout == self.CertificateLayout.LEPHADIMISHA:
-            custom_defaults = {
-                "item_number": {"label": "ITEM", "enabled": True},
-                "payment_reference": {"label": "PAY REF", "enabled": True},
-                "description": {"label": "DESCRIPTION", "enabled": True},
-                "unit_measurement": {"label": "UNIT", "enabled": True},
-                "budgeted_quantity": {"label": "QTY", "enabled": True},
-                "unit_price": {"label": "RATE (R)", "enabled": True},
-                "total_price": {"label": "TENDER AMT (R)", "enabled": True},
-                "total_qty": {"label": "CUMUL. CERT (R)", "enabled": False},
-                "total_claimed": {"label": "CUMUL. CERT (R)", "enabled": True},
-                "previous_qty": {"label": "PREV. CERT (R)", "enabled": False},
-                "previous_claimed": {"label": "PREV. CERT (R)", "enabled": True},
-                "current_qty": {"label": "AMT DUE (R)", "enabled": False},
-                "current_claim": {"label": "AMT DUE (R)", "enabled": True},
-            }
-            for col in default_columns:
-                if col["id"] in custom_defaults:
-                    col.update(custom_defaults[col["id"]])
-
         if (
             self.column_config
             and isinstance(self.column_config, dict)
@@ -389,7 +357,6 @@ class Project(BaseModel):
         dates_changed = False
         old_start_date = None
         old_end_date = None
-        layout_changed = False
 
         if self.pk:
             try:
@@ -399,30 +366,8 @@ class Project(BaseModel):
                 dates_changed = (
                     old_start_date != self.start_date or old_end_date != self.end_date
                 )
-                layout_changed = (
-                    old_instance.certificate_layout != self.certificate_layout
-                )
             except Project.DoesNotExist:
                 pass
-
-        if layout_changed:
-            for cert in self.payment_certificates.all():
-                if cert.pdf:
-                    cert.pdf.delete(save=False)
-                if cert.abridged_pdf:
-                    cert.abridged_pdf.delete(save=False)
-                cert.pdf = None
-                cert.abridged_pdf = None
-                cert.pdf_generating = False
-                cert.abridged_pdf_generating = False
-                cert.save(
-                    update_fields=[
-                        "pdf",
-                        "abridged_pdf",
-                        "pdf_generating",
-                        "abridged_pdf_generating",
-                    ]
-                )
 
         if not self.logo:
             super().save(*args, **kwargs)

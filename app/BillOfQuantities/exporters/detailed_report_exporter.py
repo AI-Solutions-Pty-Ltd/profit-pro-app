@@ -376,7 +376,8 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
             elif col_id == "description":
                 width = 65
             else:
-                width = 15
+                # Give enough space for the custom label or default 15
+                width = max(15, len(col_config.get("label", "")) + 2)
             ws.column_dimensions[col_letter].width = width
 
         # Format numbers

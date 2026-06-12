@@ -66,19 +66,9 @@ class TestExporters:
         assert data["total_previous"] == Decimal("0.00")
         assert data["total_current"] == Decimal("200.00")
 
-    def test_compile_pdf_for_certificate_standard(self):
-        """Test PDF compiler for standard layout."""
-        project = ProjectFactory.create(certificate_layout="standard")
-        cert = PaymentCertificateFactory.create(project=project)
-        LineItemFactory.create(project=project)
-
-        pdf_file = compile_pdf_for_certificate(cert)
-        assert pdf_file is not None
-        assert pdf_file.size > 0
-
-    def test_compile_pdf_for_certificate_valterra_rpm(self):
-        """Test PDF compiler for Valterra/RPM layout."""
-        project = ProjectFactory.create(certificate_layout="valterra_rpm")
+    def test_compile_pdf_for_certificate(self):
+        """Test PDF compiler."""
+        project = ProjectFactory.create()
         cert = PaymentCertificateFactory.create(project=project)
         LineItemFactory.create(project=project)
 
@@ -88,7 +78,7 @@ class TestExporters:
 
     def test_compile_pdf_custom_sections(self):
         """Test PDF compiler with custom section inclusions."""
-        project = ProjectFactory.create(certificate_layout="valterra_rpm")
+        project = ProjectFactory.create()
         cert = PaymentCertificateFactory.create(project=project)
         LineItemFactory.create(project=project)
 
@@ -106,7 +96,7 @@ class TestExporters:
         from app.Project.models import Company
 
         # 1. Project logo
-        project1 = ProjectFactory.create(certificate_layout="standard")
+        project1 = ProjectFactory.create()
         project1.logo = SimpleUploadedFile(
             "logo.png",
             b"GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
@@ -118,7 +108,7 @@ class TestExporters:
         assert pdf_file1 is not None
 
         # 2. Contractor logo
-        project2 = ProjectFactory.create(certificate_layout="standard", logo=None)
+        project2 = ProjectFactory.create(logo=None)
         contractor = Company.objects.create(
             type=Company.Type.CONTRACTOR, name="Contractor Inc"
         )
@@ -135,7 +125,7 @@ class TestExporters:
         assert pdf_file2 is not None
 
         # 3. Client logo
-        project3 = ProjectFactory.create(certificate_layout="standard", logo=None)
+        project3 = ProjectFactory.create(logo=None)
         client = Company.objects.create(type=Company.Type.CLIENT, name="Client Ltd")
         client.logo = SimpleUploadedFile(
             "client_logo.png",
@@ -149,27 +139,13 @@ class TestExporters:
         pdf_file3 = compile_pdf_for_certificate(cert3)
         assert pdf_file3 is not None
 
-    def test_compile_pdf_logo_fallbacks_valterra_layout(self):
-        """Test that Valterra layout PDF compiles successfully with logo fallbacks."""
-        from django.core.files.uploadedfile import SimpleUploadedFile
 
-        # Project logo
-        project1 = ProjectFactory.create(certificate_layout="valterra_rpm")
-        project1.logo = SimpleUploadedFile(
-            "logo.png",
-            b"GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
-            content_type="image/gif",
-        )
-        project1.save()
-        cert1 = PaymentCertificateFactory.create(project=project1)
-        pdf_file1 = compile_pdf_for_certificate(cert1)
-        assert pdf_file1 is not None
 
     def test_compile_pdf_with_custom_columns(self):
         """Test PDF compiler with custom column configuration."""
         from django.template.loader import render_to_string
 
-        project = ProjectFactory.create(certificate_layout="standard")
+        project = ProjectFactory.create()
         cert = PaymentCertificateFactory.create(project=project)
 
         # Configure custom columns: only keep description and amount due, reordered
@@ -216,7 +192,7 @@ class TestDownloadViews:
     def test_download_pdf_view_custom_sections(self, client):
         """Test that PDF download view with custom sections returns valid PDF response."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(users=user, certificate_layout="valterra_rpm")
+        project = ProjectFactory.create(users=user)
         cert = PaymentCertificateFactory.create(project=project)
         LineItemFactory.create(project=project)
 
@@ -234,7 +210,7 @@ class TestDownloadViews:
     def test_download_abridged_pdf_view_custom_sections(self, client):
         """Test that abridged PDF download view with custom sections returns valid PDF response."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(users=user, certificate_layout="valterra_rpm")
+        project = ProjectFactory.create(users=user)
         cert = PaymentCertificateFactory.create(project=project)
         LineItemFactory.create(project=project)
 
@@ -249,30 +225,4 @@ class TestDownloadViews:
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
 
-    def test_project_layout_change_clears_pdf_cache(self):
-        """Test that updating project certificate layout clears generated PDF cache of its certificates."""
-        from django.core.files.base import ContentFile
 
-        project = ProjectFactory.create(certificate_layout="standard")
-        cert = PaymentCertificateFactory.create(project=project)
-
-        # Set fake generated PDF files
-        cert.pdf.save("test_full.pdf", ContentFile(b"fake pdf"))
-        cert.abridged_pdf.save("test_abridged.pdf", ContentFile(b"fake abridged pdf"))
-        cert.pdf_generating = True
-        cert.abridged_pdf_generating = True
-        cert.save()
-
-        assert cert.pdf.name is not None
-        assert cert.abridged_pdf.name is not None
-
-        # Update layout and save project
-        project.certificate_layout = "valterra_rpm"
-        project.save()
-
-        # Re-fetch certificate and verify fields are cleared
-        cert.refresh_from_db()
-        assert not cert.pdf
-        assert not cert.abridged_pdf
-        assert not cert.pdf_generating
-        assert not cert.abridged_pdf_generating

@@ -1269,22 +1269,6 @@ class PaymentCertificateValuationSummaryView(PaymentCertificateMixin, DetailView
             },
         ]
 
-    def get(self, request, *args, **kwargs):
-        """Guard: only allow access for valterra_rpm or lephadimisha layout projects."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
-        layout = getattr(project, "certificate_layout", "") or ""
-        if layout.lower() not in ("valterra_rpm", "lephadimisha"):
-            messages.error(
-                request,
-                "Valuation Summary is only available for projects using the Valterra RPM layout.",
-            )
-            return redirect(
-                "bill_of_quantities:payment-certificate-detail",
-                project_pk=project.pk,
-                pk=self.kwargs["pk"],
-            )
-        return super().get(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         """Add valuation summary data to context."""
         from app.BillOfQuantities.tasks import get_valuation_summary_data

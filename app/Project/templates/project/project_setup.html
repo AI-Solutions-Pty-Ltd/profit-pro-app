@@ -473,7 +473,7 @@
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Report Selection & Configuration</h2>
                 <p class="mt-1 text-sm text-gray-600">
-                    Choose report layout style and customize column headings, visibility, and ordering.
+                    Customize column headings, visibility, and ordering.
                 </p>
             </div>
             <div class="px-6 py-4">
@@ -508,7 +508,7 @@
                                     <button type="button"
                                             id="reset-columns-btn"
                                             class="text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none">
-                                        Reset to Layout Defaults
+                                        Reset to Defaults
                                     </button>
                                 </div>
                             </div>
@@ -1032,7 +1032,6 @@
             const listContainer = document.getElementById('columns-config-list');
             const previewHeader = document.getElementById('live-header-preview');
             const previewBody = document.getElementById('live-body-preview');
-            const layoutSelect = document.getElementById('certificate_layout_select');
             const formInput = document.getElementById('column-config-input');
             const configForm = document.getElementById('report-config-form');
             const resetBtn = document.getElementById('reset-columns-btn');
@@ -1053,34 +1052,6 @@
                 {"id": "current_qty", "label": "Current Quantity", "enabled": true},
                 {"id": "current_claim", "label": "Amount Due", "enabled": true}
             ];
-
-            // Lephadimisha layout defaults
-            const lephadimishaDefaults = [
-                {"id": "item_number", "label": "ITEM", "enabled": true},
-                {"id": "payment_reference", "label": "PAY REF", "enabled": true},
-                {"id": "description", "label": "DESCRIPTION", "enabled": true},
-                {"id": "unit_measurement", "label": "UNIT", "enabled": true},
-                {"id": "budgeted_quantity", "label": "QTY", "enabled": true},
-                {"id": "unit_price", "label": "RATE (R)", "enabled": true},
-                {"id": "total_price", "label": "TENDER AMT (R)", "enabled": true},
-                {"id": "total_qty", "label": "CUMUL. CERT (R)", "enabled": false},
-                {"id": "total_claimed", "label": "CUMUL. CERT (R)", "enabled": true},
-                {"id": "previous_qty", "label": "PREV. CERT (R)", "enabled": false},
-                {"id": "previous_claimed", "label": "PREV. CERT (R)", "enabled": true},
-                {"id": "current_qty", "label": "AMT DUE (R)", "enabled": false},
-                {"id": "current_claim", "label": "AMT DUE (R)", "enabled": true}
-            ];
-
-            function updateLayoutPreview(layout) {
-                document.querySelectorAll('.layout-preview').forEach(el => el.classList.add('hidden'));
-                if (layout === 'STANDARD') {
-                    document.getElementById('layout-preview-standard').classList.remove('hidden');
-                } else if (layout === 'VALTERRA_RPM') {
-                    document.getElementById('layout-preview-valterra').classList.remove('hidden');
-                } else if (layout === 'LEPHADIMISHA') {
-                    document.getElementById('layout-preview-lephadimisha').classList.remove('hidden');
-                }
-            }
 
             function renderColumns() {
                 if (!listContainer) return;
@@ -1200,20 +1171,9 @@
                 previewHeader.appendChild(trHead);
             }
 
-            if (layoutSelect) {
-                layoutSelect.addEventListener('change', function() {
-                    updateLayoutPreview(this.value);
-                });
-            }
-
             if (resetBtn) {
                 resetBtn.addEventListener('click', function() {
-                    const layout = layoutSelect ? layoutSelect.value : 'STANDARD';
-                    if (layout === 'LEPHADIMISHA') {
-                        columns = JSON.parse(JSON.stringify(lephadimishaDefaults));
-                    } else {
-                        columns = JSON.parse(JSON.stringify(standardDefaults));
-                    }
+                    columns = JSON.parse(JSON.stringify(standardDefaults));
                     renderColumns();
                 });
             }
@@ -1225,9 +1185,6 @@
             }
 
             // Initialize
-            if (layoutSelect) {
-                updateLayoutPreview(layoutSelect.value);
-            }
             renderColumns();
         })();
 

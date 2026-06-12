@@ -69,12 +69,13 @@
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 5px;
-                table-layout: fixed;
             }
             table.items-table th, table.items-table td {
                 padding: 4px;
                 vertical-align: middle;
                 border: none;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
             table.items-table th {
                 background-color: #1e3a5f;
@@ -178,17 +179,17 @@
                         <tr>
                             {% for col in columns %}
                                 {% if col.id == 'item_number' %}
-                                    <th class="left-align" width="3%">{{ col.label }}</th>
+                                    <th class="left-align">{{ col.label }}</th>
                                 {% elif col.id == 'payment_reference' %}
-                                    <th class="left-align" width="7%">{{ col.label }}</th>
+                                    <th class="left-align">{{ col.label }}</th>
                                 {% elif col.id == 'description' %}
-                                    <th class="left-align" width="25%">{{ col.label }}</th>
+                                    <th class="left-align" style="min-width: 120px;">{{ col.label }}</th>
                                 {% elif col.id == 'unit_measurement' %}
-                                    <th class="text-center" width="5%">{{ col.label }}</th>
+                                    <th class="text-center">{{ col.label }}</th>
                                 {% elif col.id == 'budgeted_quantity' %}
-                                    <th class="right-align" width="8%">{{ col.label }}</th>
+                                    <th class="right-align">{{ col.label }}</th>
                                 {% elif col.id == 'unit_price' %}
-                                    <th class="right-align" width="8%">{{ col.label }}</th>
+                                    <th class="right-align">{{ col.label }}</th>
                                 {% else %}
                                     <th class="right-align">{{ col.label }}</th>
                                 {% endif %}
@@ -210,15 +211,15 @@
                                         <tr class="item-row">
                                             {% for col in columns %}
                                                 {% if col.id == 'item_number' %}
-                                                    <td class="left-align" width="3%">{{ line_item.item_number|default:"" }}</td>
+                                                    <td class="left-align">{{ line_item.item_number|default:"" }}</td>
                                                 {% elif col.id == 'payment_reference' %}
-                                                    <td class="left-align" width="7%">{{ line_item.payment_reference|default:"" }}</td>
+                                                    <td class="left-align">{{ line_item.payment_reference|default:"" }}</td>
                                                 {% elif col.id == 'description' %}
-                                                    <td width="25%">{{ line_item.description }}</td>
+                                                    <td>{{ line_item.description }}</td>
                                                 {% elif col.id == 'unit_measurement' %}
-                                                    <td class="text-center" width="5%">{{ line_item.unit_measurement|default:"-" }}</td>
+                                                    <td class="text-center">{{ line_item.unit_measurement|default:"-" }}</td>
                                                 {% elif col.id == 'budgeted_quantity' %}
-                                                    <td class="text-right" width="8%">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                                                    <td class="text-right">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% elif col.id == 'unit_price' %}
                                                     <td class="text-right">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
                                                 {% elif col.id == 'total_price' %}
@@ -295,7 +296,7 @@
                     </tbody> 
                 </table>
                 <div class="footer-text">
-                    {% if project.contractor %}{{ project.contractor.name }}{% else %}NIX Quantity Surveyors (Pty) Ltd{% endif %} | {% if project.client %}{{ project.client.name }}{% else %}Rustenburg Platinum Mines (PTY) LTD, 144 Oxford St, Rosebank, 2196{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                    {% if project.contractor %}{{ project.contractor.name }}{% endif %} | {% if project.client %}{{ project.client.name }}{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
                 </div>
             </div>
         {% empty %}
