@@ -49,4 +49,9 @@ urlpatterns = [
         project_views.ProjectDeleteView.as_view(),
         name="project-delete",
     ),
+    path(
+        "<int:pk>/preview-layout/",
+        project_views.ProjectReportLayoutPreviewView.as_view(),
+        name="project-layout-preview",
+    ),
 ]

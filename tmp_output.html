@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full" data-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description"
+              content="SEDGE BUILD - Streamline your business operations with our comprehensive management platform. Track finances, manage customers, and grow your business with confidence." />
+        <meta name="keywords"
+              content="SEDGE BUILD, business management, finance tracking, customer management, business growth" />
+        <title>Payment Certificate - School Project 1</title>
+        <!-- Tailwind CSS -->
+        <link rel="stylesheet"
+              type="text/css"
+              href="/static/css/dist/styles.css?v=1780998659">
+        <!-- Crispy Forms -->
+        <link href="/static/css/styles.css" rel="stylesheet">
+        <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
+        <!-- from cdn -->
+    </head>
+    <body class="flex flex-col min-h-screen bg-white">
+        <!-- Sticky Top Navigation -->
+        <nav class="sticky top-0 z-50 bg-white">
+            <!-- Complimentary Access Ribbon -->
+            <div id="complimentary-access-ribbon"
+                 class="hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white text-[10px] sm:text-xs font-bold py-1.5 px-4 justify-between items-center z-[60] border-b border-emerald-500 shadow-lg">
+                <div class="flex gap-2 items-center mx-auto sm:mx-0">
+                    <span class="flex relative w-2 h-2">
+                        <span class="inline-flex absolute w-full h-full bg-emerald-300 rounded-full opacity-75 animate-ping"></span>
+                        <span class="inline-flex relative w-2 h-2 bg-white rounded-full"></span>
+                    </span>
+                    <span class="tracking-widest uppercase">Subscriber Administration with complimentary access</span>
+                </div>
+                <button type="button"
+                        onclick="dismissComplimentaryRibbon()"
+                        class="p-0.5 text-emerald-100 rounded-md transition-all hover:text-white hover:bg-emerald-700/30 focus:outline-none"
+                        aria-label="Dismiss notice">
+                    <svg fill="none"
+                         viewBox="0 0 24 24"
+                         stroke-width="1.5"
+                         stroke="currentColor"
+                         aria-hidden="true"
+                         width="14"
+                         height="14">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const ribbon = document.getElementById('complimentary-access-ribbon');
+                if (!ribbon) return;
+
+                const FOUR_HOURS = 4 * 60 * 60 * 1000; // 4 hours in ms
+                const TWO_MINUTES = 2 * 60 * 1000; // 2 minutes in ms
+                const dismissedAt = localStorage.getItem('complimentary_ribbon_dismissed_at');
+                const now = new Date().getTime();
+
+                let shouldShow = true;
+                if (dismissedAt) {
+                    const elapsed = now - parseInt(dismissedAt, 10);
+                    if (elapsed < FOUR_HOURS) {
+                        shouldShow = false;
+                    }
+                }
+
+                if (shouldShow) {
+                    ribbon.classList.remove('hidden');
+                    ribbon.classList.add('flex');
+
+                    // Auto dismiss after 2 minutes
+                    const autoDismissTimeout = setTimeout(function() {
+                        dismissComplimentaryRibbon(true);
+                    }, TWO_MINUTES);
+
+                    window.complimentaryRibbonTimeout = autoDismissTimeout;
+                }
+            });
+
+            function dismissComplimentaryRibbon(isAuto = false) {
+                const ribbon = document.getElementById('complimentary-access-ribbon');
+                if (ribbon) {
+                    ribbon.classList.remove('flex');
+                    ribbon.classList.add('hidden');
+                    
+                    // Save dismissal timestamp
+                    localStorage.setItem('complimentary_ribbon_dismissed_at', new Date().getTime().toString());
+                    
+                    // Clear the auto-dismiss timer if manual close is triggered
+                    if (!isAuto && window.complimentaryRibbonTimeout) {
+                        clearTimeout(window.complimentaryRibbonTimeout);
+                    }
+                }
+            }
+            </script>
+            <div class="bg-indigo-600 text-white text-[10px] sm:text-xs font-bold py-1.5 px-4 flex justify-center items-center z-[60] border-b border-indigo-500 shadow-lg">
+                <div class="flex gap-2 items-center">
+                    <span class="tracking-widest">You build the business, we handle the software</span>
+                </div>
+            </div>
+            <div class="bg-white border-b border-gray-200 [{&#x27;title&#x27;: &#x27;School Project 1&#x27;, &#x27;url&#x27;: &#x27;/project/19/management/&#x27;}, {&#x27;title&#x27;: &#x27;Payment Certificates&#x27;, &#x27;url&#x27;: &#x27;/bill-of-quantities/project/19/payment-certificates/&#x27;}, {&#x27;title&#x27;: &#x27;Payment Certificate: #1&#x27;, &#x27;url&#x27;: None}]">
+                <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <!-- Logo/Brand -->
+                        <div class="flex flex-shrink-0 items-center">
+                            <a href="/" class="text-2xl font-bold text-indigo-600">SEDGE BUILD</a>
+                        </div>
+                        <!-- Navigation Links -->
+                        <div class="hidden md:block">
+                            <div class="flex items-baseline ml-10 space-x-4 font-sm">
+                                <!-- 1. Home Page -->
+                                <a href="/"
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="mr-1 w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                    </svg>
+                                    Home
+                                </a>
+                                <!-- 2. Portfolio Dashboard with Reports Dropdown -->
+                                <div class="relative group" id="portfolio-nav-container">
+                                    <a href="/project/portfolio/dashboard/"
+                                       class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                        <svg fill="none"
+                                             viewBox="0 0 24 24"
+                                             stroke-width="1.5"
+                                             stroke="currentColor"
+                                             aria-hidden="true"
+                                             width="24"
+                                             height="24"
+                                             class="mr-1 w-4 h-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                                        </svg>
+                                        Project Dashboard
+                                    </a>
+                                </div>
+                                <!-- 4. Project List -->
+                                <a href="/project/list/"
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="mr-1 w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
+                                    </svg>
+                                    Project List
+                                </a>
+                                <!-- 4b. System Library (staff only) -->
+                                <a href="/estimator/system/trade-codes/"
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="mr-1 w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3m3 3a3 3 0 1 0 0 6h13.5a3 3 0 1 0 0-6m-16.5-3a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3m-19.5 0a4.5 4.5 0 0 1 .9-2.7L5.737 5.1a3.375 3.375 0 0 1 2.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 0 1 .9 2.7m0 0a3 3 0 0 1-3 3m0 3h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Zm-3 6h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Z" />
+                                    </svg>
+                                    System Library
+                                </a>
+                                <!-- 3. Companies (only if user has companies) -->
+                                <a href="/project/company/dashboard/"
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="mr-1 w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                                    </svg>
+                                    Business Dashboard
+                                </a>
+                                <!-- 5. Consultant Clients (only for consultant group) -->
+                                <a href="/client/consultant/clients/"
+                                   class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="mr-1 w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
+                                    </svg>
+                                    Approvals
+                                </a>
+                                <!-- 6. Help Center Onboarding Hub -->
+                            </div>
+                        </div>
+                        <!-- User Actions -->
+                        <div class="hidden md:block">
+                            <div class="flex items-center ml-4 space-x-4 md:ml-6">
+                                <a href="/users/account/"
+                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md transition-colors hover:text-indigo-600"
+                                   title="View Profile">Profile</a>
+                                <form method="post" action="/users/auth/logout/">
+                                    <input type="hidden"
+                                           name="csrfmiddlewaretoken"
+                                           value="RnN5tERYcdI6jTlTgOm1SKNqrbvcM5Pik08JQxMXYQnDtlmVbdHcUgxCM3FFqxUg">
+                                    <button type="submit"
+                                            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md transition-colors hover:bg-indigo-700"
+                                            onclick="return confirm('Are you sure you want to logout?')">Logout</button>
+                                </form>
+                            </div>
+                        </div>
+                        <!-- Mobile menu button -->
+                        <div class="md:hidden">
+                            <button type="button"
+                                    class="inline-flex justify-center items-center p-2 text-gray-700 bg-gray-100 rounded-md hover:text-indigo-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600">
+                                <span class="sr-only">Open main menu</span>
+                                <svg fill="none"
+                                     viewBox="0 0 24 24"
+                                     stroke-width="1.5"
+                                     stroke="currentColor"
+                                     aria-hidden="true"
+                                     width="24"
+                                     height="24"
+                                     class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-row justify-center items-center p-2 shadow-b">
+                <!-- Breadcrumbs -->
+                <nav aria-label="Breadcrumb">
+                    <div class="flex">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                            <li class="inline-flex items-center">
+                                <a href="/"
+                                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="20"
+                                         height="20"
+                                         class="text-indigo-600">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                    </svg>
+                                </a>
+                            </li>
+                            <li class="inline-flex items-center">
+                                <a href="/project/19/management/"
+                                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="20"
+                                         height="20"
+                                         class="text-gray-400 mr-2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                    School Project 1
+                                </a>
+                            </li>
+                            <li class="inline-flex items-center">
+                                <a href="/bill-of-quantities/project/19/payment-certificates/"
+                                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="20"
+                                         height="20"
+                                         class="text-gray-400 mr-2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                    Payment Certificates
+                                </a>
+                            </li>
+                            <li class="inline-flex items-center">
+                                <div class="flex items-center">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="20"
+                                         height="20"
+                                         class="text-gray-400 mr-2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                    <span class="text-sm font-medium text-gray-500">Payment Certificate: #1</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        <!-- Main Content -->
+        <div id="content" class="pb-6 mb-20 bg-gray-50 flex-grow">
+            <main class="w-full px-4 sm:px-6 lg:px-8 py-6">
+                <style>
+      .header {
+          font-weight: bold;
+          background-color: #f5f5f5;
+          padding: 8px;
+      }
+
+      .header:hover {
+          background-color: #e5e5e5;
+      }
+                </style>
+                <!-- Header -->
+                <div class="bg-white shadow-sm rounded-lg mb-6">
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">School Project 1</h1>
+                                <p class="text-sm text-gray-600 mt-1">Payment Certificate: #1</p>
+                                <p class="text-sm text-gray-600 mt-1">Status: APPROVED</p>
+                                <p class="text-sm text-gray-600 mt-1">Date: Oct. 31, 2025, midnight</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <form method="post"
+                                      action="/bill-of-quantities/project/19/payment-certificates/42/email/">
+                                    <input type="hidden"
+                                           name="csrfmiddlewaretoken"
+                                           value="RnN5tERYcdI6jTlTgOm1SKNqrbvcM5Pik08JQxMXYQnDtlmVbdHcUgxCM3FFqxUg">
+                                    <button type="submit"
+                                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        <svg fill="none"
+                                             viewBox="0 0 24 24"
+                                             stroke-width="1.5"
+                                             stroke="currentColor"
+                                             aria-hidden="true"
+                                             width="24"
+                                             height="24"
+                                             class="w-4 h-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                                        </svg>
+                                        Email to Signatories
+                                    </button>
+                                </form>
+                                <!-- Section View Buttons -->
+                                <a href="/bill-of-quantities/project/19/payment-certificates/42/cover-page/"
+                                   class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                   title="View Cover Page in browser">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="w-4 h-4 mr-1">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                    </svg>
+                                    Cover Page
+                                </a>
+                                <a href="/bill-of-quantities/project/19/payment-certificates/42/valuation-summary/"
+                                   class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                   title="View Valuation Summary in browser">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="w-4 h-4 mr-1">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
+                                    </svg>
+                                    Valuation Summary
+                                </a>
+                                <a href="/bill-of-quantities/project/19/payment-certificates/42/view-detailed/?mode=full"
+                                   class="inline-flex items-center px-3 py-2 border border-indigo-300 shadow-sm text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                   title="View full detailed report in browser">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="w-4 h-4 mr-1">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                    </svg>
+                                    View Detailed (Full)
+                                </a>
+                                <a href="/bill-of-quantities/project/19/payment-certificates/42/view-detailed/?mode=abridged"
+                                   class="inline-flex items-center px-3 py-2 border border-amber-300 shadow-sm text-sm leading-4 font-medium rounded-md text-amber-700 bg-amber-50 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                                   title="View abridged (claimed items only) in browser">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="w-4 h-4 mr-1">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                                    </svg>
+                                    View Detailed (Abridged)
+                                </a>
+                            </div>
+                        </div>
+                        <div id="pdf-download" class="mt-6 pt-6 border-t border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-semibold text-gray-900">Download Reports</h2>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Card 1: Full Payment Certificate -->
+                                <form method="get"
+                                      id="default-full-pdf-form"
+                                      class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-indigo-300 transition-colors flex flex-col justify-between"
+                                      action="/bill-of-quantities/project/19/payment-certificates/42/download-pdf/">
+                                    <div>
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-2">
+                                                    <h3 class="text-base font-semibold text-gray-900">Full Payment Certificate</h3>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        ✓ Available
+                                                    </span>
+                                                </div>
+                                                <p class="text-xs text-gray-600 mt-1">Complete certificate with all line items</p>
+                                            </div>
+                                        </div>
+                                        <!-- Custom Section Selectors -->
+                                        <div class="mb-4">
+                                            <p class="text-xs font-medium text-gray-700 mb-2">Select sections to include:</p>
+                                            <div class="space-y-1.5 bg-white p-3 rounded border border-gray-100 shadow-sm">
+                                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                    <input type="checkbox"
+                                                           name="front"
+                                                           value="true"
+                                                           checked
+                                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                    <span>Cover Page (Front)</span>
+                                                </label>
+                                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                    <input type="checkbox"
+                                                           name="summary"
+                                                           value="true"
+                                                           checked
+                                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                    <span>Valuation Summary</span>
+                                                </label>
+                                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                    <input type="checkbox"
+                                                           name="detailed"
+                                                           value="true"
+                                                           checked
+                                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                    <span>Detailed Report</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <!-- Force regenerate checkbox -->
+                                        <div class="mb-3">
+                                            <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                <input type="checkbox"
+                                                       name="force"
+                                                       value="true"
+                                                       id="force-full-pdf"
+                                                       class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                <span>Force regenerate</span>
+                                            </label>
+                                        </div>
+                                        <!-- Dual Buttons -->
+                                        <div class="flex flex-col sm:flex-row gap-3">
+                                            <button type="submit"
+                                                    id="full-pdf-button"
+                                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                                <svg fill="none"
+                                                     viewBox="0 0 24 24"
+                                                     stroke-width="1.5"
+                                                     stroke="currentColor"
+                                                     aria-hidden="true"
+                                                     width="24"
+                                                     height="24"
+                                                     class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                                <span id="full-pdf-button-text">Download PDF</span>
+                                            </button>
+                                            <button type="submit"
+                                                    name="format"
+                                                    value="excel"
+                                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                                                <svg fill="none"
+                                                     viewBox="0 0 24 24"
+                                                     stroke-width="1.5"
+                                                     stroke="currentColor"
+                                                     aria-hidden="true"
+                                                     width="24"
+                                                     height="24"
+                                                     class="w-4.5 h-4.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                </svg>
+                                                <span>Download Excel</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <!-- Card 2: Abridged Certificate -->
+                                <form method="get"
+                                      class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-indigo-300 transition-colors flex flex-col justify-between"
+                                      action="/bill-of-quantities/project/19/payment-certificates/42/download-abridged-pdf/">
+                                    <div>
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-2">
+                                                    <h3 class="text-base font-semibold text-gray-900">Abridged Certificate</h3>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        ✓ Available
+                                                    </span>
+                                                </div>
+                                                <p class="text-xs text-gray-600 mt-1">Summary with claimed items only</p>
+                                            </div>
+                                        </div>
+                                        <!-- Custom Section Selectors -->
+                                        <div class="mb-4">
+                                            <p class="text-xs font-medium text-gray-700 mb-2">Select sections to include:</p>
+                                            <div class="space-y-1.5 bg-white p-3 rounded border border-gray-100 shadow-sm">
+                                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                    <input type="checkbox"
+                                                           name="front"
+                                                           value="true"
+                                                           checked
+                                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                    <span>Cover Page (Front)</span>
+                                                </label>
+                                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                    <input type="checkbox"
+                                                           name="summary"
+                                                           value="true"
+                                                           checked
+                                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                    <span>Valuation Summary</span>
+                                                </label>
+                                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                    <input type="checkbox"
+                                                           name="detailed"
+                                                           value="true"
+                                                           checked
+                                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                    <span>Detailed Report</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <!-- Force regenerate checkbox -->
+                                        <div class="mb-3">
+                                            <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                                <input type="checkbox"
+                                                       name="force"
+                                                       value="true"
+                                                       id="force-abridged-pdf"
+                                                       class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                                <span>Force regenerate</span>
+                                            </label>
+                                        </div>
+                                        <!-- Dual Buttons -->
+                                        <div class="flex flex-col sm:flex-row gap-3">
+                                            <button type="submit"
+                                                    id="abridged-pdf-button"
+                                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                                <svg fill="none"
+                                                     viewBox="0 0 24 24"
+                                                     stroke-width="1.5"
+                                                     stroke="currentColor"
+                                                     aria-hidden="true"
+                                                     width="24"
+                                                     height="24"
+                                                     class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                                <span id="abridged-pdf-button-text">Download PDF</span>
+                                            </button>
+                                            <button type="submit"
+                                                    name="format"
+                                                    value="excel"
+                                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                                                <svg fill="none"
+                                                     viewBox="0 0 24 24"
+                                                     stroke-width="1.5"
+                                                     stroke="currentColor"
+                                                     aria-hidden="true"
+                                                     width="24"
+                                                     height="24"
+                                                     class="w-4.5 h-4.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                </svg>
+                                                <span>Download Excel</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <!-- Invoice and Statement Section -->
+                        <div id="invoice-statement" class="mt-6 pt-6 border-t border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900 mb-4">Client Documents</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Invoice -->
+                                <a href="/bill-of-quantities/project/19/payment-certificates/42/invoice/"
+                                   target="_blank"
+                                   class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors block">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="text-sm font-semibold text-gray-900">Invoice</h3>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    <svg fill="none"
+                                                         viewBox="0 0 24 24"
+                                                         stroke-width="1.5"
+                                                         stroke="currentColor"
+                                                         aria-hidden="true"
+                                                         width="24"
+                                                         height="24"
+                                                         class="w-3 h-3">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                    </svg>
+                                                    PDF Available
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 mt-1">Client invoice for payment</p>
+                                        </div>
+                                        <svg fill="none"
+                                             viewBox="0 0 24 24"
+                                             stroke-width="1.5"
+                                             stroke="currentColor"
+                                             aria-hidden="true"
+                                             width="24"
+                                             height="24"
+                                             class="w-5 h-5 text-gray-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                    </div>
+                                </a>
+                                <!-- Payment Statement -->
+                                <a href="/bill-of-quantities/project/19/payment-certificates/payment-statement/"
+                                   class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors block">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="text-sm font-semibold text-gray-900">Payment Statement</h3>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <svg fill="none"
+                                                         viewBox="0 0 24 24"
+                                                         stroke-width="1.5"
+                                                         stroke="currentColor"
+                                                         aria-hidden="true"
+                                                         width="24"
+                                                         height="24"
+                                                         class="w-3 h-3">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                    </svg>
+                                                    Interactive
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 mt-1">View payment history and balance</p>
+                                        </div>
+                                        <svg fill="none"
+                                             viewBox="0 0 24 24"
+                                             stroke-width="1.5"
+                                             stroke="currentColor"
+                                             aria-hidden="true"
+                                             width="24"
+                                             height="24"
+                                             class="w-5 h-5 text-gray-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                        </svg>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Transactions Preview -->
+                <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
+                    <div class="border-b border-gray-200 mb-4">
+                        <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
+                        <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
+                    </div>
+                    <div id="contract-line-items" class="mb-6 border-b border-gray-200">
+                        <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th>
+                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
+                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Quantity</th>
+                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
+                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</th>
+                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Claim</th>
+                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header font-bold"
+                                            colspan="9">Section 1 Preliminaries</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header font-bold"
+                                            colspan="9">Bill No. 1: Fixed Charge Items</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">A</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Contractual requirements</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 500,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 50,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 50,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">B</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Offices and storage sheds</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 30,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 3,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 3,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">C</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Workshops</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 10,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 1,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 1,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">D</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Laboratories.</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 10,000.00 / Sum</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 1,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 1,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">E</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Living accommodation.</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 20,000.00 / Sum</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 2,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 2,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">F</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Ablution and latrine facilities.</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 20,000.00 / Sum</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 2,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 2,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">G</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Tools and equipment</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 20,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 2,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 2,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">H</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Water supplies, electric power, communications, dealing with water, and access</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 15,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 1,500.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 1,500.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">J</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Plant.</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 25,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 2,500.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 2,500.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">K</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Medicals and inductions</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 20,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 2,000.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 2,000.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">L</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Fencing of laydown area</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 55,933.13 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 5,593.31</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 5,593.31</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">M</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Other fixed charge obligations</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 5,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 500.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 500.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">N</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">Removal of site establishment</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">R 15,000.00 / SUM</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">0.10</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 1,500.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R 0.00</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R 1,500.00</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="8"
+                                            class="px-3 py-3 text-right text-sm font-bold text-gray-900">Total:</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-indigo-600 text-right">R 74,593.31</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
+                        <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
+                        <div class="text-center py-12 flex flex-col items-center">
+                            <svg fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke-width="1.5"
+                                 stroke="currentColor"
+                                 aria-hidden="true"
+                                 width="24"
+                                 height="24"
+                                 class="w-12 h-12 text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No Transactions</h3>
+                            <p class="mt-1 text-sm text-gray-500">This payment certificate has no transactions to approve.</p>
+                        </div>
+                    </div>
+                    <div id="special-items"
+                         class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
+                        <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                            <svg fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke-width="1.5"
+                                 stroke="currentColor"
+                                 aria-hidden="true"
+                                 width="20"
+                                 height="20"
+                                 class="text-orange-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                            </svg>
+                            Special Items
+                        </h2>
+                        <div class="text-center py-12 flex flex-col items-center">
+                            <svg fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke-width="1.5"
+                                 stroke="currentColor"
+                                 aria-hidden="true"
+                                 width="24"
+                                 height="24"
+                                 class="w-12 h-12 text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No Special Items</h3>
+                            <p class="mt-1 text-sm text-gray-500">This payment certificate has no special items to approve.</p>
+                        </div>
+                    </div>
+                    <!-- Ledger Totals Section -->
+                    <div id="ledger-totals" class="mb-6">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <svg fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke-width="1.5"
+                                 stroke="currentColor"
+                                 aria-hidden="true"
+                                 width="20"
+                                 height="20"
+                                 class="text-indigo-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V13.5Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V18Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V13.5Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V18Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V18Zm2.498-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5ZM8.25 6h7.5v2.25h-7.5V6ZM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0 0 12 2.25Z" />
+                            </svg>
+                            Ledger Totals
+                        </h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Summary Item</th>
+                                        <th class="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Previous Amount</th>
+                                        <th class="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Current Amount</th>
+                                        <th class="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Total Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <!-- Advance Payments -->
+                                    <!-- Retention -->
+                                    <!-- Materials on Site -->
+                                    <!-- Escalation -->
+                                    <!-- Special Items -->
+                                </tbody>
+                                <tfoot class="bg-gray-50 divide-y divide-gray-200">
+                                    <!-- Ledger Subtotal -->
+                                    <tr>
+                                        <td colspan="2"
+                                            class="px-4 py-3 text-xs font-bold tracking-widest text-right text-gray-500 uppercase">
+                                            Subtotal Special Items
+                                        </td>
+                                        <td class="px-4 py-3 text-sm font-bold text-right text-indigo-600 whitespace-nowrap">R 0.00</td>
+                                        <td class="px-4 py-3 text-sm font-bold text-right text-gray-900 whitespace-nowrap">R 0.00</td>
+                                    </tr>
+                                    <!-- Work Subtotal -->
+                                    <tr>
+                                        <td colspan="2"
+                                            class="px-4 py-3 text-xs font-bold tracking-widest text-right text-gray-500 uppercase">
+                                            Subtotal Work Done
+                                        </td>
+                                        <td class="px-4 py-3 text-sm font-bold text-right text-indigo-600 whitespace-nowrap">R 74,593.31</td>
+                                        <td class="px-4 py-3 text-sm font-bold text-right text-gray-900 whitespace-nowrap">R 74,593.31</td>
+                                    </tr>
+                                    <!-- Grand Total -->
+                                    <tr class="bg-blue-50">
+                                        <td colspan="2"
+                                            class="px-4 py-4 text-sm font-black tracking-widest text-right text-indigo-600 uppercase">
+                                            Grand Total Certified
+                                        </td>
+                                        <td class="px-4 py-4 font-mono text-lg font-black tabular-nums text-right text-indigo-600 whitespace-nowrap">
+                                            R 74,593.31
+                                        </td>
+                                        <td class="px-4 py-4 font-mono text-lg font-black tabular-nums text-right text-indigo-600 whitespace-nowrap">
+                                            R 74,593.31
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!-- Notes -->
+                        <div class="p-4 mt-4 bg-blue-50 rounded-lg">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="w-5 h-5 text-blue-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-blue-800">Special Items Summary</h3>
+                                    <div class="mt-2 text-sm text-blue-700">
+                                        <p>
+                                            This table shows all special items (advance payments, retention, materials on site, escalation, and other special items) for this payment certificate.
+                                        </p>
+                                        <p class="mt-1">Special items are broken down by type for better tracking and reporting.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <!-- Footer -->
+        <footer class="fixed bottom-0 w-full bg-gray-800 text-white z-99">
+            <div class="max-w-7xl mx-auto py-2 px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-300 text-sm">2026 SEDGE BUILD.</p>
+                    <p class="text-gray-300 text-sm">Empowering businesses with smart financial solutions.</p>
+                    <p class="text-gray-300 text-sm">
+                        All
+                        rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+        <!-- Toast Notifications Container -->
+        <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2"></div>
+        <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const statusUrl = "/bill-of-quantities/project/19/payment-certificates/42/pdf-status/";
+          
+          // Independent polling for each PDF type
+          const pdfPoller = {
+              interval: null,
+              isPolling: false,
+              type: 'pdf'
+          };
+          
+          const abridgedPdfPoller = {
+              interval: null,
+              isPolling: false,
+              type: 'abridged_pdf'
+          };
+          
+          // Check initial state and start polling if needed
+          const pdfGenerating = false;
+          const abridgedPdfGenerating = false;
+          
+          if (pdfGenerating) {
+              console.log('Full PDF generation in progress, starting polling...');
+              startPolling(pdfPoller);
+          }
+          
+          if (abridgedPdfGenerating) {
+              console.log('Abridged PDF generation in progress, starting polling...');
+              startPolling(abridgedPdfPoller);
+          }
+          
+          function startPolling(poller) {
+              if (poller.isPolling) return; // Already polling
+              
+              poller.isPolling = true;
+              // Poll every 2 seconds
+              poller.interval = setInterval(() => checkStatus(poller), 2000);
+          }
+          
+          function stopPolling(poller) {
+              if (poller.interval) {
+                  clearInterval(poller.interval);
+                  poller.interval = null;
+                  poller.isPolling = false;
+                  console.log(`${poller.type} polling stopped`);
+              }
+          }
+          
+          async function checkStatus(poller) {
+              try {
+                  const response = await fetch(statusUrl);
+                  const data = await response.json();
+                  
+                  console.log(`${poller.type} status update:`, data);
+                  
+                  if (poller.type === 'pdf') {
+                      // Update full PDF status
+                      updatePDFStatus('pdf', data.pdf_generating, data.pdf_available);
+                      
+                      // Stop polling if generation complete
+                      if (!data.pdf_generating) {
+                          stopPolling(poller);
+                          // Reload page to show updated state
+
+                      }
+                  } else if (poller.type === 'abridged_pdf') {
+                      // Update abridged PDF status
+                      updatePDFStatus('abridged_pdf', data.abridged_pdf_generating, data.abridged_pdf_available);
+                      
+                      // Stop polling if generation complete
+                      if (!data.abridged_pdf_generating) {
+                          stopPolling(poller);
+                          // Reload page to show updated state
+
+                      }
+                  }
+              } catch (error) {
+                  console.error(`Error checking ${poller.type} status:`, error);
+              }
+          }
+          
+          function updatePDFStatus(type, isGenerating, isAvailable) {
+              const formSelector = type === 'pdf' ? '#default-full-pdf-form' : 'form[action*="download-abridged-pdf"]';
+              const form = document.querySelector(formSelector);
+              
+              if (!form) return;
+              
+              const badgeContainer = form.querySelector('.flex.items-center.gap-2');
+              const button = type === 'pdf' ? form.querySelector('#full-pdf-button') : form.querySelector('#abridged-pdf-button');
+              
+              if (!badgeContainer || !button) return;
+              
+              // Remove existing badge
+              const existingBadge = badgeContainer.querySelector('span.inline-flex.items-center');
+              if (existingBadge) {
+                  existingBadge.remove();
+              }
+              
+              // Add new badge based on status
+              let badgeHTML = '';
+              if (isGenerating) {
+                  badgeHTML = `
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Generating...
+                      </span>
+                  `;
+                  button.disabled = true;
+                  button.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500');
+                  button.classList.add('bg-gray-400', 'cursor-not-allowed');
+              } else if (isAvailable) {
+                  badgeHTML = `
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          ✓ Available
+                      </span>
+                  `;
+                  button.disabled = false;
+                  button.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                  button.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500');
+              } else {
+                  badgeHTML = `
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          Not generated
+                      </span>
+                  `;
+                  button.disabled = false;
+                  button.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                  button.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500');
+              }
+              
+              badgeContainer.insertAdjacentHTML('beforeend', badgeHTML);
+          }
+      });
+
+      // Handle button text change when force regenerate checkbox is checked
+      const forceFullCheckbox = document.getElementById('force-full-pdf');
+      const fullButtonText = document.getElementById('full-pdf-button-text');
+      const forceAbridgedCheckbox = document.getElementById('force-abridged-pdf');
+      const abridgedButtonText = document.getElementById('abridged-pdf-button-text');
+
+      if (forceFullCheckbox && fullButtonText) {
+          forceFullCheckbox.addEventListener('change', function() {
+              fullButtonText.textContent = this.checked ? 'Regenerate PDF' : 'Download PDF';
+          });
+      }
+
+      if (forceAbridgedCheckbox && abridgedButtonText) {
+          forceAbridgedCheckbox.addEventListener('change', function() {
+              abridgedButtonText.textContent = this.checked ? 'Regenerate PDF' : 'Download PDF';
+          });
+      }
+        </script>
+        <!-- Loading Buttons JavaScript -->
+        <script src="/static/js/loading-buttons.js"></script>
+        <script>
+            // Toast functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) return;
+                
+                const toasts = toastContainer.querySelectorAll('.toast-notification');
+                
+                toasts.forEach((toast, index) => {
+                    let dismissTimeout = null;
+                    let isPaused = false;
+                    
+                    // Set initial styles for slide-in animation
+                    toast.style.transform = 'translateX(100%)';
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'all 0.3s ease-out';
+                    
+                    // Slide in with stagger
+                    setTimeout(() => {
+                        toast.style.transform = 'translateX(0)';
+                        toast.style.opacity = '1';
+                    }, 50 + (index * 100));
+                    
+                    // Function to dismiss toast
+                    function dismissToast() {
+                        toast.style.transform = 'translateX(100%)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => {
+                            toast.remove();
+                        }, 300);
+                    }
+                    
+                    // Start auto-dismiss timer
+                    function startDismissTimer(delay) {
+                        dismissTimeout = setTimeout(() => {
+                            if (!isPaused) {
+                                dismissToast();
+                            }
+                        }, delay);
+                    }
+                    
+                    // Start initial timer (5 seconds + stagger)
+                    startDismissTimer(5000 + (index * 200));
+                    
+                    // Pause on hover
+                    toast.addEventListener('mouseenter', function() {
+                        isPaused = true;
+                        if (dismissTimeout) {
+                            clearTimeout(dismissTimeout);
+                        }
+                    });
+                    
+                    // Resume on mouse leave (2 second delay)
+                    toast.addEventListener('mouseleave', function() {
+                        isPaused = false;
+                        startDismissTimer(2000);
+                    });
+                    
+                    // Close button
+                    const closeBtn = toast.querySelector('.toast-close');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (dismissTimeout) {
+                                clearTimeout(dismissTimeout);
+                            }
+                            dismissToast();
+                        });
+                    }
+                });
+            });
+
+            // Dropdown toggle function
+            function toggleDropdown(dropdownId) {
+                const dropdown = document.getElementById(dropdownId);
+                const arrow = document.getElementById(dropdownId + '-arrow');
+                
+                if (dropdown.classList.contains('hidden')) {
+                    dropdown.classList.remove('hidden');
+                    arrow.classList.add('rotate-180');
+                } else {
+                    dropdown.classList.add('hidden');
+                    arrow.classList.remove('rotate-180');
+                }
+            }
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdowns = document.querySelectorAll('[id$="-dropdown"]');
+                dropdowns.forEach(dropdown => {
+                    if (!dropdown.parentElement.contains(event.target)) {
+                        dropdown.classList.add('hidden');
+                        const arrowId = dropdown.id + '-arrow';
+                        const arrow = document.getElementById(arrowId);
+                        if (arrow) {
+                            arrow.classList.remove('rotate-180');
+                        }
+                    }
+                });
+            });
+        </script>
+        <dialog id="dynamic-quick-create-modal"
+                class="transition-opacity duration-300 modal modal-bottom sm:modal-middle">
+            <div class="overflow-hidden p-0 w-11/12 max-w-4xl bg-white rounded-lg border border-gray-300 duration-300 modal-box animate-in zoom-in-95">
+                <div class="flex justify-between items-center px-8 py-6 bg-white border-b border-gray-300">
+                    <div class="flex items-center">
+                        <div>
+                            <h3 id="dynamic-modal-title"
+                                class="text-xl font-bold tracking-tight leading-tight text-gray-900">Quick Create</h3>
+                        </div>
+                    </div>
+                    <form method="dialog">
+                        <button class="p-2 text-gray-400 rounded-xl transition-all hover:text-gray-900 bg-gray-50/50 hover:bg-gray-100/80 group">
+                            <svg fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke-width="1.5"
+                                 stroke="currentColor"
+                                 aria-hidden="true"
+                                 width="20"
+                                 height="20"
+                                 class="transition-transform duration-300 group-hover:rotate-90">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                <form id="dynamic-quick-create-form"
+                      onsubmit="submitDynamicQuickCreate(event)">
+                    <input type="hidden"
+                           name="csrfmiddlewaretoken"
+                           value="RnN5tERYcdI6jTlTgOm1SKNqrbvcM5Pik08JQxMXYQnDtlmVbdHcUgxCM3FFqxUg">
+                    <!-- Form Body: Soft scrolling -->
+                    <div id="dynamic-modal-content"
+                         class="  space-y-6 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-100 scrollbar-track-transparent">
+                        <div class="flex flex-col justify-center items-center py-16 space-y-5">
+                            <div class="relative">
+                                <div class="w-14 h-14 rounded-full border-4 border-indigo-100"></div>
+                                <div class="absolute top-0 left-0 w-14 h-14 rounded-full border-4 border-indigo-600 animate-spin border-t-transparent">
+                                </div>
+                            </div>
+                            <p class="text-sm font-bold tracking-widest text-gray-400 uppercase animate-pulse">Initializing Interface...</p>
+                        </div>
+                    </div>
+                    <!-- Enhanced Global Error Container -->
+                    <div id="dynamic-modal-errors"
+                         class="hidden px-8 py-2 duration-300 animate-in slide-in-from-top-4">
+                        <div class="p-4 rounded-2xl border border-rose-100 backdrop-blur-sm bg-rose-50/80">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-0.5 text-rose-500">
+                                    <svg viewBox="0 0 24 24"
+                                         fill="currentColor"
+                                         aria-hidden="true"
+                                         width="24"
+                                         height="24"
+                                         class="w-5 h-5">
+                                        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-xs font-black tracking-widest text-rose-800 uppercase">Attention Required</h3>
+                                    <div class="mt-1 text-sm font-medium leading-relaxed text-rose-700"
+                                         id="dynamic-error-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Footer: Premium Actions -->
+                    <div class="flex justify-end items-center px-8 py-6 space-x-4 bg-white border-t border-gray-300">
+                        <button type="button"
+                                onclick="closeDynamicQuickCreateModal()"
+                                class="px-6 py-2.5 text-sm font-bold text-gray-500 rounded-xl transition-all duration-300 hover:text-gray-900 hover:bg-gray-200/50">
+                            Discard
+                        </button>
+                        <button type="submit"
+                                id="dynamic-modal-submit"
+                                class="inline-flex items-center px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <span id="dynamic-submit-text">Create &amp; Select</span>
+                            <div id="dynamic-submit-spinner" class="hidden ml-3">
+                                <svg class="w-5 h-5 text-white animate-spin"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     fill="none"
+                                     viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+        <style>
+            svg {
+                margin-left: 5px;
+                margin-right: 5px;
+            }
+        </style>
+        <script src="/static/django-browser-reload/reload-listener.js"
+                data-worker-script-path="/static/django-browser-reload/reload-worker.js"
+                data-events-path="/__reload__/events/"
+                defer></script>
+    </body>
+</html>

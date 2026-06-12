@@ -1,39 +1,31 @@
-# Implementation Plan - Add Bi-Weekly Safety and NCR Cards to Company Management
-
 ## Goal
-Add "Bi-Weekly Safety" and "NCR Register" cards to the "Site Management" grid in the Business Management Center dashboard (`company_management.html`), specifically appending them at the end of the site cards list (Option 1).
+Refactor the report configuration UI card inputs and add a preview button that opens a print dialog showing the structure of the report.
 
 ## Assumptions
-- The template context represents the active project under the variable name `company`.
-- The Django URL namespaces are:
-  - Bi-Weekly Safety: `site_management:biweekly-safety-list`
-  - NCR Register: `site_management:ncr-list`
-- The project has `.venv` correctly configured, and pytest tests can run.
+- The refactoring mainly involves organizing the HTML of the Layout Visual Previews in project_setup.html into cleaner, maintainable components.
+- The preview print dialog should be a new view that generates a dummy certificate/report matching the selected layout and triggers window.print() on load.
 
 ## Plan
-
-### Step 1: Update Company Management Template
-- **Files**: `app/Project/templates/company/company_management.html`
-- **Change**: Append "Bi-Weekly Safety" and "NCR Register" cards to the end of the `<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">` in the Site Management section (around lines 440-445).
-- **Verify**: Read the modified template file to check for correct URL resolution tags and class styling.
-
-### Step 2: Add View Unit Test
-- **Files**: `app/Project/tests/test_views.py`
-- **Change**: Add a new test case `TestCompanyManagementSiteCards` that verifies rendering of `company_management.html` and checks that the HTML response content includes:
-  - The URL targeting `site_management:biweekly-safety-list` with `company.pk`
-  - The URL targeting `site_management:ncr-list` with `company.pk`
-- **Verify**: Run the new test case with pytest:
-  `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -k TestCompanyManagementSiteCards`
-
-### Step 3: Run Full View Tests & Linting
-- **Files**: None
-- **Change**: None
-- **Verify**: Run the full suite of Project views tests and ruff lint check:
-  `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py`
+1. **Create Preview View**:
+   - Files: pp/Project/projects/project_views.py, pp/Project/urls.py
+   - Change: Add ProjectReportLayoutPreviewView that takes the project PK and optionally a layout_style query parameter. It renders a dummy layout template. Update urls.py to route to this view.
+   - Verify: Run .venv\Scripts\python.exe manage.py check to ensure URLs are valid.
+2. **Create Preview Templates**:
+   - Files: pp/Project/templates/project/project_layout_preview.html
+   - Change: Create the template that includes Tailwind CSS and a script to call window.print(). Render a structural representation of the report based on the layout_style.
+   - Verify: Check that the template is loadable.
+3. **Refactor Card Inputs in project_setup.html**:
+   - Files: pp/Project/templates/project/project_setup.html
+   - Change: Refactor the layout visual preview cards (Standard, Valterra, Lephadimisha) into a more modular structure, potentially extracting them into included partials if they are too long.
+   - Verify: Ensure the configuration page still loads correctly without errors.
+4. **Add Preview Button**:
+   - Files: pp/Project/templates/project/project_setup.html
+   - Change: Add a "Preview" button in the Layout Visual Preview area. Use Javascript to read the currently selected certificate_layout_select value and open the preview URL in a new tab with that layout.
+   - Verify: Test clicking the button to ensure it navigates to the correct preview URL.
 
 ## Risks & mitigations
-- **Risk**: Missing `project` or `company` subscription permissions during testing.
-- **Mitigation**: Use `AccountFactory` which defaults to `FULL_ACCESS` subscription, or set `subscription = Subscription.FULL_ACCESS` explicitly on the user during tests.
+- **Risk:** The dummy layout might not accurately represent the real layout. **Mitigation:** Base the dummy layout on existing certificate PDF templates using Tailwind for print styling.
+- **Risk:** The "Preview" button might not capture the unsaved layout choice. **Mitigation:** Use client-side JavaScript on the button to dynamically construct the URL using the currently selected <select> value.
 
 ## Rollback plan
-- Revert changes to `app/Project/templates/company/company_management.html` and `app/Project/tests/test_views.py` using `git checkout`.
+- Remove the new URL, view, and template. Revert project_setup.html to its previous git state.

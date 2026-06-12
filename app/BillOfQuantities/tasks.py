@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 from django.template.loader import get_template, render_to_string
 from pypdf import PdfReader, PdfWriter
 
+from app.BillOfQuantities.exporters.unified_xlsx_exporter import export_unified_xlsx
 from app.BillOfQuantities.models import LineItem, PaymentCertificate
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.generate_pdf import generate_pdf
@@ -53,24 +54,61 @@ def group_line_items_by_hierarchy(line_items):
     # Convert to list format for template iteration
     grouped = []
     for structure, bills in hierarchy.items():
-        structure_data = {"structure": structure, "bills": []}
+        structure_data = {
+            "structure": structure,
+            "bills": [],
+            "budget": Decimal("0.00"),
+            "cumulative": Decimal("0.00"),
+            "previous": Decimal("0.00"),
+            "current": Decimal("0.00"),
+        }
         for bill, packages in bills.items():
-            bill_data = {"bill": bill, "packages": []}
+            bill_data = {
+                "bill": bill,
+                "packages": [],
+                "budget": Decimal("0.00"),
+                "cumulative": Decimal("0.00"),
+                "previous": Decimal("0.00"),
+                "current": Decimal("0.00"),
+            }
             for package, items in packages.items():
                 package_data = {"package": package, "line_items": items}
+
+                for item in items:
+                    if getattr(item, "is_work", False):
+                        bill_data["budget"] += Decimal(str(item.total_price or "0.00"))
+                        bill_data["cumulative"] += Decimal(
+                            str(item.total_claimed or "0.00")
+                        )
+                        bill_data["previous"] += Decimal(
+                            str(item.previous_claimed or "0.00")
+                        )
+                        bill_data["current"] += Decimal(
+                            str(item.current_claim or "0.00")
+                        )
+
                 bill_data["packages"].append(package_data)
+
+            structure_data["budget"] += bill_data["budget"]
+            structure_data["cumulative"] += bill_data["cumulative"]
+            structure_data["previous"] += bill_data["previous"]
+            structure_data["current"] += bill_data["current"]
+
             structure_data["bills"].append(bill_data)
         grouped.append(structure_data)
 
     return grouped
 
 
-def get_valuation_summary_data(payment_certificate):
+def get_valuation_summary_data(payment_certificate, abridged=False):
     """
     Get aggregated data for the Valuation Summary page (Valterra/RPM layout).
     Groups line items by structure (section) -> bill and calculates totals.
     """
-    line_items = LineItem.construct_payment_certificate(payment_certificate)
+    if abridged:
+        line_items = LineItem.abridged_payment_certificate(payment_certificate)
+    else:
+        line_items = LineItem.construct_payment_certificate(payment_certificate)
 
     structures_data: dict[Any, dict[str, Any]] = {}
     for item in line_items:
@@ -196,8 +234,8 @@ def compile_pdf_for_certificate(
             }
         )
 
-    # Add summary data if summary is requested and layout is valterra_rpm
-    if include_summary and layout == "valterra_rpm":
+    # Add summary data if summary is requested and layout is valterra_rpm or lephadimisha
+    if include_summary and layout in ("valterra_rpm", "lephadimisha"):
         summary_data = get_valuation_summary_data(payment_certificate)
         context.update(summary_data)
 
@@ -205,7 +243,7 @@ def compile_pdf_for_certificate(
     merger = PdfWriter()
     pdf_parts = []
 
-    if layout == "valterra_rpm":
+    if layout in ("valterra_rpm", "lephadimisha"):
         if include_front:
             front_tpl = get_template("pdf_templates/valterra_rpm/1-front-page.html")
             pdf_parts.append(generate_pdf(front_tpl.render(context)))
@@ -437,6 +475,148 @@ def generate_pdf_async(
         thread = threading.Thread(
             target=generate_and_save_pdf,
             args=(payment_certificate_id, "abridged"),
+            daemon=True,
+        )
+        thread.start()
+
+
+def generate_and_save_xlsx(
+    payment_certificate_id: int,
+    sections: dict,
+    xlsx_type: Literal["full", "abridged"] = "full",
+):
+    """
+    Internal function to generate and save unified XLSX in a separate thread.
+
+    Args:
+        payment_certificate_id: ID of the PaymentCertificate
+        sections: Dictionary of requested sections (e.g. {"front": True, "summary": True, "detailed": True})
+        xlsx_type: Either 'full' or 'abridged'
+    """
+    import logging
+    from tempfile import NamedTemporaryFile
+
+    from app.BillOfQuantities.models import PaymentCertificate
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
+        logger.info(
+            f"Starting {xlsx_type} XLSX generation for certificate {payment_certificate.certificate_number}"
+        )
+
+        update_fields = []
+        is_abridged = xlsx_type == "abridged"
+
+        # Generate the unified workbook
+        wb = export_unified_xlsx(payment_certificate, sections, is_abridged=is_abridged)
+
+        # Save to memory/tempfile and read as ContentFile
+        with NamedTemporaryFile(delete=True) as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            file_content = ContentFile(tmp.read())
+
+        if xlsx_type == "full":
+            file_content.name = (
+                f"payment_certificate_{payment_certificate.certificate_number}.xlsx"
+            )
+            file_content.type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            payment_certificate.xlsx = file_content
+            payment_certificate.xlsx_generating = False
+            update_fields.extend(["xlsx", "xlsx_generating"])
+        else:
+            file_content.name = f"payment_certificate_{payment_certificate.certificate_number}_abridged.xlsx"
+            file_content.type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            payment_certificate.abridged_xlsx = file_content
+            payment_certificate.abridged_xlsx_generating = False
+            update_fields.extend(["abridged_xlsx", "abridged_xlsx_generating"])
+
+        payment_certificate.save(update_fields=update_fields)
+        logger.info(
+            f"Successfully generated {xlsx_type} XLSX for certificate {payment_certificate.certificate_number}"
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating {xlsx_type} XLSX: {e}", exc_info=True)
+        try:
+            payment_certificate = PaymentCertificate.objects.get(
+                id=payment_certificate_id
+            )
+            if xlsx_type == "full":
+                payment_certificate.xlsx_generating = False
+            else:
+                payment_certificate.abridged_xlsx_generating = False
+            payment_certificate.save()
+            logger.info(f"Reset {xlsx_type} XLSX generating flag after error")
+        except Exception as save_error:
+            logger.error(f"Failed to reset XLSX generating flag: {save_error}")
+
+
+def generate_xlsx_async(
+    payment_certificate_id: int,
+    sections: dict,
+    xlsx_type: Literal["full", "abridged", "both"] | None = None,
+) -> None:
+    """
+    Start XLSX generation in a background thread.
+    """
+    import logging
+
+    from app.BillOfQuantities.models import PaymentCertificate
+
+    logger = logging.getLogger(__name__)
+
+    payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
+    generate_xlsx = False
+    generate_abridged_xlsx = False
+
+    if xlsx_type == "both":
+        generate_xlsx = True
+        generate_abridged_xlsx = True
+    elif xlsx_type == "full":
+        generate_xlsx = True
+    elif xlsx_type == "abridged":
+        generate_abridged_xlsx = True
+    else:
+        if not payment_certificate.xlsx and not payment_certificate.xlsx_generating:
+            generate_xlsx = True
+        if (
+            not payment_certificate.abridged_xlsx
+            and not payment_certificate.abridged_xlsx_generating
+        ):
+            generate_abridged_xlsx = True
+
+    if generate_xlsx:
+        payment_certificate.xlsx_generating = True
+    if generate_abridged_xlsx:
+        payment_certificate.abridged_xlsx_generating = True
+
+    payment_certificate.save()
+
+    if generate_xlsx:
+        logger.info(
+            f"Starting full XLSX generation thread for cert {payment_certificate.certificate_number}"
+        )
+        thread = threading.Thread(
+            target=generate_and_save_xlsx,
+            args=(payment_certificate_id, sections, "full"),
+            daemon=True,
+        )
+        thread.start()
+
+    if generate_abridged_xlsx:
+        logger.info(
+            f"Starting abridged XLSX generation thread for cert {payment_certificate.certificate_number}"
+        )
+        thread = threading.Thread(
+            target=generate_and_save_xlsx,
+            args=(payment_certificate_id, sections, "abridged"),
             daemon=True,
         )
         thread.start()

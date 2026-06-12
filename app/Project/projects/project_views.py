@@ -996,3 +996,19 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
             return self.render_to_response(context)
 
         return HttpResponseRedirect(request.path)
+
+
+class ProjectReportLayoutPreviewView(ProjectMixin, DetailView):
+    """View to display a structural preview of the selected report layout."""
+
+    model = Project
+    template_name = "project/project_layout_preview.html"
+    context_object_name = "project"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        layout_style = self.request.GET.get("layout_style", "STANDARD")
+        context["layout_style"] = layout_style
+        return context

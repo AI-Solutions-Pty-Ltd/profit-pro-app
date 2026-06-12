@@ -5,5 +5,5 @@
   "format_css": true,
   "format_js": true,
   "profile": "django",
-  "extend_exclude": "htmlcov,.venv,documentation,app/theme,app/core/templates/auth/password_reset_email.html"
+  "extend_exclude": "tmp_output.html,htmlcov,.venv,documentation,app/theme,app/core/templates/auth/password_reset_email.html"
 }

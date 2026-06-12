@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full" data-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            {% block title %}
+                {{ SITE_NAME|default:"Profit Pro" }}
+            {% endblock title %}
+        </title>
+        <!-- Tailwind CSS -->
+        {% load tailwind_filters %}
+        {% load static tailwind_tags %}
+        {% tailwind_css %}
+        {% block extra_css %}
+        {% endblock extra_css %}
+        <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    </head>
+    <body class="bg-white">
+        {% block content %}
+        {% endblock content %}
+        {% block extra_js %}
+        {% endblock extra_js %}
+    </body>
+</html>
