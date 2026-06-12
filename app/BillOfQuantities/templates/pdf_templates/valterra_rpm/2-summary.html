@@ -1,6 +1,8 @@
 {% load l10n %}
 {% load mathfilters %}
 {% load humanize %}
+{% load mathfilters %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -217,7 +219,7 @@
         </table>
 
         <div class="footer-text">
-            {% if project.contractor %}{{ project.contractor.name }}{% else %}NIX Quantity Surveyors (Pty) Ltd{% endif %} | {% if project.client %}{{ project.client.name }}{% else %}Rustenburg Platinum Mines (PTY) LTD, 144 Oxford St, Rosebank, 2196{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+            {% if project.contractor %}{{ project.contractor.name }}{% endif %} | {% if project.client %}{{ project.client.name }}{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
         </div>
     </body>
 </html>

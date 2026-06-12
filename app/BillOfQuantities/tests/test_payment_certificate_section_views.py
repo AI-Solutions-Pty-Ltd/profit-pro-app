@@ -17,10 +17,10 @@ from app.Project.tests.factories import ProjectFactory
 # ---------------------------------------------------------------------------
 
 
-def _make_user_with_cert(certificate_layout="standard"):
+def _make_user_with_cert():
     """Return (user, project, certificate) with a line item attached."""
     user = AccountFactory.create()
-    project = ProjectFactory.create(users=user, certificate_layout=certificate_layout)
+    project = ProjectFactory.create(users=user)
     LineItemFactory.create(project=project)
     certificate = PaymentCertificateFactory.create(project=project)
     return user, project, certificate
@@ -117,7 +117,7 @@ class TestPaymentCertificateValuationSummaryView:
 
     def test_requires_authentication(self, client):
         """Unauthenticated users are redirected to login."""
-        user, project, cert = _make_user_with_cert(certificate_layout="valterra_rpm")
+        user, project, cert = _make_user_with_cert()
         url = reverse(
             "bill_of_quantities:payment-certificate-valuation-summary",
             kwargs={"project_pk": project.pk, "pk": cert.pk},
@@ -125,9 +125,9 @@ class TestPaymentCertificateValuationSummaryView:
         response = client.get(url)
         assert response.status_code == 302
 
-    def test_returns_200_for_valterra_rpm_layout(self, client):
-        """Returns 200 for projects using the valterra_rpm layout."""
-        user, project, cert = _make_user_with_cert(certificate_layout="valterra_rpm")
+    def test_returns_200(self, client):
+        """Returns 200 for Valuation Summary view."""
+        user, project, cert = _make_user_with_cert()
         client.force_login(user)
         url = reverse(
             "bill_of_quantities:payment-certificate-valuation-summary",
@@ -136,22 +136,9 @@ class TestPaymentCertificateValuationSummaryView:
         response = client.get(url)
         assert response.status_code == 200
 
-    def test_redirects_for_standard_layout(self, client):
-        """Returns redirect with error for projects using standard layout."""
-        user, project, cert = _make_user_with_cert(certificate_layout="standard")
-        client.force_login(user)
-        url = reverse(
-            "bill_of_quantities:payment-certificate-valuation-summary",
-            kwargs={"project_pk": project.pk, "pk": cert.pk},
-        )
-        response = client.get(url)
-        assert response.status_code == 302
-        # Should redirect back to the detail page
-        assert "payment-certificate" in response["Location"]
-
     def test_context_contains_grouped_sections(self, client):
         """Valuation summary context includes grouped_sections key."""
-        user, project, cert = _make_user_with_cert(certificate_layout="valterra_rpm")
+        user, project, cert = _make_user_with_cert()
         client.force_login(user)
         url = reverse(
             "bill_of_quantities:payment-certificate-valuation-summary",
@@ -162,7 +149,7 @@ class TestPaymentCertificateValuationSummaryView:
 
     def test_context_contains_totals(self, client):
         """Valuation summary context includes total_budget, total_current, etc."""
-        user, project, cert = _make_user_with_cert(certificate_layout="valterra_rpm")
+        user, project, cert = _make_user_with_cert()
         client.force_login(user)
         url = reverse(
             "bill_of_quantities:payment-certificate-valuation-summary",
@@ -179,7 +166,7 @@ class TestPaymentCertificateValuationSummaryView:
 
     def test_returns_200_abridged_mode(self, client):
         """Abridged mode returns 200."""
-        user, project, cert = _make_user_with_cert(certificate_layout="valterra_rpm")
+        user, project, cert = _make_user_with_cert()
         client.force_login(user)
         url = reverse(
             "bill_of_quantities:payment-certificate-valuation-summary",
@@ -191,7 +178,7 @@ class TestPaymentCertificateValuationSummaryView:
 
     def test_default_mode_is_abridged(self, client):
         """Without ?mode= param, defaults to abridged mode (is_abridged=True)."""
-        user, project, cert = _make_user_with_cert(certificate_layout="valterra_rpm")
+        user, project, cert = _make_user_with_cert()
         client.force_login(user)
         url = reverse(
             "bill_of_quantities:payment-certificate-valuation-summary",
@@ -325,7 +312,7 @@ class TestSectionViewURLs:
 
     def test_all_three_urls_return_200(self, client):
         """Cover page, valuation summary (valterra), and detailed full all return 200."""
-        user, project, cert = _make_user_with_cert(certificate_layout="valterra_rpm")
+        user, project, cert = _make_user_with_cert()
         client.force_login(user)
 
         urls = [
