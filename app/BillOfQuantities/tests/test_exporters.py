@@ -89,6 +89,27 @@ class TestExporters:
         assert pdf_file is not None
         assert pdf_file.size > 0
 
+    def test_compile_pdf_abridged(self):
+        """Test compiling abridged PDF."""
+        project = ProjectFactory.create()
+        cert = PaymentCertificateFactory.create(project=project)
+        # Create standard line items
+        LineItemFactory.create(project=project, addendum=False, special_item=False)
+        # Create special items
+        LineItemFactory.create(project=project, addendum=False, special_item=True)
+        # Create addendum items
+        LineItemFactory.create(project=project, addendum=True)
+
+        pdf_file = compile_pdf_for_certificate(
+            cert,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=True,
+        )
+        assert pdf_file is not None
+        assert pdf_file.size > 0
+
     def test_compile_pdf_logo_fallbacks_standard_layout(self):
         """Test that standard layout PDF compiles successfully with logo fallbacks (project -> contractor -> client)."""
         from django.core.files.uploadedfile import SimpleUploadedFile
