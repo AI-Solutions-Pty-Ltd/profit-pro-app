@@ -544,6 +544,74 @@ class ProjectSetupView(ProjectMixin, DetailView):
         )
 
 
+class ProjectReportConfigView(ProjectMixin, DetailView):
+    """Display and manage project report layout and column configuration."""
+
+    model = Project
+    template_name = "project/report_config.html"
+    context_object_name = "project"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.object.name,
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.object.pk}
+                ),
+            ),
+            BreadcrumbItem(
+                title="Edit Project",
+                url=reverse(
+                    "project:project-setup", kwargs={"pk": self.object.pk}
+                ),
+            ),
+            BreadcrumbItem(title="Column Customization", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        import json
+
+        context["project_columns_json"] = json.dumps(self.object.get_column_config())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        project = self.object
+        action = request.POST.get("action")
+
+        if action == "save_report_config":
+            column_config_str = request.POST.get("column_config")
+
+            import json
+
+            try:
+                if column_config_str:
+                    project.column_config = json.loads(column_config_str)
+                else:
+                    project.column_config = {}
+            except ValueError:
+                messages.error(request, "Invalid column configuration format.")
+                return HttpResponseRedirect(
+                    reverse("project:project-report-config", kwargs={"pk": project.pk})
+                )
+
+            project.save()
+            messages.success(
+                request, "Report layout and column configuration saved successfully!"
+            )
+
+        return HttpResponseRedirect(
+            reverse("project:project-report-config", kwargs={"pk": project.pk})
+        )
+
+
+
 class ProjectManagementView(ProjectMixin, DetailView):
     """Display project management page with all buttons (no graphs)."""
 

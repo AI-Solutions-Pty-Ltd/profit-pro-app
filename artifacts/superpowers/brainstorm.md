@@ -1,31 +1,37 @@
+# Superpowers Brainstorm
+
 ## Goal
-Refactor the report configuration UI to improve the card inputs for layout selection and introduce a "Preview" button that opens a native print dialog to showcase the structure of the selected report layout.
+The goal is to create a dedicated Column Heading Customization & Reordering page for a project, replace the table/form under "Report Selection & Configuration" in the project setup page with a "Report Template Setup" card, and add a link/button on that card to access the new dedicated page.
 
 ## Constraints
-- Must align with the existing Django templates, Crispy Forms, and Tailwind CSS stack.
-- The preview must accurately reflect the structure of the selected report layout without needing full actual data (placeholder data is acceptable).
-- The print dialog preview should format well for printing (e.g., using @media print CSS where needed).
+- **Virtual Environment**: All execution and commands must use the project's virtual environment `.venv\Scripts\python.exe`.
+- **Styling**: Must match the premium Tailwind CSS look and feel of the existing project setup page (responsive layout, hover transitions, icons, and consistent cards).
+- **Functionality**: Must not break the existing saving logic or column configuration persistence on the `Project` model.
 
 ## Known context
-- The application is a Django app called Profit Pro.
-- The UI contains a "Report Layout Style" selector, a visual layout preview card, a column configuration table, and a real-time column header preview.
-- The user wants to refactor the card inputs (likely making the layout cards more modular, responsive, or standardized) and add a preview capability via a print dialog.
+- **Setup Page**: Located at `app/Project/templates/project/project_setup.html` and rendered via `ProjectSetupView` in `app/Project/projects/project_views.py`.
+- **Existing Customization Component**: The column customization table, live preview, save form, and its script block reside within `project_setup.html` (lines 471-544, lines 1026-1192).
+- **Data Model**: The resolved configuration is returned by `project.get_column_config()` and saved back to `project.column_config` via the POST view parameter `action="save_report_config"`.
+- **Permissions**: Views should enforce `SubscriptionRequiredMixin` and `UserHasProjectRoleGenericMixin` with `Role.USER` level.
 
 ## Risks
-- Refactoring existing card inputs might break the current real-time HTMX or Javascript interactions for the previews.
-- Generating a realistic print layout directly from the configuration page might be complex if it requires rendering a separate view just for the preview.
-- Browser inconsistencies with window.print() behavior.
+- **JavaScript Breakage**: The drag/reorder and live preview logic expects specific elements like `columns-config-list` and `live-header-preview`. Extracting it must ensure all DOM elements are present in the new page's template.
+- **Redirection / UX Flow**: Moving this form to a separate page requires clear breadcrumb navigation and a seamless save-and-redirect/success message flow.
+- **Permission Bypass**: A user must not be able to customize columns for a project they do not belong to.
 
 ## Options (2?4)
-1.  **Option 1: Hidden Iframe Print.** Refactor the UI components. Add a "Preview" button that fetches the report HTML via an endpoint, loads it into a hidden iframe, and calls iframe.contentWindow.print().
-2.  **Option 2: New Tab Print.** Add a "Preview" button that opens a new browser tab with the report preview layout and immediately executes window.print() upon load.
-3.  **Option 3: In-page Modal Preview.** Refactor the cards and add a "Preview" button that opens a modal within the page showing the report structure, with a secondary "Print" button inside the modal that triggers the print dialog.
+- **Option 1**: Implement `ProjectReportConfigView` mapping to `<int:pk>/report-config/` using template `project/report_config.html`. On the setup page, under the "Report Selection & Configuration" section, render a grid layout containing the "Report Template Setup" card, which links to the new page. The new view handles the POST action `save_report_config` and redirects back to itself with a success message.
+- **Option 2**: Create a reusable Django form for the report config and render it within a modal on the setup page rather than creating a dedicated page. (Not recommended because the user explicitly asked for a dedicated page).
+- **Option 3**: Move the table to a new page, but keep the POST endpoint pointing to the old `ProjectSetupView`. (Not recommended, as it makes view handling less clean and splits the configuration logic).
 
 ## Recommendation
-**Option 2 (New Tab Print)** is the most robust and easiest to implement for print previews. It provides a clean, isolated environment for print CSS without interfering with the complex configuration page. The refactoring of the card inputs should focus on creating reusable Django template inclusions with standard Tailwind utility classes.
+- **Option 1** is recommended. It cleanly separates the complex column reordering/customization page (which includes a large JavaScript block and table preview) from the general project setup overview, while keeping view and save operations nicely encapsulated in `ProjectReportConfigView`.
 
 ## Acceptance criteria
-1. The card inputs for report selection are refactored for better maintainability and visual consistency.
-2. A new "Preview" button is added to the UI.
-3. Clicking the "Preview" button successfully opens a print dialog.
-4. The print preview accurately displays the structural layout of the selected report style.
+- A new route `<int:pk>/report-config/` mapped to `ProjectReportConfigView` in `project_urls.py`.
+- `ProjectReportConfigView` requires `Role.USER` and project membership.
+- A new template `app/Project/templates/project/report_config.html` containing the customize form, live preview, and reorder Javascript.
+- The "Report Selection & Configuration" section in `project_setup.html` is updated to show a "Report Template Setup" card matching the other setup cards.
+- The card contains a link/button leading to the new configuration page.
+- Saving/resetting column configs on the new page works correctly and displays a success alert.
+- Pytest tests are updated or added, and all tests pass.
