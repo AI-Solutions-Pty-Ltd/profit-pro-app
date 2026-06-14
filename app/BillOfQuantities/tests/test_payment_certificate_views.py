@@ -653,6 +653,22 @@ class TestPaymentCertificatePDFDownloadAccess:
             response.status_code == 302
         )  # redirects to detail page because PDF does not exist yet
 
+    def test_download_abridged_pdf_with_detailed_selection(self, client):
+        """Test downloading abridged PDF with ?detailed=true selection on-the-fly."""
+        superuser = SuperuserFactory.create()
+        project = ProjectFactory.create()
+        LineItemFactory.create(project=project)
+        certificate = PaymentCertificateFactory.create(project=project)
+
+        client.force_login(superuser)
+        url = reverse(
+            "bill_of_quantities:payment-certificate-download-abridged-pdf",
+            kwargs={"project_pk": project.pk, "pk": certificate.pk},
+        )
+        response = client.get(url + "?detailed=true")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+
     def test_pdf_status_view_allows_superuser_not_in_project_users(self, client):
         """Test that a superuser can access PDF status check even if not in project users."""
         superuser = SuperuserFactory.create()
