@@ -608,7 +608,7 @@ def generate_xlsx_async(
         thread.start()
 
 
-def send_payment_certificate_to_signatories(payment_certificate_id: int):
+def send_payment_certificate_to_signatories(payment_certificate_id: int, request=None):
     # Get all signatories
     payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
     project: Project = payment_certificate.project
@@ -625,6 +625,7 @@ def send_payment_certificate_to_signatories(payment_certificate_id: int):
     # Render email template
     context = {
         "payment_certificate": payment_certificate,
+        "sender": request.user if request and request.user.is_authenticated else None,
     }
     html_message = render_to_string(
         "payment_certificate/email_payment_certificate.html", context
