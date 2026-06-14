@@ -81,6 +81,11 @@ def link_callback(src_attr, *args):
 
 def generate_pdf(html_content) -> ContentFile:
     pdf_file = BytesIO()
-    pisa.CreatePDF(html_content, dest=pdf_file, link_callback=link_callback)
+    result = pisa.CreatePDF(html_content, dest=pdf_file, link_callback=link_callback)
+    if result.err:
+        raise RuntimeError(
+            f"PDF generation failed with {result.err} error(s). "
+            "Check template HTML for unsupported CSS or missing resources."
+        )
     pdf_file.seek(0)
     return ContentFile(pdf_file.getvalue())  # in memory pdf
