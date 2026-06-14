@@ -566,9 +566,7 @@ class ProjectReportConfigView(ProjectMixin, DetailView):
             ),
             BreadcrumbItem(
                 title="Edit Project",
-                url=reverse(
-                    "project:project-setup", kwargs={"pk": self.object.pk}
-                ),
+                url=reverse("project:project-setup", kwargs={"pk": self.object.pk}),
             ),
             BreadcrumbItem(title="Column Customization", url=None),
         ]
@@ -609,7 +607,6 @@ class ProjectReportConfigView(ProjectMixin, DetailView):
         return HttpResponseRedirect(
             reverse("project:project-report-config", kwargs={"pk": project.pk})
         )
-
 
 
 class ProjectManagementView(ProjectMixin, DetailView):

@@ -1,21 +1,15 @@
-# Execution Summary
+# Finish Summary
 
-## Verification
-- python manage.py check: Passed with no issues.
+## Summary of Changes
+- Registered new URL route `<int:pk>/report-config/` pointing to `ProjectReportConfigView`.
+- Created `ProjectReportConfigView` view class handling GET (rendering custom template) and POST (saving column settings).
+- Added `report_config.html` containing the table, preview, reset, and reorder Javascript block.
+- Replaced inline table/form on `project_setup.html` with a clean card under "Report Selection & Configuration".
+- Updated unit tests in `test_views.py`.
 
-## Summary of changes
-- Extracted layout cards from project_setup.html into project/includes/layout_cards.html for better maintainability.
-- Added a Preview button in the Layout Visual Preview area.
-- Added a bit of JavaScript to open a print dialog layout view dynamically based on the selected layout option.
-- Created ProjectReportLayoutPreviewView and routed it at project/<pk>/preview-layout/.
-- Created project_layout_preview.html to format the report layout with Tailwind print styles and an auto-firing window.print() script.
+## Verification Results
+- Django checks: Passed.
+- Pytest test suite: All 3 view tests passed successfully.
 
-## Manual validation steps
-1. Open a Project and go to the Edit / Setup page.
-2. Scroll to the Report Selection & Configuration section.
-3. Change the layout option in the dropdown (Standard, Valterra, Lephadimisha).
-4. Click the Preview button next to Layout Visual Preview.
-5. Observe that a new tab opens and immediately prompts a system print dialog showing the mock structure of that layout.
-
-## Review Pass
-No blocking or major issues found. Implementation aligns with the approved plan.
+## Pull Request
+Created Pull Request to `develop` branch: https://github.com/AI-Solutions-Pty-Ltd/profit-pro-app/pull/252

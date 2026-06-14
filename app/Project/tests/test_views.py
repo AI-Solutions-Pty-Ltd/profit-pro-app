@@ -20,7 +20,9 @@ class TestProjectReportConfig:
         ProjectRole.objects.get_or_create(
             project=self.project, user=self.user, role=Role.ADMIN
         )
-        self.url = reverse("project:project-report-config", kwargs={"pk": self.project.pk})
+        self.url = reverse(
+            "project:project-report-config", kwargs={"pk": self.project.pk}
+        )
 
     def test_get_report_config(self, client):
         """Test successfully rendering report config page."""
