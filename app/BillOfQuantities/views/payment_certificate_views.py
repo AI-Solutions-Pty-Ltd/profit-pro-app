@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
@@ -44,6 +45,8 @@ from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
 )
 from app.Project.models import PlannedValue, Project, Role
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentCertificateMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
@@ -960,7 +963,12 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                 )
                 return response
             except Exception as e:
-                messages.error(request, f"Error compiling PDF: {str(e)}")
+                logger.exception(
+                    "Error compiling abridged PDF for payment certificate pk=%s, project_pk=%s",
+                    pk,
+                    project_pk,
+                )
+                messages.error(request, f"Error compiling PDF: {e}")
                 return redirect(
                     "bill_of_quantities:payment-certificate-detail",
                     project_pk=project_pk,
@@ -1275,14 +1283,9 @@ class PaymentCertificateValuationSummaryView(PaymentCertificateMixin, DetailView
 
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        context["is_abridged"] = False
 
-        mode = self.request.GET.get("mode", "abridged")
-        context["mode"] = mode
-        context["is_abridged"] = mode == "abridged"
-
-        summary_data = get_valuation_summary_data(
-            self.get_object(), abridged=context["is_abridged"]
-        )
+        summary_data = get_valuation_summary_data(self.get_object(), abridged=False)
         context.update(summary_data)
         return context
 
