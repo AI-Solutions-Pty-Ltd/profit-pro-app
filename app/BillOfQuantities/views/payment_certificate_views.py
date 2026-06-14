@@ -869,11 +869,12 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                     include_detailed=include_detailed,
                     is_abridged=False,
                 )
-                response = FileResponse(
-                    pdf_file,
+                response = HttpResponse(
+                    pdf_file.read(),
                     content_type="application/pdf",
-                    as_attachment=True,
-                    filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",
+                )
+                response["Content-Disposition"] = (
+                    f'attachment; filename="payment_certificate_{payment_certificate.certificate_number}.pdf"'
                 )
                 return response
             except Exception as e:
@@ -955,11 +956,12 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                     include_detailed=include_detailed,
                     is_abridged=True,
                 )
-                response = FileResponse(
-                    pdf_file,
+                response = HttpResponse(
+                    pdf_file.read(),
                     content_type="application/pdf",
-                    as_attachment=True,
-                    filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf",
+                )
+                response["Content-Disposition"] = (
+                    f'attachment; filename="payment_certificate_{payment_certificate.certificate_number}_abridged.pdf"'
                 )
                 return response
             except Exception as e:
