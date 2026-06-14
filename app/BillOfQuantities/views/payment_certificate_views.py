@@ -1075,7 +1075,7 @@ class PaymentCertificateEmailView(PaymentCertificateMixin, View):
 
         # Send email to signatories
         response, message = send_payment_certificate_to_signatories(
-            payment_certificate.pk
+            payment_certificate.pk, request=request
         )
 
         if response:
