@@ -35,6 +35,9 @@ DATABASES = {
     }
 }
 
+# Ensure logs directory exists before logging is configured
+os.makedirs(os.path.join(BASE_DIR, "logs"), exist_ok=True)  # noqa: F405
+
 # Write Django errors to a log file readable via cPanel File Manager
 LOGGING = {
     "version": 1,

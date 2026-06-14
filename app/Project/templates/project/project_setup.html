@@ -469,7 +469,7 @@
             </div>
         </div>
         <!-- Report Selection & Column Configuration -->
-        <div class="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Report Selection & Configuration</h2>
                 <p class="mt-1 text-sm text-gray-600">Customize column headings, visibility, and ordering.</p>
@@ -484,16 +484,16 @@
                         <div class="space-y-6">
                             <!-- Column Config List -->
                             <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-3">Column Heading Customization & Reordering</h3>
-                                <div class="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                                <h3 class="mb-3 text-sm font-semibold text-gray-900">Column Heading Customization & Reordering</h3>
+                                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
                                     <table class="min-w-full divide-y divide-gray-200" id="columns-config-table">
                                         <thead class="bg-gray-50">
                                             <tr>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-16 text-center">Order</th>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-16 text-center">Visible</th>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Default Header</th>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Custom Label</th>
-                                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase w-28">Actions</th>
+                                                <th class="px-3 py-2 w-16 text-xs font-semibold text-left text-center text-gray-500 uppercase">Order</th>
+                                                <th class="px-3 py-2 w-16 text-xs font-semibold text-left text-center text-gray-500 uppercase">Visible</th>
+                                                <th class="px-3 py-2 text-xs font-semibold text-left text-gray-500 uppercase">Default Header</th>
+                                                <th class="px-3 py-2 text-xs font-semibold text-left text-gray-500 uppercase">Custom Label</th>
+                                                <th class="px-3 py-2 w-28 text-xs font-semibold text-center text-gray-500 uppercase">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-200" id="columns-config-list">
@@ -501,7 +501,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="mt-2 flex justify-between items-center">
+                                <div class="flex justify-between items-center mt-2">
                                     <p class="text-xs text-gray-500">Use Up/Down buttons to reorder, or checkbox to show/hide.</p>
                                     <button type="button"
                                             id="reset-columns-btn"
@@ -511,18 +511,18 @@
                                 </div>
                             </div>
                             <!-- Real-time Live Header Preview -->
-                            <div class="border border-indigo-100 rounded-lg p-4 bg-indigo-50/30">
-                                <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            <div class="p-4 rounded-lg border border-indigo-100 bg-indigo-50/30">
+                                <h4 class="flex gap-1.5 items-center mb-3 text-xs font-bold tracking-wider text-indigo-900 uppercase">
                                     {% heroicon_outline "eye" class="w-4 h-4 text-indigo-600" %}
                                     Real-time Column Header Preview
                                 </h4>
-                                <div class="overflow-x-auto border border-indigo-100 rounded bg-white shadow-inner max-w-full">
+                                <div class="overflow-x-auto max-w-full bg-white rounded border border-indigo-100 shadow-inner">
                                     <table class="min-w-full divide-y divide-gray-200 text-[10px] table-fixed">
-                                        <thead class="bg-gray-50 text-center font-bold" id="live-header-preview">
+                                        <thead class="font-bold text-center bg-gray-50" id="live-header-preview">
                                             <!-- Dynamically rendered by JS -->
                                         </thead>
                                         <tbody>
-                                            <tr class="divide-x divide-gray-100 text-center text-gray-400"
+                                            <tr class="text-center text-gray-400 divide-x divide-gray-100"
                                                 id="live-body-preview">
                                                 <!-- Placeholders -->
                                             </tr>
@@ -532,9 +532,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="pt-4 border-t border-gray-200 flex justify-end">
+                    <div class="flex justify-end pt-4 border-t border-gray-200">
                         <button type="submit"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "check" size="20" %}
                             <span class="ml-2">Save Report Configuration</span>
                         </button>
@@ -686,13 +686,13 @@
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h2 class="text-lg font-semibold text-gray-900">Lead Consultant Management</h2>
+                        <h2 class="text-lg font-semibold text-gray-900">Consultant Management</h2>
                         <p class="mt-1 text-sm text-gray-600">Manage project lead consultant information</p>
                     </div>
                     <a href="{% url 'client:lead-consultant-management:lead-consultant-list' project.pk %}"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "user-group" size="20" class="mr-2" %}
-                        Manage Lead Consultants
+                        Manage  Consultants
                     </a>
                 </div>
             </div>
@@ -723,38 +723,23 @@
                     </div>
                 {% else %}
                     <div class="py-8 text-center">
-                        <p class="mb-4 text-sm text-gray-600">No lead consultant assigned to this project</p>
+                        <p class="mb-4 text-sm text-gray-600">No consultant assigned to this project</p>
                         <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"
                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" size="16" %}
-                            <span class="ml-2">Assign Lead Consultant</span>
+                            <span class="ml-2">Assign Lead  Consultant</span>
+                        </a>
+                        <a href="#"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "plus" size="16" %}
+                            <span class="ml-2">Assign  Consultant</span>
                         </a>
                     </div>
                 {% endif %}
             </div>
         </div>
-        <!-- Project Work Breakdown Structures -->
-        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Project Work Breakdown Structures</h2>
-                <p class="mt-1 text-sm text-gray-600">Manage categories, sub-categories, and disciplines</p>
-            </div>
-            <div class="px-6 py-4">
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
-                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Manage Categories</h3>
-                        <p class="mb-3 text-xs text-gray-600">Create and manage project categories for classification</p>
-                        <a href="{% url 'project:project-category-list' project.pk %}"
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "tag" size="16" %}
-                            <span class="ml-2">Manage Level 1 Categories</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
         <!-- Signatories Management -->
-        <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <div>
@@ -840,6 +825,26 @@
                         </a>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+        <!-- Project Work Breakdown Structures -->
+        <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Project Work Breakdown Structures</h2>
+                <p class="mt-1 text-sm text-gray-600">Manage categories, sub-categories, and disciplines</p>
+            </div>
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
+                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Manage Categories</h3>
+                        <p class="mb-3 text-xs text-gray-600">Create and manage project categories for classification</p>
+                        <a href="{% url 'project:project-category-list' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "tag" size="16" %}
+                            <span class="ml-2">Manage Level 1 Categories</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- Estimator Data Source -->
@@ -1058,19 +1063,19 @@
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50 transition-colors';
                     tr.innerHTML = `
-                        <td class="px-3 py-2 text-center text-xs text-gray-500 font-medium">${idx + 1}</td>
+                        <td class="px-3 py-2 text-xs font-medium text-center text-gray-500">${idx + 1}</td>
                         <td class="px-3 py-2 text-center">
-                            <input type="checkbox" data-id="${col.id}" class="col-enable-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${col.enabled ? 'checked' : ''}>
+                            <input type="checkbox" data-id="${col.id}" class="text-indigo-600 rounded border-gray-300 col-enable-checkbox focus:ring-indigo-500" ${col.enabled ? 'checked' : ''}>
                         </td>
-                        <td class="px-3 py-2 text-xs text-gray-900 font-medium">${getOriginalHeader(col.id)}</td>
+                        <td class="px-3 py-2 text-xs font-medium text-gray-900">${getOriginalHeader(col.id)}</td>
                         <td class="px-3 py-2">
-                            <input type="text" data-id="${col.id}" value="${col.label || ''}" class="col-label-input block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs px-2 py-1">
+                            <input type="text" data-id="${col.id}" value="${col.label || ''}" class="block px-2 py-1 w-full text-xs rounded border-gray-300 shadow-sm col-label-input focus:border-indigo-500 focus:ring-indigo-500">
                         </td>
-                        <td class="px-3 py-2 text-center space-x-1">
-                            <button type="button" class="p-1 text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-30 btn-move-up" data-index="${idx}" ${idx === 0 ? 'disabled' : ''}>
+                        <td class="px-3 py-2 space-x-1 text-center">
+                            <button type="button" class="p-1 text-gray-400 transition-colors hover:text-indigo-600 disabled:opacity-30 btn-move-up" data-index="${idx}" ${idx === 0 ? 'disabled' : ''}>
                                 <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                             </button>
-                            <button type="button" class="p-1 text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-30 btn-move-down" data-index="${idx}" ${idx === columns.length - 1 ? 'disabled' : ''}>
+                            <button type="button" class="p-1 text-gray-400 transition-colors hover:text-indigo-600 disabled:opacity-30 btn-move-down" data-index="${idx}" ${idx === columns.length - 1 ? 'disabled' : ''}>
                                 <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                         </td>
