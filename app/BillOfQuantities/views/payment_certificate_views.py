@@ -1285,9 +1285,7 @@ class PaymentCertificateValuationSummaryView(PaymentCertificateMixin, DetailView
         context["project"] = self.get_project()
         context["is_abridged"] = False
 
-        summary_data = get_valuation_summary_data(
-            self.get_object(), abridged=False
-        )
+        summary_data = get_valuation_summary_data(self.get_object(), abridged=False)
         context.update(summary_data)
         return context
 
