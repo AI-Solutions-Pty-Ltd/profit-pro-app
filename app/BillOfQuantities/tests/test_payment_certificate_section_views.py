@@ -165,7 +165,7 @@ class TestPaymentCertificateValuationSummaryView:
             assert key in response.context
 
     def test_returns_200_abridged_mode(self, client):
-        """Abridged mode returns 200."""
+        """Abridged mode query parameter is ignored, is_abridged is False."""
         user, project, cert = _make_user_with_cert()
         client.force_login(user)
         url = reverse(
@@ -174,10 +174,10 @@ class TestPaymentCertificateValuationSummaryView:
         )
         response = client.get(url + "?mode=abridged")
         assert response.status_code == 200
-        assert response.context["is_abridged"] is True
+        assert response.context["is_abridged"] is False
 
-    def test_default_mode_is_abridged(self, client):
-        """Without ?mode= param, defaults to abridged mode (is_abridged=True)."""
+    def test_default_mode_is_full(self, client):
+        """Without ?mode= param, defaults to full mode (is_abridged=False)."""
         user, project, cert = _make_user_with_cert()
         client.force_login(user)
         url = reverse(
@@ -186,7 +186,7 @@ class TestPaymentCertificateValuationSummaryView:
         )
         response = client.get(url)
         assert response.status_code == 200
-        assert response.context["is_abridged"] is True
+        assert response.context["is_abridged"] is False
 
 
 # ===========================================================================

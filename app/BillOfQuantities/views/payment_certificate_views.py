@@ -1283,13 +1283,10 @@ class PaymentCertificateValuationSummaryView(PaymentCertificateMixin, DetailView
 
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-
-        mode = self.request.GET.get("mode", "abridged")
-        context["mode"] = mode
-        context["is_abridged"] = mode == "abridged"
+        context["is_abridged"] = False
 
         summary_data = get_valuation_summary_data(
-            self.get_object(), abridged=context["is_abridged"]
+            self.get_object(), abridged=False
         )
         context.update(summary_data)
         return context
