@@ -1,7 +1,7 @@
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Fix Ruff E721 lint error in `extract_styles.py` | [x] | `.venv\Scripts\python.exe -m ruff check .` |
-| **TSK-02** | Fix Ruff E402 module level import order in `scratch_test.py` | [x] | `.venv\Scripts\python.exe -m ruff check .` |
-| **TSK-03** | Resolve `djlint` UnicodeDecodeError caused by UTF-16 encoded `output.html` | [x] | `.venv\Scripts\python.exe -m djlint --reformat .` |
-| **TSK-04** | Exclude `output.html` and `.venv` and ignore warnings H030, H031, H023 in `pyproject.toml` and `.djlintrc` | [x] | `.venv\Scripts\python.exe -m djlint --lint .` |
-| **TSK-05** | Verify all tools (ruff, ty, djlint) return 0 exit code | [x] | Individual script run executions |
+| **TSK-01** | Register new route in `app/Project/projects/project_urls.py` | [x] | `.venv\Scripts\python.exe manage.py check` |
+| **TSK-02** | Implement `ProjectReportConfigView` view class in `app/Project/projects/project_views.py` | [x] | `.venv\Scripts\python.exe manage.py check` |
+| **TSK-03** | Create the dedicated `report_config.html` template in `app/Project/templates/project/report_config.html` | [x] | Render checks and layout verification |
+| **TSK-04** | Update project setup template in `app/Project/templates/project/project_setup.html` | [x] | Render checks on project setup page |
+| **TSK-05** | Update and run unit views tests in `app/Project/tests/test_views.py` | [x] | `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py` |
