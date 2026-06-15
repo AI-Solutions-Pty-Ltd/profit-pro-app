@@ -215,7 +215,11 @@ def get_report_filename(
         version = "combined"
 
     # 3. date of report
-    date_val = payment_certificate.assessment_date or payment_certificate.approved_on or datetime.now()
+    date_val = (
+        payment_certificate.assessment_date
+        or payment_certificate.approved_on
+        or datetime.now()
+    )
     if hasattr(date_val, "date"):
         date_val = date_val.date()
     date_str = date_val.strftime("%Y-%m-%d")

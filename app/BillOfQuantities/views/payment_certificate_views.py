@@ -859,7 +859,10 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                     pk=pk,
                 )
 
-            from app.BillOfQuantities.tasks import compile_pdf_for_certificate, get_report_filename
+            from app.BillOfQuantities.tasks import (
+                compile_pdf_for_certificate,
+                get_report_filename,
+            )
 
             try:
                 pdf_file = compile_pdf_for_certificate(
@@ -914,6 +917,7 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
             )
         # PDF exists and is ready - serve it
         from app.BillOfQuantities.tasks import get_report_filename
+
         filename = get_report_filename(
             payment_certificate,
             include_front=True,
@@ -959,7 +963,10 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                     pk=pk,
                 )
 
-            from app.BillOfQuantities.tasks import compile_pdf_for_certificate, get_report_filename
+            from app.BillOfQuantities.tasks import (
+                compile_pdf_for_certificate,
+                get_report_filename,
+            )
 
             try:
                 pdf_file = compile_pdf_for_certificate(
@@ -1019,6 +1026,7 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
             )
         # Abridged PDF exists and is ready - serve it
         from app.BillOfQuantities.tasks import get_report_filename
+
         filename = get_report_filename(
             payment_certificate,
             include_front=True,

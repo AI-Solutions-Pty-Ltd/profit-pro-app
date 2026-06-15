@@ -487,5 +487,7 @@ class SignatoriesFactory(DjangoModelFactory):
 
     project = SubFactory(ProjectFactory)
     user = SubFactory(AccountFactory)
-    role = factory.Iterator(["Project Manager", "Quantity Surveyor", "Senior Manager PMU"])
+    role = factory.Iterator(
+        ["Project Manager", "Quantity Surveyor", "Senior Manager PMU"]
+    )
     sequence_number = factory.Sequence(lambda n: n)

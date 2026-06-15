@@ -640,8 +640,8 @@
                     </div>
                     <a href="{% url 'client:lead-consultant-management:lead-consultant-list' project.pk %}"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                       {% heroicon_outline "user-group" size="20" class="mr-2" %}
-                       Manage Consultants
+                        {% heroicon_outline "user-group" size="20" class="mr-2" %}
+                        Manage Consultants
                     </a>
                 </div>
             </div>
@@ -678,7 +678,6 @@
                                 <p class="text-xs italic text-gray-500">No Lead Consultant assigned</p>
                             {% endif %}
                         </div>
-
                         <!-- Regular Consultants Section -->
                         <div>
                             <h4 class="mb-2 text-sm font-medium text-gray-700">Consultants</h4>
@@ -709,7 +708,6 @@
                                 <p class="text-xs italic text-gray-500">No Consultant assigned</p>
                             {% endif %}
                         </div>
-
                         <!-- Assignment Buttons -->
                         <div class="flex gap-4 pt-4 border-t border-gray-200">
                             <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"

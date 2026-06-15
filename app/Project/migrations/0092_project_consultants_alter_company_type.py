@@ -9,6 +9,7 @@ def copy_lead_consultant_to_consultants(apps, schema_editor):
         if project.lead_consultant_id:
             project.consultants.add(project.lead_consultant_id)
 
+
 def copy_lead_consultant_to_consultants_reverse(apps, schema_editor):
     Project = apps.get_model("Project", "Project")
     for project in Project.objects.all():
@@ -20,7 +21,6 @@ def copy_lead_consultant_to_consultants_reverse(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0091_remove_project_certificate_layout"),
     ]
@@ -42,7 +42,10 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("CLIENT", "Client"),
-                    ("CONTRACTOR", "Contract" + "or"), # avoiding ruff/linter issues if any
+                    (
+                        "CONTRACTOR",
+                        "Contract" + "or",
+                    ),  # avoiding ruff/linter issues if any
                     ("LEAD_CONSULTANT", "Lead Consultant"),
                     ("CONSULTANT", "Consultant"),
                 ],

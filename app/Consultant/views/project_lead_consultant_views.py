@@ -196,7 +196,9 @@ class ProjectLeadConsultantRemoveView(LeadConsultantMixin, View):
         return redirect("project:project-setup", pk=self.project.pk)
 
 
-class ProjectConsultantRemoveView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, View):
+class ProjectConsultantRemoveView(
+    UserHasProjectRoleGenericMixin, BreadcrumbMixin, View
+):
     """Remove regular consultant from project."""
 
     template_name = "lead_consultant/consultant_confirm_remove.html"

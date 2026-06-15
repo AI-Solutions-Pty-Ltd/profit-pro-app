@@ -321,7 +321,9 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     current_row += 1
 
     # Footer
-    footer_text = f"Sedgepro | {project.name} | Payment Certificate No. {cert_num} | {cert_date}"
+    footer_text = (
+        f"Sedgepro | {project.name} | Payment Certificate No. {cert_num} | {cert_date}"
+    )
     ws.cell(row=current_row, column=1, value=footer_text).font = font_italic_small
     ws.cell(row=current_row, column=1).alignment = align_center
     ws.merge_cells(

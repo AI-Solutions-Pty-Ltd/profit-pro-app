@@ -57,18 +57,15 @@
                     {% endif %}
                     {% comment %} {% if payment_certificate.status == 'APPROVED' %}
                         {% if project.signatories.count > 0 %}
-                            <form method="post"
-                                  action="{% url 'bill_of_quantities:payment-certificate-email' project.pk payment_certificate.pk %}">
+                            <form method="post" action="{% url 'bill_of_quantities:payment-certificate-email' project.pk payment_certificate.pk %}">
                                 {% csrf_token %}
-                                <button type="submit"
-                                        class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white bg-green-600 rounded-md border border-gray-300 shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white bg-green-600 rounded-md border border-gray-300 shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                     {% heroicon_outline "envelope" class="w-4 h-4" %}
                                     Email to Signatories
                                 </button>
                             </form>
                         {% else %}
-                            <a href="{% url 'project:signatory-list' project.pk %}"
-                               class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-gray-50 rounded-md border border-gray-300 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <a href="{% url 'project:signatory-list' project.pk %}" class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-gray-50 rounded-md border border-gray-300 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                                 {% heroicon_outline "plus" class="w-4 h-4" %}
                                 Add signatories to send email
                             </a>

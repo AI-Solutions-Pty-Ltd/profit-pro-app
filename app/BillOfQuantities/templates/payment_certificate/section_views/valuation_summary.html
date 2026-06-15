@@ -41,7 +41,6 @@
                 <table class="w-full text-sm">
                     <thead class="bg-gray-100">
                         <tr>
-                           
                             <th class="px-4 py-3 text-left font-semibold text-gray-700 w-[34%]">DESCRIPTION</th>
                             <th class="px-4 py-3 font-semibold text-right text-gray-700">TENDER AMOUNT (R)</th>
                             <th class="px-4 py-3 font-semibold text-right text-gray-700">CUMULATIVE CERTIFIED (R)</th>
@@ -53,7 +52,6 @@
                         {% for section in grouped_sections %}
                             <!-- Section Header Row -->
                             <tr class="font-semibold bg-gray-50">
-                                
                                 <td class="px-4 py-2 text-gray-900 uppercase">{{ section.name }}</td>
                                 <td class="px-4 py-2 font-mono text-right text-gray-900">{{ section.budget|floatformat:2|intcomma }}</td>
                                 <td class="px-4 py-2 font-mono text-right text-gray-900">{{ section.cumulative|floatformat:2|intcomma }}</td>
@@ -63,7 +61,6 @@
                             <!-- Bill rows -->
                             {% for bill in section.bills %}
                                 <tr class="bg-white hover:bg-gray-50">
-                                    
                                     <td class="px-4 py-2 pl-4 text-gray-700">{{ bill.name }}</td>
                                     <td class="px-4 py-2 font-mono text-right text-gray-700">{{ bill.budget|floatformat:2|intcomma }}</td>
                                     <td class="px-4 py-2 font-mono text-right text-gray-700">{{ bill.cumulative|floatformat:2|intcomma }}</td>
@@ -83,7 +80,6 @@
                     </tbody>
                     <tfoot class="font-bold bg-gray-100 border-t-2 border-gray-300">
                         <tr>
-                           
                             <td class="px-4 py-3 text-gray-900 uppercase">Total Excluding VAT</td>
                             <td class="px-4 py-3 font-mono text-right text-gray-900">{{ total_budget|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right text-gray-900">{{ total_cumulative|floatformat:2|intcomma }}</td>
@@ -91,7 +87,6 @@
                             <td class="px-4 py-3 font-mono text-right text-indigo-700">{{ total_current|floatformat:2|intcomma }}</td>
                         </tr>
                         <tr class="bg-indigo-50">
-                           
                             <td class="px-4 py-4 text-base text-indigo-900 uppercase">Grand Total</td>
                             <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">{{ total_budget|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">{{ total_cumulative|floatformat:2|intcomma }}</td>

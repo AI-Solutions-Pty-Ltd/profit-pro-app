@@ -234,30 +234,55 @@ class TestExporters:
     def test_report_naming_format(self):
         """Test that get_report_filename constructs correct filenames."""
         from datetime import datetime
+
         from app.Project.tests.factories import ProjectFactory
 
         project = ProjectFactory.create(name="Test Project")
         cert = PaymentCertificateFactory.create(project=project)
-        
+
         date_val = cert.assessment_date or cert.approved_on or datetime.now()
         if hasattr(date_val, "date"):
             date_val = date_val.date()
         expected_date = date_val.strftime("%Y-%m-%d")
 
         # Case 1: Full report
-        filename = get_report_filename(cert, include_front=True, include_summary=True, include_detailed=True, is_abridged=False)
+        filename = get_report_filename(
+            cert,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=False,
+        )
         assert filename == f"cover-summary-detailed_full_{expected_date}.pdf"
 
         # Case 2: Abridged report
-        filename = get_report_filename(cert, include_front=True, include_summary=True, include_detailed=True, is_abridged=True)
+        filename = get_report_filename(
+            cert,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=True,
+        )
         assert filename == f"cover-summary-detailed_abridged_{expected_date}.pdf"
 
         # Case 3: Combined/custom sections
-        filename = get_report_filename(cert, include_front=True, include_summary=False, include_detailed=True, is_abridged=False)
+        filename = get_report_filename(
+            cert,
+            include_front=True,
+            include_summary=False,
+            include_detailed=True,
+            is_abridged=False,
+        )
         assert filename == f"cover-detailed_combined_{expected_date}.pdf"
 
         # Case 4: Single section
-        filename = get_report_filename(cert, include_front=False, include_summary=True, include_detailed=False, is_abridged=False)
+        filename = get_report_filename(
+            cert,
+            include_front=False,
+            include_summary=True,
+            include_detailed=False,
+            is_abridged=False,
+        )
         assert filename == f"summary_combined_{expected_date}.pdf"
 
 

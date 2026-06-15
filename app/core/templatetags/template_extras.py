@@ -194,4 +194,3 @@ def space_intcomma(value):
             return f"{val:,.2f}".replace(",", " ")
         except (ValueError, TypeError):
             return value
-

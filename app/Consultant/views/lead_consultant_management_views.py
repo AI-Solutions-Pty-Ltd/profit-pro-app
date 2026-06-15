@@ -209,11 +209,12 @@ class RevealLeadConsultantFieldView(LeadConsultantMixin, View):
         try:
             consultant = Company.objects.get(
                 pk=self.kwargs["company_pk"],
-                type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT]
+                type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT],
             )
         except Company.DoesNotExist:
             return JsonResponse(
-                {"status": "error", "message": "Consultant company not found"}, status=404
+                {"status": "error", "message": "Consultant company not found"},
+                status=404,
             )
 
         val = getattr(consultant, field_name, "")

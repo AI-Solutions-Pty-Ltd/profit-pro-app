@@ -234,11 +234,15 @@ class TestAllocationFixes(TestCase):
         self.project.consultants.add(self.lead_consultant_company)
         self.project.consultants.add(consultant_company)
 
-        self.assertIn(self.lead_consultant_company, self.project.lead_consultant_companies)
+        self.assertIn(
+            self.lead_consultant_company, self.project.lead_consultant_companies
+        )
         self.assertNotIn(consultant_company, self.project.lead_consultant_companies)
 
         self.assertIn(consultant_company, self.project.regular_consultant_companies)
-        self.assertNotIn(self.lead_consultant_company, self.project.regular_consultant_companies)
+        self.assertNotIn(
+            self.lead_consultant_company, self.project.regular_consultant_companies
+        )
 
     def test_allocate_consultant_views(self):
         """Verify ProjectAllocateConsultantView and ProjectConsultantRemoveView."""
@@ -254,21 +258,31 @@ class TestAllocationFixes(TestCase):
             "client:project-lead-consultant:project-consultant-allocate",
             kwargs={"project_pk": self.project.pk},
         )
-        response = self.client.post(url_allocate, {
-            "consultant": consultant_company.pk,
-            "type": Company.Type.CONSULTANT,
-        })
+        response = self.client.post(
+            url_allocate,
+            {
+                "consultant": consultant_company.pk,
+                "type": Company.Type.CONSULTANT,
+            },
+        )
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(self.project.consultants.filter(pk=consultant_company.pk).exists())
+        self.assertTrue(
+            self.project.consultants.filter(pk=consultant_company.pk).exists()
+        )
 
         # Test remove view post
         url_remove = reverse(
             "client:project-lead-consultant:project-consultant-remove",
-            kwargs={"project_pk": self.project.pk, "consultant_pk": consultant_company.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "consultant_pk": consultant_company.pk,
+            },
         )
         response = self.client.post(url_remove)
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(self.project.consultants.filter(pk=consultant_company.pk).exists())
+        self.assertFalse(
+            self.project.consultants.filter(pk=consultant_company.pk).exists()
+        )
 
     def test_allocate_lead_consultant_views(self):
         """Verify ProjectAllocateLeadConsultantView and ProjectLeadConsultantRemoveView."""
@@ -284,21 +298,29 @@ class TestAllocationFixes(TestCase):
             "client:project-lead-consultant:project-lead-consultant-allocate",
             kwargs={"project_pk": self.project.pk},
         )
-        response = self.client.post(url_allocate, {
-            "lead_consultant": lead_consultant.pk,
-            "type": Company.Type.LEAD_CONSULTANT,
-        })
+        response = self.client.post(
+            url_allocate,
+            {
+                "lead_consultant": lead_consultant.pk,
+                "type": Company.Type.LEAD_CONSULTANT,
+            },
+        )
         self.assertEqual(response.status_code, 302)
         self.assertTrue(self.project.consultants.filter(pk=lead_consultant.pk).exists())
 
         # Test remove view post
         url_remove = reverse(
             "client:project-lead-consultant:project-lead-consultant-remove",
-            kwargs={"project_pk": self.project.pk, "lead_consultant_pk": lead_consultant.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "lead_consultant_pk": lead_consultant.pk,
+            },
         )
         response = self.client.post(url_remove)
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(self.project.consultants.filter(pk=lead_consultant.pk).exists())
+        self.assertFalse(
+            self.project.consultants.filter(pk=lead_consultant.pk).exists()
+        )
 
     def test_allocate_consultant_updates_type(self):
         """Verify allocating a consultant updates their type contextually."""
@@ -316,10 +338,13 @@ class TestAllocationFixes(TestCase):
             "client:project-lead-consultant:project-consultant-allocate",
             kwargs={"project_pk": self.project.pk},
         )
-        self.client.post(url_allocate, {
-            "consultant": company.pk,
-            "type": Company.Type.CONSULTANT,
-        })
+        self.client.post(
+            url_allocate,
+            {
+                "consultant": company.pk,
+                "type": Company.Type.CONSULTANT,
+            },
+        )
 
         # Verify type has changed to CONSULTANT
         company.refresh_from_db()
@@ -341,10 +366,13 @@ class TestAllocationFixes(TestCase):
             "client:project-lead-consultant:project-lead-consultant-allocate",
             kwargs={"project_pk": self.project.pk},
         )
-        self.client.post(url_allocate, {
-            "lead_consultant": company.pk,
-            "type": Company.Type.LEAD_CONSULTANT,
-        })
+        self.client.post(
+            url_allocate,
+            {
+                "lead_consultant": company.pk,
+                "type": Company.Type.LEAD_CONSULTANT,
+            },
+        )
 
         # Verify type has changed to LEAD_CONSULTANT
         company.refresh_from_db()
@@ -358,15 +386,16 @@ class TestAllocationFixes(TestCase):
             "client:lead-consultant-management:lead-consultant-create",
             kwargs={"project_pk": self.project.pk},
         )
-        response = self.client.post(url_create, {
-            "name": "Self Created Consultant",
-            "registration_number": "REG-SELF",
-        })
+        response = self.client.post(
+            url_create,
+            {
+                "name": "Self Created Consultant",
+                "registration_number": "REG-SELF",
+            },
+        )
         self.assertEqual(response.status_code, 302)
 
         company = Company.objects.get(name="Self Created Consultant")
         self.assertEqual(company.type, Company.Type.LEAD_CONSULTANT)
         self.assertIn(self.user, company.users.all())
         self.assertIn(self.user, company.consultants.all())
-
-

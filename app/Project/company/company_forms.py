@@ -230,4 +230,3 @@ class ConsultantCompanyForm(CompanyForm):
 
     class Meta(CompanyForm.Meta):
         pass
-

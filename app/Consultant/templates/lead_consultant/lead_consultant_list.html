@@ -49,9 +49,7 @@
                                 <div class="ml-4">
                                     <h3 class="text-sm font-medium text-gray-900">
                                         <a href="{% url 'client:lead-consultant-management:lead-consultant-update' project.pk consultant.pk %}"
-                                           class="hover:text-indigo-600 transition-colors">
-                                            {{ consultant.name }}
-                                        </a>
+                                           class="hover:text-indigo-600 transition-colors">{{ consultant.name }}</a>
                                         <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
                                             {{ consultant.get_type_display }}
                                         </span>
@@ -103,9 +101,7 @@
                                         <div class="text-sm font-medium text-gray-900">{{ lc.name }}</div>
                                         <div class="text-sm text-gray-500">{{ lc.tax_number }}</div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ lc.get_type_display }}
-                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ lc.get_type_display }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ lc.registration_number }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         {% if lc.vat_registered %}
