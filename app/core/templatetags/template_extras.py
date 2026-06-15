@@ -173,3 +173,25 @@ def subtract_from(value, arg):
         return float(arg) - float(value)
     except (ValueError, TypeError):
         return value
+
+
+@register.filter(name="space_intcomma")
+def space_intcomma(value):
+    """Format a number with space thousands separator and dot decimal separator."""
+    if value is None or value == "":
+        return value
+    try:
+        val_str = str(value)
+        if "." in val_str:
+            parts = val_str.split(".")
+            integer_part = f"{int(parts[0]):,}".replace(",", " ")
+            return f"{integer_part}.{parts[1]}"
+        else:
+            return f"{int(val_str):,}".replace(",", " ")
+    except (ValueError, TypeError):
+        try:
+            val = float(value)
+            return f"{val:,.2f}".replace(",", " ")
+        except (ValueError, TypeError):
+            return value
+

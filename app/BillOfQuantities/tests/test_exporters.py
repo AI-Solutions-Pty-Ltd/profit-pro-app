@@ -18,7 +18,7 @@ from app.BillOfQuantities.tests.factories import (
     PaymentCertificateFactory,
     StructureFactory,
 )
-from app.Project.tests.factories import ProjectFactory
+from app.Project.tests.factories import ProjectFactory, SignatoriesFactory
 
 
 @pytest.mark.django_db
@@ -199,6 +199,33 @@ class TestExporters:
         assert "TOTAL_CUSTOM" not in html
 
         # Also compile PDF and assert it executes without errors
+        pdf_file = compile_pdf_for_certificate(cert)
+        assert pdf_file is not None
+        assert pdf_file.size > 0
+
+    def test_compile_pdf_with_signatories(self):
+        """Test compiling PDF when the project has allocated signatories."""
+        project = ProjectFactory.create()
+        cert = PaymentCertificateFactory.create(project=project)
+        LineItemFactory.create(project=project)
+
+        # Create allocated signatories for the project
+        SignatoriesFactory.create(project=project, role="Project Manager")
+        SignatoriesFactory.create(project=project, role="Quantity Surveyor")
+
+        pdf_file = compile_pdf_for_certificate(cert)
+        assert pdf_file is not None
+        assert pdf_file.size > 0
+
+    def test_compile_pdf_without_signatories(self):
+        """Test compiling PDF when the project has no allocated signatories."""
+        project = ProjectFactory.create()
+        cert = PaymentCertificateFactory.create(project=project)
+        LineItemFactory.create(project=project)
+
+        # Ensure no signatories are allocated
+        assert project.signatories.count() == 0
+
         pdf_file = compile_pdf_for_certificate(cert)
         assert pdf_file is not None
         assert pdf_file.size > 0

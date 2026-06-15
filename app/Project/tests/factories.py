@@ -27,6 +27,7 @@ from app.Project.models import (
     ProjectRole,
     Risk,
     Role,
+    Signatories,
 )
 from app.Project.models.entity_definitions import (
     LabourEntity,
@@ -148,6 +149,13 @@ class ProjectFactory(DjangoModelFactory):
             else Faker("date_between", start_date="today", end_date="+1y")
         )
     )
+
+    @post_generation
+    def lead_consultant(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            self.consultants.add(extracted)
 
     @post_generation
     def users(self, create, extracted, **kwargs):
@@ -469,3 +477,15 @@ class DrawingFactory(DjangoModelFactory):
     sub_category = SubFactory(SubCategoryFactory)
     file = factory.django.FileField(filename="test_drawing.pdf")
     notes = Faker("text")
+
+
+class SignatoriesFactory(DjangoModelFactory):
+    """Factory for Signatories model."""
+
+    class Meta:
+        model = Signatories
+
+    project = SubFactory(ProjectFactory)
+    user = SubFactory(AccountFactory)
+    role = factory.Iterator(["Project Manager", "Quantity Surveyor", "Senior Manager PMU"])
+    sequence_number = factory.Sequence(lambda n: n)

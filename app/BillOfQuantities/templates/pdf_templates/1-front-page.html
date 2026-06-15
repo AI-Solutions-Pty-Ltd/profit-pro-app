@@ -101,15 +101,15 @@
                 <tbody>
                     <tr>
                         <td>Original Contract Value</td>
-                        <td class="text-right">R {{ project.original_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.original_contract_value|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Total Contract Amendments To Date</td>
-                        <td class="text-right">R {{ project.addendum_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.addendum_contract_value|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Sub Total (Excl. VAT)</td>
-                        <td class="text-right">R {{ project.total_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.total_contract_value|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>
@@ -121,11 +121,11 @@
                                 No VAT
                             {% endif %}
                         </td>
-                        <td class="text-right">R {{ vat_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ vat_value|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr class="total-row">
                         <td>Total Contract Value (Incl. VAT)</td>
-                        <td class="text-right">R {{ project.total_contract_value|add:vat_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.total_contract_value|add:vat_value|floatformat:2|space_intcomma }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -142,19 +142,19 @@
                 <tbody>
                     <tr>
                         <td>Value of work done up to the assessment interval #{{ payment_certificate.certificate_number }}</td>
-                        <td class="text-right">R {{ payment_certificate.work_progressive_previous|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.work_progressive_previous|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Plus : Contract Compensation Events</td>
-                        <td class="text-right">R {{ payment_certificate.contract_current_claim_total|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.contract_current_claim_total|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Plus : Addendum Compensation Events</td>
-                        <td class="text-right">R {{ payment_certificate.addendum_current_claim_total|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.addendum_current_claim_total|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Total value of work done</td>
-                        <td class="text-right">R {{ payment_certificate.work_progressive_to_date|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.work_progressive_to_date|floatformat:2|space_intcomma }}</td>
                     </tr>
                     {% for special_item in payment_certificate.special_items_annotated %}
                         {% if special_item.total %}
@@ -166,21 +166,21 @@
                                         LESS: {{ special_item.description }}
                                     {% endif %}
                                 </td>
-                                <td class="text-right">R {{ special_item.total|default:0|floatformat:2|intcomma }}</td>
+                                <td class="text-right">R {{ special_item.total|default:0|floatformat:2|space_intcomma }}</td>
                             </tr>
                         {% endif %}
                     {% endfor %}
                     <tr>
                         <td>Sub Total</td>
-                        <td class="text-right">R {{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>LESS : Previous Amount Due</td>
-                        <td class="text-right">R {{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.progressive_previous|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>NET AMOUNT NOW CERTIFIED</td>
-                        <td class="text-right">R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.current_claim_total|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr>
                         <td>
@@ -192,11 +192,11 @@
                                 No VAT
                             {% endif %}
                         </td>
-                        <td class="text-right">R {{ vat_now|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ vat_now|floatformat:2|space_intcomma }}</td>
                     </tr>
                     <tr class="total-row">
                         <td>TOTAL AMOUNT NOW CERTIFIED</td>
-                        <td class="text-right">R {{ payment_certificate.current_claim_total|add:vat_now|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.current_claim_total|add:vat_now|floatformat:2|space_intcomma }}</td>
                     </tr>
                 </tbody>
             </table>

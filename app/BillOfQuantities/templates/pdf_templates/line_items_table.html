@@ -52,23 +52,23 @@
                                     {% elif col.id == 'unit_measurement' %}
                                         <td class="text-center">{{ line_item.unit_measurement|default:"-" }}</td>
                                     {% elif col.id == 'budgeted_quantity' %}
-                                        <th class="text-right text-normal-weight">{{ line_item.budgeted_quantity|default:0|floatformat:2|intcomma }}</th>
+                                        <th class="text-right text-normal-weight">{{ line_item.budgeted_quantity|default:0|floatformat:2|space_intcomma }}</th>
                                     {% elif col.id == 'unit_price' %}
-                                        <th class="text-right text-normal-weight">R{{ line_item.unit_price|default:0|floatformat:2|intcomma }}</th>
+                                        <th class="text-right text-normal-weight">R{{ line_item.unit_price|default:0|floatformat:2|space_intcomma }}</th>
                                     {% elif col.id == 'total_price' %}
-                                        <th class="text-right text-normal-weight">R{{ line_item.total_price|default:0|floatformat:2|intcomma }}</th>
+                                        <th class="text-right text-normal-weight">R{{ line_item.total_price|default:0|floatformat:2|space_intcomma }}</th>
                                     {% elif col.id == 'total_qty' %}
-                                        <td class="text-right text-normal-weight">{{ line_item.total_qty|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right text-normal-weight">{{ line_item.total_qty|default:0|floatformat:2|space_intcomma }}</td>
                                     {% elif col.id == 'total_claimed' %}
-                                        <th class="text-right text-normal-weight">R{{ line_item.total_claimed|default:0|floatformat:2|intcomma }}</th>
+                                        <th class="text-right text-normal-weight">R{{ line_item.total_claimed|default:0|floatformat:2|space_intcomma }}</th>
                                     {% elif col.id == 'previous_qty' %}
-                                        <td class="text-right text-normal-weight">{{ line_item.previous_qty|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right text-normal-weight">{{ line_item.previous_qty|default:0|floatformat:2|space_intcomma }}</td>
                                     {% elif col.id == 'previous_claimed' %}
-                                        <th class="text-right text-normal-weight">R{{ line_item.previous_claimed|default:0|floatformat:2|intcomma }}</th>
+                                        <th class="text-right text-normal-weight">R{{ line_item.previous_claimed|default:0|floatformat:2|space_intcomma }}</th>
                                     {% elif col.id == 'current_qty' %}
-                                        <td class="text-right text-normal-weight">{{ line_item.current_qty|default:0|floatformat:2|intcomma }}</td>
+                                        <td class="text-right text-normal-weight">{{ line_item.current_qty|default:0|floatformat:2|space_intcomma }}</td>
                                     {% elif col.id == 'current_claim' %}
-                                        <th class="text-right text-normal-weight">R{{ line_item.current_claim|default:0|floatformat:2|intcomma }}</th>
+                                        <th class="text-right text-normal-weight">R{{ line_item.current_claim|default:0|floatformat:2|space_intcomma }}</th>
                                     {% endif %}
                                 {% endfor %}
                             </tr>
@@ -88,13 +88,13 @@
                 {% if col.id == 'description' %}
                     <td class="total-row text-bold text-right">Total</td>
                 {% elif col.id == 'total_price' %}
-                    <td class="total-row text-bold text-right">R{{ contract_value|default:0|floatformat:2|intcomma }}</td>
+                    <td class="total-row text-bold text-right">R{{ contract_value|default:0|floatformat:2|space_intcomma }}</td>
                 {% elif col.id == 'total_claimed' %}
-                    <td class="total-row text-bold text-right">R{{ cumulative_total|default:0|floatformat:2|intcomma }}</td>
+                    <td class="total-row text-bold text-right">R{{ cumulative_total|default:0|floatformat:2|space_intcomma }}</td>
                 {% elif col.id == 'previous_claimed' %}
-                    <td class="total-row text-bold text-right">R{{ previous_total|default:0|floatformat:2|intcomma }}</td>
+                    <td class="total-row text-bold text-right">R{{ previous_total|default:0|floatformat:2|space_intcomma }}</td>
                 {% elif col.id == 'current_claim' %}
-                    <td class="total-row text-bold text-right">R{{ total|default:0|floatformat:2|intcomma }}</td>
+                    <td class="total-row text-bold text-right">R{{ total|default:0|floatformat:2|space_intcomma }}</td>
                 {% else %}
                     <td class="total-row"></td>
                 {% endif %}
