@@ -223,3 +223,10 @@ class CompanyForm(forms.ModelForm):
             self.save_m2m()
 
         return instance
+
+
+class ConsultantCompanyForm(CompanyForm):
+    """Form for creating and editing consultant companies."""
+
+    class Meta(CompanyForm.Meta):
+        pass

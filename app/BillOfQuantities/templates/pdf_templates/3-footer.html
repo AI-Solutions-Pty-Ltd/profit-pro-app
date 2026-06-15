@@ -15,7 +15,10 @@
         <div class="signature">
             <p class="spacing">Signature: ________________________</p>
             <p class="spacing">
-                Name: <strong>{{ signatory.title }} {{ signatory.name }}</strong>
+                Role: <strong>{{ signatory.role }}</strong>
+            </p>
+            <p class="spacing">
+                Name: <strong>{% if signatory.user %}{{ signatory.user.first_name }} {{ signatory.user.last_name }}{% else %}{{ signatory }}{% endif %}</strong>
             </p>
             <p class="spacing">Date: ________________________</p>
         </div>

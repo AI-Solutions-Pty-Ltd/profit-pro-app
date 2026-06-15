@@ -1,37 +1,63 @@
-# Superpowers Brainstorm
+# Superpowers Brainstorm: Contractual Special Items Table Modification
 
 ## Goal
-The goal is to create a dedicated Column Heading Customization & Reordering page for a project, replace the table/form under "Report Selection & Configuration" in the project setup page with a "Report Template Setup" card, and add a link/button on that card to access the new dedicated page.
+Modify the "Contractual Special Items" section in the Payment Certificate pages to render special line items in a detailed 9-column table matching the "Contract Line Items" table structure, including:
+- Item No.
+- Description
+- Price/Unit
+- Total Quantity
+- Previous Quantity
+- Current Quantity
+- Total Claimed
+- Previous Claim
+- Current Claim
+- A total row at the bottom summing the current claim values.
 
 ## Constraints
-- **Virtual Environment**: All execution and commands must use the project's virtual environment `.venv\Scripts\python.exe`.
-- **Styling**: Must match the premium Tailwind CSS look and feel of the existing project setup page (responsive layout, hover transitions, icons, and consistent cards).
-- **Functionality**: Must not break the existing saving logic or column configuration persistence on the `Project` model.
+- Must inherit and display fields from the annotated `LineItem` instances where `special_item=True` and `addendum=False`.
+- Must support all 9 columns and ensure fields display with appropriate styling (like currency formatting and decimal points).
+- Must include a total row.
+- Must ensure consistent styling (matching `line_items.html` look & feel) across all pages rendering this table:
+  - `payment_certificate_detail.html`
+  - `payment_certificate_submit.html`
+  - `payment_certificate_final_approval.html`
+  - `view_detailed.html`
+- Resolving the label confusion in `payment_certificate_detail.html` where "Contractual Special Items" is used as the header for ledger totals (which should be named "Ledger Totals"), while actual special line items are not displayed with a visible header (the header is commented out).
 
 ## Known context
-- **Setup Page**: Located at `app/Project/templates/project/project_setup.html` and rendered via `ProjectSetupView` in `app/Project/projects/project_views.py`.
-- **Existing Customization Component**: The column customization table, live preview, save form, and its script block reside within `project_setup.html` (lines 471-544, lines 1026-1192).
-- **Data Model**: The resolved configuration is returned by `project.get_column_config()` and saved back to `project.column_config` via the POST view parameter `action="save_report_config"`.
-- **Permissions**: Views should enforce `SubscriptionRequiredMixin` and `UserHasProjectRoleGenericMixin` with `Role.USER` level.
+- Special line items are retrieved as `LineItem` querysets.
+- The shared template `app/BillOfQuantities/templates/payment_certificate/tables/special_items.html` is used to render special items.
+- Line items are annotated via `LineItem.construct_payment_certificate` with fields: `item_number`, `description`, `unit_price`, `unit_measurement`, `total_qty`, `previous_qty`, `current_qty`, `total_claimed`, `previous_claimed`, and `current_claim`.
+- In `payment_certificate_detail.html`:
+  - `#special-items` renders `special_items.html` (the header is currently commented out).
+  - `#ledger-totals` renders `ledger_totals.html` under the header "Contractual Special Items".
+- In `view_detailed.html`:
+  - `#special-items` renders `special_items.html` under the header "Special Items".
+  - `#ledger-totals` renders `ledger_totals.html` under the header "Ledger Totals".
 
 ## Risks
-- **JavaScript Breakage**: The drag/reorder and live preview logic expects specific elements like `columns-config-list` and `live-header-preview`. Extracting it must ensure all DOM elements are present in the new page's template.
-- **Redirection / UX Flow**: Moving this form to a separate page requires clear breadcrumb navigation and a seamless save-and-redirect/success message flow.
-- **Permission Bypass**: A user must not be able to customize columns for a project they do not belong to.
+- **Column Overflow on Small Screens**: Displaying 9 columns can cause overflow on narrow viewports.
+  - *Mitigation*: Wrap the table in a container with the `overflow-x-auto` utility class.
+- **Header Confusions / Broken Layouts**: Renaming headers might confuse users if not done consistently.
+  - *Mitigation*: Keep terminology consistent. Rename the header above `ledger_totals.html` to "Ledger Totals" and the header above `special_items.html` to "Contractual Special Items".
 
-## Options (2?4)
-- **Option 1**: Implement `ProjectReportConfigView` mapping to `<int:pk>/report-config/` using template `project/report_config.html`. On the setup page, under the "Report Selection & Configuration" section, render a grid layout containing the "Report Template Setup" card, which links to the new page. The new view handles the POST action `save_report_config` and redirects back to itself with a success message.
-- **Option 2**: Create a reusable Django form for the report config and render it within a modal on the setup page rather than creating a dedicated page. (Not recommended because the user explicitly asked for a dedicated page).
-- **Option 3**: Move the table to a new page, but keep the POST endpoint pointing to the old `ProjectSetupView`. (Not recommended, as it makes view handling less clean and splits the configuration logic).
+## Options (2–4)
+### Option 1: Modify the Shared Table Template and Update Headers (Recommended)
+Update the shared `special_items.html` table to use a 9-column structure identical to `line_items.html` using the existing annotated attributes of `LineItem`. In `payment_certificate_detail.html`, uncomment the `#special-items` header, name it "Contractual Special Items", and rename the `#ledger-totals` header to "Ledger Totals" to match the layout in `view_detailed.html`.
+- *Pros*: Completely DRY, updates all read-only views consistently, resolves header naming bugs, matches existing design patterns.
+- *Cons*: None.
+
+### Option 2: Duplicate Template and Create a New Detailed Table for Specific Views
+Create a new template file (e.g. `special_items_detailed.html`) specifically for the 9-column view, and only reference it in `payment_certificate_detail.html`, leaving other pages with the 4-column layout.
+- *Pros*: Minimal risk of changing other views.
+- *Cons*: Code duplication and inconsistent UX across different payment certificate views.
 
 ## Recommendation
-- **Option 1** is recommended. It cleanly separates the complex column reordering/customization page (which includes a large JavaScript block and table preview) from the general project setup overview, while keeping view and save operations nicely encapsulated in `ProjectReportConfigView`.
+We recommend **Option 1**. It maintains a single source of truth for rendering special items in read-only views, matches the structure of normal line items, and unifies the headers to resolve layout bugs.
 
 ## Acceptance criteria
-- A new route `<int:pk>/report-config/` mapped to `ProjectReportConfigView` in `project_urls.py`.
-- `ProjectReportConfigView` requires `Role.USER` and project membership.
-- A new template `app/Project/templates/project/report_config.html` containing the customize form, live preview, and reorder Javascript.
-- The "Report Selection & Configuration" section in `project_setup.html` is updated to show a "Report Template Setup" card matching the other setup cards.
-- The card contains a link/button leading to the new configuration page.
-- Saving/resetting column configs on the new page works correctly and displays a success alert.
-- Pytest tests are updated or added, and all tests pass.
+1. The table rendering `special_line_items` (in `special_items.html`) has 9 columns: `Item No.`, `Description`, `Price/Unit`, `Total Quantity`, `Previous Quantity`, `Current Quantity`, `Total Claimed`, `Previous Claim`, `Current Claim`.
+2. A total row is present at the bottom of the table, displaying the total current claim amount of special items.
+3. In `payment_certificate_detail.html`, the header for `#special-items` is uncommented and renamed to "Contractual Special Items", and the header for `#ledger-totals` is renamed to "Ledger Totals".
+4. The styling (header colors, text alignment, fonts) matches the "Contract Line Items" table styling exactly.
+5. All tests pass successfully.

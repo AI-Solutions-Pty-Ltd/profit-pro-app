@@ -205,14 +205,17 @@
                 height: 16px;
                 vertical-align: bottom;
             }
-            .footer-text {
-                text-align: center;
-                font-style: italic;
-                color: #9ca3af;
-                font-size: 7.5pt;
-                margin-top: 20px;
-                border-top: 1px solid #e5e7eb;
-                padding-top: 5px;
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+                margin-bottom: 20mm;
+                @frame footer {
+                    -pdf-frame-content: running-footer;
+                    bottom: 5mm;
+                    height: 10mm;
+                    margin-left: 10mm;
+                    margin-right: 10mm;
+                }
             }
         </style>
     </head>
@@ -277,7 +280,7 @@
                 </tr>
                 <tr>
                     <td class="label-cell">Retention Free Amount</td>
-                    <td class="value-cell">R {{ project.total_contract_value|mul:0.2|floatformat:2 }}</td>
+                    <td class="value-cell">R {{ project.total_contract_value|mul:0.2|floatformat:2|space_intcomma }}</td>
                 </tr>
             </table>
         </div>
@@ -295,13 +298,13 @@
             <tbody>
                 <tr class="row-light">
                     <td>Original Contract Value</td>
-                    <td class="text-right">{{ project.original_contract_value|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.original_contract_value|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr>
                     <td>Total Contract Amendments To Date</td>
                     <td class="text-right">
                         {% if project.addendum_contract_value and project.addendum_contract_value != 0 %}
-                            {{ project.addendum_contract_value|floatformat:2 }}
+                            {{ project.addendum_contract_value|floatformat:2|space_intcomma }}
                         {% else %}
                             -
                         {% endif %}
@@ -309,15 +312,15 @@
                 </tr>
                 <tr class="row-light total-row">
                     <td>Sub Total</td>
-                    <td class="text-right">{{ project.total_contract_value|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.total_contract_value|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr>
                     <td>VAT at 15%</td>
-                    <td class="text-right">{{ project.total_contract_value|mul:0.15|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.total_contract_value|mul:0.15|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr class="highlight-navy">
                     <td>Total Contract Value (incl. VAT)</td>
-                    <td class="text-right">{{ project.total_contract_value|mul:1.15|floatformat:2 }}</td>
+                    <td class="text-right">{{ project.total_contract_value|mul:1.15|floatformat:2|space_intcomma }}</td>
                 </tr>
             </tbody>
         </table>
@@ -337,7 +340,7 @@
             <tbody>
                 <tr class="row-light">
                     <td>Value of Work Done (Cumulative &ndash; Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }})</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr>
                     <td class="text-italic-gray">Plus: Compensation Events</td>
@@ -349,7 +352,7 @@
                 </tr>
                 <tr class="total-row">
                     <td>Total Value of Work Done</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr class="row-light">
                     <td class="text-italic-gray">Less: Retention</td>
@@ -357,29 +360,29 @@
                 </tr>
                 <tr class="total-row">
                     <td>Sub Total</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr class="row-light">
                     <td class="text-italic-gray">Less: Previous Amount Due</td>
-                    <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr class="total-row">
                     <td>Sub Total</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr class="row-light">
                     <td class="text-italic-gray">Plus: V.A.T. at 15%</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:0.15|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:0.15|floatformat:2|space_intcomma }}</td>
                 </tr>
                 <tr class="highlight-orange">
                     <td>TOTAL AMOUNT NOW CERTIFIED (incl. VAT)</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:1.15|floatformat:2 }}</td>
+                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:1.15|floatformat:2|space_intcomma }}</td>
                 </tr>
             </tbody>
         </table>
         
         <div class="note-text">
-            Note: 5% Retention not deducted &mdash; handled by Valterra GSS. Retention: R {{ payment_certificate.current_claim_total|mul:0.05|floatformat:2 }}
+            
         </div>
         
         <table class="auth-table">
@@ -389,35 +392,56 @@
                 </tr>
             </thead>
             <tbody>
+                {% for signatory in project.signatories.all %}
                 <tr>
-                    <td class="role-cell">Project Manager</td>
-                    <td><div class="gray-box">M. Susela</div></td>
+                    <td class="role-cell">{{ signatory.role }}</td>
+                    <td>
+                        <div class="gray-box">
+                            {% if signatory.user %}
+                                {{ signatory.user.first_name }} {{ signatory.user.last_name }}
+                            {% else %}
+                                &nbsp;
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
+                    <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td class="role-cell">&nbsp;</td>
+                    <td><div class="gray-box">&nbsp;</div></td>
                     <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
                     <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
                 </tr>
                 <tr>
-                    <td class="role-cell">Quantity Surveyor</td>
-                    <td><div class="gray-box">M. Hachinavamwe</div></td>
+                    <td class="role-cell">&nbsp;</td>
+                    <td><div class="gray-box">&nbsp;</div></td>
                     <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
                     <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
                 </tr>
                 <tr>
-                    <td class="role-cell">Section Manager &ndash; Project Governance</td>
-                    <td><div class="gray-box">S. Tsokalamtengo</div></td>
+                    <td class="role-cell">&nbsp;</td>
+                    <td><div class="gray-box">&nbsp;</div></td>
                     <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
                     <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
                 </tr>
-                <tr>
-                    <td class="role-cell">Senior Manager PMU</td>
-                    <td><div class="gray-box">H. Sifeni</div></td>
-                    <td><span style="color: #6b7280;">Signature:</span> <span class="sig-line"></span></td>
-                    <td><span style="color: #6b7280;">Date:</span> <span class="date-line"></span></td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
         
-        <div class="footer-text">
-            NBI Quantity Surveyors (Pty) Ltd | Rustenburg Platinum Mines (PTY) LTD, 144 Oxford St, Rosebank, 2196 | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+        <!-- Running Footer -->
+        <div id="running-footer">
+            <table style="width: 100%; border: none; font-size: 7.5pt; color: #9ca3af; font-family: 'Inter', Arial, Helvetica, sans-serif;">
+                <tr>
+                    <td style="text-align: left; border: none; padding: 0;">
+                        Sedgepro | {{ project.name }} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                    </td>
+                    <td style="text-align: right; border: none; padding: 0; width: 10%;">
+                        Page <pdf:pagenumber />
+                    </td>
+                </tr>
+            </table>
         </div>
     </body>
 </html>

@@ -94,10 +94,9 @@
             <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
             {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
         </div>
-        <div id="special-items"
-             class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
+        <div id="special-items" class="mb-6 border-b border-gray-200">
             <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-                {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
+                {% heroicon_outline "star" size="20" class="text-orange-600" %} Contractual Special Items
             </h2>
             {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
         </div>

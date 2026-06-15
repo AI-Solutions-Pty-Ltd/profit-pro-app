@@ -270,8 +270,8 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
         current_row += 1
 
     # Retention Note
-    ret_amount = getattr(payment_certificate, "retention_to_date", Decimal("0.00"))
-    note = f"Note: 5% Retention not deducted — handled by Valterra GSS. Retention: R {ret_amount:,}"
+
+    note = ""
     ws.cell(row=current_row, column=1, value=note).font = font_italic_small
     ws.merge_cells(
         start_row=current_row, start_column=1, end_row=current_row, end_column=7
@@ -321,7 +321,9 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     current_row += 1
 
     # Footer
-    footer_text = f"Profit Pro | {project.name} | Payment Certificate No. {cert_num} | {cert_date}"
+    footer_text = (
+        f"Sedgepro | {project.name} | Payment Certificate No. {cert_num} | {cert_date}"
+    )
     ws.cell(row=current_row, column=1, value=footer_text).font = font_italic_small
     ws.cell(row=current_row, column=1).alignment = align_center
     ws.merge_cells(

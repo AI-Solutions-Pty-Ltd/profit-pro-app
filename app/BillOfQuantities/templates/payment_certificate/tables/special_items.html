@@ -1,36 +1,54 @@
 {% if special_line_items %}
     <div class="overflow-x-auto">
-        <table class="w-auto divide-y divide-gray-200">
-            {% define "4" as colSpan %}
-            <thead class="bg-orange-50">
+        <table class="min-w-full divide-y divide-gray-200">
+            {% define "9" as colSpan %}
+            <thead class="bg-gray-50">
                 <tr>
+                    <th class="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Item No.</th>
                     <th class="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Description</th>
+                    <th class="px-3 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Price/Unit</th>
+                    <th class="px-3 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Total Quantity</th>
+                    <th class="px-3 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Previous Quantity</th>
+                    <th class="px-3 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Current Quantity</th>
+                    <th class="px-3 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Total Claimed</th>
                     <th class="px-3 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Previous Claim</th>
                     <th class="px-3 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Current Claim</th>
-                    <th class="px-3 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Total Claimed</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for line_item in special_line_items %}
                     <tr class="hover:bg-gray-50">
+                        <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">{{ line_item.item_number|default:"-" }}</td>
                         <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|truncatewords:10 }}</td>
-                        <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
-                            R {{ line_item.previous_claimed|floatformat:2|intcomma }}
+                        <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
+                            R {{ line_item.unit_price|floatformat:2|intcomma }} / {{ line_item.unit_measurement }}
                         </td>
-                        <td class="px-3 py-2 text-sm font-semibold text-right text-orange-600 whitespace-nowrap">
-                            R {{ line_item.current_claim|floatformat:2|intcomma }}
+                        <td class="px-3 py-2 text-sm font-semibold text-right text-gray-900 whitespace-nowrap">
+                            {{ line_item.total_qty|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
+                            {{ line_item.previous_qty|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-3 py-2 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
+                            {{ line_item.current_qty|floatformat:2|intcomma }}
                         </td>
                         <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                             R {{ line_item.total_claimed|floatformat:2|intcomma }}
                         </td>
+                        <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
+                            R {{ line_item.previous_claimed|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-3 py-2 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
+                            R {{ line_item.current_claim|floatformat:2|intcomma }}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
-            <tfoot class="bg-orange-50">
+            <tfoot class="bg-gray-50">
                 <tr>
-                    <td colspan="3"
+                    <td colspan="8"
                         class="px-3 py-3 text-sm font-bold text-right text-gray-900">Total:</td>
-                    <td class="px-3 py-3 text-sm font-bold text-right text-orange-600 whitespace-nowrap">
+                    <td class="px-3 py-3 text-sm font-bold text-right text-indigo-600 whitespace-nowrap">
                         R {{ special_line_items_total|floatformat:2|intcomma }}
                     </td>
                 </tr>

@@ -192,13 +192,6 @@ class Project(BaseModel):
         blank=True,
         related_name="contractor_projects",
     )
-    lead_consultant = models.ForeignKey(
-        Company,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="lead_consultant_projects",
-    )
     project_category = models.ForeignKey(
         ProjectCategory,
         on_delete=models.SET_NULL,
@@ -259,6 +252,12 @@ class Project(BaseModel):
         related_name="lead_consultant_projects",
         help_text="Lead Consultants (e.g., Principal Agents)",
     )
+    consultants = models.ManyToManyField(
+        Company,
+        blank=True,
+        related_name="consultant_projects",
+        help_text="Consultants assigned to this project",
+    )
     client_representatives = models.ManyToManyField(
         "Account.Account",
         blank=True,
@@ -283,6 +282,30 @@ class Project(BaseModel):
     def project_sub_category(self):
         """Alias for area for backward compatibility."""
         return self.area
+
+    @property
+    def lead_consultant(self):
+        """Get the first assigned Lead Consultant company."""
+        return self.consultants.filter(type=Company.Type.LEAD_CONSULTANT).first()
+
+    @lead_consultant.setter
+    def lead_consultant(self, value):
+        """Set the lead consultant company (for backwards compatibility)."""
+        if self.pk:
+            existing_lcs = self.consultants.filter(type=Company.Type.LEAD_CONSULTANT)
+            self.consultants.remove(*existing_lcs)
+            if value:
+                self.consultants.add(value)
+
+    @property
+    def lead_consultant_companies(self):
+        """Get assigned Lead Consultant companies."""
+        return self.consultants.filter(type=Company.Type.LEAD_CONSULTANT)
+
+    @property
+    def regular_consultant_companies(self):
+        """Get assigned regular Consultant companies."""
+        return self.consultants.filter(type=Company.Type.CONSULTANT)
 
     def get_column_config(self) -> list[dict]:
         """Get the resolved column configuration for the project, falling back to defaults."""

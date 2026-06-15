@@ -3,7 +3,7 @@
 {% load heroicons %}
 {% load crispy_forms_tags %}
 {% block title %}
-    Update Lead Consultant - {{ project.name }}
+    Update Consultant - {{ project.name }}
 {% endblock title %}
 {% block content %}
     <div class="min-h-screen py-8">
@@ -13,7 +13,7 @@
                 <div class="px-6 py-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900">Update Project Lead Consultant</h1>
+                            <h1 class="text-2xl font-bold text-gray-900">Update Project Consultant</h1>
                             <p class="mt-1 text-sm text-gray-600">Project: {{ project.name }}</p>
                         </div>
                     </div>
@@ -38,9 +38,9 @@
                             </div>
                         </div>
                     {% endif %}
-                    {% if has_lead_consultants %}
+                    {% if has_consultants %}
                         <div class="grid grid-cols-1 gap-6">
-                            {{ form.lead_consultant|as_crispy_field }}
+                            {{ form.consultant|as_crispy_field }}
                             {{ form.type|as_crispy_field }}
                         </div>
                     {% else %}
@@ -48,30 +48,19 @@
                             <div class="flex">
                                 <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-amber-400" %}</div>
                                 <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-amber-800">No lead consultants available</h3>
+                                    <h3 class="text-sm font-medium text-amber-800">No consultants available</h3>
                                     <p class="mt-1 text-sm text-amber-700">
-                                        There are no lead consultant companies in the system yet. Create one first before allocating.
+                                        There are no consultant companies in the system yet. Create one first before allocating.
                                     </p>
                                     <div class="mt-3">
                                         <a href="{% url 'client:lead-consultant-management:lead-consultant-create' project.pk %}"
                                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                             {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
-                                            Create Lead Consultant
+                                            Create Consultant
                                         </a>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    {% endif %}
-                    <!-- Current Lead Consultant Info -->
-                    {% if project.lead_consultant %}
-                        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <h3 class="text-sm font-medium text-gray-900 mb-2">Current Lead Consultant</h3>
-                            <p class="text-sm text-gray-600">{{ project.lead_consultant.name }}</p>
-                            <p class="text-xs text-gray-500 mt-1">Registration: {{ project.lead_consultant.registration_number }}</p>
-                            {% if project.lead_consultant.vat_number %}
-                                <p class="text-xs text-gray-500">VAT: {{ project.lead_consultant.vat_number }}</p>
-                            {% endif %}
                         </div>
                     {% endif %}
                     <!-- Form Actions -->
@@ -84,7 +73,7 @@
                         <button type="submit"
                                 class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
-                            Update Lead Consultant
+                            Update Consultant
                         </button>
                     </div>
                 </form>
