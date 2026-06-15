@@ -16,4 +16,15 @@ urlpatterns = [
         project_lead_consultant_views.ProjectLeadConsultantRemoveView.as_view(),
         name="project-lead-consultant-remove",
     ),
+    # Regular Consultant Allocation
+    path(
+        "project/<int:project_pk>/allocate-consultant/",
+        project_lead_consultant_views.ProjectAllocateConsultantView.as_view(),
+        name="project-consultant-allocate",
+    ),
+    path(
+        "project/<int:project_pk>/remove-consultant/<int:consultant_pk>/",
+        project_lead_consultant_views.ProjectConsultantRemoveView.as_view(),
+        name="project-consultant-remove",
+    ),
 ]

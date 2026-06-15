@@ -55,7 +55,7 @@
                             View Final Account
                         </a>
                     {% endif %}
-                    {% if payment_certificate.status == 'APPROVED' %}
+                    {% comment %} {% if payment_certificate.status == 'APPROVED' %}
                         {% if project.signatories.count > 0 %}
                             <form method="post"
                                   action="{% url 'bill_of_quantities:payment-certificate-email' project.pk payment_certificate.pk %}">
@@ -73,7 +73,7 @@
                                 Add signatories to send email
                             </a>
                         {% endif %}
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                     <!-- Section View Buttons -->
                     <a href="{% url 'bill_of_quantities:payment-certificate-cover-page' project.pk payment_certificate.pk %}"
                        class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -363,17 +363,16 @@
             {% comment %} <  {% endcomment %}
             {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
         </div>
-        <div id="special-items"
-             class="flex flex-col gap-2 justify-center items-center mb-2 mb-6 border-b border-gray-200">
-            {% comment %} <h2 class="flex gap-2 items-center mb-2 text-lg font-bold text-gray-900">
-                {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
-            </h2> {% endcomment %}
+        <div id="special-items" class="mb-6 border-b border-gray-200">
+            <h2 class="flex gap-2 items-center mb-2 text-lg font-bold text-gray-900">
+                {% heroicon_outline "star" size="20" class="text-orange-600" %} Contractual Special Items
+            </h2>
             {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
         </div>
         <!-- Ledger Totals Section -->
         <div id="ledger-totals" class="mb-6">
             <h2 class="flex gap-2 items-center mb-4 text-lg font-bold text-gray-900">
-                {% heroicon_outline "calculator" size="20" class="text-indigo-600" %} Contractual Special Items
+                {% heroicon_outline "calculator" size="20" class="text-indigo-600" %} Ledger Totals
             </h2>
             {% include "payment_certificate/tables/ledger_totals.html" %}
         </div>

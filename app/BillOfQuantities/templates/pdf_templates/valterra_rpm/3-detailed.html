@@ -10,6 +10,14 @@
             @page {
                 size: a4 landscape;
                 margin: 1cm;
+                margin-bottom: 20mm;
+                @frame footer {
+                    -pdf-frame-content: running-footer;
+                    bottom: 5mm;
+                    height: 10mm;
+                    margin-left: 10mm;
+                    margin-right: 10mm;
+                }
             }
             html, body {
                 margin: 0;
@@ -264,9 +272,7 @@
                     </tbody>
                 </table>
 
-                <div class="footer-text">
-                    {% if project.contractor %}{{ project.contractor.name }}{% endif %}{% if project.contractor and project.client %} | {% endif %}{% if project.client %}{{ project.client.name }}{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
-                </div>
+
 
             </div>
         {% empty %}
@@ -274,5 +280,18 @@
                 <h2>No Line Items Found</h2>
             </div>
         {% endfor %}
+        <!-- Running Footer -->
+        <div id="running-footer">
+            <table style="width: 100%; border: none; font-size: 7.5pt; color: #9ca3af; font-family: Arial, sans-serif;">
+                <tr>
+                    <td style="text-align: left; border: none; padding: 0;">
+                        Sedgepro | {{ project.name }} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                    </td>
+                    <td style="text-align: right; border: none; padding: 0; width: 10%;">
+                        Page <pdf:pagenumber />
+                    </td>
+                </tr>
+            </table>
+        </div>
     </body>
 </html>

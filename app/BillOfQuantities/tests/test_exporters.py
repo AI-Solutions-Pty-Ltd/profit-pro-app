@@ -8,6 +8,7 @@ from django.urls import reverse
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.tasks import (
     compile_pdf_for_certificate,
+    get_report_filename,
     get_valuation_summary_data,
 )
 from app.BillOfQuantities.tests.factories import (
@@ -230,6 +231,35 @@ class TestExporters:
         assert pdf_file is not None
         assert pdf_file.size > 0
 
+    def test_report_naming_format(self):
+        """Test that get_report_filename constructs correct filenames."""
+        from datetime import datetime
+        from app.Project.tests.factories import ProjectFactory
+
+        project = ProjectFactory.create(name="Test Project")
+        cert = PaymentCertificateFactory.create(project=project)
+        
+        date_val = cert.assessment_date or cert.approved_on or datetime.now()
+        if hasattr(date_val, "date"):
+            date_val = date_val.date()
+        expected_date = date_val.strftime("%Y-%m-%d")
+
+        # Case 1: Full report
+        filename = get_report_filename(cert, include_front=True, include_summary=True, include_detailed=True, is_abridged=False)
+        assert filename == f"cover-summary-detailed_full_{expected_date}.pdf"
+
+        # Case 2: Abridged report
+        filename = get_report_filename(cert, include_front=True, include_summary=True, include_detailed=True, is_abridged=True)
+        assert filename == f"cover-summary-detailed_abridged_{expected_date}.pdf"
+
+        # Case 3: Combined/custom sections
+        filename = get_report_filename(cert, include_front=True, include_summary=False, include_detailed=True, is_abridged=False)
+        assert filename == f"cover-detailed_combined_{expected_date}.pdf"
+
+        # Case 4: Single section
+        filename = get_report_filename(cert, include_front=False, include_summary=True, include_detailed=False, is_abridged=False)
+        assert filename == f"summary_combined_{expected_date}.pdf"
+
 
 @pytest.mark.django_db
 class TestDownloadViews:
@@ -252,6 +282,8 @@ class TestDownloadViews:
         response = client.get(url, {"front": "on", "summary": "on", "detailed": "on"})
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
+        assert "Content-Disposition" in response
+        assert "cover-summary-detailed_full_" in response["Content-Disposition"]
 
     def test_download_abridged_pdf_view_custom_sections(self, client):
         """Test that abridged PDF download view with custom sections returns valid PDF response."""
@@ -270,3 +302,5 @@ class TestDownloadViews:
         response = client.get(url, {"front": "on", "summary": "on", "detailed": "on"})
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
+        assert "Content-Disposition" in response
+        assert "cover-summary-detailed_abridged_" in response["Content-Disposition"]

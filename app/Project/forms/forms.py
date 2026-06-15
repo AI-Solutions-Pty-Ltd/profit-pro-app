@@ -94,27 +94,36 @@ class ProjectContractorForm(forms.ModelForm):
                 ).order_by("name")
 
 
-class ProjectLeadConsultantForm(forms.ModelForm):
-    """Form for updating the project lead consultant."""
+class ProjectLeadConsultantForm(forms.Form):
+    """Form for allocating a lead consultant to a project."""
 
-    class Meta:
-        model = Project
-        fields = ["lead_consultant"]
-        widgets = {
-            "lead_consultant": SearchableSelectWidget(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                },
-                create_url=True,
-                resource_type="lead_consultant",
-            ),
-        }
-        labels = {
-            "lead_consultant": "Lead Consultant",
-        }
-        help_texts = {
-            "lead_consultant": "Select the lead consultant company for this project",
-        }
+    lead_consultant = forms.ModelChoiceField(
+        queryset=Company.objects.none(),
+        widget=SearchableSelectWidget(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+            },
+            create_url=True,
+            resource_type="lead_consultant",
+        ),
+        label="Lead Consultant",
+        help_text="Select the lead consultant company for this project",
+    )
+
+    type = forms.ChoiceField(
+        choices=[
+            (Company.Type.LEAD_CONSULTANT, "Lead Consultant"),
+            (Company.Type.CONSULTANT, "Consultant"),
+        ],
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+            }
+        ),
+        label="Consultant Type",
+        help_text="Specify whether this company should be assigned as a Lead Consultant or a regular Consultant",
+        initial=Company.Type.LEAD_CONSULTANT,
+    )
 
     def __init__(self, *args, **kwargs):
         kwargs.pop("project", None)
@@ -128,10 +137,9 @@ class ProjectLeadConsultantForm(forms.ModelForm):
 
             projects = user.get_projects
 
-            # Filter to show lead consultant companies that are either associated with the user's projects or account
             from django.db.models import Q
 
-            condition = Q(lead_consultant_projects__in=projects) | Q(users=user)
+            condition = Q(consultant_projects__in=projects) | Q(users=user)
             if user.has_demo_permission:
                 condition |= Q(
                     registration_number__in=[
@@ -143,21 +151,84 @@ class ProjectLeadConsultantForm(forms.ModelForm):
             queryset = (
                 Company.objects.filter(
                     condition,
-                    type=Company.Type.LEAD_CONSULTANT,
+                    type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT],
                 )
                 .distinct()
                 .order_by("name")
             )
         else:
-            # Filter to only show lead consultant companies
             queryset = Company.objects.filter(
-                type=Company.Type.LEAD_CONSULTANT
+                type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT]
             ).order_by("name")
 
-        # Type: ModelChoiceField has queryset attribute
         lead_consultant_field = self.fields["lead_consultant"]
         if hasattr(lead_consultant_field, "queryset"):
             cast(ModelChoiceField, lead_consultant_field).queryset = queryset.distinct()
+
+
+class ProjectConsultantForm(forms.Form):
+    """Form for allocating a regular consultant to a project."""
+
+    consultant = forms.ModelChoiceField(
+        queryset=Company.objects.none(),
+        widget=SearchableSelectWidget(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+            },
+            create_url=True,
+            resource_type="consultant",
+        ),
+        label="Consultant",
+        help_text="Select the consultant company for this project",
+    )
+
+    type = forms.ChoiceField(
+        choices=[
+            (Company.Type.LEAD_CONSULTANT, "Lead Consultant"),
+            (Company.Type.CONSULTANT, "Consultant"),
+        ],
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+            }
+        ),
+        label="Consultant Type",
+        help_text="Specify whether this company should be assigned as a Lead Consultant or a regular Consultant",
+        initial=Company.Type.CONSULTANT,
+    )
+
+    def __init__(self, *args, **kwargs):
+        kwargs.pop("project", None)
+        user: Account | None = kwargs.pop("user", None)
+
+        super().__init__(*args, **kwargs)
+
+        if user:
+            if user.has_demo_permission:
+                Company.ensure_demo_companies(user=user)
+
+            projects = user.get_projects
+
+            from django.db.models import Q
+
+            condition = Q(consultant_projects__in=projects) | Q(users=user)
+
+            queryset = (
+                Company.objects.filter(
+                    condition,
+                    type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT],
+                )
+                .distinct()
+                .order_by("name")
+            )
+        else:
+            queryset = Company.objects.filter(
+                type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT]
+            ).order_by("name")
+
+        consultant_field = self.fields["consultant"]
+        if hasattr(consultant_field, "queryset"):
+            cast(ModelChoiceField, consultant_field).queryset = queryset.distinct()
 
 
 class ClientCreateUpdateForm(forms.ModelForm):
@@ -997,6 +1068,21 @@ class LeadConsultantQuickCreateForm(CompanyForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.type = Company.Type.LEAD_CONSULTANT
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
+
+class ConsultantQuickCreateForm(CompanyForm):
+    """Quick create form for regular consultant companies."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.type = Company.Type.CONSULTANT
         if commit:
             instance.save()
             self.save_m2m()

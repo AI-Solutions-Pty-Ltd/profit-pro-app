@@ -8,6 +8,7 @@ from app.Consultant.forms import ProjectClientForm
 from app.Project.forms.forms import (
     ClientQuickCreateForm,
     LeadConsultantQuickCreateForm,
+    ProjectConsultantForm,
     ProjectLeadConsultantForm,
 )
 from app.Project.models import Company, Project, ProjectRole, Role
@@ -212,3 +213,160 @@ class TestAllocationFixes(TestCase):
         # Verify the user is in both users and consultants
         self.assertIn(self.user, company.users.all())
         self.assertIn(self.user, company.consultants.all())
+
+    def test_project_consultant_form_queryset_filtering(self):
+        """Verify that ProjectConsultantForm filters queryset to include both LEAD_CONSULTANT and CONSULTANT."""
+        consultant_company = ClientFactory(
+            name="Test Consultant Company",
+            type=Company.Type.CONSULTANT,
+        )
+        # Check without user
+        form = ProjectConsultantForm(project=self.project)
+        self.assertIn(consultant_company, form.fields["consultant"].queryset)
+        self.assertIn(self.lead_consultant_company, form.fields["consultant"].queryset)
+
+    def test_project_consultant_properties(self):
+        """Verify the new lead_consultant_companies and regular_consultant_companies properties on Project."""
+        consultant_company = ClientFactory(
+            name="Test Consultant Company",
+            type=Company.Type.CONSULTANT,
+        )
+        self.project.consultants.add(self.lead_consultant_company)
+        self.project.consultants.add(consultant_company)
+
+        self.assertIn(self.lead_consultant_company, self.project.lead_consultant_companies)
+        self.assertNotIn(consultant_company, self.project.lead_consultant_companies)
+
+        self.assertIn(consultant_company, self.project.regular_consultant_companies)
+        self.assertNotIn(self.lead_consultant_company, self.project.regular_consultant_companies)
+
+    def test_allocate_consultant_views(self):
+        """Verify ProjectAllocateConsultantView and ProjectConsultantRemoveView."""
+        self.client.force_login(self.user)
+        consultant_company = ClientFactory(
+            name="Test Consultant Company",
+            type=Company.Type.CONSULTANT,
+        )
+        consultant_company.users.add(self.user)
+
+        # Test allocate view post
+        url_allocate = reverse(
+            "client:project-lead-consultant:project-consultant-allocate",
+            kwargs={"project_pk": self.project.pk},
+        )
+        response = self.client.post(url_allocate, {
+            "consultant": consultant_company.pk,
+            "type": Company.Type.CONSULTANT,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.project.consultants.filter(pk=consultant_company.pk).exists())
+
+        # Test remove view post
+        url_remove = reverse(
+            "client:project-lead-consultant:project-consultant-remove",
+            kwargs={"project_pk": self.project.pk, "consultant_pk": consultant_company.pk},
+        )
+        response = self.client.post(url_remove)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(self.project.consultants.filter(pk=consultant_company.pk).exists())
+
+    def test_allocate_lead_consultant_views(self):
+        """Verify ProjectAllocateLeadConsultantView and ProjectLeadConsultantRemoveView."""
+        self.client.force_login(self.user)
+        lead_consultant = ClientFactory(
+            name="Test Lead Consultant Company 2",
+            type=Company.Type.LEAD_CONSULTANT,
+        )
+        lead_consultant.users.add(self.user)
+
+        # Test allocate view post
+        url_allocate = reverse(
+            "client:project-lead-consultant:project-lead-consultant-allocate",
+            kwargs={"project_pk": self.project.pk},
+        )
+        response = self.client.post(url_allocate, {
+            "lead_consultant": lead_consultant.pk,
+            "type": Company.Type.LEAD_CONSULTANT,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.project.consultants.filter(pk=lead_consultant.pk).exists())
+
+        # Test remove view post
+        url_remove = reverse(
+            "client:project-lead-consultant:project-lead-consultant-remove",
+            kwargs={"project_pk": self.project.pk, "lead_consultant_pk": lead_consultant.pk},
+        )
+        response = self.client.post(url_remove)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(self.project.consultants.filter(pk=lead_consultant.pk).exists())
+
+    def test_allocate_consultant_updates_type(self):
+        """Verify allocating a consultant updates their type contextually."""
+        self.client.force_login(self.user)
+
+        # Start as LEAD_CONSULTANT
+        company = ClientFactory(
+            name="Flexible Consultant",
+            type=Company.Type.LEAD_CONSULTANT,
+        )
+        company.users.add(self.user)
+
+        # Allocate as regular CONSULTANT
+        url_allocate = reverse(
+            "client:project-lead-consultant:project-consultant-allocate",
+            kwargs={"project_pk": self.project.pk},
+        )
+        self.client.post(url_allocate, {
+            "consultant": company.pk,
+            "type": Company.Type.CONSULTANT,
+        })
+
+        # Verify type has changed to CONSULTANT
+        company.refresh_from_db()
+        self.assertEqual(company.type, Company.Type.CONSULTANT)
+
+    def test_allocate_lead_consultant_updates_type(self):
+        """Verify allocating a lead consultant updates their type contextually."""
+        self.client.force_login(self.user)
+
+        # Start as regular CONSULTANT
+        company = ClientFactory(
+            name="Flexible Lead Consultant",
+            type=Company.Type.CONSULTANT,
+        )
+        company.users.add(self.user)
+
+        # Allocate as LEAD_CONSULTANT
+        url_allocate = reverse(
+            "client:project-lead-consultant:project-lead-consultant-allocate",
+            kwargs={"project_pk": self.project.pk},
+        )
+        self.client.post(url_allocate, {
+            "lead_consultant": company.pk,
+            "type": Company.Type.LEAD_CONSULTANT,
+        })
+
+        # Verify type has changed to LEAD_CONSULTANT
+        company.refresh_from_db()
+        self.assertEqual(company.type, Company.Type.LEAD_CONSULTANT)
+
+    def test_create_consultant_associates_creator_user(self):
+        """Verify creating a company via LeadConsultantCreateView associates the current user."""
+        self.client.force_login(self.user)
+
+        url_create = reverse(
+            "client:lead-consultant-management:lead-consultant-create",
+            kwargs={"project_pk": self.project.pk},
+        )
+        response = self.client.post(url_create, {
+            "name": "Self Created Consultant",
+            "registration_number": "REG-SELF",
+        })
+        self.assertEqual(response.status_code, 302)
+
+        company = Company.objects.get(name="Self Created Consultant")
+        self.assertEqual(company.type, Company.Type.LEAD_CONSULTANT)
+        self.assertIn(self.user, company.users.all())
+        self.assertIn(self.user, company.consultants.all())
+
+

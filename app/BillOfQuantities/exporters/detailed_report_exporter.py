@@ -353,7 +353,7 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         current_row += 2
 
         # Final Footer
-        company = "Profit Pro"  # Or get from settings/project
+        company = "Sedgepro"  # Or get from settings/project
         footer_text = (
             f"{company}  |  Payment Certificate No. {cert_num}  |  {cert_date}"
         )

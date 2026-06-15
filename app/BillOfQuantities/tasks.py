@@ -184,6 +184,45 @@ def get_valuation_summary_data(payment_certificate, abridged=False):
     }
 
 
+def get_report_filename(
+    payment_certificate,
+    include_front: bool = True,
+    include_summary: bool = True,
+    include_detailed: bool = True,
+    is_abridged: bool = False,
+) -> str:
+    """
+    Generate the dynamic report filename for a payment certificate.
+    Format: [report_name]_[version]_[date].pdf
+    """
+    # 1. report_name (cover, summary, detailed)
+    parts = []
+    if include_front:
+        parts.append("cover")
+    if include_summary:
+        parts.append("summary")
+    if include_detailed:
+        parts.append("detailed")
+
+    report_name = "-".join(parts) if parts else "report"
+
+    # 2. version (full, combined, abridged)
+    if is_abridged:
+        version = "abridged"
+    elif include_front and include_summary and include_detailed:
+        version = "full"
+    else:
+        version = "combined"
+
+    # 3. date of report
+    date_val = payment_certificate.assessment_date or payment_certificate.approved_on or datetime.now()
+    if hasattr(date_val, "date"):
+        date_val = date_val.date()
+    date_str = date_val.strftime("%Y-%m-%d")
+
+    return f"{report_name}_{version}_{date_str}.pdf"
+
+
 def compile_pdf_for_certificate(
     payment_certificate,
     include_front: bool = True,
@@ -349,8 +388,12 @@ def generate_and_save_pdf(
         if pdf_type == "full":
             # Generate full PDF
             pdf = generate_full_payment_certificate_pdf(payment_certificate)
-            pdf.name = (
-                f"payment_certificate_{payment_certificate.certificate_number}.pdf"
+            pdf.name = get_report_filename(
+                payment_certificate,
+                include_front=True,
+                include_summary=True,
+                include_detailed=True,
+                is_abridged=False,
             )
             pdf.type = "application/pdf"  # type: ignore
             payment_certificate.pdf = pdf
@@ -363,14 +406,20 @@ def generate_and_save_pdf(
         else:
             # Generate abridged PDF
             pdf = generate_abridged_payment_certificate_pdf(payment_certificate)
-            pdf.name = f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf"
+            pdf.name = get_report_filename(
+                payment_certificate,
+                include_front=True,
+                include_summary=True,
+                include_detailed=True,
+                is_abridged=True,
+            )
             pdf.type = "application/pdf"  # type: ignore
             payment_certificate.abridged_pdf = pdf
             payment_certificate.abridged_pdf_generating = False
             update_fields.append("abridged_pdf")
             update_fields.append("abridged_pdf_generating")
             logger.info(
-                f"Full PDF generated successfully for certificate {payment_certificate.certificate_number}. Progressive to date: {payment_certificate.progressive_to_date}"
+                f"Abridged PDF generated successfully for certificate {payment_certificate.certificate_number}. Progressive to date: {payment_certificate.progressive_to_date}"
             )
 
         payment_certificate.save(update_fields=update_fields)

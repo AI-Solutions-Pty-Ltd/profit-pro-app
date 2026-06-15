@@ -1,4 +1,4 @@
-"""Views for managing Lead Consultant Companies."""
+"""Views for managing Consultant Companies (Lead and regular)."""
 
 import json
 
@@ -12,12 +12,12 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from app.Account.models import Account
 from app.Consultant.views.mixins import LeadConsultantMixin
 from app.core.Utilities.mixins import BreadcrumbItem
-from app.Project.company.company_forms import CompanyForm
+from app.Project.company.company_forms import ConsultantCompanyForm
 from app.Project.models import Company
 
 
 class LeadConsultantListView(LeadConsultantMixin, ListView):
-    """List all lead consultant companies."""
+    """List all lead and regular consultant companies."""
 
     model = Company
     template_name = "lead_consultant/lead_consultant_list.html"
@@ -29,13 +29,14 @@ class LeadConsultantListView(LeadConsultantMixin, ListView):
         from django.db.models import Q
 
         queryset = Company.objects.filter(
-            Q(lead_consultant_projects__in=projects) | Q(users=user),
-            type=Company.Type.LEAD_CONSULTANT,
+            Q(consultant_projects__in=projects) | Q(users=user),
+            type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT],
         )
 
-        lead_consultant = self.get_project().lead_consultant
-        if lead_consultant:
-            queryset = queryset.exclude(pk=lead_consultant.pk)
+        project = self.get_project()
+        if project:
+            # Exclude consultants that are already assigned to the project
+            queryset = queryset.exclude(pk__in=project.consultants.all())
 
         return queryset.distinct().order_by("name")
 
@@ -47,15 +48,15 @@ class LeadConsultantListView(LeadConsultantMixin, ListView):
                     "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             ),
-            BreadcrumbItem(title="Lead Consultants", url=None),
+            BreadcrumbItem(title="Consultants", url=None),
         ]
 
 
 class LeadConsultantCreateView(LeadConsultantMixin, CreateView):
-    """Create a new lead consultant company."""
+    """Create a new consultant company."""
 
     model = Company
-    form_class = CompanyForm
+    form_class = ConsultantCompanyForm
     template_name = "lead_consultant/lead_consultant_form.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -67,23 +68,23 @@ class LeadConsultantCreateView(LeadConsultantMixin, CreateView):
                 ),
             ),
             BreadcrumbItem(
-                title="Lead Consultants",
+                title="Consultants",
                 url=reverse(
                     "client:lead-consultant-management:lead-consultant-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
             ),
-            BreadcrumbItem(title="Add Lead Consultant", url=None),
+            BreadcrumbItem(title="Add Consultant", url=None),
         ]
 
     def form_valid(self, form):
         form.instance.type = Company.Type.LEAD_CONSULTANT
-
-        messages.success(self.request, "Lead consultant created successfully.")
+        messages.success(self.request, "Consultant company created successfully.")
         response = super().form_valid(form)
         project = self.get_project()
-        project.lead_consultant = self.object
-        project.save()
+        project.consultants.add(self.object)
+        self.object.users.add(self.request.user)
+        self.object.consultants.add(self.request.user)
         return response
 
     def get_success_url(self):
@@ -94,10 +95,10 @@ class LeadConsultantCreateView(LeadConsultantMixin, CreateView):
 
 
 class LeadConsultantUpdateView(LeadConsultantMixin, UpdateView):
-    """Update a lead consultant company."""
+    """Update a consultant company."""
 
     model = Company
-    form_class = CompanyForm
+    form_class = ConsultantCompanyForm
     template_name = "lead_consultant/lead_consultant_form.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -110,7 +111,7 @@ class LeadConsultantUpdateView(LeadConsultantMixin, UpdateView):
                 ),
             ),
             BreadcrumbItem(
-                title="Lead Consultants",
+                title="Consultants",
                 url=reverse(
                     "client:lead-consultant-management:lead-consultant-list",
                     kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -120,7 +121,7 @@ class LeadConsultantUpdateView(LeadConsultantMixin, UpdateView):
         ]
 
     def form_valid(self, form):
-        messages.success(self.request, "Lead consultant updated successfully.")
+        messages.success(self.request, "Consultant company updated successfully.")
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -131,7 +132,7 @@ class LeadConsultantUpdateView(LeadConsultantMixin, UpdateView):
 
 
 class LeadConsultantDeleteView(LeadConsultantMixin, DeleteView):
-    """Delete a lead consultant company."""
+    """Delete a consultant company."""
 
     model = Company
     template_name = "lead_consultant/lead_consultant_confirm_delete.html"
@@ -145,7 +146,7 @@ class LeadConsultantDeleteView(LeadConsultantMixin, DeleteView):
                 ),
             ),
             BreadcrumbItem(
-                title="Lead Consultants",
+                title="Consultants",
                 url=reverse(
                     "client:lead-consultant-management:lead-consultant-list",
                     kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -155,10 +156,10 @@ class LeadConsultantDeleteView(LeadConsultantMixin, DeleteView):
         ]
 
     def delete(self, request, *args, **kwargs):
-        lead_consultant = self.get_object()
+        consultant = self.get_object()
         messages.success(
             request,
-            f"Lead consultant '{lead_consultant.name}' deleted successfully.",
+            f"Consultant company '{consultant.name}' deleted successfully.",
         )
         return super().delete(request, *args, **kwargs)
 
@@ -170,7 +171,7 @@ class LeadConsultantDeleteView(LeadConsultantMixin, DeleteView):
 
 
 class RevealLeadConsultantFieldView(LeadConsultantMixin, View):
-    """Reveal a sensitive lead consultant company field securely to authorized project administrators."""
+    """Reveal a sensitive consultant company field securely to authorized project administrators."""
 
     def handle_no_permission(self):
         """Return 403 Forbidden since this is a secure JSON AJAX endpoint."""
@@ -206,13 +207,14 @@ class RevealLeadConsultantFieldView(LeadConsultantMixin, View):
             )
 
         try:
-            lead_consultant = Company.objects.get(
-                pk=self.kwargs["company_pk"], type=Company.Type.LEAD_CONSULTANT
+            consultant = Company.objects.get(
+                pk=self.kwargs["company_pk"],
+                type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT]
             )
         except Company.DoesNotExist:
             return JsonResponse(
-                {"status": "error", "message": "Lead consultant not found"}, status=404
+                {"status": "error", "message": "Consultant company not found"}, status=404
             )
 
-        val = getattr(lead_consultant, field_name, "")
+        val = getattr(consultant, field_name, "")
         return JsonResponse({"status": "success", "value": val})

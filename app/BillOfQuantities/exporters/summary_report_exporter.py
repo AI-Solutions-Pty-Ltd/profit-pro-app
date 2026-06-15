@@ -73,7 +73,7 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
 
     # Column Headers
     headers = [
-        "SCHED",
+        # "SCHED",
         "DESCRIPTION",
         "TENDER AMOUNT (R)",
         "CUMULATIVE CERTIFIED (R)",
