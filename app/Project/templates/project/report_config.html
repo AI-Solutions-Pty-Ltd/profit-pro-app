@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}
+    Column Customization - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <div class="mb-6 bg-white rounded-lg shadow-sm">
+            <div class="px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Report Column Customization</h1>
+                        <p class="mt-1 text-sm text-gray-600">Customize column headings, visibility, and ordering for {{ project.name }}</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'project:project-setup' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "arrow-left" size="20" %}
+                            <span class="ml-2">Back to Project Setup</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Report Selection & Column Configuration -->
+        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Column Heading Customization & Reordering</h2>
+                <p class="mt-1 text-sm text-gray-600">Customize column headings, visibility, and ordering.</p>
+            </div>
+            <div class="px-6 py-4">
+                <form method="post" id="report-config-form" class="space-y-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="save_report_config">
+                    <input type="hidden" name="column_config" id="column-config-input">
+                    <div class="grid grid-cols-1 gap-6">
+                        <!-- Right Panel: Column Configuration & Live Preview -->
+                        <div class="space-y-6">
+                            <!-- Column Config List -->
+                            <div>
+                                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <table class="min-w-full divide-y divide-gray-200" id="columns-config-table">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-3 py-2 w-16 text-xs font-semibold text-left text-center text-gray-500 uppercase">Order</th>
+                                                <th class="px-3 py-2 w-16 text-xs font-semibold text-left text-center text-gray-500 uppercase">Visible</th>
+                                                <th class="px-3 py-2 text-xs font-semibold text-left text-gray-500 uppercase">Default Header</th>
+                                                <th class="px-3 py-2 text-xs font-semibold text-left text-gray-500 uppercase">Custom Label</th>
+                                                <th class="px-3 py-2 w-28 text-xs font-semibold text-center text-gray-500 uppercase">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200" id="columns-config-list">
+                                            <!-- Will be populated via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="flex justify-between items-center mt-2">
+                                    <p class="text-xs text-gray-500">Use Up/Down buttons to reorder, or checkbox to show/hide.</p>
+                                    <button type="button"
+                                            id="reset-columns-btn"
+                                            class="text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                                        Reset to Defaults
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Real-time Live Header Preview -->
+                            <div class="p-4 rounded-lg border border-indigo-100 bg-indigo-50/30">
+                                <h4 class="flex gap-1.5 items-center mb-3 text-xs font-bold tracking-wider text-indigo-900 uppercase">
+                                    {% heroicon_outline "eye" class="w-4 h-4 text-indigo-600" %}
+                                    Real-time Column Header Preview
+                                </h4>
+                                <div class="overflow-x-auto max-w-full bg-white rounded border border-indigo-100 shadow-inner">
+                                    <table class="min-w-full divide-y divide-gray-200 text-[10px] table-fixed">
+                                        <thead class="font-bold text-center bg-gray-50" id="live-header-preview">
+                                            <!-- Dynamically rendered by JS -->
+                                        </thead>
+                                        <tbody>
+                                            <tr class="text-center text-gray-400 divide-x divide-gray-100"
+                                                id="live-body-preview">
+                                                <!-- Placeholders -->
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-4 border-t border-gray-200">
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "check" size="20" %}
+                            <span class="ml-2">Save Report Configuration</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Report Configuration Logic
+        (function() {
+            let columns = [];
+            try {
+                columns = JSON.parse('{{ project_columns_json|escapejs }}');
+            } catch (e) {
+                console.error("Failed to parse project columns", e);
+            }
+            
+            const listContainer = document.getElementById('columns-config-list');
+            const previewHeader = document.getElementById('live-header-preview');
+            const previewBody = document.getElementById('live-body-preview');
+            const formInput = document.getElementById('column-config-input');
+            const configForm = document.getElementById('report-config-form');
+            const resetBtn = document.getElementById('reset-columns-btn');
+            
+            // Standard layout defaults
+            const standardDefaults = [
+                {"id": "item_number", "label": "Item No.", "enabled": true},
+                {"id": "payment_reference", "label": "Pay Ref", "enabled": true},
+                {"id": "description", "label": "Description", "enabled": true},
+                {"id": "unit_measurement", "label": "Unit", "enabled": true},
+                {"id": "budgeted_quantity", "label": "Quantity", "enabled": true},
+                {"id": "unit_price", "label": "Rate", "enabled": true},
+                {"id": "total_price", "label": "Amount", "enabled": true},
+                {"id": "total_qty", "label": "Cumulative Quantity Certified", "enabled": true},
+                {"id": "total_claimed", "label": "Cumulative Amount Certified", "enabled": true},
+                {"id": "previous_qty", "label": "Previous Quantity", "enabled": true},
+                {"id": "previous_claimed", "label": "Previous Amount Certified", "enabled": true},
+                {"id": "current_qty", "label": "Current Quantity", "enabled": true},
+                {"id": "current_claim", "label": "Amount Due", "enabled": true}
+            ];
+
+            function renderColumns() {
+                if (!listContainer) return;
+                listContainer.innerHTML = '';
+                columns.forEach((col, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 transition-colors';
+                    tr.innerHTML = `
+                        <td class="px-3 py-2 text-xs font-medium text-center text-gray-500">${idx + 1}</td>
+                        <td class="px-3 py-2 text-center">
+                            <input type="checkbox" data-id="${col.id}" class="text-indigo-600 rounded border-gray-300 col-enable-checkbox focus:ring-indigo-500" ${col.enabled ? 'checked' : ''}>
+                        </td>
+                        <td class="px-3 py-2 text-xs font-medium text-gray-900">${getOriginalHeader(col.id)}</td>
+                        <td class="px-3 py-2">
+                            <input type="text" data-id="${col.id}" value="${col.label || ''}" class="block px-2 py-1 w-full text-xs rounded border-gray-300 shadow-sm col-label-input focus:border-indigo-500 focus:ring-indigo-500">
+                        </td>
+                        <td class="px-3 py-2 space-x-1 text-center">
+                            <button type="button" class="p-1 text-gray-400 transition-colors hover:text-indigo-600 disabled:opacity-30 btn-move-up" data-index="${idx}" ${idx === 0 ? 'disabled' : ''}>
+                                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                            <button type="button" class="p-1 text-gray-400 transition-colors hover:text-indigo-600 disabled:opacity-30 btn-move-down" data-index="${idx}" ${idx === columns.length - 1 ? 'disabled' : ''}>
+                                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                        </td>
+                    `;
+                    listContainer.appendChild(tr);
+                });
+
+                // Attach event listeners
+                document.querySelectorAll('.col-enable-checkbox').forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        const colId = this.dataset.id;
+                        const col = columns.find(c => c.id === colId);
+                        if (col) {
+                            col.enabled = this.checked;
+                            updatePreview();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.col-label-input').forEach(input => {
+                    input.addEventListener('input', function() {
+                        const colId = this.dataset.id;
+                        const col = columns.find(c => c.id === colId);
+                        if (col) {
+                            col.label = this.value;
+                            updatePreview();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.btn-move-up').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const idx = parseInt(this.dataset.index);
+                        moveColumn(idx, -1);
+                    });
+                });
+
+                document.querySelectorAll('.btn-move-down').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const idx = parseInt(this.dataset.index);
+                        moveColumn(idx, 1);
+                    });
+                });
+
+                updatePreview();
+            }
+
+            function getOriginalHeader(id) {
+                const standard = standardDefaults.find(c => c.id === id);
+                return standard ? standard.label : id;
+            }
+
+            function moveColumn(idx, direction) {
+                const targetIdx = idx + direction;
+                if (targetIdx < 0 || targetIdx >= columns.length) return;
+                
+                const temp = columns[idx];
+                columns[idx] = columns[targetIdx];
+                columns[targetIdx] = temp;
+                
+                renderColumns();
+            }
+
+            function updatePreview() {
+                if (!previewHeader || !previewBody) return;
+                previewHeader.innerHTML = '';
+                previewBody.innerHTML = '';
+                
+                const trHead = document.createElement('tr');
+                trHead.className = 'divide-x divide-indigo-100';
+                
+                let visibleCount = 0;
+                columns.forEach(col => {
+                    if (col.enabled) {
+                        const th = document.createElement('th');
+                        th.className = 'px-2 py-1 text-indigo-900 truncate max-w-[120px]';
+                        th.textContent = col.label || getOriginalHeader(col.id);
+                        trHead.appendChild(th);
+                        
+                        const td = document.createElement('td');
+                        td.className = 'px-2 py-2 truncate max-w-[120px] bg-slate-50/50';
+                        td.innerHTML = `<span class="bg-gray-100 text-gray-400 px-1 rounded text-[8px]">data</span>`;
+                        previewBody.appendChild(td);
+                        
+                        visibleCount++;
+                    }
+                });
+                
+                if (visibleCount === 0) {
+                    const th = document.createElement('th');
+                    th.className = 'px-2 py-3 text-gray-400 italic text-center w-full';
+                    th.textContent = 'No columns selected';
+                    trHead.appendChild(th);
+                }
+                
+                previewHeader.appendChild(trHead);
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    columns = JSON.parse(JSON.stringify(standardDefaults));
+                    renderColumns();
+                });
+            }
+
+            if (configForm && formInput) {
+                configForm.addEventListener('submit', function(e) {
+                    formInput.value = JSON.stringify({ columns: columns });
+                });
+            }
+
+            // Initialize
+            renderColumns();
+        })();
+    </script>
+{% endblock content %}
