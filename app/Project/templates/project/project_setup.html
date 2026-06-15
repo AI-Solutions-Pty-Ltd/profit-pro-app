@@ -471,7 +471,7 @@
         <!-- Report Selection & Configuration -->
         <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Report Selection & Configuration</h2>
+                <h2 class="text-lg font-semibold text-gray-900">Project Reports Template Setup</h2>
                 <p class="mt-1 text-sm text-gray-600">Customize column headings, visibility, and ordering.</p>
             </div>
             <div class="px-6 py-4">
@@ -479,7 +479,7 @@
                     <!-- Report Template Setup Card -->
                     <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
                         <div class="flex justify-between items-center mb-1">
-                            <h3 class="text-sm font-semibold text-gray-900">Report Template Setup</h3>
+                            <h3 class="text-sm font-semibold text-gray-900">Payment Certificate Template Setup</h3>
                         </div>
                         <p class="mb-3 text-xs text-gray-600">Customize column headings, visibility, and reorder fields for the report template.</p>
                         <a href="{% url 'project:project-report-config' project.pk %}"
@@ -630,44 +630,96 @@
                 {% endif %}
             </div>
         </div>
-        <!-- Lead Consultant Management -->
+        <!-- Consultant Management -->
         <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-lg font-semibold text-gray-900">Consultant Management</h2>
-                        <p class="mt-1 text-sm text-gray-600">Manage project lead consultant information</p>
+                        <p class="mt-1 text-sm text-gray-600">Manage project lead & other consultant information</p>
                     </div>
                     <a href="{% url 'client:lead-consultant-management:lead-consultant-list' project.pk %}"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "user-group" size="20" class="mr-2" %}
-                        Manage  Consultants
+                        Manage Consultants
                     </a>
                 </div>
             </div>
             <div class="px-6 py-4">
-                {% if project.lead_consultant %}
-                    <div class="p-4 mb-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900">{{ project.lead_consultant.name }}</h4>
-                                <p class="mt-1 text-xs text-gray-600">Registration: {{ project.lead_consultant.registration_number }}</p>
-                                {% if project.lead_consultant.vat_number %}
-                                    <p class="text-xs text-gray-600">VAT: {{ project.lead_consultant.vat_number }}</p>
-                                {% endif %}
-                            </div>
-                            <div class="gap-2 right-content">
-                                <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"
-                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "pencil" size="16" %}
-                                    <span class="ml-1">Change</span>
-                                </a>
-                                <a href="{% url 'client:project-lead-consultant:project-lead-consultant-remove' project.pk project.lead_consultant.pk %}"
-                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-white rounded-md border border-red-300 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                    {% heroicon_outline "x-mark" size="16" %}
-                                    <span class="ml-1">Remove</span>
-                                </a>
-                            </div>
+                {% if project.consultants.exists %}
+                    <div class="space-y-6">
+                        <!-- Lead Consultants Section -->
+                        <div>
+                            <h4 class="mb-2 text-sm font-medium text-gray-700">Lead Consultants</h4>
+                            {% if project.lead_consultant_companies.exists %}
+                                <div class="space-y-2">
+                                    {% for consultant in project.lead_consultant_companies %}
+                                        <div class="p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h5 class="text-sm font-medium text-gray-900">{{ consultant.name }}</h5>
+                                                    <p class="mt-1 text-xs text-gray-600">Registration: {{ consultant.registration_number }}</p>
+                                                    {% if consultant.vat_number %}
+                                                        <p class="text-xs text-gray-600">VAT: {{ consultant.vat_number }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <a href="{% url 'client:project-lead-consultant:project-lead-consultant-remove' project.pk consultant.pk %}"
+                                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                        {% heroicon_outline "x-mark" size="14" %}
+                                                        <span class="ml-1">Remove</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs italic text-gray-500">No Lead Consultant assigned</p>
+                            {% endif %}
+                        </div>
+                        <!-- Regular Consultants Section -->
+                        <div>
+                            <h4 class="mb-2 text-sm font-medium text-gray-700">Consultants</h4>
+                            {% if project.regular_consultant_companies.exists %}
+                                <div class="space-y-2">
+                                    {% for consultant in project.regular_consultant_companies %}
+                                        <div class="p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h5 class="text-sm font-medium text-gray-900">{{ consultant.name }}</h5>
+                                                    <p class="mt-1 text-xs text-gray-600">Registration: {{ consultant.registration_number }}</p>
+                                                    {% if consultant.vat_number %}
+                                                        <p class="text-xs text-gray-600">VAT: {{ consultant.vat_number }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <a href="{% url 'client:project-lead-consultant:project-consultant-remove' project.pk consultant.pk %}"
+                                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                        {% heroicon_outline "x-mark" size="14" %}
+                                                        <span class="ml-1">Remove</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs italic text-gray-500">No Consultant assigned</p>
+                            {% endif %}
+                        </div>
+                        <!-- Assignment Buttons -->
+                        <div class="flex gap-4 pt-4 border-t border-gray-200">
+                            <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "plus" size="16" %}
+                                <span class="ml-2">Assign Lead Consultant</span>
+                            </a>
+                            <a href="{% url 'client:project-lead-consultant:project-consultant-allocate' project.pk %}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                {% heroicon_outline "plus" size="16" %}
+                                <span class="ml-2">Assign Consultant</span>
+                            </a>
                         </div>
                     </div>
                 {% else %}
@@ -676,12 +728,12 @@
                         <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"
                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" size="16" %}
-                            <span class="ml-2">Assign Lead  Consultant</span>
+                            <span class="ml-2">Assign Lead Consultant</span>
                         </a>
-                        <a href="#"
+                        <a href="{% url 'client:project-lead-consultant:project-consultant-allocate' project.pk %}"
                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                             {% heroicon_outline "plus" size="16" %}
-                            <span class="ml-2">Assign  Consultant</span>
+                            <span class="ml-2">Assign Consultant</span>
                         </a>
                     </div>
                 {% endif %}

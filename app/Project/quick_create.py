@@ -9,6 +9,7 @@ from app.Project.forms.entity_forms import (
 )
 from app.Project.forms.forms import (
     ClientQuickCreateForm,
+    ConsultantQuickCreateForm,
     ContractorQuickCreateForm,
     LeadConsultantQuickCreateForm,
     UserQuickCreateForm,
@@ -96,6 +97,14 @@ registry.register(
     model=Company,
     form_class=LeadConsultantQuickCreateForm,
     title="Create New Lead Consultant",
+    needs_project=False,
+)
+
+registry.register(
+    resource_type="consultant",
+    model=Company,
+    form_class=ConsultantQuickCreateForm,
+    title="Create New Consultant",
     needs_project=False,
 )
 

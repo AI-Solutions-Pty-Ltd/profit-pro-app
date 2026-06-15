@@ -10,6 +10,14 @@
             @page {
                 size: a4 landscape;
                 margin: 1cm;
+                margin-bottom: 20mm;
+                @frame footer {
+                    -pdf-frame-content: running-footer;
+                    bottom: 5mm;
+                    height: 10mm;
+                    margin-left: 10mm;
+                    margin-right: 10mm;
+                }
             }
             html, body {
                 margin: 0;
@@ -181,23 +189,23 @@
                                                 {% elif col.id == 'unit_measurement' %}
                                                     <td><div class="tc">{{ line_item.unit_measurement|default:"-" }}</div></td>
                                                 {% elif col.id == 'budgeted_quantity' %}
-                                                    <td><div class="tr">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'unit_price' %}
-                                                    <td><div class="tr">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'total_price' %}
-                                                    <td><div class="tr">{% if line_item.total_price %}{{ line_item.total_price|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.total_price %}{{ line_item.total_price|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'total_qty' %}
-                                                    <td><div class="tr">{% if line_item.total_qty %}{{ line_item.total_qty|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.total_qty %}{{ line_item.total_qty|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'total_claimed' %}
-                                                    <td><div class="tr">{% if line_item.total_claimed %}{{ line_item.total_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.total_claimed %}{{ line_item.total_claimed|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'previous_qty' %}
-                                                    <td><div class="tr">{% if line_item.previous_qty %}{{ line_item.previous_qty|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.previous_qty %}{{ line_item.previous_qty|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'previous_claimed' %}
-                                                    <td><div class="tr">{% if line_item.previous_claimed %}{{ line_item.previous_claimed|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.previous_claimed %}{{ line_item.previous_claimed|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'current_qty' %}
-                                                    <td><div class="tr">{% if line_item.current_qty %}{{ line_item.current_qty|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.current_qty %}{{ line_item.current_qty|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'current_claim' %}
-                                                    <td><div class="tr">{% if line_item.current_claim %}{{ line_item.current_claim|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.current_claim %}{{ line_item.current_claim|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% else %}
                                                     <td><div class="tr">-</div></td>
                                                 {% endif %}
@@ -215,19 +223,19 @@
                                     {% elif col.id == 'item_number' or col.id == 'payment_reference' or col.id == 'unit_measurement' or col.id == 'budgeted_quantity' or col.id == 'unit_price' %}
                                         <td><div></div></td>
                                     {% elif col.id == 'total_price' %}
-                                        <td><div class="tr">{% if bill_group.budget %}{{ bill_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                        <td><div class="tr">{% if bill_group.budget %}{{ bill_group.budget|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                     {% elif col.id == 'total_qty' %}
                                         <td><div class="tr">-</div></td>
                                     {% elif col.id == 'total_claimed' %}
-                                        <td><div class="tr">{% if bill_group.cumulative %}{{ bill_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                        <td><div class="tr">{% if bill_group.cumulative %}{{ bill_group.cumulative|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                     {% elif col.id == 'previous_qty' %}
                                         <td><div class="tr">-</div></td>
                                     {% elif col.id == 'previous_claimed' %}
-                                        <td><div class="tr">{% if bill_group.previous %}{{ bill_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                        <td><div class="tr">{% if bill_group.previous %}{{ bill_group.previous|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                     {% elif col.id == 'current_qty' %}
                                         <td><div class="tr">-</div></td>
                                     {% elif col.id == 'current_claim' %}
-                                        <td><div class="tr">{% if bill_group.current %}{{ bill_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                        <td><div class="tr">{% if bill_group.current %}{{ bill_group.current|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                     {% else %}
                                         <td><div class="tr">-</div></td>
                                     {% endif %}
@@ -243,19 +251,19 @@
                                 {% elif col.id == 'item_number' or col.id == 'payment_reference' or col.id == 'unit_measurement' or col.id == 'budgeted_quantity' or col.id == 'unit_price' %}
                                     <td><div></div></td>
                                 {% elif col.id == 'total_price' %}
-                                    <td><div class="tr">{% if structure_group.budget %}{{ structure_group.budget|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if structure_group.budget %}{{ structure_group.budget|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                 {% elif col.id == 'total_qty' %}
                                     <td><div class="tr">-</div></td>
                                 {% elif col.id == 'total_claimed' %}
-                                    <td><div class="tr">{% if structure_group.cumulative %}{{ structure_group.cumulative|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if structure_group.cumulative %}{{ structure_group.cumulative|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                 {% elif col.id == 'previous_qty' %}
                                     <td><div class="tr">-</div></td>
                                 {% elif col.id == 'previous_claimed' %}
-                                    <td><div class="tr">{% if structure_group.previous %}{{ structure_group.previous|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if structure_group.previous %}{{ structure_group.previous|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                 {% elif col.id == 'current_qty' %}
                                     <td><div class="tr">-</div></td>
                                 {% elif col.id == 'current_claim' %}
-                                    <td><div class="tr">{% if structure_group.current %}{{ structure_group.current|floatformat:2|intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if structure_group.current %}{{ structure_group.current|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                 {% else %}
                                     <td><div class="tr">-</div></td>
                                 {% endif %}
@@ -264,9 +272,7 @@
                     </tbody>
                 </table>
 
-                <div class="footer-text">
-                    {% if project.contractor %}{{ project.contractor.name }}{% endif %}{% if project.contractor and project.client %} | {% endif %}{% if project.client %}{{ project.client.name }}{% endif %} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
-                </div>
+
 
             </div>
         {% empty %}
@@ -274,5 +280,18 @@
                 <h2>No Line Items Found</h2>
             </div>
         {% endfor %}
+        <!-- Running Footer -->
+        <div id="running-footer">
+            <table style="width: 100%; border: none; font-size: 7.5pt; color: #9ca3af; font-family: Arial, sans-serif;">
+                <tr>
+                    <td style="text-align: left; border: none; padding: 0;">
+                        Sedgepro | {{ project.name }} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                    </td>
+                    <td style="text-align: right; border: none; padding: 0; width: 10%;">
+                        Page <pdf:pagenumber />
+                    </td>
+                </tr>
+            </table>
+        </div>
     </body>
 </html>

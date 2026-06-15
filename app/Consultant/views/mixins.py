@@ -143,16 +143,20 @@ class LeadConsultantMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     project_slug = "project_pk"
 
     def get_queryset(self) -> QuerySet[Company]:
-        return Company.objects.filter(type=Company.Type.LEAD_CONSULTANT).order_by(
-            "name"
-        )
+        return Company.objects.filter(
+            type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT]
+        ).order_by("name")
 
     def get_object(self) -> Company:
         return get_object_or_404(
-            Company, id=self.kwargs["pk"], type=Company.Type.LEAD_CONSULTANT
+            Company,
+            id=self.kwargs["pk"],
+            type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT],
         )
 
     def get_lead_consultant(self, slug="pk") -> Company:
         return get_object_or_404(
-            Company, id=self.kwargs[slug], type=Company.Type.LEAD_CONSULTANT
+            Company,
+            id=self.kwargs[slug],
+            type__in=[Company.Type.LEAD_CONSULTANT, Company.Type.CONSULTANT],
         )

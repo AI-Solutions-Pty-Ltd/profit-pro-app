@@ -28,6 +28,7 @@ class Company(BaseModel):
         CLIENT = "CLIENT", "Client"
         CONTRACTOR = "CONTRACTOR", "Contractor"
         LEAD_CONSULTANT = "LEAD_CONSULTANT", "Lead Consultant"
+        CONSULTANT = "CONSULTANT", "Consultant"
 
     type = models.CharField(max_length=255, choices=Type.choices)
     logo = models.ImageField(

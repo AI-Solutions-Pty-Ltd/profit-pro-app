@@ -859,7 +859,10 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                     pk=pk,
                 )
 
-            from app.BillOfQuantities.tasks import compile_pdf_for_certificate
+            from app.BillOfQuantities.tasks import (
+                compile_pdf_for_certificate,
+                get_report_filename,
+            )
 
             try:
                 pdf_file = compile_pdf_for_certificate(
@@ -873,9 +876,14 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                     pdf_file.read(),
                     content_type="application/pdf",
                 )
-                response["Content-Disposition"] = (
-                    f'attachment; filename="payment_certificate_{payment_certificate.certificate_number}.pdf"'
+                filename = get_report_filename(
+                    payment_certificate,
+                    include_front=include_front,
+                    include_summary=include_summary,
+                    include_detailed=include_detailed,
+                    is_abridged=False,
                 )
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
                 return response
             except Exception as e:
                 messages.error(request, f"Error compiling PDF: {str(e)}")
@@ -908,12 +916,21 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                 pk=pk,
             )
         # PDF exists and is ready - serve it
+        from app.BillOfQuantities.tasks import get_report_filename
+
+        filename = get_report_filename(
+            payment_certificate,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=False,
+        )
         file = payment_certificate.pdf.open("rb")
         response = FileResponse(
             file,
             content_type="application/pdf",
             as_attachment=True,
-            filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",
+            filename=filename,
         )
 
         return response
@@ -946,7 +963,10 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                     pk=pk,
                 )
 
-            from app.BillOfQuantities.tasks import compile_pdf_for_certificate
+            from app.BillOfQuantities.tasks import (
+                compile_pdf_for_certificate,
+                get_report_filename,
+            )
 
             try:
                 pdf_file = compile_pdf_for_certificate(
@@ -960,9 +980,14 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                     pdf_file.read(),
                     content_type="application/pdf",
                 )
-                response["Content-Disposition"] = (
-                    f'attachment; filename="payment_certificate_{payment_certificate.certificate_number}_abridged.pdf"'
+                filename = get_report_filename(
+                    payment_certificate,
+                    include_front=include_front,
+                    include_summary=include_summary,
+                    include_detailed=include_detailed,
+                    is_abridged=True,
                 )
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
                 return response
             except Exception as e:
                 logger.exception(
@@ -1000,12 +1025,21 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                 pk=pk,
             )
         # Abridged PDF exists and is ready - serve it
+        from app.BillOfQuantities.tasks import get_report_filename
+
+        filename = get_report_filename(
+            payment_certificate,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=True,
+        )
         file = payment_certificate.abridged_pdf.open("rb")
         response = FileResponse(
             file,
             content_type="application/pdf",
             as_attachment=True,
-            filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf",
+            filename=filename,
         )
 
         return response
