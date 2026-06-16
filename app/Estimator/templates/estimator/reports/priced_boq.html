@@ -171,8 +171,8 @@
                 <tbody class="divide-y divide-gray-100">
                     {% for group in section_groups %}
                         <tr id="section-{{ group.section|slugify }}"
-                            class="bg-gray-100 scroll-mt-20">
-                            <td colspan="10" class="px-3 py-2 font-semibold text-gray-800">{{ group.section }}</td>
+                            class="bg-gray-200 scroll-mt-20">
+                            <td colspan="10" class="px-3 py-2 font-bold text-gray-900">{{ group.section }}</td>
                         </tr>
                         {% for row in group.rows %}
                             <tr class="hover:bg-gray-50/50">

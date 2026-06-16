@@ -72,13 +72,13 @@
                                 <input type="text"
                                        id="id_item_code"
                                        name="item_code"
-                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                             </div>
-                            <div class="sm:col-span-2">
+                            <div class="sm:col-span-3">
                                 <label for="id_trade_code" class="block text-sm font-medium text-gray-700">Trade Code</label>
                                 <select id="id_trade_code"
                                         name="trade_code"
-                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                                     <option value="">—</option>
                                     {% for tc in trade_codes %}<option value="{{ tc.id }}">{{ tc.trade_code }}</option>{% endfor %}
                                 </select>
@@ -88,28 +88,28 @@
                                 <input type="text"
                                        id="id_component"
                                        name="component"
-                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                             </div>
                             <div class="sm:col-span-1">
                                 <label for="id_unit" class="block text-sm font-medium text-gray-700">Unit</label>
                                 <input type="text"
                                        id="id_unit"
                                        name="unit"
-                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                             </div>
-                            <div class="sm:col-span-3">
+                            <div class="sm:col-span-6">
                                 <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
                                 <input type="text"
                                        id="id_description"
                                        name="description"
-                                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                             </div>
                             <div class="sm:col-span-2">
                                 <label for="id_material_spec"
                                        class="block text-sm font-medium text-gray-700">Material Spec</label>
                                 <select id="id_material_spec"
                                         name="material_spec"
-                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                                     <option value="">—</option>
                                     {% for s in material_specs %}
                                         {% if s.is_active %}<option value="{{ s.id }}">{{ s.name }}</option>{% endif %}
@@ -121,7 +121,7 @@
                                        class="block text-sm font-medium text-gray-700">Labour &amp; Plant Spec</label>
                                 <select id="id_labour_plant_spec"
                                         name="labour_plant_spec"
-                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                                     <option value="">—</option>
                                     {% for name in labour_plant_spec_names %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
                                 </select>
@@ -131,7 +131,7 @@
                                        class="block text-sm font-medium text-gray-700">Prelim Spec</label>
                                 <select id="id_preliminary_spec"
                                         name="preliminary_spec"
-                                        class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                                     <option value="">—</option>
                                     {% for s in preliminary_specs %}
                                         {% if s.is_active %}<option value="{{ s.id }}">{{ s.name }}</option>{% endif %}
@@ -160,7 +160,7 @@
             <div>
                 <label class="block text-xs font-medium text-gray-700">Trade Code</label>
                 <select name="trade_code"
-                        class="mt-1 rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        class="mt-1 block rounded-md border-0 py-1.5 pl-3 pr-10 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
                     <option value="">All</option>
                     {% for tc in trade_codes %}
                         <option value="{{ tc.id }}"
@@ -176,7 +176,7 @@
                        name="q"
                        value="{{ f_q }}"
                        placeholder="e.g. concrete in surface bed"
-                       class="mt-1 w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                       class="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600">
             </div>
             <button type="submit"
                     class="rounded-md bg-gray-700 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800">
@@ -231,8 +231,8 @@
                             </th>
                             <th class="px-2 py-3 w-8" title="Drag rows to reorder"></th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500 w-44">Item Code</th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Trade Code</th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Description</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500 min-w-[220px]">Trade Code</th>
+                            <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500 min-w-[380px]">Description</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Unit</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Material</th>
                             <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Labour &amp; Plant</th>
@@ -262,7 +262,7 @@
                                            data-field="item_code"
                                            value="{{ e.item_code }}">
                                 </td>
-                                <td class="px-2 py-1.5">
+                                <td class="px-2 py-1.5 min-w-[220px]">
                                     <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
                                             data-entry-id="{{ e.id }}"
                                             data-field="trade_code">
@@ -275,7 +275,7 @@
                                         {% endfor %}
                                     </select>
                                 </td>
-                                <td class="px-2 py-1.5 min-w-[260px]">
+                                <td class="px-2 py-1.5 min-w-[380px]">
                                     <input type="text"
                                            class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
                                            data-entry-id="{{ e.id }}"
