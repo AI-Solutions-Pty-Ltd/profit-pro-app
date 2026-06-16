@@ -71,15 +71,24 @@
             {% endif %}
         </form>
     </div>
-    <!-- Data Table -->
+    <!-- Data Table (grouped by section, collapsible) -->
+    <div class="mb-3 flex justify-end gap-2">
+        <button type="button"
+                id="expand-all-sections"
+                class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            Expand all
+        </button>
+        <button type="button"
+                id="collapse-all-sections"
+                class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            Collapse all
+        </button>
+    </div>
     <div class="bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
             <table class="min-w-full text-xs whitespace-nowrap">
                 <thead>
                     <tr class="border-b border-gray-200">
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[180px]">
-                            Structure
-                        </th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
                             Bill No.
                         </th>
@@ -113,37 +122,58 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    {% for row in report_rows %}
-                        <tr class="hover:bg-gray-50/50">
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[180px]"
-                                title="{{ row.section }}">{{ row.section }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
-                                title="{{ row.bill_no }}">{{ row.bill_no }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[280px]"
-                                title="{{ row.description }}">{{ row.description }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.amount_a|currency }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700 font-medium">{{ row.amount_b|currency }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_amount != None %}{% if row.variance_amount > 0 %}text-red-600{% elif row.variance_amount < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
-                                {{ row.variance_amount|currency }}
+                    {% for group in section_groups %}
+                        <tr class="section-header cursor-pointer select-none bg-gray-200 hover:bg-gray-300"
+                            data-section="sec-{{ forloop.counter }}"
+                            aria-expanded="true">
+                            <td colspan="2" class="px-3 py-2 font-bold text-gray-900">
+                                <span class="section-caret mr-1 inline-block transition-transform">▾</span>
+                                {{ group.section }}
                             </td>
-                            <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_pct != None %}{% if row.variance_pct > 0 %}text-red-600{% elif row.variance_pct < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
-                                {{ row.variance_pct|pct }}
+                            <td class="px-3 py-2 text-right tabular-nums font-bold text-gray-900">{{ group.total_a|currency }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums font-bold text-indigo-700">{{ group.total_b|currency }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums font-bold {% if group.variance_amount != None %}{% if group.variance_amount > 0 %}text-red-600{% elif group.variance_amount < 0 %}text-green-600{% else %}text-gray-900{% endif %}{% endif %}">
+                                {{ group.variance_amount|currency }}
                             </td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.materials_pct|pct }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.labour_pct|pct }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.plant_pct|pct }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.preliminary_pct|pct }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums font-bold {% if group.variance_pct != None %}{% if group.variance_pct > 0 %}text-red-600{% elif group.variance_pct < 0 %}text-green-600{% else %}text-gray-900{% endif %}{% endif %}">
+                                {{ group.variance_pct|pct }}
+                            </td>
+                            <td class="px-3 py-2"></td>
+                            <td class="px-3 py-2"></td>
+                            <td class="px-3 py-2"></td>
+                            <td class="px-3 py-2"></td>
                         </tr>
+                        {% for row in group.rows %}
+                            <tr class="section-row hover:bg-gray-50/50"
+                                data-section-row="sec-{{ forloop.parentloop.counter }}">
+                                <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
+                                    title="{{ row.bill_no }}">{{ row.bill_no }}</td>
+                                <td class="px-3 py-1.5 text-gray-700 truncate max-w-[280px]"
+                                    title="{{ row.description }}">{{ row.description }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.amount_a|currency }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700 font-medium">{{ row.amount_b|currency }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_amount != None %}{% if row.variance_amount > 0 %}text-red-600{% elif row.variance_amount < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                    {{ row.variance_amount|currency }}
+                                </td>
+                                <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_pct != None %}{% if row.variance_pct > 0 %}text-red-600{% elif row.variance_pct < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                    {{ row.variance_pct|pct }}
+                                </td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.materials_pct|pct }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.labour_pct|pct }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.plant_pct|pct }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.preliminary_pct|pct }}</td>
+                            </tr>
+                        {% endfor %}
                     {% empty %}
                         <tr>
-                            <td colspan="11" class="px-3 py-8 text-center text-gray-500">No data available for this report.</td>
+                            <td colspan="10" class="px-3 py-8 text-center text-gray-500">No data available for this report.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
-                {% if report_rows %}
+                {% if section_groups %}
                     <tfoot>
                         <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                            <td class="px-3 py-2 text-gray-900" colspan="3">Totals</td>
+                            <td class="px-3 py-2 text-gray-900" colspan="2">Totals</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_a|currency }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-indigo-700">{{ total_b|currency }}</td>
                             <td class="px-3 py-2 text-right tabular-nums {% if total_variance != None %}{% if total_variance > 0 %}text-red-600{% elif total_variance < 0 %}text-green-600{% else %}text-gray-900{% endif %}{% endif %}">
@@ -162,4 +192,41 @@
             </table>
         </div>
     </div>
+    <script>
+    (function () {
+        function setCollapsed(header, collapsed) {
+            header.classList.toggle('is-collapsed', collapsed);
+            header.setAttribute('aria-expanded', String(!collapsed));
+            var caret = header.querySelector('.section-caret');
+            if (caret) caret.classList.toggle('-rotate-90', collapsed);
+            var key = header.dataset.section;
+            document.querySelectorAll('[data-section-row="' + key + '"]').forEach(function (r) {
+                r.classList.toggle('hidden', collapsed);
+            });
+        }
+
+        document.querySelectorAll('.section-header').forEach(function (header) {
+            header.addEventListener('click', function () {
+                setCollapsed(header, !header.classList.contains('is-collapsed'));
+            });
+        });
+
+        var expandAll = document.getElementById('expand-all-sections');
+        var collapseAll = document.getElementById('collapse-all-sections');
+        if (expandAll) {
+            expandAll.addEventListener('click', function () {
+                document.querySelectorAll('.section-header').forEach(function (h) {
+                    setCollapsed(h, false);
+                });
+            });
+        }
+        if (collapseAll) {
+            collapseAll.addEventListener('click', function () {
+                document.querySelectorAll('.section-header').forEach(function (h) {
+                    setCollapsed(h, true);
+                });
+            });
+        }
+    })();
+    </script>
 {% endblock %}

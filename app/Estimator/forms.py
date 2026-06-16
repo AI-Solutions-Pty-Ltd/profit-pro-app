@@ -67,6 +67,27 @@ def _setup_trade_code(form, queryset):
     )
 
 
+def _setup_trade_name_choices(form, queryset):
+    """Render the free-text ``trade_name`` field as a dropdown sourced from the
+    scope's uploaded trade codes (listed by trade name only).
+
+    Material models store ``trade_name`` as plain text rather than a FK, so we
+    keep that storage but constrain entry to the trades defined on the Trade
+    Codes tab for the same scope (project / contractor / system)."""
+    names = list(
+        queryset.exclude(trade_name="")
+        .values_list("trade_name", flat=True)
+        .distinct()
+        .order_by("trade_name")
+    )
+    form.fields["trade_name"] = forms.ChoiceField(
+        choices=[("", "Select a trade…")] + [(name, name) for name in names],
+        required=False,
+        label="Trade Name",
+        widget=forms.Select(attrs={"class": TAILWIND_SELECT}),
+    )
+
+
 class MaterialForm(forms.ModelForm):
     class Meta:
         model = ProjectMaterial
@@ -105,6 +126,15 @@ class MaterialForm(forms.ModelForm):
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. 42.5N Structural"}
             ),
         }
+
+    def __init__(self, *args, project=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        _setup_trade_name_choices(
+            self,
+            ProjectTradeCode.objects.filter(project=project)
+            if project
+            else ProjectTradeCode.objects.none(),
+        )
 
 
 class SpecificationForm(forms.ModelForm):
@@ -346,6 +376,10 @@ class SystemMaterialForm(forms.ModelForm):
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. 42.5N Structural"}
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _setup_trade_name_choices(self, SystemTradeCode.objects.all())
 
 
 class SystemLabourCrewForm(forms.ModelForm):
@@ -883,6 +917,15 @@ class ContractorMaterialForm(forms.ModelForm):
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. 42.5N Structural"}
             ),
         }
+
+    def __init__(self, *args, company=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        tc_qs = ContractorTradeCode.objects.all()
+        if company:
+            tc_qs = tc_qs.filter(company=company)
+        else:
+            tc_qs = ContractorTradeCode.objects.none()
+        _setup_trade_name_choices(self, tc_qs)
 
 
 class ContractorLabourCrewForm(forms.ModelForm):
