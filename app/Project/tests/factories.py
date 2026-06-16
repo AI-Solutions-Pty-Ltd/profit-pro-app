@@ -23,11 +23,13 @@ from app.Project.models import (
     PlannedValue,
     Project,
     ProjectCategory,
+    ProjectCompanyUserRole,
     ProjectDocument,
     ProjectRole,
     Risk,
     Role,
     Signatories,
+    StakeholderRole,
 )
 from app.Project.models.entity_definitions import (
     LabourEntity,
@@ -228,6 +230,18 @@ class ProjectRoleFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     user = SubFactory(UserFactory)
     role = Role.ADMIN
+
+
+class ProjectCompanyUserRoleFactory(DjangoModelFactory):
+    """Factory for ProjectCompanyUserRole model."""
+
+    class Meta:
+        model = ProjectCompanyUserRole
+
+    project = SubFactory(ProjectFactory)
+    company = SubFactory("app.Project.tests.factories.ClientFactory")
+    user = SubFactory(AccountFactory)
+    role = StakeholderRole.CAPTURER
 
 
 class PlannedValueFactory(DjangoModelFactory):

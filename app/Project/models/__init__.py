@@ -55,6 +55,10 @@ from .impact_models import ProjectImpact
 from .order_amendment_models import OrderAmendment
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
+from .project_company_user_role_models import (
+    ProjectCompanyUserRole,
+    StakeholderRole,
+)
 from .project_roles_models import ProjectRole, Role
 from .report_summary_models import ProjectReportSummary
 from .risk_models import Risk, RiskStatus
@@ -76,6 +80,9 @@ __all__ = [
     "PlannedValue",
     "Portfolio",
     "Project",
+    "ProjectCompanyUserRole",
+    "StakeholderRole",
+
     "Category",
     "SubCategory",
     "Group",

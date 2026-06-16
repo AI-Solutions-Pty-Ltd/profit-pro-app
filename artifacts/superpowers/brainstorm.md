@@ -1,63 +1,76 @@
-# Superpowers Brainstorm: Contractual Special Items Table Modification
+# Superpowers Brainstorm: Stakeholder User & Role Management
 
 ## Goal
-Modify the "Contractual Special Items" section in the Payment Certificate pages to render special line items in a detailed 9-column table matching the "Contract Line Items" table structure, including:
-- Item No.
-- Description
-- Price/Unit
-- Total Quantity
-- Previous Quantity
-- Current Quantity
-- Total Claimed
-- Previous Claim
-- Current Claim
-- A total row at the bottom summing the current claim values.
+Refactor and improve user management inside the stakeholder submodules (Client Management, Contractor Management, and Consultant Management). The feature must allow assigning users and associating specific roles (Admin, Supervisor, and Capturer) to these submodules (contextualized by project and stakeholder company).
 
 ## Constraints
-- Must inherit and display fields from the annotated `LineItem` instances where `special_item=True` and `addendum=False`.
-- Must support all 9 columns and ensure fields display with appropriate styling (like currency formatting and decimal points).
-- Must include a total row.
-- Must ensure consistent styling (matching `line_items.html` look & feel) across all pages rendering this table:
-  - `payment_certificate_detail.html`
-  - `payment_certificate_submit.html`
-  - `payment_certificate_final_approval.html`
-  - `view_detailed.html`
-- Resolving the label confusion in `payment_certificate_detail.html` where "Contractual Special Items" is used as the header for ledger totals (which should be named "Ledger Totals"), while actual special line items are not displayed with a visible header (the header is commented out).
+1. **Roles defined**: Must support exactly three stakeholder roles: Admin, Supervisor, and Capturer.
+2. **Contextual Scope**: Roles must be assigned per stakeholder company per project (e.g., a user might be a Capturer for Contractor A on Project X, but a Supervisor on Project Y).
+3. **No security regression**: Must respect existing tenant/permission isolation.
+4. **Integration**: Must fit into the existing Django app structure, particularly integrating with the views in [views](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views) where client, contractor, and consultant management is defined.
+5. **No hard-coded values where configurable**: Follow established project conventions for models (inheriting from `BaseModel`, using factories, and testing first).
 
 ## Known context
-- Special line items are retrieved as `LineItem` querysets.
-- The shared template `app/BillOfQuantities/templates/payment_certificate/tables/special_items.html` is used to render special items.
-- Line items are annotated via `LineItem.construct_payment_certificate` with fields: `item_number`, `description`, `unit_price`, `unit_measurement`, `total_qty`, `previous_qty`, `current_qty`, `total_claimed`, `previous_claimed`, and `current_claim`.
-- In `payment_certificate_detail.html`:
-  - `#special-items` renders `special_items.html` (the header is currently commented out).
-  - `#ledger-totals` renders `ledger_totals.html` under the header "Contractual Special Items".
-- In `view_detailed.html`:
-  - `#special-items` renders `special_items.html` under the header "Special Items".
-  - `#ledger-totals` renders `ledger_totals.html` under the header "Ledger Totals".
+1. **Current Models**:
+   * [Company](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/company/company_models.py#L26) represents the stakeholder companies with `Type` choices (Client, Contractor, Lead Consultant, Consultant).
+   * [Account](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/models.py#L101) represents the users.
+   * [Project](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/projects_models.py#L42) connects users and companies via `users`, `contractors`, `quantity_surveyors`, `lead_consultants`, `consultants`, etc.
+   * [ProjectRole](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/models/project_roles_models.py#L81) maps general project roles to individual users on a project level, using choices in `Role`.
+2. **Current Views**:
+   * Stakeholder management views are defined in `app/Consultant/views/`:
+     * [client_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/client_management_views.py)
+     * [contractor_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/contractor_management_views.py)
+     * [lead_consultant_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/lead_consultant_management_views.py)
+   * The visual cards for managing these stakeholder assignments are located in [project_setup.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/project_setup.html#L532).
 
 ## Risks
-- **Column Overflow on Small Screens**: Displaying 9 columns can cause overflow on narrow viewports.
-  - *Mitigation*: Wrap the table in a container with the `overflow-x-auto` utility class.
-- **Header Confusions / Broken Layouts**: Renaming headers might confuse users if not done consistently.
-  - *Mitigation*: Keep terminology consistent. Rename the header above `ledger_totals.html` to "Ledger Totals" and the header above `special_items.html` to "Contractual Special Items".
+1. **Role Clashes**: Confusing general project-level roles (like `Admin`, `User`) with submodule-specific stakeholder roles (like `Contractor Admin`, `Client Supervisor`).
+   * *Mitigation*: Clearly separate these concepts in both the database (either via separate relationship models or distinct role namespaces) and the UI.
+2. **Permission Bypass**: A stakeholder capturer might find a way to perform supervisor/admin tasks if view permissions are not properly guarded by the new roles.
+   * *Mitigation*: Implement custom class-based view mixins or helper decorators that explicitly check the user's stakeholder role context on the project.
+3. **Data Migration Complexity**: Modifying existing relationships to accommodate roles might break existing project-stakeholder mappings.
+   * *Mitigation*: Keep existing direct ManyToMany associations as fallback or baseline access, and overlay the role mappings dynamically, or create clean migration scripts that initialize existing project users as "Admin" or "Supervisor" by default.
 
-## Options (2–4)
-### Option 1: Modify the Shared Table Template and Update Headers (Recommended)
-Update the shared `special_items.html` table to use a 9-column structure identical to `line_items.html` using the existing annotated attributes of `LineItem`. In `payment_certificate_detail.html`, uncomment the `#special-items` header, name it "Contractual Special Items", and rename the `#ledger-totals` header to "Ledger Totals" to match the layout in `view_detailed.html`.
-- *Pros*: Completely DRY, updates all read-only views consistently, resolves header naming bugs, matches existing design patterns.
-- *Cons*: None.
+## Options (2???4)
 
-### Option 2: Duplicate Template and Create a New Detailed Table for Specific Views
-Create a new template file (e.g. `special_items_detailed.html`) specifically for the 9-column view, and only reference it in `payment_certificate_detail.html`, leaving other pages with the 4-column layout.
-- *Pros*: Minimal risk of changing other views.
-- *Cons*: Code duplication and inconsistent UX across different payment certificate views.
+### Option 1: Submodule-Specific Stakeholder Role Model (Recommended)
+Create a new model `ProjectCompanyUserRole` that acts as a formal link between `Project`, `Company`, `Account`, and a new choice field `role` (choices: Admin, Supervisor, Capturer).
+* **Pros**:
+  * Extremely clean and modular. Doesn't pollute the general `ProjectRole` model.
+  * Fully supports project-specific and company-specific role scoping.
+  * Straightforward to build dedicated UI forms for adding/editing users and their roles under each stakeholder card.
+* **Cons**:
+  * Requires creating a new table and migrating the database.
+
+### Option 2: Expand `ProjectRole` with a Foreign Key to `Company`
+Add a nullable `company` ForeignKey field to the existing `ProjectRole` model. Add new role choices to `Role` (e.g., `STAKEHOLDER_ADMIN`, `STAKEHOLDER_SUPERVISOR`, `STAKEHOLDER_CAPTURER`).
+* **Pros**:
+  * Reuses the existing `ProjectRole` model structure and permission checkers.
+  * Fewer new tables in the database.
+* **Cons**:
+  * Pollutes the general `Role` choices with sub-module specific roles.
+  * Can lead to validation complexity (e.g., ensuring a regular `Admin` role does not have a `company` assigned, whereas a `STAKEHOLDER_ADMIN` must have a `company` assigned).
+
+### Option 3: Use Django's ManyToMany `through` Model on `Company.users`
+Change `Company.users` relation to use a custom `through` model `CompanyUser` containing a `role` field.
+* **Pros**:
+  * Directly embeds roles into the relationship between companies and users.
+* **Cons**:
+  * Roles would be global to the company, not specific to a project. A user would have the same role (e.g., Capturer) for a Contractor company across all projects, which lacks the project-level flexibility that is usually required.
+  * Rewriting an existing simple ManyToMany field to use a `through` model is historically error-prone and complex in Django migrations.
 
 ## Recommendation
-We recommend **Option 1**. It maintains a single source of truth for rendering special items in read-only views, matches the structure of normal line items, and unifies the headers to resolve layout bugs.
+We recommend **Option 1**. It is the most robust and clean design pattern for stakeholder role context. It avoids polluting general project roles and ensures that a user can have different roles under different projects for the same stakeholder company.
 
 ## Acceptance criteria
-1. The table rendering `special_line_items` (in `special_items.html`) has 9 columns: `Item No.`, `Description`, `Price/Unit`, `Total Quantity`, `Previous Quantity`, `Current Quantity`, `Total Claimed`, `Previous Claim`, `Current Claim`.
-2. A total row is present at the bottom of the table, displaying the total current claim amount of special items.
-3. In `payment_certificate_detail.html`, the header for `#special-items` is uncommented and renamed to "Contractual Special Items", and the header for `#ledger-totals` is renamed to "Ledger Totals".
-4. The styling (header colors, text alignment, fonts) matches the "Contract Line Items" table styling exactly.
-5. All tests pass successfully.
+1. Introduce a new model `ProjectCompanyUserRole` inheriting from `BaseModel`. It must link:
+   * `project` (ForeignKey to `Project`)
+   * `company` (ForeignKey to `Company`)
+   * `user` (ForeignKey to `Account`)
+   * `role` (CharField with choices: Admin, Supervisor, Capturer)
+2. Define a database unique constraint on `(project, company, user)` to prevent duplicate assignments of the same user under the same company and project.
+3. Update [project_setup.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/project_setup.html) to display the assigned users and their roles under the respective Client, Contractor, and Consultant management cards.
+4. Refactor client, contractor, and consultant allocation views to support adding/updating users and their specific roles.
+5. Implement permission checking decorators or mixins (e.g., `UserHasStakeholderRoleMixin`) to guard actions (e.g., only Admin/Supervisor can certify payments, while Capturers can only save drafts).
+6. Create model factories and comprehensive pytest test cases for the new model and views.
+

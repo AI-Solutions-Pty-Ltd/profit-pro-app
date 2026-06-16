@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 
 from app.Account.models import Account
-from app.Project.models import Project, Role
+from app.Project.models import Project, ProjectCompanyUserRole, Role
 
 
 class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -210,3 +210,36 @@ def permitted_rights(allowed_rights=None):
         return wrapper
 
     return decorator
+
+
+class UserHasStakeholderRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Mixin to verify that a user has a specific stakeholder role on a project."""
+
+    stakeholder_roles: list[str] = []
+    project_slug: str = "project_pk"
+    company_slug: str = "company_pk"
+
+    def test_func(self) -> bool:
+        user = self.request.user
+        if user.is_superuser:
+            return True
+
+        project_id = self.kwargs.get(self.project_slug)
+        company_id = self.kwargs.get(self.company_slug)
+        if not project_id or not company_id:
+            return False
+
+        return ProjectCompanyUserRole.objects.filter(
+            project_id=project_id,
+            company_id=company_id,
+            user=user,
+            role__in=self.stakeholder_roles,
+            deleted=False,
+        ).exists()
+
+    def handle_no_permission(self):
+        messages.error(
+            self.request,
+            f"Page restricted to stakeholder roles: {', '.join(self.stakeholder_roles)}.",
+        )
+        return redirect("home")

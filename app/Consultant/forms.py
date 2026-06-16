@@ -3,7 +3,7 @@ from django import forms
 from app.Account.models import Account
 from app.BillOfQuantities.models import PaymentCertificate
 from app.core.Utilities.widgets import SearchableSelectWidget
-from app.Project.models import Company
+from app.Project.models import Company, ProjectCompanyUserRole, StakeholderRole
 
 
 class PaymentCertificateApprovedDateForm(forms.ModelForm):
@@ -88,3 +88,41 @@ class ProjectClientForm(forms.Form):
                 client_field.queryset = Company.objects.filter(  # type: ignore
                     type=Company.Type.CLIENT
                 ).order_by("name")
+
+
+class ProjectCompanyUserRoleForm(forms.ModelForm):
+    """Form to assign a user to a company on a project with a role."""
+
+    class Meta:
+        model = ProjectCompanyUserRole
+        fields = ["user", "role"]
+        widgets = {
+            "user": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "role": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.project = kwargs.pop("project", None)
+        self.company = kwargs.pop("company", None)
+        super().__init__(*args, **kwargs)
+
+        if self.company:
+            # Only allow selecting users who belong to the company
+            self.fields["user"].queryset = self.company.users.all().order_by(
+                "first_name", "last_name"
+            )
+        else:
+            self.fields["user"].queryset = Account.objects.none()
+
+        if self.instance and self.instance.pk:
+            self.fields["user"].disabled = True
+
+
