@@ -980,9 +980,7 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get(
-            "form", MaterialForm(project=self.get_project())
-        )
+        context["form"] = context.get("form", MaterialForm(project=self.get_project()))
         project_materials = ProjectMaterial.objects.filter(project=self.get_project())
         context["units"] = (
             project_materials.exclude(unit="")
@@ -6488,9 +6486,7 @@ class ContractorMaterialListView(ContractorLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         company = self.get_company()
-        context["form"] = context.get(
-            "form", ContractorMaterialForm(company=company)
-        )
+        context["form"] = context.get("form", ContractorMaterialForm(company=company))
         all_materials = ContractorMaterial.objects.filter(company=company)
         context["units"] = (
             all_materials.exclude(unit="")

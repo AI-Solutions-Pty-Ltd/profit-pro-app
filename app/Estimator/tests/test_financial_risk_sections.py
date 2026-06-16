@@ -24,12 +24,17 @@ class TestFinancialRiskSections:
         project = ProjectFactory()
         # Section A: two items -> contract total 2 * (100 * 250) = 50_000
         BOQItemFactory.create_batch(
-            2, project=project, section="Section A", contract_quantity=100,
+            2,
+            project=project,
+            section="Section A",
+            contract_quantity=100,
             contract_rate=Decimal("250.00"),
         )
         # Section B: one item -> contract total 10 * 100 = 1_000
         BOQItemFactory(
-            project=project, section="Section B", contract_quantity=10,
+            project=project,
+            section="Section B",
+            contract_quantity=10,
             contract_rate=Decimal("100.00"),
         )
 
@@ -46,11 +51,15 @@ class TestFinancialRiskSections:
     def test_section_summary_sorted_by_variance_magnitude(self):
         project = ProjectFactory()
         BOQItemFactory(
-            project=project, section="Small", contract_quantity=1,
+            project=project,
+            section="Small",
+            contract_quantity=1,
             contract_rate=Decimal("100.00"),
         )
         BOQItemFactory(
-            project=project, section="Big", contract_quantity=100,
+            project=project,
+            section="Big",
+            contract_quantity=100,
             contract_rate=Decimal("500.00"),
         )
 
@@ -67,7 +76,9 @@ class TestFinancialRiskSections:
         project = ProjectFactory()
         BOQItemFactory(project=project, section="Section A", is_section_header=True)
         BOQItemFactory(
-            project=project, section="Section A", contract_quantity=5,
+            project=project,
+            section="Section A",
+            contract_quantity=5,
             contract_rate=Decimal("10.00"),
         )
 
