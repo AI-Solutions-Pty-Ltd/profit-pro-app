@@ -142,9 +142,13 @@
             <p>
                 Best regards,
                 <br>
-                <strong>{{ request.user.get_full_name|default:request.user.email }}</strong>
-                <br>
-                {{ request.user.email }}
+                {% if sender %}
+                    <strong>{{ sender.get_full_name|default:sender.email }}</strong>
+                    <br>
+                    {{ sender.email }}
+                {% else %}
+                    <strong>System Administrator</strong>
+                {% endif %}
             </p>
         </div>
         <div class="footer">

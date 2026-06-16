@@ -4,33 +4,33 @@
 {% endblock title %}
 {% block content %}
     {% include "site_management/_back_button.html" %}
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="px-6 py-4 flex items-center justify-between">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
+        <div class="flex justify-between items-center px-6 py-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Bi-Weekly Safety Reports</h1>
-                <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
             </div>
             <a href="{% url 'site_management:biweekly-safety-create' project.pk %}"
-               class="px-4 py-2 rounded-md text-sm text-white bg-indigo-600 hover:bg-indigo-700">Add Report</a>
+               class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Add Report</a>
         </div>
     </div>
-    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <div class="overflow-hidden bg-white rounded-lg shadow-sm">
+        <table class="min-w-full text-sm divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                    <th class="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-                    <th class="px-6 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-6 py-3 font-medium tracking-wider text-left text-gray-500 uppercase">Period</th>
+                    <th class="px-6 py-3 font-medium tracking-wider text-left text-gray-500 uppercase">Submitted</th>
+                    <th class="px-6 py-3 font-medium tracking-wider text-right text-gray-500 uppercase">Actions</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for r in reports %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">{{ r.period_start }} → {{ r.period_end }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ r.created_at|date:"Y-m-d H:i" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                        <td class="px-6 py-4 text-gray-600 whitespace-nowrap">{{ r.created_at|date:"Y-m-d H:i" }}</td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap">
                             <a href="{% url 'site_management:biweekly-safety-update' project.pk r.pk %}"
-                               class="text-indigo-700 hover:text-indigo-900 mr-3">Edit</a>
+                               class="mr-3 text-indigo-700 hover:text-indigo-900">Edit</a>
                             <a href="{% url 'site_management:biweekly-safety-delete' project.pk r.pk %}"
                                class="text-red-700 hover:text-red-900">Delete</a>
                         </td>
@@ -42,5 +42,8 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
+        <div class="flex justify-between items-center">{% include "site_management/_back_button_footer.html" %}</div>
     </div>
 {% endblock content %}

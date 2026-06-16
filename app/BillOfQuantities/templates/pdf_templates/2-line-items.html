@@ -23,11 +23,32 @@
                 </div>
             {% endif %}
         </div>
+        <!-- Running Footer -->
+        <div id="running-footer">
+            <table style="width: 100%; border: none; font-size: 7.5pt; color: #9ca3af; font-family: Arial, sans-serif;">
+                <tr>
+                    <td style="text-align: left; border: none; padding: 0;">
+                        Sedgepro | {{ project.name }} | Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} | {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                    </td>
+                    <td style="text-align: right; border: none; padding: 0; width: 10%;">
+                        Page <pdf:pagenumber />
+                    </td>
+                </tr>
+            </table>
+        </div>
     </body>
     <style id="page-style">
         @page {
             size: A4 landscape;
             margin: 10mm;
+            margin-bottom: 20mm;
+            @frame footer {
+                -pdf-frame-content: running-footer;
+                bottom: 5mm;
+                height: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+            }
         }
     </style>
     <style id="general">

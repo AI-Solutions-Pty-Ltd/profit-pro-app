@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 from django.template.loader import get_template, render_to_string
 from pypdf import PdfReader, PdfWriter
 
+from app.BillOfQuantities.exporters.unified_xlsx_exporter import export_unified_xlsx
 from app.BillOfQuantities.models import LineItem, PaymentCertificate
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.generate_pdf import generate_pdf
@@ -53,24 +54,61 @@ def group_line_items_by_hierarchy(line_items):
     # Convert to list format for template iteration
     grouped = []
     for structure, bills in hierarchy.items():
-        structure_data = {"structure": structure, "bills": []}
+        structure_data = {
+            "structure": structure,
+            "bills": [],
+            "budget": Decimal("0.00"),
+            "cumulative": Decimal("0.00"),
+            "previous": Decimal("0.00"),
+            "current": Decimal("0.00"),
+        }
         for bill, packages in bills.items():
-            bill_data = {"bill": bill, "packages": []}
+            bill_data = {
+                "bill": bill,
+                "packages": [],
+                "budget": Decimal("0.00"),
+                "cumulative": Decimal("0.00"),
+                "previous": Decimal("0.00"),
+                "current": Decimal("0.00"),
+            }
             for package, items in packages.items():
                 package_data = {"package": package, "line_items": items}
+
+                for item in items:
+                    if getattr(item, "is_work", False):
+                        bill_data["budget"] += Decimal(str(item.total_price or "0.00"))
+                        bill_data["cumulative"] += Decimal(
+                            str(item.total_claimed or "0.00")
+                        )
+                        bill_data["previous"] += Decimal(
+                            str(item.previous_claimed or "0.00")
+                        )
+                        bill_data["current"] += Decimal(
+                            str(item.current_claim or "0.00")
+                        )
+
                 bill_data["packages"].append(package_data)
+
+            structure_data["budget"] += bill_data["budget"]
+            structure_data["cumulative"] += bill_data["cumulative"]
+            structure_data["previous"] += bill_data["previous"]
+            structure_data["current"] += bill_data["current"]
+
             structure_data["bills"].append(bill_data)
         grouped.append(structure_data)
 
     return grouped
 
 
-def get_valuation_summary_data(payment_certificate):
+def get_valuation_summary_data(payment_certificate, abridged=False):
     """
     Get aggregated data for the Valuation Summary page (Valterra/RPM layout).
     Groups line items by structure (section) -> bill and calculates totals.
     """
-    line_items = LineItem.construct_payment_certificate(payment_certificate)
+    if abridged:
+        line_items = LineItem.abridged_payment_certificate(payment_certificate)
+    else:
+        line_items = LineItem.construct_payment_certificate(payment_certificate)
 
     structures_data: dict[Any, dict[str, Any]] = {}
     for item in line_items:
@@ -146,21 +184,60 @@ def get_valuation_summary_data(payment_certificate):
     }
 
 
+def get_report_filename(
+    payment_certificate,
+    include_front: bool = True,
+    include_summary: bool = True,
+    include_detailed: bool = True,
+    is_abridged: bool = False,
+) -> str:
+    """
+    Generate the dynamic report filename for a payment certificate.
+    Format: [report_name]_[version]_[date].pdf
+    """
+    # 1. report_name (cover, summary, detailed)
+    parts = []
+    if include_front:
+        parts.append("cover")
+    if include_summary:
+        parts.append("summary")
+    if include_detailed:
+        parts.append("detailed")
+
+    report_name = "-".join(parts) if parts else "report"
+
+    # 2. version (full, combined, abridged)
+    if is_abridged:
+        version = "abridged"
+    elif include_front and include_summary and include_detailed:
+        version = "full"
+    else:
+        version = "combined"
+
+    # 3. date of report
+    date_val = (
+        payment_certificate.assessment_date
+        or payment_certificate.approved_on
+        or datetime.now()
+    )
+    if hasattr(date_val, "date"):
+        date_val = date_val.date()
+    date_str = date_val.strftime("%Y-%m-%d")
+
+    return f"{report_name}_{version}_{date_str}.pdf"
+
+
 def compile_pdf_for_certificate(
     payment_certificate,
     include_front: bool = True,
     include_summary: bool = True,
     include_detailed: bool = True,
     is_abridged: bool = False,
-    layout: str | None = None,
 ) -> ContentFile:
     """
-    Compile a payment certificate PDF with optional layout and sections.
+    Compile a payment certificate PDF with optional sections.
     """
     project = payment_certificate.project
-    if not layout:
-        layout = getattr(project, "certificate_layout", "standard") or "standard"
-    layout = layout.lower()
 
     # Context initialization
     all_columns = project.get_column_config()
@@ -196,8 +273,8 @@ def compile_pdf_for_certificate(
             }
         )
 
-    # Add summary data if summary is requested and layout is valterra_rpm
-    if include_summary and layout == "valterra_rpm":
+    # Add summary data if summary is requested
+    if include_summary:
         summary_data = get_valuation_summary_data(payment_certificate)
         context.update(summary_data)
 
@@ -205,25 +282,15 @@ def compile_pdf_for_certificate(
     merger = PdfWriter()
     pdf_parts = []
 
-    if layout == "valterra_rpm":
-        if include_front:
-            front_tpl = get_template("pdf_templates/valterra_rpm/1-front-page.html")
-            pdf_parts.append(generate_pdf(front_tpl.render(context)))
-        if include_summary:
-            sum_tpl = get_template("pdf_templates/valterra_rpm/2-summary.html")
-            pdf_parts.append(generate_pdf(sum_tpl.render(context)))
-        if include_detailed:
-            det_tpl = get_template("pdf_templates/valterra_rpm/3-detailed.html")
-            pdf_parts.append(generate_pdf(det_tpl.render(context)))
-    else:
-        # Standard Layout
-        if include_front:
-            front_tpl = get_template("pdf_templates/1-front-page.html")
-            pdf_parts.append(generate_pdf(front_tpl.render(context)))
-        # Standard layout has no separate summary page, but if detailed is checked we render 2-line-items
-        if include_detailed:
-            det_tpl = get_template("pdf_templates/2-line-items.html")
-            pdf_parts.append(generate_pdf(det_tpl.render(context)))
+    if include_front:
+        front_tpl = get_template("pdf_templates/valterra_rpm/1-front-page.html")
+        pdf_parts.append(generate_pdf(front_tpl.render(context)))
+    if include_summary:
+        sum_tpl = get_template("pdf_templates/valterra_rpm/2-summary.html")
+        pdf_parts.append(generate_pdf(sum_tpl.render(context)))
+    if include_detailed:
+        det_tpl = get_template("pdf_templates/valterra_rpm/3-detailed.html")
+        pdf_parts.append(generate_pdf(det_tpl.render(context)))
 
     # Merge PDFs using pypdf
     for pdf_content in pdf_parts:
@@ -243,7 +310,6 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
     """Generate payment certificate PDF in memory (for backwards compatibility)."""
     payment_certificate = context.get("payment_certificate")
     if payment_certificate:
-        layout = getattr(payment_certificate.project, "certificate_layout", "standard")
         is_abridged = context.get("is_abridged", False)
         return compile_pdf_for_certificate(
             payment_certificate,
@@ -251,20 +317,21 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
             include_summary=True,
             include_detailed=True,
             is_abridged=is_abridged,
-            layout=layout,
         )
 
     # Fallback to standard logic if no payment_certificate is in context
     context["now"] = datetime.now()
     context["vat_rate"] = settings.VAT_RATE
-    front_page_template = get_template("pdf_templates/1-front-page.html")
-    line_items_template = get_template("pdf_templates/2-line-items.html")
+    front_page_template = get_template("pdf_templates/valterra_rpm/1-front-page.html")
+    summary_template = get_template("pdf_templates/valterra_rpm/2-summary.html")
+    line_items_template = get_template("pdf_templates/valterra_rpm/3-detailed.html")
 
     front_page_pdf = generate_pdf(front_page_template.render(context))
+    summary_pdf = generate_pdf(summary_template.render(context))
     line_items_pdf = generate_pdf(line_items_template.render(context))
 
     merger = PdfWriter()
-    for pdf_content in [front_page_pdf, line_items_pdf]:
+    for pdf_content in [front_page_pdf, summary_pdf, line_items_pdf]:
         pdf_reader = PdfReader(BytesIO(pdf_content.read()))
         for page in pdf_reader.pages:
             merger.add_page(page)
@@ -325,8 +392,12 @@ def generate_and_save_pdf(
         if pdf_type == "full":
             # Generate full PDF
             pdf = generate_full_payment_certificate_pdf(payment_certificate)
-            pdf.name = (
-                f"payment_certificate_{payment_certificate.certificate_number}.pdf"
+            pdf.name = get_report_filename(
+                payment_certificate,
+                include_front=True,
+                include_summary=True,
+                include_detailed=True,
+                is_abridged=False,
             )
             pdf.type = "application/pdf"  # type: ignore
             payment_certificate.pdf = pdf
@@ -339,14 +410,20 @@ def generate_and_save_pdf(
         else:
             # Generate abridged PDF
             pdf = generate_abridged_payment_certificate_pdf(payment_certificate)
-            pdf.name = f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf"
+            pdf.name = get_report_filename(
+                payment_certificate,
+                include_front=True,
+                include_summary=True,
+                include_detailed=True,
+                is_abridged=True,
+            )
             pdf.type = "application/pdf"  # type: ignore
             payment_certificate.abridged_pdf = pdf
             payment_certificate.abridged_pdf_generating = False
             update_fields.append("abridged_pdf")
             update_fields.append("abridged_pdf_generating")
             logger.info(
-                f"Full PDF generated successfully for certificate {payment_certificate.certificate_number}. Progressive to date: {payment_certificate.progressive_to_date}"
+                f"Abridged PDF generated successfully for certificate {payment_certificate.certificate_number}. Progressive to date: {payment_certificate.progressive_to_date}"
             )
 
         payment_certificate.save(update_fields=update_fields)
@@ -442,7 +519,149 @@ def generate_pdf_async(
         thread.start()
 
 
-def send_payment_certificate_to_signatories(payment_certificate_id: int):
+def generate_and_save_xlsx(
+    payment_certificate_id: int,
+    sections: dict,
+    xlsx_type: Literal["full", "abridged"] = "full",
+):
+    """
+    Internal function to generate and save unified XLSX in a separate thread.
+
+    Args:
+        payment_certificate_id: ID of the PaymentCertificate
+        sections: Dictionary of requested sections (e.g. {"front": True, "summary": True, "detailed": True})
+        xlsx_type: Either 'full' or 'abridged'
+    """
+    import logging
+    from tempfile import NamedTemporaryFile
+
+    from app.BillOfQuantities.models import PaymentCertificate
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
+        logger.info(
+            f"Starting {xlsx_type} XLSX generation for certificate {payment_certificate.certificate_number}"
+        )
+
+        update_fields = []
+        is_abridged = xlsx_type == "abridged"
+
+        # Generate the unified workbook
+        wb = export_unified_xlsx(payment_certificate, sections, is_abridged=is_abridged)
+
+        # Save to memory/tempfile and read as ContentFile
+        with NamedTemporaryFile(delete=True) as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            file_content = ContentFile(tmp.read())
+
+        if xlsx_type == "full":
+            file_content.name = (
+                f"payment_certificate_{payment_certificate.certificate_number}.xlsx"
+            )
+            file_content.type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            payment_certificate.xlsx = file_content
+            payment_certificate.xlsx_generating = False
+            update_fields.extend(["xlsx", "xlsx_generating"])
+        else:
+            file_content.name = f"payment_certificate_{payment_certificate.certificate_number}_abridged.xlsx"
+            file_content.type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            payment_certificate.abridged_xlsx = file_content
+            payment_certificate.abridged_xlsx_generating = False
+            update_fields.extend(["abridged_xlsx", "abridged_xlsx_generating"])
+
+        payment_certificate.save(update_fields=update_fields)
+        logger.info(
+            f"Successfully generated {xlsx_type} XLSX for certificate {payment_certificate.certificate_number}"
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating {xlsx_type} XLSX: {e}", exc_info=True)
+        try:
+            payment_certificate = PaymentCertificate.objects.get(
+                id=payment_certificate_id
+            )
+            if xlsx_type == "full":
+                payment_certificate.xlsx_generating = False
+            else:
+                payment_certificate.abridged_xlsx_generating = False
+            payment_certificate.save()
+            logger.info(f"Reset {xlsx_type} XLSX generating flag after error")
+        except Exception as save_error:
+            logger.error(f"Failed to reset XLSX generating flag: {save_error}")
+
+
+def generate_xlsx_async(
+    payment_certificate_id: int,
+    sections: dict,
+    xlsx_type: Literal["full", "abridged", "both"] | None = None,
+) -> None:
+    """
+    Start XLSX generation in a background thread.
+    """
+    import logging
+
+    from app.BillOfQuantities.models import PaymentCertificate
+
+    logger = logging.getLogger(__name__)
+
+    payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
+    generate_xlsx = False
+    generate_abridged_xlsx = False
+
+    if xlsx_type == "both":
+        generate_xlsx = True
+        generate_abridged_xlsx = True
+    elif xlsx_type == "full":
+        generate_xlsx = True
+    elif xlsx_type == "abridged":
+        generate_abridged_xlsx = True
+    else:
+        if not payment_certificate.xlsx and not payment_certificate.xlsx_generating:
+            generate_xlsx = True
+        if (
+            not payment_certificate.abridged_xlsx
+            and not payment_certificate.abridged_xlsx_generating
+        ):
+            generate_abridged_xlsx = True
+
+    if generate_xlsx:
+        payment_certificate.xlsx_generating = True
+    if generate_abridged_xlsx:
+        payment_certificate.abridged_xlsx_generating = True
+
+    payment_certificate.save()
+
+    if generate_xlsx:
+        logger.info(
+            f"Starting full XLSX generation thread for cert {payment_certificate.certificate_number}"
+        )
+        thread = threading.Thread(
+            target=generate_and_save_xlsx,
+            args=(payment_certificate_id, sections, "full"),
+            daemon=True,
+        )
+        thread.start()
+
+    if generate_abridged_xlsx:
+        logger.info(
+            f"Starting abridged XLSX generation thread for cert {payment_certificate.certificate_number}"
+        )
+        thread = threading.Thread(
+            target=generate_and_save_xlsx,
+            args=(payment_certificate_id, sections, "abridged"),
+            daemon=True,
+        )
+        thread.start()
+
+
+def send_payment_certificate_to_signatories(payment_certificate_id: int, request=None):
     # Get all signatories
     payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
     project: Project = payment_certificate.project
@@ -459,6 +678,7 @@ def send_payment_certificate_to_signatories(payment_certificate_id: int):
     # Render email template
     context = {
         "payment_certificate": payment_certificate,
+        "sender": request.user if request and request.user.is_authenticated else None,
     }
     html_message = render_to_string(
         "payment_certificate/email_payment_certificate.html", context

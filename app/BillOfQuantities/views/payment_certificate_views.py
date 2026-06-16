@@ -1,9 +1,10 @@
+import logging
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.db.models import Sum
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView, View
@@ -44,6 +45,8 @@ from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
 )
 from app.Project.models import PlannedValue, Project, Role
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentCertificateMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
@@ -838,36 +841,6 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
             PaymentCertificate, pk=pk, project=project
         )
 
-        # Serve Excel if format is specified as excel
-        if request.GET.get("format") == "excel":
-            from io import BytesIO
-
-            from app.BillOfQuantities.exporters.excel_exporter import (
-                generate_payment_certificate_excel,
-            )
-
-            try:
-                wb = generate_payment_certificate_excel(
-                    payment_certificate, is_abridged=False
-                )
-                output = BytesIO()
-                wb.save(output)
-                output.seek(0)
-                response = FileResponse(
-                    output,
-                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    as_attachment=True,
-                    filename=f"payment_certificate_{payment_certificate.certificate_number}.xlsx",
-                )
-                return response
-            except Exception as e:
-                messages.error(request, f"Error generating Excel: {str(e)}")
-                return redirect(
-                    "bill_of_quantities:payment-certificate-detail",
-                    project_pk=project_pk,
-                    pk=pk,
-                )
-
         # Check if custom sections are specified via checkboxes
         has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
 
@@ -886,7 +859,10 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                     pk=pk,
                 )
 
-            from app.BillOfQuantities.tasks import compile_pdf_for_certificate
+            from app.BillOfQuantities.tasks import (
+                compile_pdf_for_certificate,
+                get_report_filename,
+            )
 
             try:
                 pdf_file = compile_pdf_for_certificate(
@@ -896,12 +872,18 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                     include_detailed=include_detailed,
                     is_abridged=False,
                 )
-                response = FileResponse(
-                    pdf_file,
+                response = HttpResponse(
+                    pdf_file.read(),
                     content_type="application/pdf",
-                    as_attachment=True,
-                    filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",
                 )
+                filename = get_report_filename(
+                    payment_certificate,
+                    include_front=include_front,
+                    include_summary=include_summary,
+                    include_detailed=include_detailed,
+                    is_abridged=False,
+                )
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
                 return response
             except Exception as e:
                 messages.error(request, f"Error compiling PDF: {str(e)}")
@@ -934,52 +916,24 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
                 pk=pk,
             )
         # PDF exists and is ready - serve it
+        from app.BillOfQuantities.tasks import get_report_filename
+
+        filename = get_report_filename(
+            payment_certificate,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=False,
+        )
         file = payment_certificate.pdf.open("rb")
         response = FileResponse(
             file,
             content_type="application/pdf",
             as_attachment=True,
-            filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",
+            filename=filename,
         )
 
         return response
-
-
-class PaymentCertificateDownloadExcelView(PaymentCertificateMixin, View):
-    """Download payment certificate as Excel workbook."""
-
-    def get(self, request, pk=None, project_pk=None):
-        project = self.get_project()
-        payment_certificate = get_object_or_404(
-            PaymentCertificate, pk=pk, project=project
-        )
-
-        from io import BytesIO
-
-        from app.BillOfQuantities.exporters.excel_exporter import (
-            generate_payment_certificate_excel,
-        )
-
-        try:
-            wb = generate_payment_certificate_excel(payment_certificate)
-            output = BytesIO()
-            wb.save(output)
-            output.seek(0)
-
-            response = FileResponse(
-                output,
-                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                as_attachment=True,
-                filename=f"payment_certificate_{payment_certificate.certificate_number}.xlsx",
-            )
-            return response
-        except Exception as e:
-            messages.error(request, f"Error generating Excel file: {str(e)}")
-            return redirect(
-                "bill_of_quantities:payment-certificate-detail",
-                project_pk=project_pk,
-                pk=pk,
-            )
 
 
 class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
@@ -990,36 +944,6 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
         payment_certificate = get_object_or_404(
             PaymentCertificate, pk=pk, project=project
         )
-
-        # Serve Excel if format is specified as excel
-        if request.GET.get("format") == "excel":
-            from io import BytesIO
-
-            from app.BillOfQuantities.exporters.excel_exporter import (
-                generate_payment_certificate_excel,
-            )
-
-            try:
-                wb = generate_payment_certificate_excel(
-                    payment_certificate, is_abridged=True
-                )
-                output = BytesIO()
-                wb.save(output)
-                output.seek(0)
-                response = FileResponse(
-                    output,
-                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    as_attachment=True,
-                    filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.xlsx",
-                )
-                return response
-            except Exception as e:
-                messages.error(request, f"Error generating Excel: {str(e)}")
-                return redirect(
-                    "bill_of_quantities:payment-certificate-detail",
-                    project_pk=project_pk,
-                    pk=pk,
-                )
 
         # Check if custom sections are specified via checkboxes
         has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
@@ -1039,7 +963,10 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                     pk=pk,
                 )
 
-            from app.BillOfQuantities.tasks import compile_pdf_for_certificate
+            from app.BillOfQuantities.tasks import (
+                compile_pdf_for_certificate,
+                get_report_filename,
+            )
 
             try:
                 pdf_file = compile_pdf_for_certificate(
@@ -1049,15 +976,26 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                     include_detailed=include_detailed,
                     is_abridged=True,
                 )
-                response = FileResponse(
-                    pdf_file,
+                response = HttpResponse(
+                    pdf_file.read(),
                     content_type="application/pdf",
-                    as_attachment=True,
-                    filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf",
                 )
+                filename = get_report_filename(
+                    payment_certificate,
+                    include_front=include_front,
+                    include_summary=include_summary,
+                    include_detailed=include_detailed,
+                    is_abridged=True,
+                )
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
                 return response
             except Exception as e:
-                messages.error(request, f"Error compiling PDF: {str(e)}")
+                logger.exception(
+                    "Error compiling abridged PDF for payment certificate pk=%s, project_pk=%s",
+                    pk,
+                    project_pk,
+                )
+                messages.error(request, f"Error compiling PDF: {e}")
                 return redirect(
                     "bill_of_quantities:payment-certificate-detail",
                     project_pk=project_pk,
@@ -1087,19 +1025,28 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
                 pk=pk,
             )
         # Abridged PDF exists and is ready - serve it
+        from app.BillOfQuantities.tasks import get_report_filename
+
+        filename = get_report_filename(
+            payment_certificate,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=True,
+        )
         file = payment_certificate.abridged_pdf.open("rb")
         response = FileResponse(
             file,
             content_type="application/pdf",
             as_attachment=True,
-            filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf",
+            filename=filename,
         )
 
         return response
 
 
 class PaymentCertificatePDFStatusView(PaymentCertificateMixin, View):
-    """API endpoint to check PDF generation status."""
+    """API endpoint to check PDF and XLSX generation status."""
 
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
@@ -1113,6 +1060,10 @@ class PaymentCertificatePDFStatusView(PaymentCertificateMixin, View):
                 "pdf_available": bool(payment_certificate.pdf),
                 "abridged_pdf_generating": payment_certificate.abridged_pdf_generating,
                 "abridged_pdf_available": bool(payment_certificate.abridged_pdf),
+                "xlsx_generating": payment_certificate.xlsx_generating,
+                "xlsx_available": bool(payment_certificate.xlsx),
+                "abridged_xlsx_generating": payment_certificate.abridged_xlsx_generating,
+                "abridged_xlsx_available": bool(payment_certificate.abridged_xlsx),
             }
         )
 
@@ -1160,7 +1111,7 @@ class PaymentCertificateEmailView(PaymentCertificateMixin, View):
 
         # Send email to signatories
         response, message = send_payment_certificate_to_signatories(
-            payment_certificate.pk
+            payment_certificate.pk, request=request
         )
 
         if response:
@@ -1273,3 +1224,545 @@ class PaymentCertificateUnmarkFinalView(PaymentCertificateMixin, DetailView):
             "bill_of_quantities:payment-certificate-list",
             project_pk=self.kwargs["project_pk"],
         )
+
+
+class PaymentCertificateCoverPageView(PaymentCertificateMixin, DetailView):
+    """Render the cover page (project details, contract summary, cert summary) in-browser."""
+
+    model = PaymentCertificate
+    template_name = "payment_certificate/section_views/cover_page.html"
+    context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for cover page view."""
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "pk": self.get_object().pk,
+                    },
+                ),
+            },
+            {
+                "title": "Cover Page",
+                "url": None,
+            },
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class PaymentCertificateValuationSummaryView(PaymentCertificateMixin, DetailView):
+    """Render the valuation summary page in-browser (valterra_rpm layout only)."""
+
+    model = PaymentCertificate
+    template_name = "payment_certificate/section_views/valuation_summary.html"
+    context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for valuation summary view."""
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "pk": self.get_object().pk,
+                    },
+                ),
+            },
+            {
+                "title": "Valuation Summary",
+                "url": None,
+            },
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Add valuation summary data to context."""
+        from app.BillOfQuantities.tasks import get_valuation_summary_data
+
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["is_abridged"] = False
+
+        summary_data = get_valuation_summary_data(self.get_object(), abridged=False)
+        context.update(summary_data)
+        return context
+
+
+class PaymentCertificateDetailedView(PaymentCertificateMixin, DetailView):
+    """Render the detailed line-item report in-browser (full or abridged via ?mode= param)."""
+
+    model = PaymentCertificate
+    template_name = "payment_certificate/section_views/view_detailed.html"
+    context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for detailed view."""
+        mode = self.request.GET.get("mode", "abridged")
+        mode_label = "Full" if mode != "abridged" else "Abridged"
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-management",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "pk": self.get_object().pk,
+                    },
+                ),
+            },
+            {
+                "title": f"Detailed — {mode_label}",
+                "url": None,
+            },
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Build line-item context for full or abridged mode."""
+        from app.BillOfQuantities.tasks import group_line_items_by_hierarchy
+
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        payment_certificate = self.get_object()
+        mode = self.request.GET.get("mode", "abridged")
+        is_abridged = mode == "abridged"
+
+        context["project"] = project
+        context["is_abridged"] = is_abridged
+        context["mode"] = mode
+
+        if is_abridged:
+            all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
+            line_items = all_line_items.filter(addendum=False, special_item=False)
+            special_line_items = all_line_items.filter(
+                special_item=True, addendum=False
+            )
+            addendum_line_items = all_line_items.filter(
+                addendum=True, special_item=False
+            )
+        else:
+            all_line_items = LineItem.construct_payment_certificate(payment_certificate)
+            line_items = all_line_items.filter(special_item=False, addendum=False)
+            special_line_items = all_line_items.filter(
+                special_item=True, addendum=False
+            )
+            addendum_line_items = all_line_items.filter(
+                addendum=True, special_item=False
+            )
+
+        context["grouped_line_items"] = group_line_items_by_hierarchy(line_items)
+        context["special_line_items"] = special_line_items
+        context["addendum_line_items"] = group_line_items_by_hierarchy(
+            addendum_line_items
+        )
+        context["special_item_types"] = SpecialItemTransaction.SpecialItemType.choices
+
+        return context
+
+
+class PaymentCertificateDownloadUnifiedXLSXView(PaymentCertificateMixin, View):
+    """Download unified payment certificate as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+
+        if has_selections:
+            # On-the-fly generation for custom selections (synchronous for now, or just redirect)
+            # Actually, to mirror PDF, it should be synchronous for custom sections, or trigger async.
+            # PDF logic is synchronous for custom sections!
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+
+            if not (include_front or include_summary or include_detailed):
+                messages.warning(
+                    request,
+                    "Please select at least one section to include in the XLSX.",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+            from app.BillOfQuantities.exporters.unified_xlsx_exporter import (
+                export_unified_xlsx,
+            )
+
+            try:
+                wb = export_unified_xlsx(
+                    payment_certificate,
+                    sections={
+                        "front": include_front,
+                        "summary": include_summary,
+                        "detailed": include_detailed,
+                    },
+                    is_abridged=False,
+                )
+                response = HttpResponse(
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+                filename = (
+                    f"payment_certificate_{payment_certificate.certificate_number}.xlsx"
+                )
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
+                wb.save(response)
+                return response
+            except Exception as e:
+                messages.error(request, f"Error compiling XLSX: {str(e)}")
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+        # Check if XLSX is currently being generated
+        if payment_certificate.xlsx_generating:
+            messages.info(
+                request,
+                "XLSX is currently being generated. Please try again in a few moments.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        # Check if we need to generate or regenerate the XLSX
+        force_regenerate = bool(request.GET.get("force"))
+        if not payment_certificate.xlsx or force_regenerate:
+            from app.BillOfQuantities.tasks import generate_xlsx_async
+
+            # Request all sections by default
+            sections = {"front": True, "summary": True, "detailed": True}
+            generate_xlsx_async(payment_certificate.pk, sections, "full")
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        # XLSX exists and is ready - serve it
+        file = payment_certificate.xlsx.open("rb")
+        response = FileResponse(
+            file,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            filename=f"payment_certificate_{payment_certificate.certificate_number}.xlsx",
+        )
+        return response
+
+
+class PaymentCertificateDownloadUnifiedAbridgedXLSXView(PaymentCertificateMixin, View):
+    """Download unified abridged payment certificate as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+
+        if has_selections:
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+
+            if not (include_front or include_summary or include_detailed):
+                messages.warning(
+                    request,
+                    "Please select at least one section to include in the XLSX.",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+            from app.BillOfQuantities.exporters.unified_xlsx_exporter import (
+                export_unified_xlsx,
+            )
+
+            try:
+                wb = export_unified_xlsx(
+                    payment_certificate,
+                    sections={
+                        "front": include_front,
+                        "summary": include_summary,
+                        "detailed": include_detailed,
+                    },
+                    is_abridged=True,
+                )
+                response = HttpResponse(
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+                filename = f"payment_certificate_{payment_certificate.certificate_number}_abridged.xlsx"
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
+                wb.save(response)
+                return response
+            except Exception as e:
+                messages.error(request, f"Error compiling XLSX: {str(e)}")
+                return redirect(
+                    "bill_of_quantities:payment-certificate-detail",
+                    project_pk=project_pk,
+                    pk=pk,
+                )
+
+        if payment_certificate.abridged_xlsx_generating:
+            messages.info(
+                request,
+                "Abridged XLSX is currently being generated. Please try again in a few moments.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        force_regenerate = bool(request.GET.get("force"))
+        if not payment_certificate.abridged_xlsx or force_regenerate:
+            from app.BillOfQuantities.tasks import generate_xlsx_async
+
+            sections = {"front": True, "summary": True, "detailed": True}
+            generate_xlsx_async(payment_certificate.pk, sections, "abridged")
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        file = payment_certificate.abridged_xlsx.open("rb")
+        response = FileResponse(
+            file,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.xlsx",
+        )
+        return response
+
+
+class PaymentCertificateDownloadXLSXView(PaymentCertificateMixin, View):
+    """Download detailed payment certificate as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.detailed_report_exporter import (
+            export_detailed_report_to_xlsx,
+        )
+
+        try:
+            wb = export_detailed_report_to_xlsx(payment_certificate, is_abridged=False)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_detailed_v2.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-view-detailed",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+
+class PaymentCertificateDownloadAbridgedXLSXView(PaymentCertificateMixin, View):
+    """Download abridged detailed payment certificate as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.detailed_report_exporter import (
+            export_detailed_report_to_xlsx,
+        )
+
+        try:
+            wb = export_detailed_report_to_xlsx(payment_certificate, is_abridged=True)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_detailed_abridged_v2.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-view-detailed",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+
+class PaymentCertificateDownloadSummaryXLSXView(PaymentCertificateMixin, View):
+    """Download valuation summary as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.summary_report_exporter import (
+            export_summary_report_to_xlsx,
+        )
+
+        try:
+            wb = export_summary_report_to_xlsx(payment_certificate, is_abridged=False)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_summary.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-valuation-summary",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+
+class PaymentCertificateDownloadAbridgedSummaryXLSXView(PaymentCertificateMixin, View):
+    """Download abridged valuation summary as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.summary_report_exporter import (
+            export_summary_report_to_xlsx,
+        )
+
+        try:
+            wb = export_summary_report_to_xlsx(payment_certificate, is_abridged=True)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_summary_abridged.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-valuation-summary",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+
+class PaymentCertificateCoverPageDownloadXLSXView(PaymentCertificateMixin, View):
+    """Download cover page as XLSX."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        from app.BillOfQuantities.exporters.cover_page_exporter import (
+            export_cover_page_to_xlsx,
+        )
+
+        try:
+            wb = export_cover_page_to_xlsx(payment_certificate)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"payment_certificate_{payment_certificate.certificate_number}_cover_page.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect(
+                "bill_of_quantities:payment-certificate-cover-page",
+                project_pk=project_pk,
+                pk=pk,
+            )

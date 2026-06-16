@@ -519,30 +519,7 @@ class ProjectSetupView(ProjectMixin, DetailView):
                 messages.error(request, f"Error loading demo data: {e}")
 
         elif action == "save_report_config":
-            layout = request.POST.get("certificate_layout")
             column_config_str = request.POST.get("column_config")
-
-            if layout in Project.CertificateLayout.values:
-                # Clear certificate caches if layout changed
-                if project.certificate_layout != layout:
-                    for cert in project.payment_certificates.all():
-                        if cert.pdf:
-                            cert.pdf.delete(save=False)
-                        if cert.abridged_pdf:
-                            cert.abridged_pdf.delete(save=False)
-                        cert.pdf = None
-                        cert.abridged_pdf = None
-                        cert.pdf_generating = False
-                        cert.abridged_pdf_generating = False
-                        cert.save(
-                            update_fields=[
-                                "pdf",
-                                "abridged_pdf",
-                                "pdf_generating",
-                                "abridged_pdf_generating",
-                            ]
-                        )
-                project.certificate_layout = layout
 
             import json
 
@@ -564,6 +541,71 @@ class ProjectSetupView(ProjectMixin, DetailView):
 
         return HttpResponseRedirect(
             reverse("project:project-setup", kwargs={"pk": project.pk})
+        )
+
+
+class ProjectReportConfigView(ProjectMixin, DetailView):
+    """Display and manage project report layout and column configuration."""
+
+    model = Project
+    template_name = "project/report_config.html"
+    context_object_name = "project"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.object.name,
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.object.pk}
+                ),
+            ),
+            BreadcrumbItem(
+                title="Edit Project",
+                url=reverse("project:project-setup", kwargs={"pk": self.object.pk}),
+            ),
+            BreadcrumbItem(title="Column Customization", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        import json
+
+        context["project_columns_json"] = json.dumps(self.object.get_column_config())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        project = self.object
+        action = request.POST.get("action")
+
+        if action == "save_report_config":
+            column_config_str = request.POST.get("column_config")
+
+            import json
+
+            try:
+                if column_config_str:
+                    project.column_config = json.loads(column_config_str)
+                else:
+                    project.column_config = {}
+            except ValueError:
+                messages.error(request, "Invalid column configuration format.")
+                return HttpResponseRedirect(
+                    reverse("project:project-report-config", kwargs={"pk": project.pk})
+                )
+
+            project.save()
+            messages.success(
+                request, "Report layout and column configuration saved successfully!"
+            )
+
+        return HttpResponseRedirect(
+            reverse("project:project-report-config", kwargs={"pk": project.pk})
         )
 
 
@@ -996,3 +1038,19 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
             return self.render_to_response(context)
 
         return HttpResponseRedirect(request.path)
+
+
+class ProjectReportLayoutPreviewView(ProjectMixin, DetailView):
+    """View to display a structural preview of the selected report layout."""
+
+    model = Project
+    template_name = "project/project_layout_preview.html"
+    context_object_name = "project"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        layout_style = self.request.GET.get("layout_style", "STANDARD")
+        context["layout_style"] = layout_style
+        return context

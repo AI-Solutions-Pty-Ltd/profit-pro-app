@@ -468,175 +468,27 @@
                 </div>
             </div>
         </div>
-        <!-- Report Selection & Column Configuration -->
-        <div class="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <!-- Report Selection & Configuration -->
+        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Report Selection & Configuration</h2>
-                <p class="mt-1 text-sm text-gray-600">
-                    Choose report layout style and customize column headings, visibility, and ordering.
-                </p>
+                <h2 class="text-lg font-semibold text-gray-900">Project Reports Template Setup</h2>
+                <p class="mt-1 text-sm text-gray-600">Customize column headings, visibility, and ordering.</p>
             </div>
             <div class="px-6 py-4">
-                <form method="post" id="report-config-form" class="space-y-6">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="save_report_config">
-                    <input type="hidden" name="column_config" id="column-config-input">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- Left Panel: Layout Choice & Preview -->
-                        <div class="lg:col-span-1 space-y-4">
-                            <div>
-                                <label for="certificate_layout_select"
-                                       class="block text-sm font-semibold text-gray-900 mb-2">
-                                    Report Layout Style
-                                </label>
-                                <select name="certificate_layout"
-                                        id="certificate_layout_select"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <option value="STANDARD"
-                                            {% if project.certificate_layout == "STANDARD" %}selected{% endif %}>
-                                        Standard (Full / Abridged)
-                                    </option>
-                                    <option value="VALTERRA_RPM"
-                                            {% if project.certificate_layout == "VALTERRA_RPM" %}selected{% endif %}>
-                                        Valterra / RPM Layout
-                                    </option>
-                                    <option value="LEPHADIMISHA"
-                                            {% if project.certificate_layout == "LEPHADIMISHA" %}selected{% endif %}>
-                                        Lephadimisha BOQ Layout
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Layout Visual Preview</h4>
-                                <div id="layout-preview-standard" class="layout-preview space-y-2">
-                                    <div class="h-44 bg-white rounded border border-gray-200 flex flex-col justify-between p-3 shadow-inner">
-                                        <div class="flex justify-between border-b pb-2">
-                                            <div class="w-1/3 h-4 bg-gray-200 rounded"></div>
-                                            <div class="w-1/4 h-3 bg-gray-100 rounded"></div>
-                                        </div>
-                                        <div class="space-y-1.5 flex-1 py-3">
-                                            <div class="h-3 bg-indigo-50 rounded w-full"></div>
-                                            <div class="h-3 bg-gray-55 rounded w-11/12"></div>
-                                            <div class="h-3 bg-gray-55 rounded w-10/12"></div>
-                                        </div>
-                                        <div class="flex justify-between border-t pt-2">
-                                            <div class="w-1/4 h-3 bg-gray-200 rounded"></div>
-                                            <div class="w-1/3 h-4 bg-indigo-600 rounded"></div>
-                                        </div>
-                                    </div>
-                                    <p class="text-[11px] text-gray-500 text-center">
-                                        Standard Layout: Elegant clean format, simple detailed table with all columns.
-                                    </p>
-                                </div>
-                                <div id="layout-preview-valterra" class="layout-preview hidden space-y-2">
-                                    <div class="h-44 bg-white rounded border border-gray-200 flex flex-col justify-between p-3 shadow-inner">
-                                        <div class="flex justify-between border-b pb-2 bg-slate-50 p-1">
-                                            <div class="w-1/4 h-4 bg-gray-300 rounded"></div>
-                                            <div class="w-1/3 h-3 bg-slate-200 rounded"></div>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2 py-2">
-                                            <div class="border rounded p-1 text-center bg-indigo-50/50">
-                                                <div class="text-[9px] text-gray-400">Tender</div>
-                                                <div class="h-3 bg-indigo-200 rounded w-3/4 mx-auto mt-1"></div>
-                                            </div>
-                                            <div class="border rounded p-1 text-center bg-emerald-50/50">
-                                                <div class="text-[9px] text-gray-400">Cumulative</div>
-                                                <div class="h-3 bg-emerald-200 rounded w-3/4 mx-auto mt-1"></div>
-                                            </div>
-                                            <div class="border rounded p-1 text-center bg-amber-50/50">
-                                                <div class="text-[9px] text-gray-400">Due</div>
-                                                <div class="h-3 bg-amber-200 rounded w-3/4 mx-auto mt-1"></div>
-                                            </div>
-                                        </div>
-                                        <div class="h-4 bg-slate-100 rounded w-full"></div>
-                                    </div>
-                                    <p class="text-[11px] text-gray-500 text-center">
-                                        Valterra / RPM Layout: Multi-tab layout featuring dedicated Cover, Summary and Detailed structures.
-                                    </p>
-                                </div>
-                                <div id="layout-preview-lephadimisha"
-                                     class="layout-preview hidden space-y-2">
-                                    <div class="h-44 bg-white rounded border border-gray-200 flex flex-col justify-between p-3 shadow-inner">
-                                        <div class="flex items-center justify-between border-b pb-2">
-                                            <div class="w-16 h-8 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-400">LOGO</div>
-                                            <div class="w-2/5 h-4 bg-amber-600 rounded"></div>
-                                        </div>
-                                        <div class="space-y-1 py-1">
-                                            <div class="h-2.5 bg-gray-100 rounded w-full"></div>
-                                            <div class="h-2.5 bg-gray-100 rounded w-11/12"></div>
-                                            <div class="h-3 bg-amber-100 rounded w-10/12"></div>
-                                        </div>
-                                        <div class="border rounded p-1.5 flex justify-between bg-slate-50">
-                                            <div class="w-1/3 h-2 bg-gray-300 rounded"></div>
-                                            <div class="w-1/4 h-2 bg-amber-600 rounded"></div>
-                                        </div>
-                                    </div>
-                                    <p class="text-[11px] text-gray-500 text-center">
-                                        Lephadimisha BOQ Layout: High-fidelity executive layout omitting quantity columns, with clean monetary valuations only.
-                                    </p>
-                                </div>
-                            </div>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <!-- Report Template Setup Card -->
+                    <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="text-sm font-semibold text-gray-900">Payment Certificate Template Setup</h3>
                         </div>
-                        <!-- Right Panel: Column Configuration & Live Preview -->
-                        <div class="lg:col-span-2 space-y-6">
-                            <!-- Column Config List -->
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-3">Column Heading Customization & Reordering</h3>
-                                <div class="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                                    <table class="min-w-full divide-y divide-gray-200" id="columns-config-table">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-16 text-center">Order</th>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase w-16 text-center">Visible</th>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Default Header</th>
-                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Custom Label</th>
-                                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase w-28">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-200" id="columns-config-list">
-                                            <!-- Will be populated via JS -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="mt-2 flex justify-between items-center">
-                                    <p class="text-xs text-gray-500">Use Up/Down buttons to reorder, or checkbox to show/hide.</p>
-                                    <button type="button"
-                                            id="reset-columns-btn"
-                                            class="text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none">
-                                        Reset to Layout Defaults
-                                    </button>
-                                </div>
-                            </div>
-                            <!-- Real-time Live Header Preview -->
-                            <div class="border border-indigo-100 rounded-lg p-4 bg-indigo-50/30">
-                                <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                                    {% heroicon_outline "eye" class="w-4 h-4 text-indigo-600" %}
-                                    Real-time Column Header Preview
-                                </h4>
-                                <div class="overflow-x-auto border border-indigo-100 rounded bg-white shadow-inner max-w-full">
-                                    <table class="min-w-full divide-y divide-gray-200 text-[10px] table-fixed">
-                                        <thead class="bg-gray-50 text-center font-bold" id="live-header-preview">
-                                            <!-- Dynamically rendered by JS -->
-                                        </thead>
-                                        <tbody>
-                                            <tr class="divide-x divide-gray-100 text-center text-gray-400"
-                                                id="live-body-preview">
-                                                <!-- Placeholders -->
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                        <p class="mb-3 text-xs text-gray-600">Customize column headings, visibility, and reorder fields for the report template.</p>
+                        <a href="{% url 'project:project-report-config' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "table-cells" size="16" %}
+                            <span class="ml-2">Configure Columns</span>
+                        </a>
                     </div>
-                    <div class="pt-4 border-t border-gray-200 flex justify-end">
-                        <button type="submit"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "check" size="20" %}
-                            <span class="ml-2">Save Report Configuration</span>
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
         <!-- User Management -->
@@ -778,80 +630,117 @@
                 {% endif %}
             </div>
         </div>
-        <!-- Lead Consultant Management -->
+        <!-- Consultant Management -->
         <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h2 class="text-lg font-semibold text-gray-900">Lead Consultant Management</h2>
-                        <p class="mt-1 text-sm text-gray-600">Manage project lead consultant information</p>
+                        <h2 class="text-lg font-semibold text-gray-900">Consultant Management</h2>
+                        <p class="mt-1 text-sm text-gray-600">Manage project lead & other consultant information</p>
                     </div>
                     <a href="{% url 'client:lead-consultant-management:lead-consultant-list' project.pk %}"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "user-group" size="20" class="mr-2" %}
-                        Manage Lead Consultants
+                        Manage Consultants
                     </a>
                 </div>
             </div>
             <div class="px-6 py-4">
-                {% if project.lead_consultant %}
-                    <div class="p-4 mb-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900">{{ project.lead_consultant.name }}</h4>
-                                <p class="mt-1 text-xs text-gray-600">Registration: {{ project.lead_consultant.registration_number }}</p>
-                                {% if project.lead_consultant.vat_number %}
-                                    <p class="text-xs text-gray-600">VAT: {{ project.lead_consultant.vat_number }}</p>
-                                {% endif %}
-                            </div>
-                            <div class="gap-2 right-content">
-                                <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"
-                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "pencil" size="16" %}
-                                    <span class="ml-1">Change</span>
-                                </a>
-                                <a href="{% url 'client:project-lead-consultant:project-lead-consultant-remove' project.pk project.lead_consultant.pk %}"
-                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-white rounded-md border border-red-300 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                    {% heroicon_outline "x-mark" size="16" %}
-                                    <span class="ml-1">Remove</span>
-                                </a>
-                            </div>
+                {% if project.consultants.exists %}
+                    <div class="space-y-6">
+                        <!-- Lead Consultants Section -->
+                        <div>
+                            <h4 class="mb-2 text-sm font-medium text-gray-700">Lead Consultants</h4>
+                            {% if project.lead_consultant_companies.exists %}
+                                <div class="space-y-2">
+                                    {% for consultant in project.lead_consultant_companies %}
+                                        <div class="p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h5 class="text-sm font-medium text-gray-900">{{ consultant.name }}</h5>
+                                                    <p class="mt-1 text-xs text-gray-600">Registration: {{ consultant.registration_number }}</p>
+                                                    {% if consultant.vat_number %}
+                                                        <p class="text-xs text-gray-600">VAT: {{ consultant.vat_number }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <a href="{% url 'client:project-lead-consultant:project-lead-consultant-remove' project.pk consultant.pk %}"
+                                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                        {% heroicon_outline "x-mark" size="14" %}
+                                                        <span class="ml-1">Remove</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs italic text-gray-500">No Lead Consultant assigned</p>
+                            {% endif %}
+                        </div>
+                        <!-- Regular Consultants Section -->
+                        <div>
+                            <h4 class="mb-2 text-sm font-medium text-gray-700">Consultants</h4>
+                            {% if project.regular_consultant_companies.exists %}
+                                <div class="space-y-2">
+                                    {% for consultant in project.regular_consultant_companies %}
+                                        <div class="p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <h5 class="text-sm font-medium text-gray-900">{{ consultant.name }}</h5>
+                                                    <p class="mt-1 text-xs text-gray-600">Registration: {{ consultant.registration_number }}</p>
+                                                    {% if consultant.vat_number %}
+                                                        <p class="text-xs text-gray-600">VAT: {{ consultant.vat_number }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <a href="{% url 'client:project-lead-consultant:project-consultant-remove' project.pk consultant.pk %}"
+                                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                        {% heroicon_outline "x-mark" size="14" %}
+                                                        <span class="ml-1">Remove</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs italic text-gray-500">No Consultant assigned</p>
+                            {% endif %}
+                        </div>
+                        <!-- Assignment Buttons -->
+                        <div class="flex gap-4 pt-4 border-t border-gray-200">
+                            <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "plus" size="16" %}
+                                <span class="ml-2">Assign Lead Consultant</span>
+                            </a>
+                            <a href="{% url 'client:project-lead-consultant:project-consultant-allocate' project.pk %}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                {% heroicon_outline "plus" size="16" %}
+                                <span class="ml-2">Assign Consultant</span>
+                            </a>
                         </div>
                     </div>
                 {% else %}
                     <div class="py-8 text-center">
-                        <p class="mb-4 text-sm text-gray-600">No lead consultant assigned to this project</p>
+                        <p class="mb-4 text-sm text-gray-600">No consultant assigned to this project</p>
                         <a href="{% url 'client:project-lead-consultant:project-lead-consultant-allocate' project.pk %}"
                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" size="16" %}
                             <span class="ml-2">Assign Lead Consultant</span>
                         </a>
+                        <a href="{% url 'client:project-lead-consultant:project-consultant-allocate' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "plus" size="16" %}
+                            <span class="ml-2">Assign Consultant</span>
+                        </a>
                     </div>
                 {% endif %}
             </div>
         </div>
-        <!-- Project Work Breakdown Structures -->
-        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Project Work Breakdown Structures</h2>
-                <p class="mt-1 text-sm text-gray-600">Manage categories, sub-categories, and disciplines</p>
-            </div>
-            <div class="px-6 py-4">
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
-                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Manage Categories</h3>
-                        <p class="mb-3 text-xs text-gray-600">Create and manage project categories for classification</p>
-                        <a href="{% url 'project:project-category-list' project.pk %}"
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "tag" size="16" %}
-                            <span class="ml-2">Manage Level 1 Categories</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
         <!-- Signatories Management -->
-        <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div class="overflow-hidden mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <div>
@@ -937,6 +826,26 @@
                         </a>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+        <!-- Project Work Breakdown Structures -->
+        <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Project Work Breakdown Structures</h2>
+                <p class="mt-1 text-sm text-gray-600">Manage categories, sub-categories, and disciplines</p>
+            </div>
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
+                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Manage Categories</h3>
+                        <p class="mb-3 text-xs text-gray-600">Create and manage project categories for classification</p>
+                        <a href="{% url 'project:project-category-list' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "tag" size="16" %}
+                            <span class="ml-2">Manage Level 1 Categories</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- Estimator Data Source -->
@@ -1115,216 +1024,7 @@
             }
         });
 
-        // Report Configuration Logic
-        (function() {
-            let columns = [];
-            try {
-                columns = JSON.parse('{{ project_columns_json|escapejs }}');
-            } catch (e) {
-                console.error("Failed to parse project columns", e);
-            }
-            
-            const listContainer = document.getElementById('columns-config-list');
-            const previewHeader = document.getElementById('live-header-preview');
-            const previewBody = document.getElementById('live-body-preview');
-            const layoutSelect = document.getElementById('certificate_layout_select');
-            const formInput = document.getElementById('column-config-input');
-            const configForm = document.getElementById('report-config-form');
-            const resetBtn = document.getElementById('reset-columns-btn');
-            
-            // Standard layout defaults
-            const standardDefaults = [
-                {"id": "item_number", "label": "Item No.", "enabled": true},
-                {"id": "payment_reference", "label": "Pay Ref", "enabled": true},
-                {"id": "description", "label": "Description", "enabled": true},
-                {"id": "unit_measurement", "label": "Unit", "enabled": true},
-                {"id": "budgeted_quantity", "label": "Quantity", "enabled": true},
-                {"id": "unit_price", "label": "Rate", "enabled": true},
-                {"id": "total_price", "label": "Amount", "enabled": true},
-                {"id": "total_qty", "label": "Cumulative Quantity Certified", "enabled": true},
-                {"id": "total_claimed", "label": "Cumulative Amount Certified", "enabled": true},
-                {"id": "previous_qty", "label": "Previous Quantity", "enabled": true},
-                {"id": "previous_claimed", "label": "Previous Amount Certified", "enabled": true},
-                {"id": "current_qty", "label": "Current Quantity", "enabled": true},
-                {"id": "current_claim", "label": "Amount Due", "enabled": true}
-            ];
 
-            // Lephadimisha layout defaults
-            const lephadimishaDefaults = [
-                {"id": "item_number", "label": "ITEM", "enabled": true},
-                {"id": "payment_reference", "label": "PAY REF", "enabled": true},
-                {"id": "description", "label": "DESCRIPTION", "enabled": true},
-                {"id": "unit_measurement", "label": "UNIT", "enabled": true},
-                {"id": "budgeted_quantity", "label": "QTY", "enabled": true},
-                {"id": "unit_price", "label": "RATE (R)", "enabled": true},
-                {"id": "total_price", "label": "TENDER AMT (R)", "enabled": true},
-                {"id": "total_qty", "label": "CUMUL. CERT (R)", "enabled": false},
-                {"id": "total_claimed", "label": "CUMUL. CERT (R)", "enabled": true},
-                {"id": "previous_qty", "label": "PREV. CERT (R)", "enabled": false},
-                {"id": "previous_claimed", "label": "PREV. CERT (R)", "enabled": true},
-                {"id": "current_qty", "label": "AMT DUE (R)", "enabled": false},
-                {"id": "current_claim", "label": "AMT DUE (R)", "enabled": true}
-            ];
-
-            function updateLayoutPreview(layout) {
-                document.querySelectorAll('.layout-preview').forEach(el => el.classList.add('hidden'));
-                if (layout === 'STANDARD') {
-                    document.getElementById('layout-preview-standard').classList.remove('hidden');
-                } else if (layout === 'VALTERRA_RPM') {
-                    document.getElementById('layout-preview-valterra').classList.remove('hidden');
-                } else if (layout === 'LEPHADIMISHA') {
-                    document.getElementById('layout-preview-lephadimisha').classList.remove('hidden');
-                }
-            }
-
-            function renderColumns() {
-                if (!listContainer) return;
-                listContainer.innerHTML = '';
-                columns.forEach((col, idx) => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50 transition-colors';
-                    tr.innerHTML = `
-                        <td class="px-3 py-2 text-center text-xs text-gray-500 font-medium">${idx + 1}</td>
-                        <td class="px-3 py-2 text-center">
-                            <input type="checkbox" data-id="${col.id}" class="col-enable-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" ${col.enabled ? 'checked' : ''}>
-                        </td>
-                        <td class="px-3 py-2 text-xs text-gray-900 font-medium">${getOriginalHeader(col.id)}</td>
-                        <td class="px-3 py-2">
-                            <input type="text" data-id="${col.id}" value="${col.label || ''}" class="col-label-input block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs px-2 py-1">
-                        </td>
-                        <td class="px-3 py-2 text-center space-x-1">
-                            <button type="button" class="p-1 text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-30 btn-move-up" data-index="${idx}" ${idx === 0 ? 'disabled' : ''}>
-                                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                            </button>
-                            <button type="button" class="p-1 text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-30 btn-move-down" data-index="${idx}" ${idx === columns.length - 1 ? 'disabled' : ''}>
-                                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </button>
-                        </td>
-                    `;
-                    listContainer.appendChild(tr);
-                });
-
-                // Attach event listeners
-                document.querySelectorAll('.col-enable-checkbox').forEach(cb => {
-                    cb.addEventListener('change', function() {
-                        const colId = this.dataset.id;
-                        const col = columns.find(c => c.id === colId);
-                        if (col) {
-                            col.enabled = this.checked;
-                            updatePreview();
-                        }
-                    });
-                });
-
-                document.querySelectorAll('.col-label-input').forEach(input => {
-                    input.addEventListener('input', function() {
-                        const colId = this.dataset.id;
-                        const col = columns.find(c => c.id === colId);
-                        if (col) {
-                            col.label = this.value;
-                            updatePreview();
-                        }
-                    });
-                });
-
-                document.querySelectorAll('.btn-move-up').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const idx = parseInt(this.dataset.index);
-                        moveColumn(idx, -1);
-                    });
-                });
-
-                document.querySelectorAll('.btn-move-down').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const idx = parseInt(this.dataset.index);
-                        moveColumn(idx, 1);
-                    });
-                });
-
-                updatePreview();
-            }
-
-            function getOriginalHeader(id) {
-                const standard = standardDefaults.find(c => c.id === id);
-                return standard ? standard.label : id;
-            }
-
-            function moveColumn(idx, direction) {
-                const targetIdx = idx + direction;
-                if (targetIdx < 0 || targetIdx >= columns.length) return;
-                
-                const temp = columns[idx];
-                columns[idx] = columns[targetIdx];
-                columns[targetIdx] = temp;
-                
-                renderColumns();
-            }
-
-            function updatePreview() {
-                if (!previewHeader || !previewBody) return;
-                previewHeader.innerHTML = '';
-                previewBody.innerHTML = '';
-                
-                const trHead = document.createElement('tr');
-                trHead.className = 'divide-x divide-indigo-100';
-                
-                let visibleCount = 0;
-                columns.forEach(col => {
-                    if (col.enabled) {
-                        const th = document.createElement('th');
-                        th.className = 'px-2 py-1 text-indigo-900 truncate max-w-[120px]';
-                        th.textContent = col.label || getOriginalHeader(col.id);
-                        trHead.appendChild(th);
-                        
-                        const td = document.createElement('td');
-                        td.className = 'px-2 py-2 truncate max-w-[120px] bg-slate-50/50';
-                        td.innerHTML = `<span class="bg-gray-100 text-gray-400 px-1 rounded text-[8px]">data</span>`;
-                        previewBody.appendChild(td);
-                        
-                        visibleCount++;
-                    }
-                });
-                
-                if (visibleCount === 0) {
-                    const th = document.createElement('th');
-                    th.className = 'px-2 py-3 text-gray-400 italic text-center w-full';
-                    th.textContent = 'No columns selected';
-                    trHead.appendChild(th);
-                }
-                
-                previewHeader.appendChild(trHead);
-            }
-
-            if (layoutSelect) {
-                layoutSelect.addEventListener('change', function() {
-                    updateLayoutPreview(this.value);
-                });
-            }
-
-            if (resetBtn) {
-                resetBtn.addEventListener('click', function() {
-                    const layout = layoutSelect ? layoutSelect.value : 'STANDARD';
-                    if (layout === 'LEPHADIMISHA') {
-                        columns = JSON.parse(JSON.stringify(lephadimishaDefaults));
-                    } else {
-                        columns = JSON.parse(JSON.stringify(standardDefaults));
-                    }
-                    renderColumns();
-                });
-            }
-
-            if (configForm && formInput) {
-                configForm.addEventListener('submit', function(e) {
-                    formInput.value = JSON.stringify({ columns: columns });
-                });
-            }
-
-            // Initialize
-            if (layoutSelect) {
-                updateLayoutPreview(layoutSelect.value);
-            }
-            renderColumns();
-        })();
 
         // Setup Tooltip functions
         function toggleSetupTooltip(event, tooltipId) {

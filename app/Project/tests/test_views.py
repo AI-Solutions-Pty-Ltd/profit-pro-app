@@ -7,8 +7,8 @@ from app.Project.tests.factories import AccountFactory, ProjectFactory
 
 
 @pytest.mark.django_db
-class TestProjectSetupReportConfig:
-    """Test cases for ProjectSetupView report configuration action."""
+class TestProjectReportConfig:
+    """Test cases for ProjectReportConfigView."""
 
     def setup_method(self):
         self.project = ProjectFactory()
@@ -20,10 +20,19 @@ class TestProjectSetupReportConfig:
         ProjectRole.objects.get_or_create(
             project=self.project, user=self.user, role=Role.ADMIN
         )
-        self.url = reverse("project:project-setup", kwargs={"pk": self.project.pk})
+        self.url = reverse(
+            "project:project-report-config", kwargs={"pk": self.project.pk}
+        )
+
+    def test_get_report_config(self, client):
+        """Test successfully rendering report config page."""
+        client.force_login(self.user)
+        response = client.get(self.url)
+        assert response.status_code == 200
+        assert "project/report_config.html" in [t.name for t in response.templates]
 
     def test_save_report_config_success(self, client):
-        """Test successfully saving certificate layout and column configuration."""
+        """Test successfully saving column configuration."""
         client.force_login(self.user)
 
         column_data = {
@@ -35,7 +44,6 @@ class TestProjectSetupReportConfig:
 
         data = {
             "action": "save_report_config",
-            "certificate_layout": "LEPHADIMISHA",
             "column_config": json.dumps(column_data),
         }
 
@@ -43,7 +51,6 @@ class TestProjectSetupReportConfig:
         assert response.status_code == 302
 
         self.project.refresh_from_db()
-        assert self.project.certificate_layout == "LEPHADIMISHA"
         assert self.project.column_config == column_data
 
 
