@@ -202,3 +202,52 @@ class TestCompanyFormPrivacy(TestCase):
         self.assertNotIn(user_without_name, users_queryset)
         self.assertIn(user_with_name, consultants_queryset)
         self.assertNotIn(user_without_name, consultants_queryset)
+
+
+class TestCompanyFormDisciplines(TestCase):
+    """Test cases for multiple disciplines support on CompanyForm/ConsultantCompanyForm."""
+
+    def setUp(self):
+        from app.Project.tests.factories import ProjectDisciplineFactory
+
+        self.discipline1 = ProjectDisciplineFactory(name="Structural Engineering")
+        self.discipline2 = ProjectDisciplineFactory(name="Civil Engineering")
+        self.discipline3 = ProjectDisciplineFactory(name="Mechanical Engineering")
+
+    def test_fields_present_for_consultant(self):
+        """Test that discipline and add_discipline fields are present for consultants."""
+        from app.Project.company.company_forms import CompanyForm
+
+        form = CompanyForm(contractor=False, client=False)
+        self.assertIn("disciplines", form.fields)
+        self.assertIn("add_discipline", form.fields)
+
+    def test_fields_popped_for_contractor_and_client(self):
+        """Test that discipline fields are popped for contractors and clients."""
+        from app.Project.company.company_forms import CompanyForm
+
+        form_contractor = CompanyForm(contractor=True)
+        self.assertNotIn("disciplines", form_contractor.fields)
+        self.assertNotIn("add_discipline", form_contractor.fields)
+
+        form_client = CompanyForm(client=True)
+        self.assertNotIn("disciplines", form_client.fields)
+        self.assertNotIn("add_discipline", form_client.fields)
+
+    def test_save_multiple_disciplines(self):
+        """Test saving a consultant company with multiple disciplines."""
+        from app.Project.company.company_forms import ConsultantCompanyForm
+
+        data = {
+            "name": "Consultant Corp",
+            "registration_number": "12345",
+            "disciplines": [self.discipline1.pk, self.discipline2.pk],
+        }
+        form = ConsultantCompanyForm(data=data)
+        self.assertTrue(form.is_valid(), form.errors)
+        company = form.save()
+        self.assertEqual(company.name, "Consultant Corp")
+        self.assertEqual(company.disciplines.count(), 2)
+        self.assertIn(self.discipline1, company.disciplines.all())
+        self.assertIn(self.discipline2, company.disciplines.all())
+        self.assertNotIn(self.discipline3, company.disciplines.all())

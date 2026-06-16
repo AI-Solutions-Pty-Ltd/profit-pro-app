@@ -404,6 +404,15 @@ class DisciplineFactory(DjangoModelFactory):
     name = Sequence(lambda n: f"Discipline {n}")
 
 
+class ProjectDisciplineFactory(DjangoModelFactory):
+    """Factory for ProjectDiscipline model."""
+
+    class Meta:
+        model = "Project.ProjectDiscipline"
+
+    name = Sequence(lambda n: f"Project Discipline {n}")
+
+
 class LabourEntityFactory(DjangoModelFactory):
     """Factory for LabourEntity model."""
 

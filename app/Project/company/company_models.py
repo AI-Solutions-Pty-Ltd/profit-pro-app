@@ -69,6 +69,12 @@ class Company(BaseModel):
         blank=True,
         related_name="consultants",
     )
+    disciplines = models.ManyToManyField(
+        "Project.ProjectDiscipline",
+        blank=True,
+        related_name="companies",
+        help_text="Disciplines of expertise for this company (if consultant)",
+    )
 
     if TYPE_CHECKING:
         contractor_projects: QuerySet["Project"]
