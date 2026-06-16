@@ -71,15 +71,71 @@
             {% endif %}
         </form>
     </div>
-    <!-- Data Table -->
+    <!-- Variance by Section -->
+    {% if section_summary %}
+        <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
+            <h2 class="text-sm font-semibold text-gray-900 mb-1">Variance by Section</h2>
+            <p class="text-xs text-gray-500 mb-3">Sections ranked by the size of their variance — highest risk first.</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-xs whitespace-nowrap">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Section</th>
+                            <th class="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ amount_a_label }}</th>
+                            <th class="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ amount_b_label }}</th>
+                            <th class="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Variance</th>
+                            <th class="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">% Variance</th>
+                            <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[200px]">Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for g in section_summary %}
+                            <tr class="hover:bg-gray-50/50">
+                                <td class="px-3 py-1.5 font-medium text-gray-800">
+                                    <a href="#section-{{ g.section|slugify }}"
+                                       class="hover:text-indigo-600 hover:underline">{{ g.section }}</a>
+                                </td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ g.total_a|currency }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700 font-medium">{{ g.total_b|currency }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums font-semibold {% if g.variance_amount != None %}{% if g.variance_amount > 0 %}text-red-600{% elif g.variance_amount < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                    {{ g.variance_amount|currency }}
+                                </td>
+                                <td class="px-3 py-1.5 text-right tabular-nums font-semibold {% if g.variance_pct != None %}{% if g.variance_pct > 0 %}text-red-600{% elif g.variance_pct < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                    {{ g.variance_pct|pct }}
+                                </td>
+                                <td class="px-3 py-1.5">
+                                    <div class="h-2 w-full rounded bg-gray-100">
+                                        <div class="h-2 rounded {% if g.variance_amount != None and g.variance_amount > 0 %}bg-red-500{% elif g.variance_amount != None and g.variance_amount < 0 %}bg-green-500{% else %}bg-gray-300{% endif %}"
+                                             style="width: {{ g.bar_pct }}%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                            <td class="px-3 py-2 text-gray-900">All Sections</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_a|currency }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-indigo-700">{{ total_b|currency }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums {% if total_variance != None %}{% if total_variance > 0 %}text-red-600{% elif total_variance < 0 %}text-green-600{% else %}text-gray-900{% endif %}{% endif %}">
+                                {{ total_variance|currency }}
+                            </td>
+                            <td class="px-3 py-2 text-right tabular-nums {% if total_variance_pct != None %}{% if total_variance_pct > 0 %}text-red-600{% elif total_variance_pct < 0 %}text-green-600{% else %}text-gray-900{% endif %}{% endif %}">
+                                {{ total_variance_pct|pct }}
+                            </td>
+                            <td class="px-3 py-2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+    <!-- Data Table (grouped by section) -->
     <div class="bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
             <table class="min-w-full text-xs whitespace-nowrap">
                 <thead>
                     <tr class="border-b border-gray-200">
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[180px]">
-                            Structure
-                        </th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
                             Bill No.
                         </th>
@@ -113,37 +169,56 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    {% for row in report_rows %}
-                        <tr class="hover:bg-gray-50/50">
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[180px]"
-                                title="{{ row.section }}">{{ row.section }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
-                                title="{{ row.bill_no }}">{{ row.bill_no }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[280px]"
-                                title="{{ row.description }}">{{ row.description }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.amount_a|currency }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700 font-medium">{{ row.amount_b|currency }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_amount != None %}{% if row.variance_amount > 0 %}text-red-600{% elif row.variance_amount < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
-                                {{ row.variance_amount|currency }}
+                    {% for group in section_groups %}
+                        <tr id="section-{{ group.section|slugify }}"
+                            class="bg-gray-100 scroll-mt-20">
+                            <td colspan="10" class="px-3 py-2 font-semibold text-gray-800">{{ group.section }}</td>
+                        </tr>
+                        {% for row in group.rows %}
+                            <tr class="hover:bg-gray-50/50">
+                                <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
+                                    title="{{ row.bill_no }}">{{ row.bill_no }}</td>
+                                <td class="px-3 py-1.5 text-gray-700 truncate max-w-[280px]"
+                                    title="{{ row.description }}">{{ row.description }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.amount_a|currency }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700 font-medium">{{ row.amount_b|currency }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_amount != None %}{% if row.variance_amount > 0 %}text-red-600{% elif row.variance_amount < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                    {{ row.variance_amount|currency }}
+                                </td>
+                                <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_pct != None %}{% if row.variance_pct > 0 %}text-red-600{% elif row.variance_pct < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                    {{ row.variance_pct|pct }}
+                                </td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.materials_pct|pct }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.labour_pct|pct }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.plant_pct|pct }}</td>
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.preliminary_pct|pct }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="border-t border-gray-200 bg-gray-50/60 font-medium">
+                            <td class="px-3 py-1.5 text-gray-700" colspan="2">Subtotal — {{ group.section }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-900">{{ group.total_a|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700">{{ group.total_b|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums {% if group.variance_amount != None %}{% if group.variance_amount > 0 %}text-red-600{% elif group.variance_amount < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                {{ group.variance_amount|currency }}
                             </td>
-                            <td class="px-3 py-1.5 text-right tabular-nums font-medium {% if row.variance_pct != None %}{% if row.variance_pct > 0 %}text-red-600{% elif row.variance_pct < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
-                                {{ row.variance_pct|pct }}
+                            <td class="px-3 py-1.5 text-right tabular-nums {% if group.variance_pct != None %}{% if group.variance_pct > 0 %}text-red-600{% elif group.variance_pct < 0 %}text-green-600{% else %}text-gray-500{% endif %}{% endif %}">
+                                {{ group.variance_pct|pct }}
                             </td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.materials_pct|pct }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.labour_pct|pct }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.plant_pct|pct }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.preliminary_pct|pct }}</td>
+                            <td class="px-3 py-1.5"></td>
+                            <td class="px-3 py-1.5"></td>
+                            <td class="px-3 py-1.5"></td>
+                            <td class="px-3 py-1.5"></td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="11" class="px-3 py-8 text-center text-gray-500">No data available for this report.</td>
+                            <td colspan="10" class="px-3 py-8 text-center text-gray-500">No data available for this report.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
-                {% if report_rows %}
+                {% if section_groups %}
                     <tfoot>
                         <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                            <td class="px-3 py-2 text-gray-900" colspan="3">Totals</td>
+                            <td class="px-3 py-2 text-gray-900" colspan="2">Totals</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_a|currency }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-indigo-700">{{ total_b|currency }}</td>
                             <td class="px-3 py-2 text-right tabular-nums {% if total_variance != None %}{% if total_variance > 0 %}text-red-600{% elif total_variance < 0 %}text-green-600{% else %}text-gray-900{% endif %}{% endif %}">

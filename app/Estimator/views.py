@@ -980,7 +980,9 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get("form", MaterialForm())
+        context["form"] = context.get(
+            "form", MaterialForm(project=self.get_project())
+        )
         project_materials = ProjectMaterial.objects.filter(project=self.get_project())
         context["units"] = (
             project_materials.exclude(unit="")
@@ -1024,7 +1026,7 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
             )
 
         # Default: add material form
-        form = MaterialForm(request.POST)
+        form = MaterialForm(request.POST, project=self.get_project())
         if form.is_valid():
             obj = form.save(commit=False)
             obj.project = self.get_project()
@@ -1580,6 +1582,10 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
         total_a = Decimal("0")
         total_b = Decimal("0")
         report_rows = []
+        # Group rows by section so we can show per-section subtotals and a
+        # section-level variance comparison. Insertion order follows the
+        # queryset (BoQ order), matching the flat detail table.
+        section_map: dict[str, dict] = {}
 
         for item in context["items"]:
             amount_a, amount_b = self._get_amounts(item, report_type)
@@ -1606,24 +1612,71 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
             if amount_b:
                 total_b += amount_b
 
-            report_rows.append(
-                {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
-                    "description": item.description,
-                    "amount_a": amount_a,
-                    "amount_b": amount_b,
-                    "variance_amount": variance_amt,
-                    "variance_pct": variance_pct,
-                    "materials_pct": mat_pct,
-                    "labour_pct": lab_pct,
-                    "plant_pct": plant_pct,
-                    "preliminary_pct": prelim_pct,
+            row = {
+                "section": item.section,
+                "bill_no": item.bill_no,
+                "description": item.description,
+                "amount_a": amount_a,
+                "amount_b": amount_b,
+                "variance_amount": variance_amt,
+                "variance_pct": variance_pct,
+                "materials_pct": mat_pct,
+                "labour_pct": lab_pct,
+                "plant_pct": plant_pct,
+                "preliminary_pct": prelim_pct,
+            }
+            report_rows.append(row)
+
+            section_key = item.section or "—"
+            group = section_map.get(section_key)
+            if group is None:
+                group = {
+                    "section": section_key,
+                    "rows": [],
+                    "total_a": Decimal("0"),
+                    "total_b": Decimal("0"),
                 }
-            )
+                section_map[section_key] = group
+            group["rows"].append(row)
+            if amount_a:
+                group["total_a"] += amount_a
+            if amount_b:
+                group["total_b"] += amount_b
+
+        # Finalise per-section variance.
+        section_groups = list(section_map.values())
+        for group in section_groups:
+            var_amt, var_pct = calculate_variance(group["total_a"], group["total_b"])
+            group["variance_amount"] = var_amt
+            group["variance_pct"] = var_pct
+
+        # Section comparison panel: sort by magnitude of variance so the
+        # sections carrying the most risk surface first, and size a bar
+        # relative to the largest swing for an at-a-glance read.
+        max_abs_variance = max(
+            (
+                abs(g["variance_amount"])
+                for g in section_groups
+                if g["variance_amount"] is not None
+            ),
+            default=Decimal("0"),
+        )
+        section_summary = sorted(
+            section_groups,
+            key=lambda g: abs(g["variance_amount"] or Decimal("0")),
+            reverse=True,
+        )
+        for group in section_summary:
+            var_amt = group["variance_amount"]
+            if var_amt is not None and max_abs_variance > 0:
+                group["bar_pct"] = int(abs(var_amt) / max_abs_variance * 100)
+            else:
+                group["bar_pct"] = 0
 
         total_variance, total_variance_pct = calculate_variance(total_a, total_b)
         context["report_rows"] = report_rows
+        context["section_groups"] = section_groups
+        context["section_summary"] = section_summary
         context["total_a"] = total_a
         context["total_b"] = total_b
         context["total_variance"] = total_variance
@@ -6434,8 +6487,10 @@ class ContractorMaterialListView(ContractorLibraryMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = context.get("form", ContractorMaterialForm())
         company = self.get_company()
+        context["form"] = context.get(
+            "form", ContractorMaterialForm(company=company)
+        )
         all_materials = ContractorMaterial.objects.filter(company=company)
         context["units"] = (
             all_materials.exclude(unit="")
@@ -6471,7 +6526,7 @@ class ContractorMaterialListView(ContractorLibraryMixin, ListView):
             )
             return redirect(reverse("estimator:ctr_materials"))
 
-        form = ContractorMaterialForm(request.POST)
+        form = ContractorMaterialForm(request.POST, company=self.get_company())
         if form.is_valid():
             obj = form.save(commit=False)
             obj.company = self.get_company()
