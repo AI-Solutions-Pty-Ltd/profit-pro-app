@@ -118,8 +118,8 @@
                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         </th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Item Code</th>
-                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Trade Code</th>
-                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Description</th>
+                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500 min-w-[220px]">Trade Code</th>
+                        <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500 min-w-[380px]">Description</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Unit</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Material</th>
                         <th class="px-3 py-3 text-left font-semibold uppercase text-xs tracking-wider text-gray-500">Labour &amp; Plant</th>
@@ -144,7 +144,7 @@
                                        data-field="item_code"
                                        value="{{ e.item_code }}">
                             </td>
-                            <td class="px-2 py-1.5">
+                            <td class="px-2 py-1.5 min-w-[220px]">
                                 <select class="entry-edit-select w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
                                         data-entry-id="{{ e.id }}"
                                         data-field="trade_code">
@@ -157,7 +157,7 @@
                                     {% endfor %}
                                 </select>
                             </td>
-                            <td class="px-2 py-1.5 min-w-[260px]">
+                            <td class="px-2 py-1.5 min-w-[380px]">
                                 <input type="text"
                                        class="entry-edit-input w-full rounded border-gray-300 text-xs focus:border-indigo-500 focus:ring-indigo-500"
                                        data-entry-id="{{ e.id }}"
