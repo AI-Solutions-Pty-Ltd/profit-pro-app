@@ -2278,6 +2278,16 @@ def sync_boq_from_lineitems(project):
         section_name = li.bill.structure.name if li.bill and li.bill.structure else ""
         bill_name = li.bill.name if li.bill else ""
 
+        # ``is_work`` is False whenever a line item has no total price, which
+        # also covers measurable items that simply haven't been rated yet
+        # (quantity present, rate blank). Treat a row as a section header only
+        # when it is a genuine heading — no quantity and no unit. An unrated
+        # work item keeps its editable BoQ row so it stays visible on the
+        # Output BoQ and can still be priced.
+        is_heading = (
+            not li.is_work and not li.budgeted_quantity and not li.unit_measurement
+        )
+
         baseline_fields = {
             "section": section_name,
             "bill_no": bill_name,
@@ -2287,7 +2297,7 @@ def sync_boq_from_lineitems(project):
             "unit": li.unit_measurement or "",
             "contract_quantity": li.budgeted_quantity,
             "contract_rate": li.unit_price,
-            "is_section_header": not li.is_work,
+            "is_section_header": is_heading,
         }
 
         if li.pk in existing:
