@@ -116,6 +116,31 @@ Verification:
   - `.venv\Scripts\python.exe -m pytest app/Consultant/tests/test_stakeholder_role_views.py -v`
 - Result: PASS
 
+---
+
+### Step 1 (Column Reordering): Update SVG icon attributes in report config template
+- **Files**: [report_config.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/report_config.html)
+- **Change**: Added explicit `width="16"`, `height="16"`, and `stroke-width="2"` to the Up/Down SVG buttons inside `renderColumns()`.
+- **Verification**: Verified code changes successfully modified.
+- **Result**: PASS
+
+---
+
+### Step 2 (Column Reordering): Enhance UX styling and button tooltips
+- **Files**: [report_config.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/report_config.html)
+- **Change**: Added `title="Move Up"` / `title="Move Down"` tooltips and `hover:bg-gray-100 rounded-md` styles to the Up/Down button HTML templates.
+- **Verification**: Verified markup changes are present in template.
+- **Result**: PASS
+
+---
+
+### Step 3 (Column Reordering): Verify and expand unit test coverage
+- **Files**: [test_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/tests/test_views.py)
+- **Change**: Expanded `test_save_report_config_success` to assert that custom column reordering is saved correctly and that `get_column_config()` returns the columns in the correct custom order.
+- **Verification**: Run pytest `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -v`.
+- **Result**: PASS
+
+
 
 
 
