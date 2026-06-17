@@ -1,87 +1,69 @@
-# Superpowers Plan: Refactor Consultants to Support Multiple Consultants
+# Goal
+Refactor the stakeholder Company Details update forms (Client, Contractor, and Lead Consultant) to replace the simple `Company Users` multi-select checkbox list with an interactive **Company Team Members** table displaying users, contacts, project-specific roles, and actions. Add user invitation and role allocation controls.
 
-## Goal
-Refactor consultants in the application to support assigning multiple consultant companies to a project, separating them into Lead Consultants and regular Consultants.
+# Assumptions
+- Django virtual environment is active.
+- `ProjectCompanyUserRole` model and migration `0096` are already set up and functioning.
+- The templates are styled using TailwindCSS.
 
-## Assumptions
-- Virtual environment `.venv` exists and contains all required django/pytest packages.
-- Pytest is used for testing.
-- The project has existing migrations that we can append to.
+# Plan
 
-## Plan
+### 1. Step 1: Create `CompanyUserInviteForm`
+- **Files**: `app/Consultant/forms.py`
+- **Change**: Define `CompanyUserInviteForm` containing `email`, `first_name`, `last_name`, and `primary_contact` fields (similar to `ClientUserInviteForm`).
+- **Verify**: Run `ruff check app/Consultant/forms.py` to ensure it passes linting.
 
-### 1. Extend Company Type Choices
-- **Files**: [company_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/company/company_models.py)
-- **Change**: Add `CONSULTANT = "CONSULTANT", "Consultant"` to the `Company.Type` choices.
-- **Verify**: Inspect the file and run a quick python shell verification:
-  ```bash
-  .venv\Scripts\python.exe -c "from app.Project.models import Company; print(Company.Type.CONSULTANT)"
-  ```
+### 2. Step 2: Implement generic `CompanyInviteUserView`
+- **Files**: `app/Consultant/views/stakeholder_role_views.py`
+- **Change**: Implement `CompanyInviteUserView` class. Include permissions check, validation check for existing users, dynamic mapping of Account type/group, email invitation sending logic, and redirection routes.
+- **Verify**: Run `ruff check app/Consultant/views/stakeholder_role_views.py`.
 
-### 2. Add Many-to-Many Field to Project Model
-- **Files**: [projects_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/projects_models.py)
-- **Change**: 
-  - Add `consultants` ManyToManyField to `Project` model (pointing to `Company`).
-  - Add a `@property` for `lead_consultant` returning the first company of type `LEAD_CONSULTANT` for backwards compatibility.
-  - Temporarily keep the `lead_consultant` ForeignKey field in the DB to write a data migration.
-- **Verify**: Run `makemigrations` to generate schema changes.
+### 3. Step 3: Create template `company_invite_user.html`
+- **Files**: [NEW] `app/Consultant/templates/stakeholder_role/company_invite_user.html`
+- **Change**: Create a Tailwind-styled invitation form matching standard visual design.
+- **Verify**: Inspect HTML layout code or check file existence.
 
-### 3. Data Migration and ForeignKey Removal
-- **Files**: [projects_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/projects_models.py), migration files
-- **Change**: 
-  - Create a migration to add the ManyToMany relationship.
-  - Write a data migration script to copy existing `lead_consultant_id` values for all projects to the new ManyToMany relation.
-  - Remove `lead_consultant` ForeignKey from the `Project` model.
-  - Generate the final schema migration to drop the old `lead_consultant` ForeignKey column.
-- **Verify**: Run `.venv\Scripts\python.exe manage.py migrate` to apply all migrations and verify no errors.
+### 4. Step 4: Register the invitation URL
+- **Files**: `app/Consultant/urls/stakeholder_role_urls.py`
+- **Change**: Add route for `company-invite-user`.
+- **Verify**: Check file content/routes.
 
-### 4. Update Forms
-- **Files**: [forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/forms/forms.py)
-- **Change**:
-  - Update `ProjectLeadConsultantForm` to work with ManyToMany (allowing selection of lead consultants).
-  - Create a new `ProjectConsultantForm` for assigning regular consultants.
-  - Update `LeadConsultantQuickCreateForm` if necessary to handle the type properly.
-- **Verify**: Verify forms validate and return correct querysets.
-
-### 5. Update Views and URLs
-- **Files**: 
-  - [project_lead_consultant_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/project_lead_consultant_views.py)
-  - [project_lead_consultant_urls.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/urls/project_lead_consultant_urls.py)
-  - [lead_consultant_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/lead_consultant_management_views.py)
-- **Change**:
-  - Update `ProjectAllocateLeadConsultantView` and `ProjectLeadConsultantRemoveView` to add/remove to `project.consultants` instead of setting `project.lead_consultant`.
-  - Add new views `ProjectAllocateConsultantView` and `ProjectConsultantRemoveView` for regular consultants.
-  - Update management list, create, and update views to support both `LEAD_CONSULTANT` and `CONSULTANT` types.
-  - Add URL patterns for regular consultant allocation and removal.
-- **Verify**: Check URL routing and ensure no view crashes.
-
-### 6. Update Templates
+### 5. Step 5: Redesign and refactor forms and views context
 - **Files**:
-  - [project_setup.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/project_setup.html)
-  - [lead_consultant_list.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/lead_consultant/lead_consultant_list.html)
-  - [allocate_lead_consultant_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/lead_consultant/allocate_lead_consultant_form.html)
-- **Change**:
-  - Update `project_setup.html`'s "Consultant Management" card to display all assigned Lead Consultants and Consultants, along with the two allocation buttons (`+ Assign Lead Consultant` and `+ Assign Consultant`) and remove links for each company.
-  - Update `lead_consultant_list.html` to manage both lead and regular consultant companies.
-- **Verify**: Load the project setup page and verify correct UI rendering.
+  - `app/Consultant/views/client_management_views.py`
+  - `app/Consultant/views/contractor_management_views.py`
+  - `app/Consultant/views/lead_consultant_management_views.py`
+  - `app/Consultant/views/stakeholder_role_views.py`
+- **Change**: In `ClientUpdateView`, `ContractorUpdateView`, and `LeadConsultantUpdateView`, override `get_context_data` to fetch associated users and their roles on the current project. Build a list of members. Also, in `ProjectCompanyUserRoleAllocateView`, support pre-selecting the `user` field from `request.GET.get('user')`.
+- **Verify**: Run `ruff check` on the views.
 
-### 7. Update and Run Tests
+### 6. Step 6: Hide `users` field from forms on edit
 - **Files**:
-  - [test_allocation_fixes.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/tests/test_allocation_fixes.py)
-  - [test_lead_consultant_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/tests/test_lead_consultant_views.py)
-- **Change**: Update the unit tests to mock and test ManyToMany consultant assignment and filtering.
-- **Verify**: Run all tests:
-  ```bash
-  .venv\Scripts\python.exe -m pytest app/Consultant/tests/
-  ```
+  - `app/Project/forms/forms.py`
+  - `app/Project/company/company_forms.py`
+- **Change**: In `ClientForm` and `CompanyForm` `__init__` methods, pop the `users` field if `self.instance.pk` is present, to prevent it from rendering in `form|crispy`.
+- **Verify**: Run `ruff check` on the forms.
 
-## Risks & mitigations
-- **Risk**: Database query failure in other modules that expect `project.lead_consultant` as an ORM relation.
-  - *Mitigation*: Adding the `@property` handles direct attribute access. Any DB query filters (`lead_consultant=...`) will be refactored to query `consultants=...`.
-- **Risk**: Data loss during migration.
-  - *Mitigation*: The data migration will be fully tested and run before the schema column is deleted.
+### 7. Step 7: Refactor the templates to display the Team Members table
+- **Files**:
+  - `app/Consultant/templates/client/client_form.html`
+  - `app/Consultant/templates/contractor/contractor_form.html`
+  - `app/Consultant/templates/lead_consultant/lead_consultant_form.html`
+- **Change**:
+  - Render the **Company Team Members** table under the banking details section.
+  - Add columns: `User`, `Contact`, `Role`, and `Action`.
+  - Add buttons for **Invite User** and **Assign Role**.
+- **Verify**: Check rendering of the page or run tests.
 
-## Rollback plan
-- Revert git changes using `git checkout -- .`.
-- Roll back migration using `.venv\Scripts\python.exe manage.py migrate Project <previous_migration_name>`.
+### 8. Step 8: Write unit and integration tests
+- **Files**:
+  - `app/Consultant/tests/test_stakeholder_role_views.py`
+- **Change**: Add test cases for the invitation view, pre-selecting user initial data in allocation view, and verifying the template rendering includes the team members table.
+- **Verify**: Run `.venv\Scripts\python.exe -m pytest app/Consultant/tests/test_stakeholder_role_views.py -v`.
 
+# Risks & mitigations
+- **Duplicate relation database errors**: Mitigation: Check if the user is already associated with the company in `CompanyInviteUserView.form_valid`.
+- **Pre-selecting user fails**: Mitigation: Override `get_initial` in `ProjectCompanyUserRoleAllocateView` to fetch and set `initial['user']` from query parameters.
+
+# Rollback plan
+- Use git stash or git restore on modified files to revert to the initial state.

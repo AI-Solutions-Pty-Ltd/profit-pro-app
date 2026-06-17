@@ -13,6 +13,7 @@ from .views import (
     HelpCenterView,
     HomeView,
     favicon_view,
+    serve_media,
 )
 
 urlpatterns = (
@@ -56,6 +57,7 @@ urlpatterns = (
             include("app.Planning.urls", namespace="planning"),
         ),
         path("estimator/", include("app.Estimator.urls", namespace="estimator")),
+        path("media/<path:path>", serve_media, name="serve_media"),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
