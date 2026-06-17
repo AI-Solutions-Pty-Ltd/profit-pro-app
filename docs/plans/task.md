@@ -4,3 +4,4 @@
 | **TSK-02** | Brainstorm report column heading reordering | [x] | Verify brainstorm.md exists in artifacts/superpowers/ |
 | **TSK-03** | Fix reorder icon SVG rendering on Report Column Customization page | [x] | Verify the gray Up/Down chevron icons show correctly in Actions column |
 | **TSK-04** | Clean up test_views.py to remove temporary debug failing test | [x] | `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -v` |
+| **TSK-05** | Restyle customization page using DaisyUI and Heroicons, push and create PR | [x] | Verify PR #266 is created to develop |
