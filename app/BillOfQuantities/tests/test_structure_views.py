@@ -437,8 +437,12 @@ class TestDownloadBOQTemplateView(TestCase):
             == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         import re
+
         content_disp = response["Content-Disposition"]
-        match = re.search(r'attachment; filename="(.+?) -project-setup -(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.xlsx"', content_disp)
+        match = re.search(
+            r'attachment; filename="(.+?) -project-setup -(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.xlsx"',
+            content_disp,
+        )
         assert match is not None
         assert match.group(1) == self.project.name
         assert len(b"".join(response.streaming_content)) > 0
@@ -450,6 +454,7 @@ class TestDownloadBOQTemplateView(TestCase):
 
         # Load the workbook from the streaming content using openpyxl
         import io
+
         import openpyxl
 
         file_content = b"".join(response.streaming_content)
@@ -608,6 +613,37 @@ class TestBOQExcelImporter(TestCase):
         created_count, errors = import_boq_from_excel(self.project, excel_file)
 
         # It should succeed because the empty row is skipped!
+        assert len(errors) == 0
+        assert created_count == 1
+
+    def test_import_with_partially_empty_formula_rows(self):
+        """Test import succeeds and skips empty rows containing formula placeholders (like Amount = 0)."""
+        data = [
+            {
+                "Structure": "Phase 1",
+                "Bill No.": "001",
+                "Item No.": "1.1",
+                "Description": "Trenching",
+                "Unit": "m³",
+                "Quantity": 10,
+                "Rate": 150.0,
+                "Amount": 1500.0,
+            },
+            # Empty row in core fields, but has formula calculation 0.0 in Amount
+            {
+                "Structure": "",
+                "Bill No.": "",
+                "Item No.": "",
+                "Description": "",
+                "Unit": "",
+                "Quantity": "",
+                "Rate": "",
+                "Amount": 0.0,
+            },
+        ]
+        excel_file = self._create_excel_file(data)
+        created_count, errors = import_boq_from_excel(self.project, excel_file)
+
         assert len(errors) == 0
         assert created_count == 1
 
