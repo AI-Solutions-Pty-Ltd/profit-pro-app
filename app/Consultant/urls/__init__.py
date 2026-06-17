@@ -31,4 +31,8 @@ urlpatterns = [
         "lead-consultant-management/",
         include("app.Consultant.urls.lead_consultant_management_urls"),
     ),
+    path(
+        "stakeholder-role/",
+        include("app.Consultant.urls.stakeholder_role_urls"),
+    ),
 ]

@@ -146,6 +146,10 @@ def import_boq_from_excel(project, excel_file):
             ):
                 continue
 
+            # Skip rows where core identifying fields are completely empty (e.g. formula placeholders)
+            if not any([structure_name, bill_name, item_number, description]):
+                continue
+
             # Clean "rate only" or empty values
             is_rate_only = str(budgeted_quantity).lower().strip() == "rate only"
 

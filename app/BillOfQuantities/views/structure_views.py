@@ -307,10 +307,17 @@ class DownloadBOQTemplateView(SubscriptionAndRoleRequiredMixin, View):
                 )
             )
 
+        project = self.get_project()
+        from django.utils import timezone
+
+        current_date_time = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+        safe_project_name = "".join(
+            c for c in project.name if c.isalnum() or c in (" ", "-", "_")
+        ).strip()
+        filename = f"{safe_project_name} -project-setup -{current_date_time}.xlsx"
+
         response = FileResponse(open(template_path, "rb"), as_attachment=True)
-        response["Content-Disposition"] = (
-            'attachment; filename="Project set-up Template.xlsx"'
-        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
         response["Content-Type"] = (
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )

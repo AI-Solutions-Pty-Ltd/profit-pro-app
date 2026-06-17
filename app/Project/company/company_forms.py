@@ -147,18 +147,23 @@ class CompanyForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if "tax_number" in self.fields:
             self.fields["tax_number"].required = False
-        users_field = cast(forms.ModelMultipleChoiceField, self.fields["users"])
-        consultants_field = cast(
-            forms.ModelMultipleChoiceField,
-            self.fields["consultants"],
-        )
 
-        users_field.queryset = Account.objects.exclude(
-            first_name="", last_name=""
-        ).order_by("first_name", "email")
-        consultants_field.queryset = Account.objects.exclude(
-            first_name="", last_name=""
-        ).order_by("first_name", "email")
+        if self.instance and self.instance.pk:
+            self.fields.pop("users", None)
+        else:
+            users_field = cast(forms.ModelMultipleChoiceField, self.fields["users"])
+            users_field.queryset = Account.objects.exclude(
+                first_name="", last_name=""
+            ).order_by("first_name", "email")
+
+        if "consultants" in self.fields:
+            consultants_field = cast(
+                forms.ModelMultipleChoiceField,
+                self.fields["consultants"],
+            )
+            consultants_field.queryset = Account.objects.exclude(
+                first_name="", last_name=""
+            ).order_by("first_name", "email")
 
         # Apply masking to initial values when editing an existing instance
         if self.instance and self.instance.pk:

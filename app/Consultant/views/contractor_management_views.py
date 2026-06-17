@@ -129,6 +129,28 @@ class ContractorUpdateView(ContractorMixin, UpdateView):
         kwargs["contractor"] = True
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        company = self.get_object()
+        project = self.get_project()
+
+        company_users = company.users.all().order_by("first_name", "last_name")
+
+        from app.Project.models import ProjectCompanyUserRole
+
+        roles = ProjectCompanyUserRole.objects.filter(
+            project=project, company=company
+        ).select_related("user")
+
+        user_roles = {role.user_id: role for role in roles}
+
+        team_members = []
+        for user in company_users:
+            team_members.append({"user": user, "role_obj": user_roles.get(user.pk)})
+
+        context["team_members"] = team_members
+        return context
+
     def form_valid(self, form):
         messages.success(self.request, "Contractor updated successfully.")
         return super().form_valid(form)

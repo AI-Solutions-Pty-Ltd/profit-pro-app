@@ -1,85 +1,68 @@
-# SedgePro Webhook Invitation Flow Walkthrough
+# Walkthrough: Stakeholder Company User & Team Members Form Refactoring
 
-We have successfully designed, built, and verified the secure, idempotent server-to-server webhook endpoint that integrates **SedgePro** payments with **Profit Pro** user invitations.
+We have successfully redesigned and refactored the stakeholder Company Details update forms (Client, Contractor, and Lead Consultant) to replace the basic checkboxes with an interactive **Company Team Members** table. We also implemented generic user invitation and role allocation controls.
 
 ---
 
 ## Technical Accomplishments
 
-### 1. Endpoint Routing
-* **Endpoint Path**: `/users/auth/sedgepro/webhook/`
-* **Route Name**: `users:auth:sedgepro_webhook`
-* **File Modified**: [auth_urls.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/urls/auth_urls.py)
-* **View Mapping**: Configured the route to map directly to our new custom View class `auth_views.SedgeProWebhookView`.
+### 1. View & Form Implementation
+* **Form Creation**: Created `CompanyUserInviteForm` in [forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/forms.py) with email, first name, last name, and primary contact fields.
+* **Invitation View**: Implemented generic `CompanyInviteUserView` class in [stakeholder_role_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/stakeholder_role_views.py) which:
+  - Dynamically sets user types (`Account.Type.CLIENT`, `Account.Type.CONTRACTOR`, or `Account.Type.CONSULTANT`) and Django groups (`consultant` or `contractor`) based on the company type.
+  - Automatically checks if a user is already associated with the company to prevent duplicate link errors.
+  - Triggers email dispatch or falls back gracefully if emails are disabled.
+* **Pre-selection Support**: Overrode `get_initial()` in `ProjectCompanyUserRoleAllocateView` to capture a `?user=<pk>` parameter from the query string and pre-populate the user field.
+* **Context Injection**: Overrode `get_context_data` in `ClientUpdateView`, `ContractorUpdateView`, and `LeadConsultantUpdateView` to inject the list of `team_members` with their project-specific roles.
 
-### 2. View Implementation
-* **Class**: `SedgeProWebhookView`
-* **File Modified**: [auth_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/views/auth_views.py)
-* **Logic Summary**:
-  - **CSRF Bypass**: Applied `csrf_exempt` globally to allow secure, server-to-server headless POST requests.
-  - **Header Authentication**: Securely authenticates incoming requests by validating the `X-SedgePro-API-Key` header against `settings.SEDGEPRO_API_KEY`.
-  - **Payload Validation**: Decodes the JSON payload and validates required `email` and `client_reference` attributes.
-  - **Client Resolution**: Queries the `Company` (Client) organization model using the incoming `client_reference` against the company's `registration_number`.
-  - **Transactional Account Provisioning**: Within a `transaction.atomic()` database context, safely creates new `Account` records using `create_user` (giving them an unusable password and linking them to the `consultant` group) or resolves existing users.
-  - **Client Affiliation**: Appends the resolved account directly to the client company's ManyToMany `users` collection.
-  - **Idempotent Notification Dispatch**:
-    - **For new users**: Dispatches a secure activation email using the `client/password_reset_email.html` template.
-    - **For existing unlinked users**: Associates them with the client organization and dispatches a notification email via `client/client_added_email.html`.
-    - **For existing linked users**: Instantly returns a `200 OK` success payload without executing duplicate actions or dispatching duplicate emails.
+### 2. URL Routes Registration
+* **File Modified**: [stakeholder_role_urls.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/urls/stakeholder_role_urls.py)
+* **New Route**: Registered `company-invite-user` with path `project/<int:project_pk>/company/<int:company_pk>/invite/`.
 
-### 3. API Settings
-* **File Modified**: [base.py](file:///c:/Users/nebst/Projects/profit-pro-app/settings/base.py)
-* **Configuration**: Added the settings configuration variable `SEDGEPRO_API_KEY = os.getenv("SEDGEPRO_API_KEY", "test-sedgepro-key")` to safely ingest API tokens from system environment variables.
+### 3. Form Refactoring (Hiding Legacy Listing)
+* **Files Modified**: [forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/forms/forms.py) and [company_forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/company/company_forms.py).
+* **Logic**: Popped the `users` field from the form fields dictionary during `__init__` if `self.instance.pk` exists. This prevents it from rendering via `{{ form|crispy }}` in edit mode.
 
-### 4. Integration Tests
-* **File Created**: [test_sedgepro_webhook.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/tests/test_sedgepro_webhook.py)
-* **Test Suite Details**:
-  - `test_webhook_unauthorized_missing_header`: Validates authentication blocks requests without headers.
-  - `test_webhook_unauthorized_invalid_key`: Validates blocks on invalid API keys.
-  - `test_webhook_invalid_json`: Handles malformed POST bodies.
-  - `test_webhook_missing_required_fields`: Ensures validation checks for email and client reference.
-  - `test_webhook_company_not_found`: Gracefully rejects invalid client codes.
-  - `test_webhook_success_new_user`: Asserts new accounts are set up correctly, grouped, linked, and activation emails are sent.
-  - `test_webhook_success_existing_user_not_linked`: Asserts existing accounts are linked and notification emails are sent.
-  - `test_webhook_success_existing_user_already_linked`: Asserts idempotent execution prevents double emails.
+### 4. Template Redesign
+* **Files Refactored**:
+  - [client_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/client/client_form.html)
+  - [contractor_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/contractor/contractor_form.html)
+  - [lead_consultant_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/lead_consultant/lead_consultant_form.html)
+  - [company_invite_user.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/stakeholder_role/company_invite_user.html)
+* **Layout**: Added a clean Tailwind-styled HTML table displaying users, primary phone number contacts, allocated roles, and actions (Edit Role, Remove Role, and Assign Role). Add buttons next to/above the table to **Create User** and **Assign Role**.
 
 ---
 
 ## Verification Results
 
-### 1. Webhook Unit Tests
-All 8 integration tests pass with clean outputs:
+### 1. View Integration and CRUD Tests
+All 13 integration test cases in the test suite pass with green checks:
 ```bash
-.venv\Scripts\python.exe -m pytest app/Account/tests/test_sedgepro_webhook.py -v
+.venv\Scripts\python.exe -m pytest app/Consultant/tests/test_stakeholder_role_views.py -v
 ```
 **Results**:
 ```
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_unauthorized_missing_header PASSED
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_unauthorized_invalid_key PASSED
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_invalid_json PASSED
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_missing_required_fields PASSED
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_company_not_found PASSED
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_success_new_user PASSED
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_success_existing_user_not_linked PASSED
-app/Account/tests/test_sedgepro_webhook.py::TestSedgeProWebhookView::test_webhook_success_existing_user_already_linked PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_allocate_user_role_view_get PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_allocate_user_role_view_post_success PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_allocate_user_role_view_post_duplicate_error PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_update_user_role_view_get PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_update_user_role_view_post PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_remove_user_role_view PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_view_permission_denied_for_non_admin PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_company_invite_user_view_get PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_company_invite_user_view_post_new_user_success PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_company_invite_user_view_post_existing_user_success PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_company_invite_user_view_post_duplicate_error PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_preselect_user_allocate_view_get PASSED
+app/Consultant/tests/test_stakeholder_role_views.py::TestStakeholderRoleViews::test_company_update_view_team_members_context PASSED
 
-======================= 8 passed, 9 warnings in 49.07s ========================
+====================== 13 passed, 40 warnings in 52.85s =======================
 ```
 
-### 2. Full Account Suite Checks
-Executing the complete authentication and account model suite ensures no regressions were introduced to related structures:
+### 2. Ruff Linter & Formatter Validation
+Running ruff code quality checks on the modified files returns clean:
 ```bash
-.venv\Scripts\python.exe -m pytest app/Account/tests/
-```
-**Results**:
-```
-================= 87 passed, 39 warnings in 72.32s (0:01:12) ==================
-```
-
-### 3. Syntax Linter Validation
-Running the ruff linter on all modified files returns zero errors:
-```bash
-.venv\Scripts\python.exe -m ruff check app/Account/urls/auth_urls.py app/Account/views/auth_views.py app/Account/tests/test_sedgepro_webhook.py
+.venv\Scripts\python.exe -m ruff check ...
 ```
 **Results**:
 ```
