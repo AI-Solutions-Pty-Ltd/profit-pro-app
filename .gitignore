@@ -227,3 +227,5 @@ test_db.sqlite3
 .agents/
 .agents/rules/
 graphify-out/
+
+scratch/
