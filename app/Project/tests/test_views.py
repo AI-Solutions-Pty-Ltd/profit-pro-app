@@ -32,13 +32,13 @@ class TestProjectReportConfig:
         assert "project/report_config.html" in [t.name for t in response.templates]
 
     def test_save_report_config_success(self, client):
-        """Test successfully saving column configuration."""
+        """Test successfully saving column configuration and verifying resolution order."""
         client.force_login(self.user)
 
         column_data = {
             "columns": [
-                {"id": "item_number", "label": "ITEM CODE", "enabled": True},
                 {"id": "description", "label": "DESC", "enabled": True},
+                {"id": "item_number", "label": "ITEM CODE", "enabled": True},
             ]
         }
 
@@ -52,6 +52,13 @@ class TestProjectReportConfig:
 
         self.project.refresh_from_db()
         assert self.project.column_config == column_data
+
+        # Verify get_column_config() resolves the first two columns in the saved custom order
+        resolved_cols = self.project.get_column_config()
+        assert resolved_cols[0]["id"] == "description"
+        assert resolved_cols[0]["label"] == "DESC"
+        assert resolved_cols[1]["id"] == "item_number"
+        assert resolved_cols[1]["label"] == "ITEM CODE"
 
 
 @pytest.mark.django_db
