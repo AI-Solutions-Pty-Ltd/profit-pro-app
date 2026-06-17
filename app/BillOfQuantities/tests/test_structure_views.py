@@ -436,10 +436,11 @@ class TestDownloadBOQTemplateView(TestCase):
             response["Content-Type"]
             == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        assert (
-            'attachment; filename="Project set-up Template.xlsx"'
-            in response["Content-Disposition"]
-        )
+        import re
+        content_disp = response["Content-Disposition"]
+        match = re.search(r'attachment; filename="(.+?) -project-setup -(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.xlsx"', content_disp)
+        assert match is not None
+        assert match.group(1) == self.project.name
         assert len(b"".join(response.streaming_content)) > 0
 
     def test_download_requires_permission(self):

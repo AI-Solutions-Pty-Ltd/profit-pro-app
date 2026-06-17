@@ -1,76 +1,64 @@
-# Superpowers Brainstorm: Stakeholder User & Role Management
+# Goal
+Refactor the stakeholder Company Details edit/update forms (Client, Contractor, and Lead Consultant) to replace the simple `Company Users` multi-select checkbox list with an interactive **Company Team Members** table. The table should display associated users, their contacts, and their project-specific roles (e.g., Admin/Supervisor/Capturer). Additionally, add user invitation and role allocation controls.
 
-## Goal
-Refactor and improve user management inside the stakeholder submodules (Client Management, Contractor Management, and Consultant Management). The feature must allow assigning users and associating specific roles (Admin, Supervisor, and Capturer) to these submodules (contextualized by project and stakeholder company).
+# Constraints
+1. **Scoping**: The team members table and role actions are only applicable to existing company records (when editing/updating). When creating a new company, the team members section must be hidden/omitted.
+2. **Context**: Company users can be invited and assigned roles specifically in the context of the active project (`project` object from the URL context).
+3. **Security**: Only Project Administrators (authorized via `UserHasProjectRoleGenericMixin`) can access user invites, role allocations, updates, and removals.
+4. **Code Quality**: Follow established patterns: inherit models from `BaseModel`, write Google-style docstrings, write comprehensive pytest test cases, and use model factories.
 
-## Constraints
-1. **Roles defined**: Must support exactly three stakeholder roles: Admin, Supervisor, and Capturer.
-2. **Contextual Scope**: Roles must be assigned per stakeholder company per project (e.g., a user might be a Capturer for Contractor A on Project X, but a Supervisor on Project Y).
-3. **No security regression**: Must respect existing tenant/permission isolation.
-4. **Integration**: Must fit into the existing Django app structure, particularly integrating with the views in [views](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views) where client, contractor, and consultant management is defined.
-5. **No hard-coded values where configurable**: Follow established project conventions for models (inheriting from `BaseModel`, using factories, and testing first).
+# Known context
+1. **Existing Forms & Templates**:
+   - Client form: [client_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/client/client_form.html) (rendered by `ClientUpdateView` using `ClientForm`).
+   - Contractor form: [contractor_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/contractor/contractor_form.html) (rendered by `ContractorUpdateView` using `CompanyForm`).
+   - Lead Consultant form: [lead_consultant_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/lead_consultant/lead_consultant_form.html) (rendered by `LeadConsultantUpdateView` using `ConsultantCompanyForm`).
+2. **Existing Models & Views**:
+   - `ProjectCompanyUserRole` represents stakeholder roles.
+   - Views for CRUD operations on stakeholder roles are in [stakeholder_role_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/stakeholder_role_views.py) and mapped in [stakeholder_role_urls.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/urls/stakeholder_role_urls.py).
+3. **Email Settings**:
+   - Settings in `django.conf.settings` dictate whether emails are sent (`USE_EMAIL` is True/False).
 
-## Known context
-1. **Current Models**:
-   * [Company](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/company/company_models.py#L26) represents the stakeholder companies with `Type` choices (Client, Contractor, Lead Consultant, Consultant).
-   * [Account](file:///c:/Users/nebst/Projects/profit-pro-app/app/Account/models.py#L101) represents the users.
-   * [Project](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/projects_models.py#L42) connects users and companies via `users`, `contractors`, `quantity_surveyors`, `lead_consultants`, `consultants`, etc.
-   * [ProjectRole](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/models/project_roles_models.py#L81) maps general project roles to individual users on a project level, using choices in `Role`.
-2. **Current Views**:
-   * Stakeholder management views are defined in `app/Consultant/views/`:
-     * [client_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/client_management_views.py)
-     * [contractor_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/contractor_management_views.py)
-     * [lead_consultant_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/lead_consultant_management_views.py)
-   * The visual cards for managing these stakeholder assignments are located in [project_setup.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/project_setup.html#L532).
+# Risks
+1. **Redirection Loop / Target Mismatch**: Since three different detail pages (Client, Contractor, Lead Consultant) will link to the user invitation form, the post-invite redirect must dynamically point back to the correct detail page based on the company's type.
+   * *Mitigation*: Dynamically inspect `company.type` in `CompanyInviteUserView`'s success path and redirect accordingly.
+2. **Duplicate Invitations**: Inviting a user who is already associated with the company could cause validation errors or redundant records.
+   * *Mitigation*: Perform an explicit `.exists()` check in `form_valid()` and add an appropriate form field validation error.
+3. **Transaction Rollbacks**: Database-level unique constraint violations can abort the database connection transaction.
+   * *Mitigation*: Ensure user and role allocations check existence before saving to prevent raw `IntegrityError` from bubbling up.
 
-## Risks
-1. **Role Clashes**: Confusing general project-level roles (like `Admin`, `User`) with submodule-specific stakeholder roles (like `Contractor Admin`, `Client Supervisor`).
-   * *Mitigation*: Clearly separate these concepts in both the database (either via separate relationship models or distinct role namespaces) and the UI.
-2. **Permission Bypass**: A stakeholder capturer might find a way to perform supervisor/admin tasks if view permissions are not properly guarded by the new roles.
-   * *Mitigation*: Implement custom class-based view mixins or helper decorators that explicitly check the user's stakeholder role context on the project.
-3. **Data Migration Complexity**: Modifying existing relationships to accommodate roles might break existing project-stakeholder mappings.
-   * *Mitigation*: Keep existing direct ManyToMany associations as fallback or baseline access, and overlay the role mappings dynamically, or create clean migration scripts that initialize existing project users as "Admin" or "Supervisor" by default.
+# Options (2?4)
 
-## Options (2???4)
-
-### Option 1: Submodule-Specific Stakeholder Role Model (Recommended)
-Create a new model `ProjectCompanyUserRole` that acts as a formal link between `Project`, `Company`, `Account`, and a new choice field `role` (choices: Admin, Supervisor, Capturer).
+### Option 1: Dedicated Generic Invitation View + Template Table (Recommended)
+Introduce a generic `CompanyInviteUserView` class in the `stakeholder_role` namespace to handle inviting users for Clients, Contractors, and Consultants.
+- When rendering update views, hide the legacy many-to-many checkboxes `form.users` if `object` is present.
+- Render a Tailwind-styled HTML table for team members, with buttons linking to the new invite view and the existing allocation views.
 * **Pros**:
-  * Extremely clean and modular. Doesn't pollute the general `ProjectRole` model.
-  * Fully supports project-specific and company-specific role scoping.
-  * Straightforward to build dedicated UI forms for adding/editing users and their roles under each stakeholder card.
+  - Extremely clean segregation of concerns.
+  - Fits perfectly into the existing routing structure without polluting individual stakeholder management modules.
+  - High reusability of views and forms.
 * **Cons**:
-  * Requires creating a new table and migrating the database.
+  - Requires writing a new generic view and template.
 
-### Option 2: Expand `ProjectRole` with a Foreign Key to `Company`
-Add a nullable `company` ForeignKey field to the existing `ProjectRole` model. Add new role choices to `Role` (e.g., `STAKEHOLDER_ADMIN`, `STAKEHOLDER_SUPERVISOR`, `STAKEHOLDER_CAPTURER`).
+### Option 2: Inline AJAX/Modal Sub-Form
+Embed the user invitation and role allocation forms directly on the Company edit page using HTML dialogs (Modals) and JavaScript (AJAX) endpoints.
 * **Pros**:
-  * Reuses the existing `ProjectRole` model structure and permission checkers.
-  * Fewer new tables in the database.
+  - Smoother user experience by avoiding full-page transitions.
 * **Cons**:
-  * Pollutes the general `Role` choices with sub-module specific roles.
-  * Can lead to validation complexity (e.g., ensuring a regular `Admin` role does not have a `company` assigned, whereas a `STAKEHOLDER_ADMIN` must have a `company` assigned).
+  - Substantially higher frontend complexity.
+  - Diverges from the existing, standard multi-page FormView architecture used in the codebase.
 
-### Option 3: Use Django's ManyToMany `through` Model on `Company.users`
-Change `Company.users` relation to use a custom `through` model `CompanyUser` containing a `role` field.
-* **Pros**:
-  * Directly embeds roles into the relationship between companies and users.
-* **Cons**:
-  * Roles would be global to the company, not specific to a project. A user would have the same role (e.g., Capturer) for a Contractor company across all projects, which lacks the project-level flexibility that is usually required.
-  * Rewriting an existing simple ManyToMany field to use a `through` model is historically error-prone and complex in Django migrations.
+# Recommendation
+We recommend **Option 1**. It is standard, secure, fits the existing codebase flow perfectly, and is less error-prone than managing inline AJAX states.
 
-## Recommendation
-We recommend **Option 1**. It is the most robust and clean design pattern for stakeholder role context. It avoids polluting general project roles and ensures that a user can have different roles under different projects for the same stakeholder company.
-
-## Acceptance criteria
-1. Introduce a new model `ProjectCompanyUserRole` inheriting from `BaseModel`. It must link:
-   * `project` (ForeignKey to `Project`)
-   * `company` (ForeignKey to `Company`)
-   * `user` (ForeignKey to `Account`)
-   * `role` (CharField with choices: Admin, Supervisor, Capturer)
-2. Define a database unique constraint on `(project, company, user)` to prevent duplicate assignments of the same user under the same company and project.
-3. Update [project_setup.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/project_setup.html) to display the assigned users and their roles under the respective Client, Contractor, and Consultant management cards.
-4. Refactor client, contractor, and consultant allocation views to support adding/updating users and their specific roles.
-5. Implement permission checking decorators or mixins (e.g., `UserHasStakeholderRoleMixin`) to guard actions (e.g., only Admin/Supervisor can certify payments, while Capturers can only save drafts).
-6. Create model factories and comprehensive pytest test cases for the new model and views.
-
+# Acceptance criteria
+1. **Form**: Create `CompanyUserInviteForm` in `app/Consultant/forms.py` with email, first name, last name, and primary contact fields.
+2. **View**: Implement `CompanyInviteUserView` under `app/Consultant/views/stakeholder_role_views.py`. It must:
+   - Restrict access to Project Admins using `UserHasProjectRoleGenericMixin`.
+   - Dynamically set the new user's `Account.type` (Client/Contractor/Consultant) and group (consultant/contractor) depending on the target company type.
+   - Send invitation/notification email if enabled.
+3. **URLs**: Register `company-invite-user` in `app/Consultant/urls/stakeholder_role_urls.py`.
+4. **UI Refactoring**:
+   - In `client_form.html`, `contractor_form.html`, and `lead_consultant_form.html`, hide the `users` field when `object` is present.
+   - Render the **Company Team Members** table with columns: `User` (Name & Email), `Contact` (Phone), `Role`, and `Action` (links for Edit/Remove Role, or Assign Role if no role exists yet).
+   - Add **Invite User** and **Assign Role** buttons.
+5. **Testing**: Add test cases in `app/Consultant/tests/` to verify company user invitations and correct rendering of the team members table.

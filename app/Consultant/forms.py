@@ -3,7 +3,7 @@ from django import forms
 from app.Account.models import Account
 from app.BillOfQuantities.models import PaymentCertificate
 from app.core.Utilities.widgets import SearchableSelectWidget
-from app.Project.models import Company, ProjectCompanyUserRole, StakeholderRole
+from app.Project.models import Company, ProjectCompanyUserRole
 
 
 class PaymentCertificateApprovedDateForm(forms.ModelForm):
@@ -126,3 +126,46 @@ class ProjectCompanyUserRoleForm(forms.ModelForm):
             self.fields["user"].disabled = True
 
 
+class CompanyUserInviteForm(forms.Form):
+    """Form for inviting a user to a stakeholder company."""
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "user@example.com",
+            }
+        ),
+        label="Email Address",
+    )
+    first_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "John",
+            }
+        ),
+        label="First Name",
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "Doe",
+            }
+        ),
+        label="Last Name (Optional)",
+    )
+    primary_contact = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "+27123456789",
+            }
+        ),
+        label="Phone Number",
+    )

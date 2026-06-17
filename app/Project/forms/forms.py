@@ -890,9 +890,12 @@ class ClientForm(forms.ModelForm):
     def __init__(self, *args, contractor=False, client=False, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["users"].queryset = Account.objects.exclude(
-            first_name="", last_name=""
-        ).order_by("first_name", "email")
+        if self.instance and self.instance.pk:
+            self.fields.pop("users", None)
+        else:
+            self.fields["users"].queryset = Account.objects.exclude(
+                first_name="", last_name=""
+            ).order_by("first_name", "email")
         self.fields["consultants"].queryset = Account.objects.exclude(
             first_name="", last_name=""
         ).order_by("first_name", "email")

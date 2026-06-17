@@ -250,3 +250,51 @@ def favicon_view(request):
     if os.path.exists(favicon_path):
         return FileResponse(open(favicon_path, "rb"), content_type="image/x-icon")
     return HttpResponse(status=204)
+
+
+def serve_media(request, path):
+    """
+    Secure media serving view.
+    Only allows authenticated users to access sensitive folders,
+    and validates project access for project-specific files.
+    """
+    from django.conf import settings
+    from django.http import Http404
+    from django.views.static import serve
+    from django.contrib.auth.views import redirect_to_login
+
+    sensitive_prefixes = (
+        "project_documents/",
+        "project_drawings/",
+        "payment_certificates/",
+        "contract_correspondences/",
+        "entity_management/",
+    )
+
+    if any(path.startswith(prefix) for prefix in sensitive_prefixes):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+
+        # Check project membership where applicable
+        parts = path.split("/")
+        if len(parts) >= 2 and parts[0] in (
+            "project_documents",
+            "project_drawings",
+            "contract_correspondences",
+        ):
+            try:
+                project_id = int(parts[1])
+                from app.Project.models import Project, Role
+
+                project = Project.objects.filter(pk=project_id, deleted=False).first()
+                if project:
+                    roles = list(dict(Role.choices).keys())
+                    if not request.user.has_project_role(project, roles):
+                        raise Http404("You do not have permission to access this file.")
+                else:
+                    raise Http404("Project not found.")
+            except ValueError:
+                pass
+
+    return serve(request, path, document_root=settings.MEDIA_ROOT)
+
