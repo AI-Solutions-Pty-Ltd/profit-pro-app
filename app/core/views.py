@@ -296,5 +296,39 @@ def serve_media(request, path):
             except ValueError:
                 pass
 
-    return serve(request, path, document_root=settings.MEDIA_ROOT)
+    response = serve(request, path, document_root=settings.MEDIA_ROOT)
+
+    # Intercept downloads of BOQ documents to force correct download filename format
+    parts = path.split("/")
+    if (
+        len(parts) >= 3
+        and parts[0] == "project_documents"
+        and parts[2] == "BILL_OF_QUANTITIES"
+    ):
+        try:
+            project_id = int(parts[1])
+            from app.Project.models import Project, ProjectDocument
+
+            project = Project.objects.filter(pk=project_id, deleted=False).first()
+            if project:
+                import os
+                from django.utils import timezone
+
+                # Try to find the document to use its creation timestamp, fallback to current time
+                doc = ProjectDocument.objects.filter(project=project, file=path).first()
+                if doc:
+                    date_str = doc.created_at.strftime("%Y-%m-%d_%H-%M-%S")
+                else:
+                    date_str = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+                ext = os.path.splitext(parts[-1])[1]
+                safe_project_name = "".join(
+                    c for c in project.name if c.isalnum() or c in (" ", "-", "_")
+                ).strip()
+                filename = f"{safe_project_name} -project-setup -{date_str}{ext}"
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        except Exception:
+            pass
+
+    return response
 
