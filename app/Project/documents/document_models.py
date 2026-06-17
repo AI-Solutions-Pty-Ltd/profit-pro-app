@@ -48,8 +48,16 @@ class ProjectDocument(BaseModel):
     def upload_to(self, filename: str) -> str:
         """Generate upload path for document files."""
         import os
+        from django.utils import timezone
 
         base_filename = os.path.basename(filename)
+        if self.category == "BILL_OF_QUANTITIES":
+            ext = os.path.splitext(base_filename)[1]
+            date_str = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+            safe_project_name = "".join(
+                c for c in self.project.name if c.isalnum() or c in (" ", "-", "_")
+            ).strip()
+            base_filename = f"{safe_project_name} -project-setup -{date_str}{ext}"
         return f"project_documents/{self.project.pk}/{self.category}/{base_filename}"
 
     project = models.ForeignKey(
