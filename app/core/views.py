@@ -259,9 +259,9 @@ def serve_media(request, path):
     and validates project access for project-specific files.
     """
     from django.conf import settings
+    from django.contrib.auth.views import redirect_to_login
     from django.http import Http404
     from django.views.static import serve
-    from django.contrib.auth.views import redirect_to_login
 
     sensitive_prefixes = (
         "project_documents/",
@@ -312,6 +312,7 @@ def serve_media(request, path):
             project = Project.objects.filter(pk=project_id, deleted=False).first()
             if project:
                 import os
+
                 from django.utils import timezone
 
                 # Try to find the document to use its creation timestamp, fallback to current time
@@ -331,4 +332,3 @@ def serve_media(request, path):
             pass
 
     return response
-

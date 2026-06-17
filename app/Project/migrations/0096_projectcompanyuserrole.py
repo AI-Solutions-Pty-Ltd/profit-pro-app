@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0095_populate_standard_disciplines"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

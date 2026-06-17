@@ -1,11 +1,12 @@
 from typing import TYPE_CHECKING
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
 from app.core.Utilities.models import BaseModel
 
 if TYPE_CHECKING:
-    from app.Account.models import Account
-    from app.Project.models import Company, Project
+    pass
 
 
 class StakeholderRole(models.TextChoices):

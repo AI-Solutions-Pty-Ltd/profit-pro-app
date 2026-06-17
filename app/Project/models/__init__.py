@@ -82,7 +82,6 @@ __all__ = [
     "Project",
     "ProjectCompanyUserRole",
     "StakeholderRole",
-
     "Category",
     "SubCategory",
     "Group",

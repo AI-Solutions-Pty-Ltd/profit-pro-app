@@ -151,8 +151,10 @@ class TestProjectDocumentModel:
     @pytest.mark.django_db
     def test_project_document_boq_upload_name(self):
         """Test that uploading a BILL_OF_QUANTITIES document renames the file correctly."""
-        import factory
         import re
+
+        import factory
+
         from app.Project.models import ProjectDocument
         from app.Project.tests.factories import ProjectDocumentFactory, ProjectFactory
 
@@ -160,10 +162,12 @@ class TestProjectDocumentModel:
         doc = ProjectDocumentFactory.create(
             project=project,
             category=ProjectDocument.DocumentCategory.BILL_OF_QUANTITIES,
-            file=factory.django.FileField(filename="my_boq.xlsx")
+            file=factory.django.FileField(filename="my_boq.xlsx"),
         )
-        assert re.search(
-            r'project_documents/\d+/BILL_OF_QUANTITIES/Super_Project_-project-setup_-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.xlsx$',
-            doc.file.name
-        ) is not None
-
+        assert (
+            re.search(
+                r"project_documents/\d+/BILL_OF_QUANTITIES/Super_Project_-project-setup_-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.xlsx$",
+                doc.file.name,
+            )
+            is not None
+        )

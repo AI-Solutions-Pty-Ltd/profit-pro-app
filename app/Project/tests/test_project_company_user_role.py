@@ -1,12 +1,13 @@
 import pytest
 from django.db import IntegrityError
+
+from app.Account.tests.factories import AccountFactory
 from app.Project.models import ProjectCompanyUserRole, StakeholderRole
 from app.Project.tests.factories import (
     ClientFactory,
     ProjectCompanyUserRoleFactory,
     ProjectFactory,
 )
-from app.Account.tests.factories import AccountFactory
 
 
 @pytest.mark.django_db
@@ -73,10 +74,13 @@ class TestProjectCompanyUserRoleModel:
             role=StakeholderRole.SUPERVISOR,
         )
 
-        expected_str = f"test@user.com - Test Client - Supervisor (Test Project)"
+        expected_str = "test@user.com - Test Client - Supervisor (Test Project)"
         assert str(role_assignment) == expected_str
 
     def test_meta_verbose_names(self):
         """Test meta verbose name options."""
         assert ProjectCompanyUserRole._meta.verbose_name == "Project Company User Role"
-        assert ProjectCompanyUserRole._meta.verbose_name_plural == "Project Company User Roles"
+        assert (
+            ProjectCompanyUserRole._meta.verbose_name_plural
+            == "Project Company User Roles"
+        )

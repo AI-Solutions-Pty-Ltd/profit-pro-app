@@ -48,6 +48,7 @@ class ProjectDocument(BaseModel):
     def upload_to(self, filename: str) -> str:
         """Generate upload path for document files."""
         import os
+
         from django.utils import timezone
 
         base_filename = os.path.basename(filename)
