@@ -443,6 +443,25 @@ class TestDownloadBOQTemplateView(TestCase):
         assert match.group(1) == self.project.name
         assert len(b"".join(response.streaming_content)) > 0
 
+    def test_downloaded_template_has_no_unit_validation(self):
+        """Test that the downloaded template does not contain the unit dropdown validation."""
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+
+        # Load the workbook from the streaming content using openpyxl
+        import io
+        import openpyxl
+
+        file_content = b"".join(response.streaming_content)
+        wb = openpyxl.load_workbook(io.BytesIO(file_content))
+        ws = wb["Setup Template"]
+
+        # Ensure we only have 2 validations (the decimals) and NO list validation
+        validations = list(ws.data_validations.dataValidation)
+        assert len(validations) == 2
+        for dv in validations:
+            assert dv.type != "list"
+
     def test_download_requires_permission(self):
         """Test download requires CONTRACT_BOQ role."""
         ProjectRole.objects.filter(user=self.user, project=self.project).update(

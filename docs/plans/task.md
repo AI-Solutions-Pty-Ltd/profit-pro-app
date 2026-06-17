@@ -1,5 +1,4 @@
 | Task ID | Task Description | Status | Verification Command / Method |
 | :--- | :--- | :--- | :--- |
-| **TSK-01** | Update Download BOQ Template View | [x] | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py::TestDownloadBOQTemplateView::test_download_success -v` |
-| **TSK-02** | Update ProjectDocument.upload_to for BOQ category | [x] | `.venv\Scripts\python.exe -m pytest app/Project/tests/test_models.py -v` |
-| **TSK-03** | Overwrite Filename header in secure media serving for downloads | [x] | `.venv\Scripts\python.exe -m pytest app/core/tests/test_media_serving.py -v` |
+| **TSK-01** | Statically Remove List Validation from Excel Template | [x] | `.venv\Scripts\python.exe -c "import openpyxl; wb=openpyxl.load_workbook('app/BillOfQuantities/data/Project set-up Template.xlsx'); ws=wb['Setup Template']; assert len(ws.data_validations.dataValidation) == 2"` |
+| **TSK-02** | Add Test to Verify Downloaded Template has no Unit Validation List | [/] | `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py::TestDownloadBOQTemplateView::test_downloaded_template_has_no_unit_validation -v` |
