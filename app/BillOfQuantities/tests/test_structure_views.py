@@ -93,6 +93,46 @@ class TestStructureListView(TestCase):
         assert breadcrumbs[0]["title"] == "Project Management"
         assert breadcrumbs[1]["title"] == "Sections"
 
+    def test_view_prefetches_only_work_line_items(self):
+        """Test that the view prefetches and populates work_line_items with only is_work=True items."""
+        from app.BillOfQuantities.tests.factories import BillFactory
+        from app.BillOfQuantities.tests.factories import LineItemFactory
+        
+        bill = BillFactory.create(structure=self.structure1)
+        
+        # Create a work item
+        work_item = LineItemFactory.create(
+            project=self.project,
+            structure=self.structure1,
+            bill=bill,
+            is_work=True,
+            description="Work Item Description",
+            item_number="1.1",
+            payment_reference="REF-1",
+        )
+        
+        # Create a non-work item (heading)
+        non_work_item = LineItemFactory.create(
+            project=self.project,
+            structure=self.structure1,
+            bill=bill,
+            is_work=False,
+            description="Heading Description",
+            item_number="1",
+        )
+        
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        
+        # Verify the structure has prefetched work_line_items attribute
+        structures = response.context["structures"]
+        section_a = next(s for s in structures if s.id == self.structure1.id)
+        
+        assert hasattr(section_a, "work_line_items")
+        assert len(section_a.work_line_items) == 1
+        assert section_a.work_line_items[0].id == work_item.id
+
+
 
 class TestStructureDetailView(TestCase):
     """Test cases for StructureDetailView."""
