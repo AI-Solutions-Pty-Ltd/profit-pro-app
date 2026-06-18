@@ -30,8 +30,13 @@
                     <a class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-white rounded-md border border-blue-600 shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                        href="{% url 'bill_of_quantities:structure-list' project.pk %}">
                         {% heroicon_outline "building-office" size="16" %}
-                        <span class="ml-1">View Sections</span>
+                        <span class="ml-1">View Summary</span>
                     </a>
+                    {% comment %} <a class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-white rounded-md border border-blue-600 shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                       href="{% url 'bill_of_quantities:structure-upload' project.pk %}">
+                        {% heroicon_outline "building-office" size="16" %}
+                        <span class="ml-1">Upload Updated BoQ</span>
+                    </a> {% endcomment %}
                 </div>
             </div>
         </div>

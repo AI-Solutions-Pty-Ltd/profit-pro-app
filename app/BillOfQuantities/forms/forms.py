@@ -307,3 +307,68 @@ class PaymentCertificateWorkingForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class LineItemForm(forms.ModelForm):
+    class Meta:
+        model = LineItem
+        fields = [
+            "item_number",
+            "bill",
+            "description",
+            "is_work",
+            "unit_measurement",
+            "budgeted_quantity",
+            "unit_price",
+            "total_price",
+        ]
+        widgets = {
+            "item_number": forms.TextInput(attrs={"class": "form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"}),
+            "bill": forms.Select(attrs={"class": "form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"}),
+            "description": forms.TextInput(attrs={"class": "form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"}),
+            "is_work": forms.CheckboxInput(attrs={"class": "form-checkbox rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4 border-gray-300"}),
+            "unit_measurement": forms.TextInput(attrs={"class": "form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"}),
+            "budgeted_quantity": forms.NumberInput(attrs={"class": "form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", "step": "any"}),
+            "unit_price": forms.NumberInput(attrs={"class": "form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", "step": "any"}),
+            "total_price": forms.NumberInput(attrs={"class": "form-input block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", "readonly": "readonly"}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_work = cleaned_data.get("is_work")
+        if is_work:
+            if not cleaned_data.get("unit_measurement"):
+                self.add_error("unit_measurement", "This field is required for work items.")
+            if cleaned_data.get("budgeted_quantity") is None:
+                self.add_error("budgeted_quantity", "This field is required for work items.")
+            if cleaned_data.get("unit_price") is None:
+                self.add_error("unit_price", "This field is required for work items.")
+        return cleaned_data
+
+
+class BaseLineItemFormSet(forms.models.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter the bill queryset for each form to only show bills of this structure
+        for form in self.forms:
+            if self.instance and self.instance.pk:
+                form.fields["bill"].queryset = Bill.objects.filter(structure=self.instance)
+            else:
+                form.fields["bill"].queryset = Bill.objects.none()
+            # Set fields optional on the form level since they are conditionally required based on is_work
+            form.fields["item_number"].required = False
+            form.fields["description"].required = False
+            form.fields["unit_measurement"].required = False
+            form.fields["budgeted_quantity"].required = False
+            form.fields["unit_price"].required = False
+
+
+LineItemInlineFormSet = forms.models.inlineformset_factory(
+    Structure,
+    LineItem,
+    form=LineItemForm,
+    formset=BaseLineItemFormSet,
+    extra=1,
+    can_delete=True,
+)
+
