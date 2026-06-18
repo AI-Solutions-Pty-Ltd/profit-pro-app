@@ -42,7 +42,16 @@ class StructureListView(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin, ListV
     def get_queryset(self):
         """Filter structures by the current project."""
         project = self.get_project()
-        return Structure.objects.filter(project=project).select_related("project")
+        from django.db.models import Prefetch
+        from app.BillOfQuantities.models import LineItem
+        
+        return Structure.objects.filter(project=project).select_related("project").prefetch_related(
+            Prefetch(
+                "line_items",
+                queryset=LineItem.objects.filter(is_work=True).order_by("row_index"),
+                to_attr="work_line_items"
+            )
+        )
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
