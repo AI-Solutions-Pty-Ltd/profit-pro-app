@@ -30,15 +30,15 @@
                     <div class="flex items-center space-x-3">
                         {% if structures %}
                             <div class="inline-flex rounded-md shadow-sm" role="group">
-                                <button type="button" 
+                                <button type="button"
                                         id="btn-expand-all"
-                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-md border border-indigo-600 hover:bg-indigo-700 focus:z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150">
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-md border border-indigo-600 transition-all duration-150 hover:bg-indigo-700 focus:z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     {% heroicon_outline "chevron-double-down" size="16" class="mr-1.5" %}
                                     Expand All
                                 </button>
-                                <button type="button" 
+                                <button type="button"
                                         id="btn-collapse-all"
-                                        class="-ml-px inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-r-md border border-gray-300 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150">
+                                        class="inline-flex items-center px-3 py-2 -ml-px text-sm font-medium text-gray-700 bg-white rounded-r-md border border-gray-300 transition-all duration-150 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     {% heroicon_outline "chevron-double-up" size="16" class="mr-1.5" %}
                                     Collapse All
                                 </button>
@@ -79,16 +79,14 @@
                                                 <p>{% with total_value=structure.get_total_value %}Total: R {{ total_value|floatformat:2|intcomma }}{% endwith %}</p>
                                             </div>
                                         </div>
-                                        <div class="flex items-center space-x-2">
-                                            <a href="{% url 'bill_of_quantities:structure-update' project.pk structure.pk %}"
-                                               class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        {% comment %} <div class="flex items-center space-x-2">
+                                            <a href="{% url 'bill_of_quantities:structure-update' project.pk structure.pk %}" class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                                 {% heroicon_outline "pencil" size="16" class="mr-1" %}
                                             </a>
-                                            <a href="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}"
-                                               class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                            <a href="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}" class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                                                 {% heroicon_outline "trash" size="16" class="mr-1" %}
                                             </a>
-                                        </div>
+                                        </div> {% endcomment %}
                                     </div>
                                     <details class="mt-2 group" open>
                                         <summary class="flex items-center list-none cursor-pointer">
@@ -142,9 +140,8 @@
         </div>
     </div>
 {% endblock content %}
-
 {% block extra_js %}
-<script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
         const btnExpandAll = document.getElementById('btn-expand-all');
         const btnCollapseAll = document.getElementById('btn-collapse-all');
@@ -214,6 +211,5 @@
             updateButtonHighlight();
         }
     });
-</script>
+    </script>
 {% endblock extra_js %}
-

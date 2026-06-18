@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("BillOfQuantities", "0025_paymentcertificate_abridged_xlsx_and_more"),
     ]

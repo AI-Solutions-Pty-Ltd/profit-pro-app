@@ -9,7 +9,7 @@
     - {{ block.super }}
 {% endblock title %}
 {% block extra_css %}
-<style>
+    <style>
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(4px); }
         to { opacity: 1; transform: translateY(0); }
@@ -17,9 +17,8 @@
     .animate-fade-in {
         animation: fadeIn 0.2s ease-out forwards;
     }
-</style>
+    </style>
 {% endblock extra_css %}
-
 {% block content %}
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Form Card -->
@@ -44,155 +43,136 @@
             <!-- Form -->
             <form method="post" class="px-6 py-6" id="structure-form">
                 {% csrf_token %}
-                
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div class="col-span-2">
-                        {{ form.name|as_crispy_field }}
-                    </div>
-                    <div class="col-span-2">
-                        {{ form.description|as_crispy_field }}
-                    </div>
+                    <div class="col-span-2">{{ form.name|as_crispy_field }}</div>
+                    <div class="col-span-2">{{ form.description|as_crispy_field }}</div>
                 </div>
-
                 {% if form.instance.pk %}
-                <!-- Bill Line Items Section -->
-                <div class="mt-8 pt-6 border-t border-gray-200">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Bill Line Items</h3>
-                            <p class="text-sm text-gray-500">Edit or add individual line items for this Section.</p>
+                    <!-- Bill Line Items Section -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Bill Line Items</h3>
+                                <p class="text-sm text-gray-500">Edit or add individual line items for this Section.</p>
+                            </div>
+                            <button type="button"
+                                    id="add-item-row"
+                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                {% heroicon_outline name="plus" size="16" class="mr-1.5 text-gray-500" %}
+                                Add Line Item
+                            </button>
                         </div>
-                        <button type="button" id="add-item-row" 
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline name="plus" size="16" class="mr-1.5 text-gray-500" %}
-                            Add Line Item
-                        </button>
-                    </div>
-                    
-                    {{ line_items.management_form }}
-                    
-                    <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-                        <table class="min-w-full divide-y divide-gray-200" id="line-items-table">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Item No</th>
-                                    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Bill</th>
-                                    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">Description</th>
-                                    <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Work?</th>
-                                    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Unit</th>
-                                    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Quantity</th>
-                                    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Rate (R)</th>
-                                    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Total (R)</th>
-                                    <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Delete</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200" id="line-items-tbody">
-                                {% for item_form in line_items %}
-                                    <tr class="line-item-form-row transition-all duration-200">
-                                        <td class="px-2 py-2">
-                                            {% for hidden in item_form.hidden_fields %}
-                                                {{ hidden }}
-                                            {% endfor %}
-                                            {{ item_form.item_number }}
-                                            {% if item_form.item_number.errors %}
-                                                <p class="text-red-500 text-xs mt-1">{{ item_form.item_number.errors.as_text }}</p>
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            {{ item_form.bill }}
-                                            {% if item_form.bill.errors %}
-                                                <p class="text-red-500 text-xs mt-1">{{ item_form.bill.errors.as_text }}</p>
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            {{ item_form.description }}
-                                            {% if item_form.description.errors %}
-                                                <p class="text-red-500 text-xs mt-1">{{ item_form.description.errors.as_text }}</p>
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-2 py-2 text-center">
-                                            <div class="flex items-center justify-center">
-                                                {{ item_form.is_work }}
-                                            </div>
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            {{ item_form.unit_measurement }}
-                                            {% if item_form.unit_measurement.errors %}
-                                                <p class="text-red-500 text-xs mt-1">{{ item_form.unit_measurement.errors.as_text }}</p>
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            {{ item_form.budgeted_quantity }}
-                                            {% if item_form.budgeted_quantity.errors %}
-                                                <p class="text-red-500 text-xs mt-1">{{ item_form.budgeted_quantity.errors.as_text }}</p>
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            {{ item_form.unit_price }}
-                                            {% if item_form.unit_price.errors %}
-                                                <p class="text-red-500 text-xs mt-1">{{ item_form.unit_price.errors.as_text }}</p>
-                                            {% endif %}
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            {{ item_form.total_price }}
-                                        </td>
-                                        <td class="px-2 py-2 text-center">
-                                            {% if item_form.instance.pk %}
-                                                <div class="flex items-center justify-center">
-                                                    {{ item_form.DELETE }}
-                                                </div>
-                                            {% endif %}
-                                        </td>
+                        {{ line_items.management_form }}
+                        <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+                            <table class="min-w-full divide-y divide-gray-200" id="line-items-table">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Item No</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Bill</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">Description</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Work?</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Unit</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Quantity</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Rate (R)</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Total (R)</th>
+                                        <th scope="col"
+                                            class="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Delete</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="line-items-tbody">
+                                    {% for item_form in line_items %}
+                                        <tr class="line-item-form-row transition-all duration-200">
+                                            <td class="px-2 py-2">
+                                                {% for hidden in item_form.hidden_fields %}
+                                                    {{ hidden }}
+                                                {% endfor %}
+                                                {{ item_form.item_number }}
+                                                {% if item_form.item_number.errors %}
+                                                    <p class="text-red-500 text-xs mt-1">{{ item_form.item_number.errors.as_text }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                {{ item_form.bill }}
+                                                {% if item_form.bill.errors %}
+                                                    <p class="text-red-500 text-xs mt-1">{{ item_form.bill.errors.as_text }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                {{ item_form.description }}
+                                                {% if item_form.description.errors %}
+                                                    <p class="text-red-500 text-xs mt-1">{{ item_form.description.errors.as_text }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-2 py-2 text-center">
+                                                <div class="flex items-center justify-center">{{ item_form.is_work }}</div>
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                {{ item_form.unit_measurement }}
+                                                {% if item_form.unit_measurement.errors %}
+                                                    <p class="text-red-500 text-xs mt-1">{{ item_form.unit_measurement.errors.as_text }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                {{ item_form.budgeted_quantity }}
+                                                {% if item_form.budgeted_quantity.errors %}
+                                                    <p class="text-red-500 text-xs mt-1">{{ item_form.budgeted_quantity.errors.as_text }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                {{ item_form.unit_price }}
+                                                {% if item_form.unit_price.errors %}
+                                                    <p class="text-red-500 text-xs mt-1">{{ item_form.unit_price.errors.as_text }}</p>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-2 py-2">{{ item_form.total_price }}</td>
+                                            <td class="px-2 py-2 text-center">
+                                                {% if item_form.instance.pk %}
+                                                    <div class="flex items-center justify-center">{{ item_form.DELETE }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Template for adding dynamic line items -->
-                <template id="empty-row-template">
-                    <tr class="line-item-form-row animate-fade-in transition-all duration-200">
-                        <td class="px-2 py-2">
-                            {% for hidden in line_items.empty_form.hidden_fields %}
-                                {{ hidden }}
-                            {% endfor %}
-                            {{ line_items.empty_form.item_number }}
-                        </td>
-                        <td class="px-2 py-2">
-                            {{ line_items.empty_form.bill }}
-                        </td>
-                        <td class="px-2 py-2">
-                            {{ line_items.empty_form.description }}
-                        </td>
-                        <td class="px-2 py-2 text-center">
-                            <div class="flex items-center justify-center">
-                                {{ line_items.empty_form.is_work }}
-                            </div>
-                        </td>
-                        <td class="px-2 py-2">
-                            {{ line_items.empty_form.unit_measurement }}
-                        </td>
-                        <td class="px-2 py-2">
-                            {{ line_items.empty_form.budgeted_quantity }}
-                        </td>
-                        <td class="px-2 py-2">
-                            {{ line_items.empty_form.unit_price }}
-                        </td>
-                        <td class="px-2 py-2">
-                            {{ line_items.empty_form.total_price }}
-                        </td>
-                        <td class="px-2 py-2 text-center">
-                            <div class="flex items-center justify-center">
-                                <button type="button" class="remove-new-row text-red-500 hover:text-red-700 focus:outline-none transition-colors">
-                                    {% heroicon_outline name="trash" size="18" %}
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </template>
+                    <!-- Template for adding dynamic line items -->
+                    <template id="empty-row-template">
+                        <tr class="line-item-form-row animate-fade-in transition-all duration-200">
+                            <td class="px-2 py-2">
+                                {% for hidden in line_items.empty_form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                                {{ line_items.empty_form.item_number }}
+                            </td>
+                            <td class="px-2 py-2">{{ line_items.empty_form.bill }}</td>
+                            <td class="px-2 py-2">{{ line_items.empty_form.description }}</td>
+                            <td class="px-2 py-2 text-center">
+                                <div class="flex items-center justify-center">{{ line_items.empty_form.is_work }}</div>
+                            </td>
+                            <td class="px-2 py-2">{{ line_items.empty_form.unit_measurement }}</td>
+                            <td class="px-2 py-2">{{ line_items.empty_form.budgeted_quantity }}</td>
+                            <td class="px-2 py-2">{{ line_items.empty_form.unit_price }}</td>
+                            <td class="px-2 py-2">{{ line_items.empty_form.total_price }}</td>
+                            <td class="px-2 py-2 text-center">
+                                <div class="flex items-center justify-center">
+                                    <button type="button"
+                                            class="remove-new-row text-red-500 hover:text-red-700 focus:outline-none transition-colors">
+                                        {% heroicon_outline name="trash" size="18" %}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
                 {% endif %}
-
                 <!-- Form Actions -->
                 <div class="mt-8 pt-6 border-t border-gray-200 flex items-center justify-end space-x-3">
                     <a href="{% url 'bill_of_quantities:structure-list' project.pk %}"
@@ -213,9 +193,8 @@
         </div>
     </div>
 {% endblock content %}
-
 {% block extra_js %}
-<script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.getElementById('line-items-tbody');
         const addBtn = document.getElementById('add-item-row');
@@ -325,5 +304,5 @@
             });
         }
     });
-</script>
+    </script>
 {% endblock extra_js %}
