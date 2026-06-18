@@ -112,12 +112,70 @@ class StructureUpdateView(
     project_slug = "project_pk"
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
+    def get_context_data(self, **kwargs):
+        """Add inline formset to template context."""
+        context = super().get_context_data(**kwargs)
+        from app.BillOfQuantities.forms import LineItemInlineFormSet
+
+        if self.request.POST:
+            context["line_items"] = LineItemInlineFormSet(
+                self.request.POST, instance=self.object, prefix="line_items"
+            )
+        else:
+            context["line_items"] = LineItemInlineFormSet(
+                instance=self.object, prefix="line_items"
+            )
+        return context
+
     def form_valid(self, form):
-        """Add success message."""
-        messages.success(
-            self.request, f"Section '{form.instance.name}' updated successfully!"
-        )
-        return super().form_valid(form)
+        """Save structure and inline line items."""
+        from decimal import Decimal
+
+        from django.db import models
+
+        from app.BillOfQuantities.models import LineItem
+
+        context = self.get_context_data()
+        line_items = context["line_items"]
+
+        if form.is_valid() and line_items.is_valid():
+            self.object = form.save()
+            instances = line_items.save(commit=False)
+            project = self.get_project()
+
+            for instance in instances:
+                instance.project = project
+                if not instance.row_index:
+                    max_row = (
+                        LineItem.objects.filter(project=project).aggregate(
+                            models.Max("row_index")
+                        )["row_index__max"]
+                        or 0
+                    )
+                    instance.row_index = max_row + 1
+
+                # Calculate total_price
+                if instance.is_work:
+                    qty = instance.budgeted_quantity or Decimal("0.00")
+                    rate = instance.unit_price or Decimal("0.00")
+                    instance.total_price = qty * rate
+                else:
+                    instance.total_price = Decimal("0.00")
+                instance.save()
+
+            line_items.save_m2m()
+
+            # Handle deleted items
+            for deleted_obj in line_items.deleted_objects:
+                deleted_obj.delete()
+
+            messages.success(
+                self.request,
+                f"Section '{form.instance.name}' and its line items updated successfully!",
+            )
+            return redirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
 
     def get_queryset(self):
         """Filter structures by the current project."""

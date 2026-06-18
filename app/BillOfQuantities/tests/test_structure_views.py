@@ -199,7 +199,14 @@ class TestStructureUpdateView(TestCase):
 
     def test_form_submission_success(self):
         """Test successful form submission."""
-        data = {"name": "Updated Section", "description": "Updated description"}
+        data = {
+            "name": "Updated Section",
+            "description": "Updated description",
+            "line_items-TOTAL_FORMS": "0",
+            "line_items-INITIAL_FORMS": "0",
+            "line_items-MIN_NUM_FORMS": "0",
+            "line_items-MAX_NUM_FORMS": "1000",
+        }
         response = self.client.post(self.url, data)
         assert response.status_code == 302
 
@@ -211,17 +218,96 @@ class TestStructureUpdateView(TestCase):
         # Check success message
         messages = list(get_messages(response.wsgi_request))
         assert len(messages) == 1
-        assert "Section 'Updated Section' updated successfully!" in str(messages[0])
+        assert (
+            "Section 'Updated Section' and its line items updated successfully!"
+            in str(messages[0])
+        )
 
     def test_success_url(self):
         """Test successful redirect URL."""
-        data = {"name": "Updated Section", "description": "Test"}
+        data = {
+            "name": "Updated Section",
+            "description": "Test",
+            "line_items-TOTAL_FORMS": "0",
+            "line_items-INITIAL_FORMS": "0",
+            "line_items-MIN_NUM_FORMS": "0",
+            "line_items-MAX_NUM_FORMS": "1000",
+        }
         response = self.client.post(self.url, data)
         assert response.status_code == 302
         expected_url = reverse(
             "bill_of_quantities:structure-list", kwargs={"project_pk": self.project.pk}
         )
         assert response["Location"] == expected_url
+
+    def test_update_structure_and_line_items(self):
+        """Test updating a structure and its line items."""
+        from app.BillOfQuantities.tests.factories import BillFactory
+
+        bill = BillFactory.create(structure=self.structure)
+
+        # Create an existing line item
+        line_item = LineItemFactory.create(
+            project=self.project,
+            structure=self.structure,
+            bill=bill,
+            item_number="1.1",
+            description="Existing Item",
+            is_work=True,
+            unit_measurement="m3",
+            budgeted_quantity=10,
+            unit_price=150,
+            total_price=1500,
+        )
+
+        data = {
+            "name": "Updated Section",
+            "description": "Updated desc",
+            # Management form
+            "line_items-TOTAL_FORMS": "2",  # 1 existing updated, 1 new added
+            "line_items-INITIAL_FORMS": "1",
+            "line_items-MIN_NUM_FORMS": "0",
+            "line_items-MAX_NUM_FORMS": "1000",
+            # Existing line item (updated quantity and price)
+            "line_items-0-id": str(line_item.id),
+            "line_items-0-item_number": "1.1-rev",
+            "line_items-0-bill": str(bill.id),
+            "line_items-0-description": "Existing Item Updated",
+            "line_items-0-is_work": "on",
+            "line_items-0-unit_measurement": "m3",
+            "line_items-0-budgeted_quantity": "12",
+            "line_items-0-unit_price": "200",
+            # New line item added
+            "line_items-1-id": "",
+            "line_items-1-item_number": "1.2",
+            "line_items-1-bill": str(bill.id),
+            "line_items-1-description": "New Item",
+            "line_items-1-is_work": "on",
+            "line_items-1-unit_measurement": "m2",
+            "line_items-1-budgeted_quantity": "5",
+            "line_items-1-unit_price": "100",
+        }
+
+        response = self.client.post(self.url, data)
+        assert response.status_code == 302
+
+        # Verify existing line item updated
+        line_item.refresh_from_db()
+        assert line_item.item_number == "1.1-rev"
+        assert line_item.description == "Existing Item Updated"
+        assert line_item.budgeted_quantity == 12
+        assert line_item.unit_price == 200
+        assert line_item.total_price == 2400  # auto-calculated!
+
+        # Verify new line item created
+        new_item = LineItem.objects.get(item_number="1.2")
+        assert new_item.structure == self.structure
+        assert new_item.bill == bill
+        assert new_item.description == "New Item"
+        assert new_item.unit_measurement == "m2"
+        assert new_item.budgeted_quantity == 5
+        assert new_item.unit_price == 100
+        assert new_item.total_price == 500  # auto-calculated!
 
     def test_breadcrumbs(self):
         """Test breadcrumbs are correct."""

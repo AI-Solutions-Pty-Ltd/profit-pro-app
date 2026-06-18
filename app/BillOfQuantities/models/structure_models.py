@@ -98,6 +98,7 @@ class Bill(BaseModel):
         Structure, on_delete=models.CASCADE, related_name="bills"
     )
     name = models.CharField(max_length=100)
+    bill_number = models.CharField(max_length=50, blank=True, default="")
 
     if TYPE_CHECKING:
         line_items: QuerySet[LineItem]
