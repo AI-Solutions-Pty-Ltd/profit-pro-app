@@ -1,42 +1,46 @@
-# Implementation Summary
+# Final Summary: Special Items in Payment Certificate Reports and Views
 
-All tasks have been successfully completed and verified.
+All steps in the implementation plan have been completed and verified successfully.
 
-## Verification
-- Run test suite: `.venv\Scripts\python.exe -m pytest`
-  - Result: PASS (641 passed, 2 skipped)
-- Run specific test file: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_structure_views.py -v`
-  - Result: PASS (40 passed)
+## Review Pass
+- **Blocker**: None.
+- **Major**: None.
+- **Minor**: None.
+- **Nit**: None.
+
+## Verification Commands & Results
+The following test suites were run and passed successfully:
+1. `pytest app/BillOfQuantities/tests/test_exporters.py -k test_get_valuation_summary_data` (Valuation Summary groupings/totals) -> **PASS**
+2. `pytest app/BillOfQuantities/tests/test_exporters.py -k test_compile_pdf_for_certificate` (PDF template compilation) -> **PASS**
+3. `pytest app/BillOfQuantities/tests/test_exporters.py -k test_compile_pdf_abridged` (Abridged PDF templates) -> **PASS**
+4. `pytest app/BillOfQuantities/tests/test_exporters.py -k test_special_items_exporters` (Verification of calculations on all 3 item types under PDF/Excel exporters) -> **PASS**
+5. `pytest app/BillOfQuantities/tests/test_exporters.py` (Full exporter test suite of 12 tests) -> **PASS**
+6. Code linting and formatting check: `ruff check` and `ruff format` -> **PASS**
 
 ## Summary of Changes
-- **Forms**:
-  - Defined `LineItemForm` with proper validation. If the item is marked as `is_work = True`, fields like `unit_measurement`, `budgeted_quantity`, and `unit_price` are validated as required.
-  - Defined `BaseLineItemFormSet` with filtered queryset on the `bill` field to ensure line items can only be linked to bills belonging to the same structure.
-  - Created `LineItemInlineFormSet` using `inlineformset_factory` linking `Structure` and `LineItem`. Exposed them inside the `forms` package.
-- **Views**:
-  - Updated `StructureUpdateView` to load, validate, and save `LineItemInlineFormSet`.
-  - Added auto-calculation logic for `total_price` based on `budgeted_quantity * unit_price` if `is_work = True`, otherwise set to 0.00.
-  - Added auto-incrementing logic for `row_index` when creating new line items.
-- **Templates**:
-  - Expanded `structure_form.html` container width to `max-w-6xl` to comfortably present the line items table.
-  - Rendered inline formset in a clean Tailwind CSS table featuring Item No, Bill, Description, Work?, Unit, Quantity, Rate, Total, and Delete.
-  - Included a dynamic remove button for new rows, delete checkboxes for existing rows, and a template element for creating empty rows.
-  - Added custom CSS animations (`fadeIn`) for adding new rows.
-  - Implemented vanilla JS to handle:
-    - Real-time calculation of `total_price` whenever Quantity or Rate changes.
-    - Enabling/disabling of Work-specific inputs (Unit, Quantity, Rate) when `is_work` is toggled.
-    - Dynamic cloning of the empty row template to add new rows.
-    - Dynamic formset re-indexing when dynamic rows are deleted to ensure formset index integrity.
-- **Fixes**:
-  - Fixed database schema integrity error mismatch by adding the `bill_number` field to the `Bill` model class in `app/BillOfQuantities/models/structure_models.py` to match the `0026_bill_bill_number` migration.
 
-## Follow-ups
-- None.
+### 1. Valuation Summary Task Data
+- Grouped Contractual Special Items (`LineItem` with `special_item=True, addendum=False`) into a virtual section named `"SPECIAL ITEMS"` at the end of the summary.
+- Constructed a virtual bill for each special item row.
+- Ensured total budget, cumulative, previous, and current sums are updated dynamically to include special items.
+
+### 2. PDF Context & Rendering
+- Separated queries in `compile_pdf_for_certificate()` to map normal contract items, addendum items, and special items individually.
+- Rendered clean tables for both Addendum items and Special items in `3-detailed.html` with correct page breaks.
+- Realigned `1-front-page.html` (cover page) to show correct mathematical rows matching the HTML cover page, including the loop over active special items.
+
+### 3. Excel Exporters
+- Updated `detailed_report_exporter.py` to filter contract items on standard structure sheets, append structure-related addendums at the bottom of the corresponding sheet under sub-headers, and output special items on a dedicated `"Special Items"` sheet.
+- Updated `cover_page_exporter.py` to calculate and output the exact breakdown (work done up to assessment, contract/addendum compensation events, special items loop, net certified amount, VAT, and total).
+
+### 4. Verification Tests
+- Added `test_special_items_exporters` in `test_exporters.py` to verify the accuracy of calculations on certificates containing standard, addendum, and special items across PDF and Excel exporters.
 
 ## Manual Validation Steps
-1. Navigate to the Sections list page, and click Edit on any Section.
-2. Under the name and description fields, observe the "Bill Line Items" table listing all associated line items.
-3. Click "Add Line Item" to add a new empty row. Verify it animates into view.
-4. Toggle the "Work?" checkbox on a row and verify that the Unit, Quantity, and Rate fields disable/enable accordingly.
-5. Set Quantity = 5 and Rate = 200 on a row and verify the Total field updates immediately to 1000.00.
-6. Check "Delete" on an existing row, and click "Update Section". Confirm the item is successfully deleted, and all modifications are saved.
+If verifying manually in the web application interface:
+1. Go to the **Valuation** page of a Payment Certificate.
+2. Ensure Special Items are correctly listed at the bottom under the virtual summary section `"SPECIAL ITEMS"`.
+3. Check the **Cover Page** view to ensure the totals correctly include standard items, addendum items, and special items.
+4. Download the **Detailed Report PDF**, **Valuation Summary Excel**, and **Detailed Report Excel**. Verify:
+   - The Excel Detailed Report contains a dedicated sheet named `"Special Items"`.
+   - The Excel Cover Page totals match the PDF Cover Page totals exactly.

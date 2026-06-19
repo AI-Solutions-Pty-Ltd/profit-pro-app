@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 import openpyxl
@@ -16,14 +17,23 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
     if wb is None:
         wb = openpyxl.Workbook()
 
-    # We will create a sheet for each structure (section)
     if is_abridged:
         all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
-        line_items = all_line_items.filter(addendum=False, special_item=False)
     else:
-        line_items = LineItem.construct_payment_certificate(payment_certificate)
+        all_line_items = LineItem.construct_payment_certificate(payment_certificate)
 
-    grouped_data = group_line_items_by_hierarchy(line_items)
+    # Filter items into their respective types
+    contract_line_items = all_line_items.filter(addendum=False, special_item=False)
+    addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
+    special_line_items = all_line_items.filter(addendum=False, special_item=True)
+
+    grouped_data = group_line_items_by_hierarchy(contract_line_items)
+    addendum_grouped_data = group_line_items_by_hierarchy(addendum_line_items)
+
+    # Build a lookup map of addendum data grouped by structure ID
+    addendum_by_structure = {}
+    for struct_data in addendum_grouped_data:
+        addendum_by_structure[struct_data["structure"].id] = struct_data
 
     # active columns logic
     project = payment_certificate.project
@@ -35,16 +45,13 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
     # Styles
     font_bold = Font(bold=True)
     font_bold_white = Font(bold=True, color="FFFFFFFF")
-    Font(italic=True, color="FF666666")
     font_subtitle = Font(italic=True, color="FF666666")
-    Font(bold=True, size=11)
     font_title = Font(bold=True, size=14)
     align_center = Alignment(horizontal="center", vertical="center")
     align_right = Alignment(horizontal="right", vertical="center")
     align_left = Alignment(horizontal="left", vertical="center")
     align_wrap = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
-    Border(bottom=Side(style="thin"))
     border_bottom_thick = Border(bottom=Side(style="medium"))
     border_bottom_light = Border(bottom=Side(style="thin", color="FFE5E5E5"))
 
@@ -67,32 +74,38 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         start_color="FF111111", end_color="FF111111", fill_type="solid"
     )
 
-    if not grouped_data:
+    if not grouped_data and not special_line_items.exists():
         ws = wb.active
         ws.title = "No Data"
         ws.append(["No data available for this report."])
         return wb
 
-    # Remove the default sheet created by openpyxl
+    cert_num = str(payment_certificate.certificate_number).zfill(2)
+    cert_date = payment_certificate.created_at.strftime("%d %b %Y")
+    project_name = payment_certificate.project.name
 
-    import re
+    # Helper calculation for footer merging
+    footer_merge_end = (
+        min(
+            col_idx_map.get("total_price", num_cols),
+            col_idx_map.get("total_claimed", num_cols),
+            col_idx_map.get("previous_claimed", num_cols),
+            col_idx_map.get("current_claim", num_cols),
+        )
+        - 1
+    )
+    if footer_merge_end < 1:
+        footer_merge_end = 1
 
+    # Loop through structures to write standard contract items & structure addendums
     for structure_idx, structure_data in enumerate(grouped_data, 1):
         structure = structure_data["structure"]
-        # Excel sheet names max 31 chars and cannot contain \ * ? : / [ ]
         sheet_name = re.sub(r"[\\*?:/\[\]]", "_", structure.name)[:31]
-
-        # If it's the first sheet being added, we can rename the default or just create new and delete default later
         ws = wb.create_sheet(title=sheet_name)
-
-        cert_num = str(payment_certificate.certificate_number).zfill(2)
-        cert_date = payment_certificate.created_at.strftime("%d %b %Y")
-        project_name = payment_certificate.project.name
 
         # Row 1: Header
         ws.cell(row=1, column=1, value="[ LOGO ]").font = font_bold
 
-        # Calculate merge ranges based on num_cols
         title_end_col = max(2, num_cols - 2)
         cert_start_col = title_end_col + 1
 
@@ -132,8 +145,6 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         for col in range(1, num_cols + 1):
             ws.cell(row=2, column=col).fill = fill_package_header
 
-        # Row 3: Empty
-
         # Row 4: Column Headers
         ws.row_dimensions[4].height = 30
         for col_idx, col_config in enumerate(active_columns, 1):
@@ -144,7 +155,7 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
 
         current_row = 5
 
-        # Data Rows
+        # Data Rows for Contract Items
         for bill_idx, bill_data in enumerate(structure_data["bills"], 1):
             bill = bill_data["bill"]
 
@@ -254,19 +265,6 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
                 value=f"Carried to Summary — Bill No. {bill_idx}",
             )
 
-            # Merge footer text up to right before amounts
-            footer_merge_end = (
-                min(
-                    col_idx_map.get("total_price", num_cols),
-                    col_idx_map.get("total_claimed", num_cols),
-                    col_idx_map.get("previous_claimed", num_cols),
-                    col_idx_map.get("current_claim", num_cols),
-                )
-                - 1
-            )
-            if footer_merge_end < 1:
-                footer_merge_end = 1
-
             ws.merge_cells(
                 start_row=current_row,
                 start_column=1,
@@ -350,10 +348,12 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
             cell = ws.cell(row=current_row, column=col)
             cell.fill = fill_section_footer
             cell.font = font_bold_white
-        current_row += 2
+        current_row += 1
+
+        current_row += 1
 
         # Final Footer
-        company = "Sedgepro"  # Or get from settings/project
+        company = "Sedgepro"
         footer_text = (
             f"{company}  |  Payment Certificate No. {cert_num}  |  {cert_date}"
         )
@@ -376,7 +376,6 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
             elif col_id == "description":
                 width = 65
             else:
-                # Give enough space for the custom label or default 15
                 width = max(15, len(col_config.get("label", "")) + 2)
             ws.column_dimensions[col_letter].width = width
 
@@ -393,6 +392,306 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
                     cell = row[col_idx - 1]
                     if isinstance(cell.value, (int, float, Decimal)):
                         cell.number_format = "#,##0.00"
+
+    # Export Special Items to a dedicated sheet if they exist
+    if payment_certificate.has_contractual_special_items:
+        ws = wb.create_sheet(title="Special Items")
+
+        # Row 1: Header
+        ws.cell(row=1, column=1, value="[ LOGO ]").font = font_bold
+
+        title_cell = ws.cell(row=1, column=2, value="CONTRACTUAL SPECIAL ITEMS")
+        title_cell.font = font_title
+        title_cell.alignment = align_center
+        ws.merge_cells(start_row=1, start_column=2, end_row=1, end_column=3)
+
+        cert_cell = ws.cell(row=1, column=4, value=f"Cert No. {cert_num}\n{cert_date}")
+        cert_cell.alignment = Alignment(
+            wrap_text=True, horizontal="right", vertical="center"
+        )
+        cert_cell.font = font_bold
+
+        for col in range(2, 5):
+            ws.cell(row=1, column=col).fill = fill_package_header
+
+        ws.row_dimensions[1].height = 60
+
+        # Row 2: Subtitle
+        sub_cell = ws.cell(
+            row=2,
+            column=1,
+            value=f"{project_name} - Payment Certificate No. {cert_num} - {cert_date}",
+        )
+        sub_cell.font = font_subtitle
+        sub_cell.alignment = align_center
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=4)
+        for col in range(1, 5):
+            ws.cell(row=2, column=col).fill = fill_package_header
+
+        # Row 4: Column Headers
+        ws.row_dimensions[4].height = 30
+        headers = ["Description", "Previous Amount", "Current Amount", "Total Amount"]
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col_idx, value=header)
+            cell.font = font_bold_white
+            cell.fill = fill_column_headers
+            if col_idx == 1:
+                cell.alignment = align_left
+            else:
+                cell.alignment = align_right
+
+        current_row = 5
+
+        # 1. Addendum Line Items
+        if addendum_line_items.exists():
+            ws.row_dimensions[current_row].height = 25
+            ws.cell(row=current_row, column=1, value="ADDENDUM LINE ITEMS").font = Font(
+                bold=True, size=11
+            )
+            ws.merge_cells(
+                start_row=current_row, start_column=1, end_row=current_row, end_column=4
+            )
+            for col in range(1, 5):
+                ws.cell(row=current_row, column=col).fill = fill_package_header
+            current_row += 1
+
+            item_row_count = 0
+            for item in addendum_line_items:
+                ws.row_dimensions[current_row].height = 20
+                ws.cell(
+                    row=current_row, column=1, value=item.description
+                ).alignment = align_wrap
+                ws.cell(
+                    row=current_row, column=2, value=item.previous_claimed
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row, column=3, value=item.current_claim
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row, column=4, value=item.total_claimed
+                ).alignment = align_right
+
+                fill_to_use = (
+                    fill_zebra_even if item_row_count % 2 == 0 else fill_zebra_odd
+                )
+                for col in range(1, 5):
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.fill = fill_to_use
+                    cell.border = border_bottom_light
+                current_row += 1
+                item_row_count += 1
+
+            # Subtotal
+            ws.row_dimensions[current_row].height = 20
+            ws.cell(
+                row=current_row, column=1, value="Subtotal Addendum Items"
+            ).alignment = align_right
+            ws.cell(row=current_row, column=1).font = font_bold
+            ws.cell(
+                row=current_row,
+                column=2,
+                value=payment_certificate.addendum_progressive_previous,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=3,
+                value=payment_certificate.addendum_current_claim_total,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=4,
+                value=payment_certificate.addendum_progressive_to_date,
+            ).alignment = align_right
+            for col in range(1, 5):
+                cell = ws.cell(row=current_row, column=col)
+                cell.font = font_bold
+                cell.border = border_bottom_thick
+            current_row += 1
+
+        # 2. Special Line Items
+        if special_line_items.exists():
+            ws.row_dimensions[current_row].height = 25
+            ws.cell(row=current_row, column=1, value="SPECIAL LINE ITEMS").font = Font(
+                bold=True, size=11
+            )
+            ws.merge_cells(
+                start_row=current_row, start_column=1, end_row=current_row, end_column=4
+            )
+            for col in range(1, 5):
+                ws.cell(row=current_row, column=col).fill = fill_package_header
+            current_row += 1
+
+            item_row_count = 0
+            for item in special_line_items:
+                ws.row_dimensions[current_row].height = 20
+                ws.cell(
+                    row=current_row, column=1, value=item.description
+                ).alignment = align_wrap
+                ws.cell(
+                    row=current_row, column=2, value=item.previous_claimed
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row, column=3, value=item.current_claim
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row, column=4, value=item.total_claimed
+                ).alignment = align_right
+
+                fill_to_use = (
+                    fill_zebra_even if item_row_count % 2 == 0 else fill_zebra_odd
+                )
+                for col in range(1, 5):
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.fill = fill_to_use
+                    cell.border = border_bottom_light
+                current_row += 1
+                item_row_count += 1
+
+            # Subtotal
+            ws.row_dimensions[current_row].height = 20
+            ws.cell(
+                row=current_row, column=1, value="Subtotal Special Items"
+            ).alignment = align_right
+            ws.cell(row=current_row, column=1).font = font_bold
+            ws.cell(
+                row=current_row,
+                column=2,
+                value=payment_certificate.special_items_progressive_previous,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=3,
+                value=payment_certificate.special_items_current_claim_total,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=4,
+                value=payment_certificate.special_items_progressive_to_date,
+            ).alignment = align_right
+            for col in range(1, 5):
+                cell = ws.cell(row=current_row, column=col)
+                cell.font = font_bold
+                cell.border = border_bottom_thick
+            current_row += 1
+
+        # 3. Ledger Totals
+        ledger_items = payment_certificate.get_ledger_summary_items()
+        if ledger_items:
+            ws.row_dimensions[current_row].height = 25
+            ws.cell(row=current_row, column=1, value="LEDGER TOTALS").font = Font(
+                bold=True, size=11
+            )
+            ws.merge_cells(
+                start_row=current_row, start_column=1, end_row=current_row, end_column=4
+            )
+            for col in range(1, 5):
+                ws.cell(row=current_row, column=col).fill = fill_package_header
+            current_row += 1
+
+            item_row_count = 0
+            for item in ledger_items:
+                ws.row_dimensions[current_row].height = 20
+                ws.cell(
+                    row=current_row, column=1, value=item["description"]
+                ).alignment = align_wrap
+                ws.cell(
+                    row=current_row, column=2, value=item["previous_amount"]
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row, column=3, value=item["current_amount"]
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row, column=4, value=item["total_amount"]
+                ).alignment = align_right
+
+                fill_to_use = (
+                    fill_zebra_even if item_row_count % 2 == 0 else fill_zebra_odd
+                )
+                for col in range(1, 5):
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.fill = fill_to_use
+                    cell.border = border_bottom_light
+                current_row += 1
+                item_row_count += 1
+
+            # Subtotal
+            ws.row_dimensions[current_row].height = 20
+            ws.cell(
+                row=current_row, column=1, value="Subtotal Ledger Items"
+            ).alignment = align_right
+            ws.cell(row=current_row, column=1).font = font_bold
+            ws.cell(
+                row=current_row,
+                column=2,
+                value=payment_certificate.ledger_progressive_previous,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=3,
+                value=payment_certificate.ledger_current_net_total,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=4,
+                value=payment_certificate.ledger_progressive_to_date,
+            ).alignment = align_right
+            for col in range(1, 5):
+                cell = ws.cell(row=current_row, column=col)
+                cell.font = font_bold
+                cell.border = border_bottom_thick
+            current_row += 1
+
+        # Grand Total
+        ws.row_dimensions[current_row].height = 24
+        ws.cell(
+            row=current_row, column=1, value="TOTAL CONTRACTUAL SPECIAL ITEMS"
+        ).alignment = align_right
+        ws.cell(
+            row=current_row,
+            column=2,
+            value=payment_certificate.contractual_special_items_progressive_previous,
+        ).alignment = align_right
+        ws.cell(
+            row=current_row,
+            column=3,
+            value=payment_certificate.contractual_special_items_current_claim_total,
+        ).alignment = align_right
+        ws.cell(
+            row=current_row,
+            column=4,
+            value=payment_certificate.contractual_special_items_progressive_to_date,
+        ).alignment = align_right
+        for col in range(1, 5):
+            cell = ws.cell(row=current_row, column=col)
+            cell.fill = fill_section_footer
+            cell.font = font_bold_white
+        current_row += 2
+
+        # Final Footer
+        company = "Sedgepro"
+        footer_text = (
+            f"{company}  |  Payment Certificate No. {cert_num}  |  {cert_date}"
+        )
+        ws.cell(row=current_row, column=1, value=footer_text)
+        ws.merge_cells(
+            start_row=current_row,
+            start_column=1,
+            end_row=current_row,
+            end_column=4,
+        )
+
+        # Set Column Widths
+        ws.column_dimensions["A"].width = 65
+        ws.column_dimensions["B"].width = 20
+        ws.column_dimensions["C"].width = 20
+        ws.column_dimensions["D"].width = 20
+
+        # Format numbers
+        for row in ws.iter_rows(min_row=5, max_row=current_row):
+            for col_idx in range(2, 5):
+                cell = row[col_idx - 1]
+                if isinstance(cell.value, (int, float, Decimal)):
+                    cell.number_format = "#,##0.00"
 
     # Remove the default sheet if we added custom sheets
     if len(wb.sheetnames) > 1 and "Sheet" in wb.sheetnames:

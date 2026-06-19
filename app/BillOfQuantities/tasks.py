@@ -112,6 +112,10 @@ def get_valuation_summary_data(payment_certificate, abridged=False):
 
     structures_data: dict[Any, dict[str, Any]] = {}
     for item in line_items:
+        # Exclude addendum and special items from the main BOQ summary
+        if item.addendum or item.special_item:
+            continue
+
         if not item.is_work:
             continue
         struct_id = item.structure_id
@@ -255,23 +259,21 @@ def compile_pdf_for_certificate(
     # Gather data based on abridged flag
     if is_abridged:
         all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
-        line_items = all_line_items.filter(addendum=False, special_item=False)
-        special_items = all_line_items.filter(addendum=False, special_item=True)
-        addendum_items = all_line_items.filter(addendum=True)
-        context.update(
-            {
-                "grouped_line_items": group_line_items_by_hierarchy(line_items),
-                "addendum_items": group_line_items_by_hierarchy(addendum_items),
-                "special_items": special_items,
-            }
-        )
     else:
-        line_items = LineItem.construct_payment_certificate(payment_certificate)
-        context.update(
-            {
-                "grouped_line_items": group_line_items_by_hierarchy(line_items),
-            }
-        )
+        all_line_items = LineItem.construct_payment_certificate(payment_certificate)
+
+    line_items = all_line_items.filter(addendum=False, special_item=False)
+    special_items = all_line_items.filter(addendum=False, special_item=True)
+    addendum_items = all_line_items.filter(addendum=True, special_item=False)
+
+    context.update(
+        {
+            "grouped_line_items": group_line_items_by_hierarchy(line_items),
+            "addendum_items": group_line_items_by_hierarchy(addendum_items),
+            "addendum_items_flat": addendum_items,
+            "special_items": special_items,
+        }
+    )
 
     # Add summary data if summary is requested
     if include_summary:

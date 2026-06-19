@@ -1,5 +1,7 @@
 {% extends "base_full.html" %}
 {% load humanize %}
+{% load project_tags %}
+{% load template_extras %}
 {% block title %}Valuation Summary — {{ project.name }} — PC #{{ payment_certificate.certificate_number }}{% endblock title %}
 {% block content %}
     <div class="mb-6 bg-white rounded-lg shadow-sm">
@@ -88,14 +90,16 @@
                         </tr>
                         <tr class="bg-indigo-50">
                             <td class="px-4 py-4 text-base text-indigo-900 uppercase">Grand Total</td>
-                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">{{ total_budget|floatformat:2|intcomma }}</td>
-                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">{{ total_cumulative|floatformat:2|intcomma }}</td>
-                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">{{ total_previous|floatformat:2|intcomma }}</td>
-                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">{{ total_current|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">R {{ project.total_contract_value|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">R {{ payment_certificate.grand_total_progressive_to_date|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">R {{ payment_certificate.grand_total_progressive_previous|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-4 font-mono text-lg text-right text-indigo-700">R {{ payment_certificate.current_claim_total|varadd:payment_certificate.ledger_current_net_total|floatformat:2|intcomma }}</td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
+            <!-- Contractual Special Items -->
+            {% include "payment_certificate/tables/contractual_special_items.html" %}
         </div>
     </div>
 {% endblock content %}

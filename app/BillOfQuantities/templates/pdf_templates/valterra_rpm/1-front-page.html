@@ -1,4 +1,4 @@
-{% load l10n %}
+{% load l10n mathfilters humanize %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -339,44 +339,73 @@
             </thead>
             <tbody>
                 <tr class="row-light">
-                    <td>Value of Work Done (Cumulative &ndash; Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }})</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
+                    <td>Value of work done up to assessment interval #{{ payment_certificate.certificate_number }}</td>
+                    <td class="text-right">{% if payment_certificate.work_progressive_previous %}{{ payment_certificate.work_progressive_previous|floatformat:2|space_intcomma }}{% else %}0.00{% endif %}</td>
                 </tr>
                 <tr>
-                    <td class="text-italic-gray">Plus: Compensation Events</td>
-                    <td class="text-right text-italic-gray">-</td>
+                    <td>Plus: Contract Compensation Events</td>
+                    <td class="text-right">{% if payment_certificate.contract_current_claim_total %}{{ payment_certificate.contract_current_claim_total|floatformat:2|space_intcomma }}{% else %}0.00{% endif %}</td>
                 </tr>
                 <tr class="row-light">
-                    <td class="text-italic-gray">Plus: Material On Site</td>
-                    <td class="text-right text-italic-gray">-</td>
+                    <td>Plus: Addendum Compensation Events</td>
+                    <td class="text-right">{% if payment_certificate.addendum_current_claim_total %}{{ payment_certificate.addendum_current_claim_total|floatformat:2|space_intcomma }}{% else %}0.00{% endif %}</td>
                 </tr>
                 <tr class="total-row">
-                    <td>Total Value of Work Done</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
+                    <td>Total value of work done</td>
+                    <td class="text-right">{% if payment_certificate.work_progressive_to_date %}{{ payment_certificate.work_progressive_to_date|floatformat:2|space_intcomma }}{% else %}0.00{% endif %}</td>
                 </tr>
-                <tr class="row-light">
-                    <td class="text-italic-gray">Less: Retention</td>
-                    <td class="text-right text-italic-gray">-</td>
-                </tr>
+                {% for special_item in payment_certificate.special_items_annotated %}
+                    {% if special_item.total %}
+                        <tr class="{% cycle 'row-light' '' %}">
+                            <td>
+                                {% if special_item.total > 0 %}
+                                    ADD
+                                {% else %}
+                                    LESS
+                                {% endif %}
+                                : {{ special_item.description }}
+                            </td>
+                            <td class="text-right">{{ special_item.total|floatformat:2|space_intcomma }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
                 <tr class="total-row">
                     <td>Sub Total</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
+                    <td class="text-right">{% if payment_certificate.progressive_to_date %}{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}{% else %}0.00{% endif %}</td>
                 </tr>
                 <tr class="row-light">
                     <td class="text-italic-gray">Less: Previous Amount Due</td>
-                    <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|space_intcomma }}</td>
+                    <td class="text-right">{% if payment_certificate.progressive_previous %}{{ payment_certificate.progressive_previous|floatformat:2|space_intcomma }}{% else %}0.00{% endif %}</td>
                 </tr>
                 <tr class="total-row">
-                    <td>Sub Total</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|space_intcomma }}</td>
+                    <td>NET AMOUNT NOW CERTIFIED</td>
+                    <td class="text-right">{% if payment_certificate.current_claim_total %}{{ payment_certificate.current_claim_total|floatformat:2|space_intcomma }}{% else %}0.00{% endif %}</td>
                 </tr>
                 <tr class="row-light">
-                    <td class="text-italic-gray">Plus: V.A.T. at 15%</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:0.15|floatformat:2|space_intcomma }}</td>
+                    <td class="text-italic-gray">
+                        {% if project.vat %}
+                            Plus: V.A.T. at 15%
+                        {% else %}
+                            No VAT
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        {% if project.vat %}
+                            {{ payment_certificate.current_claim_total|mul:0.15|floatformat:2|space_intcomma }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr class="highlight-orange">
                     <td>TOTAL AMOUNT NOW CERTIFIED (incl. VAT)</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:1.15|floatformat:2|space_intcomma }}</td>
+                    <td class="text-right">
+                        {% if project.vat %}
+                            {{ payment_certificate.current_claim_total|mul:1.15|floatformat:2|space_intcomma }}
+                        {% else %}
+                            {{ payment_certificate.current_claim_total|floatformat:2|space_intcomma }}
+                        {% endif %}
+                    </td>
                 </tr>
             </tbody>
         </table>
