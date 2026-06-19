@@ -8,3 +8,6 @@
 | **TSK-06** | Clean up temporary edit in get_ledger_summary_items | [x] | Run: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_models.py` |
 | **TSK-07** | Update Current Certificate Ledger Helper Methods | [x] | Run: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_models.py -k test_current_ledger_totals_with_debits_and_credits` |
 | **TSK-08** | Update Previous Certificates Ledger Properties | [x] | Run: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_models.py -k test_previous_ledger_totals_with_debits_and_credits` |
+| **TSK-09** | Clean up `credits` variable shadowing in `payment_certificate_models.py` | [x] | Run: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_models.py` |
+| **TSK-10** | Pre-select and disable `payment_certificate` in `ledger_forms.py` | [x] | Run: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_payment_certificate_views.py` |
+| **TSK-11** | Pre-select and disable `payment_certificate` on SpecialItem forms in `ledger_views.py` | [x] | Run: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_special_item_views.py` |

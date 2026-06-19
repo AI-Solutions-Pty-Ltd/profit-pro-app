@@ -445,68 +445,88 @@ class TestPaymentCertificateProperties:
 
     def test_current_ledger_totals_with_debits_and_credits(self):
         """Test that get_<type>_total methods subtract credit transactions from debit transactions."""
+        from app.BillOfQuantities.models import BaseLedgerItem
         from app.BillOfQuantities.tests.factories import (
             AdvancePaymentFactory,
-            RetentionFactory,
-            MaterialsOnSiteFactory,
             EscalationFactory,
+            MaterialsOnSiteFactory,
+            RetentionFactory,
             SpecialItemTransactionFactory,
         )
-        from app.BillOfQuantities.models import BaseLedgerItem
 
         project = ProjectFactory.create()
         cert = PaymentCertificateFactory.create(project=project)
 
         # 1. Advance Payments (Debit: 10000, Credit: 3000) -> Net: 7000
         AdvancePaymentFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("10000.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("10000.00"),
         )
         AdvancePaymentFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("3000.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("3000.00"),
         )
 
         # 2. Retention (Debit: 5000, Credit: 1000) -> Net: 4000
         RetentionFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("5000.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("5000.00"),
         )
         RetentionFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("1000.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("1000.00"),
         )
 
         # 3. Materials on Site (Debit: 4000, Credit: 1500) -> Net: 2500
         MaterialsOnSiteFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("4000.00"),
-            material_description="Cement"
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("4000.00"),
+            material_description="Cement",
         )
         MaterialsOnSiteFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("1500.00"),
-            material_description="Cement"
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("1500.00"),
+            material_description="Cement",
         )
 
         # 4. Escalation (Debit: 2000, Credit: 500) -> Net: 1500
         EscalationFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("2000.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("2000.00"),
         )
         EscalationFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("500.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("500.00"),
         )
 
         # 5. Special Items (Debit: 8000, Credit: 2000) -> Net: 6000
         SpecialItemTransactionFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("8000.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("8000.00"),
         )
         SpecialItemTransactionFactory.create(
-            project=project, payment_certificate=cert,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("2000.00")
+            project=project,
+            payment_certificate=cert,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("2000.00"),
         )
 
         assert cert.get_advance_payment_total() == Decimal("7000.00")
@@ -517,71 +537,99 @@ class TestPaymentCertificateProperties:
 
     def test_previous_ledger_totals_with_debits_and_credits(self):
         """Test that previous_<type>_total properties subtract credit transactions from debit transactions from previous approved certificates."""
+        from app.BillOfQuantities.models import BaseLedgerItem
         from app.BillOfQuantities.tests.factories import (
             AdvancePaymentFactory,
-            RetentionFactory,
-            MaterialsOnSiteFactory,
             EscalationFactory,
+            MaterialsOnSiteFactory,
+            RetentionFactory,
             SpecialItemTransactionFactory,
         )
-        from app.BillOfQuantities.models import BaseLedgerItem
 
         project = ProjectFactory.create()
         # Certificate 1 - Approved
-        cert1 = PaymentCertificateFactory.create(project=project, certificate_number=1, status=PaymentCertificate.Status.APPROVED)
+        cert1 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.APPROVED,
+        )
         # Certificate 2 - Draft (current)
-        cert2 = PaymentCertificateFactory.create(project=project, certificate_number=2, status=PaymentCertificate.Status.DRAFT)
+        cert2 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=2,
+            status=PaymentCertificate.Status.DRAFT,
+        )
 
         # 1. Advance Payments (Debit: 20000, Credit: 5000) -> Net: 15000
         AdvancePaymentFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("20000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("20000.00"),
         )
         AdvancePaymentFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("5000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("5000.00"),
         )
 
         # 2. Retention (Debit: 6000, Credit: 2000) -> Net: 4000
         RetentionFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("6000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("6000.00"),
         )
         RetentionFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("2000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("2000.00"),
         )
 
         # 3. Materials on Site (Debit: 8000, Credit: 3000) -> Net: 5000
         MaterialsOnSiteFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("8000.00"),
-            material_description="Brick"
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("8000.00"),
+            material_description="Brick",
         )
         MaterialsOnSiteFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("3000.00"),
-            material_description="Brick"
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("3000.00"),
+            material_description="Brick",
         )
 
         # 4. Escalation (Debit: 3000, Credit: 1000) -> Net: 2000
         EscalationFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("3000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("3000.00"),
         )
         EscalationFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("1000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("1000.00"),
         )
 
         # 5. Special Items (Debit: 10000, Credit: 4000) -> Net: 6000
         SpecialItemTransactionFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.DEBIT, amount=Decimal("10000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.DEBIT,
+            amount=Decimal("10000.00"),
         )
         SpecialItemTransactionFactory.create(
-            project=project, payment_certificate=cert1,
-            transaction_type=BaseLedgerItem.TransactionType.CREDIT, amount=Decimal("4000.00")
+            project=project,
+            payment_certificate=cert1,
+            transaction_type=BaseLedgerItem.TransactionType.CREDIT,
+            amount=Decimal("4000.00"),
         )
 
         assert cert2.previous_advance_payment_total == Decimal("15000.00")
@@ -589,5 +637,3 @@ class TestPaymentCertificateProperties:
         assert cert2.previous_materials_on_site_total == Decimal("5000.00")
         assert cert2.previous_escalation_total == Decimal("2000.00")
         assert cert2.previous_special_item_total == Decimal("6000.00")
-
-

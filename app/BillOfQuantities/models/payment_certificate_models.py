@@ -550,27 +550,39 @@ class PaymentCertificate(BaseModel):
         from .ledger_models import AdvancePayment
 
         advance_payments = AdvancePayment.objects.filter(payment_certificate=self)
-        debits = advance_payments.filter(transaction_type=AdvancePayment.TransactionType.DEBIT)
-        credits = advance_payments.filter(transaction_type=AdvancePayment.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = advance_payments.filter(
+            transaction_type=AdvancePayment.TransactionType.DEBIT
+        )
+        credits_txn = advance_payments.filter(
+            transaction_type=AdvancePayment.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     def get_retention_total(self) -> Decimal:
         """Get total retention transactions for this certificate."""
         from .ledger_models import Retention
 
         retention_items = Retention.objects.filter(payment_certificate=self)
-        debits = retention_items.filter(transaction_type=Retention.TransactionType.DEBIT)
-        credits = retention_items.filter(transaction_type=Retention.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = retention_items.filter(
+            transaction_type=Retention.TransactionType.DEBIT
+        )
+        credits_txn = retention_items.filter(
+            transaction_type=Retention.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     def get_materials_on_site_total(self) -> Decimal:
         """Get total materials on site transactions for this certificate."""
         from .ledger_models import MaterialsOnSite
 
         materials = MaterialsOnSite.objects.filter(payment_certificate=self)
-        debits = materials.filter(transaction_type=MaterialsOnSite.TransactionType.DEBIT)
-        credits = materials.filter(transaction_type=MaterialsOnSite.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = materials.filter(
+            transaction_type=MaterialsOnSite.TransactionType.DEBIT
+        )
+        credits_txn = materials.filter(
+            transaction_type=MaterialsOnSite.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     def get_escalation_total(self) -> Decimal:
         """Get total escalation transactions for this certificate."""
@@ -578,17 +590,23 @@ class PaymentCertificate(BaseModel):
 
         escalations = Escalation.objects.filter(payment_certificate=self)
         debits = escalations.filter(transaction_type=Escalation.TransactionType.DEBIT)
-        credits = escalations.filter(transaction_type=Escalation.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        credits_txn = escalations.filter(
+            transaction_type=Escalation.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     def get_special_item_total(self) -> Decimal:
         """Get total special item transactions for this certificate."""
         from .ledger_models import SpecialItemTransaction
 
         special_items = SpecialItemTransaction.objects.filter(payment_certificate=self)
-        debits = special_items.filter(transaction_type=SpecialItemTransaction.TransactionType.DEBIT)
-        credits = special_items.filter(transaction_type=SpecialItemTransaction.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = special_items.filter(
+            transaction_type=SpecialItemTransaction.TransactionType.DEBIT
+        )
+        credits_txn = special_items.filter(
+            transaction_type=SpecialItemTransaction.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     def get_special_item_totals_by_type(self) -> dict:
         """Get special item totals grouped by type for this certificate."""
@@ -599,9 +617,15 @@ class PaymentCertificate(BaseModel):
             items_by_type = SpecialItemTransaction.objects.filter(
                 payment_certificate=self, special_item_type=item_type
             )
-            debits = items_by_type.filter(transaction_type=SpecialItemTransaction.TransactionType.DEBIT)
-            credits = items_by_type.filter(transaction_type=SpecialItemTransaction.TransactionType.CREDIT)
-            totals[item_type] = sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+            debits = items_by_type.filter(
+                transaction_type=SpecialItemTransaction.TransactionType.DEBIT
+            )
+            credits_txn = items_by_type.filter(
+                transaction_type=SpecialItemTransaction.TransactionType.CREDIT
+            )
+            totals[item_type] = sum_queryset(debits, "amount") - sum_queryset(
+                credits_txn, "amount"
+            )
 
         return totals
 
@@ -626,9 +650,13 @@ class PaymentCertificate(BaseModel):
         advance_payments = AdvancePayment.objects.filter(
             payment_certificate__in=previous_certificates
         )
-        debits = advance_payments.filter(transaction_type=AdvancePayment.TransactionType.DEBIT)
-        credits = advance_payments.filter(transaction_type=AdvancePayment.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = advance_payments.filter(
+            transaction_type=AdvancePayment.TransactionType.DEBIT
+        )
+        credits_txn = advance_payments.filter(
+            transaction_type=AdvancePayment.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     @property
     def previous_retention_total(self) -> Decimal:
@@ -639,9 +667,13 @@ class PaymentCertificate(BaseModel):
         retention_items = Retention.objects.filter(
             payment_certificate__in=previous_certificates
         )
-        debits = retention_items.filter(transaction_type=Retention.TransactionType.DEBIT)
-        credits = retention_items.filter(transaction_type=Retention.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = retention_items.filter(
+            transaction_type=Retention.TransactionType.DEBIT
+        )
+        credits_txn = retention_items.filter(
+            transaction_type=Retention.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     @property
     def previous_materials_on_site_total(self) -> Decimal:
@@ -652,9 +684,13 @@ class PaymentCertificate(BaseModel):
         materials = MaterialsOnSite.objects.filter(
             payment_certificate__in=previous_certificates
         )
-        debits = materials.filter(transaction_type=MaterialsOnSite.TransactionType.DEBIT)
-        credits = materials.filter(transaction_type=MaterialsOnSite.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = materials.filter(
+            transaction_type=MaterialsOnSite.TransactionType.DEBIT
+        )
+        credits_txn = materials.filter(
+            transaction_type=MaterialsOnSite.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     @property
     def previous_escalation_total(self) -> Decimal:
@@ -666,8 +702,10 @@ class PaymentCertificate(BaseModel):
             payment_certificate__in=previous_certificates
         )
         debits = escalations.filter(transaction_type=Escalation.TransactionType.DEBIT)
-        credits = escalations.filter(transaction_type=Escalation.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        credits_txn = escalations.filter(
+            transaction_type=Escalation.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     @property
     def previous_special_item_total(self) -> Decimal:
@@ -678,9 +716,13 @@ class PaymentCertificate(BaseModel):
         special_items = SpecialItemTransaction.objects.filter(
             payment_certificate__in=previous_certificates
         )
-        debits = special_items.filter(transaction_type=SpecialItemTransaction.TransactionType.DEBIT)
-        credits = special_items.filter(transaction_type=SpecialItemTransaction.TransactionType.CREDIT)
-        return sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+        debits = special_items.filter(
+            transaction_type=SpecialItemTransaction.TransactionType.DEBIT
+        )
+        credits_txn = special_items.filter(
+            transaction_type=SpecialItemTransaction.TransactionType.CREDIT
+        )
+        return sum_queryset(debits, "amount") - sum_queryset(credits_txn, "amount")
 
     @property
     def previous_special_item_totals_by_type(self) -> dict:
@@ -695,9 +737,15 @@ class PaymentCertificate(BaseModel):
                 payment_certificate__in=previous_certificates,
                 special_item_type=item_type,
             )
-            debits = items_by_type.filter(transaction_type=SpecialItemTransaction.TransactionType.DEBIT)
-            credits = items_by_type.filter(transaction_type=SpecialItemTransaction.TransactionType.CREDIT)
-            totals[item_type] = sum_queryset(debits, "amount") - sum_queryset(credits, "amount")
+            debits = items_by_type.filter(
+                transaction_type=SpecialItemTransaction.TransactionType.DEBIT
+            )
+            credits_txn = items_by_type.filter(
+                transaction_type=SpecialItemTransaction.TransactionType.CREDIT
+            )
+            totals[item_type] = sum_queryset(debits, "amount") - sum_queryset(
+                credits_txn, "amount"
+            )
 
         return totals
 
