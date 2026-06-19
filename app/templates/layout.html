@@ -30,17 +30,17 @@
         <!-- Sticky Top Navigation -->
         {% include "nav.html" %}
         <!-- Main Content -->
-        <div id="content" class="pb-6 mb-20 bg-gray-50 flex-grow">
+        <div id="content" class="flex-grow pb-6 mb-20 bg-gray-50">
             {% block page_content %}
             {% endblock page_content %}
         </div>
         <!-- Footer -->
-        <footer class="fixed bottom-0 w-full bg-gray-800 text-white z-99">
-            <div class="max-w-7xl mx-auto py-2 px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <p class="text-gray-300 text-sm">{% now "Y" %} {{ SITE_NAME|default:"Profit Pro" }}.</p>
-                    <p class="text-gray-300 text-sm">Empowering businesses with smart financial solutions.</p>
-                    <p class="text-gray-300 text-sm">
+        <footer class="fixed bottom-0 w-full text-white bg-gray-800 z-99">
+            <div class="px-4 py-2 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <div class="flex flex-col justify-between items-center md:flex-row">
+                    <p class="text-sm text-gray-300">{% now "Y" %} {{ SITE_NAME|default:"Profit Pro" }}.</p>
+                    <p class="text-sm text-gray-300">Empowering businesses and projects with bussiness automation.</p>
+                    <p class="text-sm text-gray-300">
                         All
                         rights reserved.
                     </p>
@@ -48,7 +48,7 @@
             </div>
         </footer>
         <!-- Toast Notifications Container -->
-        <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2">
+        <div id="toast-container" class="fixed right-4 top-20 z-50 space-y-2">
             {% for message in messages %}
                 {% if message.tags == 'success' %}
                     {% define "bg-green-200" as bg_color %}
@@ -74,13 +74,13 @@
                     <div class="p-4">
                         <div class="flex items-start">
                             <div class="flex-shrink-0">{% heroicon_outline name=icon size="20" %}</div>
-                            <div class="ml-3 flex-1 pt-0.5 min-w-0">
+                            <div class="flex-1 pt-0.5 ml-3 min-w-0">
                                 <p class="text-sm font-medium text-gray-900">{{ message.tags|title }}</p>
                                 <p class="mt-1 text-sm text-gray-600 break-words">{{ message }}</p>
                             </div>
-                            <div class="ml-4 flex-shrink-0 flex">
+                            <div class="flex flex-shrink-0 ml-4">
                                 <button type="button"
-                                        class="toast-close bg-white rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600"
+                                        class="inline-flex text-gray-400 bg-white rounded-md toast-close hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600"
                                         aria-label="Close">
                                     <span class="sr-only">Close</span>
                                     {% heroicon_outline name="x-mark" size="20" %}
@@ -209,85 +209,85 @@
             {% load heroicons %}
             <!-- Demo Tier Welcome Modal Container -->
             <div id="demoWelcomeModal"
-                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 hidden"
+                 class="flex hidden fixed inset-0 z-50 justify-center items-center p-4 sm:p-6 md:p-8"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="modal-title">
                 <!-- Glassmorphism Backdrop Overlay -->
                 <div id="demoModalBackdrop"
-                     class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-auto cursor-pointer">
+                     class="absolute inset-0 opacity-0 backdrop-blur-sm transition-opacity duration-300 cursor-pointer pointer-events-auto bg-slate-900/60">
                 </div>
                 <!-- Modal Card Container -->
                 <div id="demoModalCard"
-                     class="relative bg-white rounded-2xl shadow-2xl border border-gray-100 max-w-2xl w-full overflow-hidden transition-all duration-300 transform scale-95 opacity-0 z-10 flex flex-col">
+                     class="flex overflow-hidden relative z-10 flex-col w-full max-w-2xl bg-white rounded-2xl border border-gray-100 shadow-2xl opacity-0 transition-all duration-300 transform scale-95">
                     <!-- Header with Indigo & Violet Gradient -->
-                    <div class="relative bg-indigo-600 px-6 py-8 sm:px-8 text-white">
+                    <div class="relative px-6 py-8 text-white bg-indigo-600 sm:px-8">
                         <!-- Decorative circles -->
-                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                        <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 rounded-full blur-xl pointer-events-none bg-white/10"></div>
+                        <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 rounded-full blur-xl pointer-events-none bg-white/10"></div>
                         <!-- Close X Button -->
                         <button type="button"
                                 id="demoModalCloseBtn"
-                                class="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+                                class="absolute top-4 right-4 p-1.5 rounded-lg transition-colors text-white/80 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"
                                 aria-label="Close modal">{% heroicon_outline "x-mark" size="20" %}</button>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/30 border border-white/20 text-indigo-100 mb-3 tracking-wide uppercase">
+                        <span class="inline-flex items-center px-3 py-1 mb-3 text-xs font-semibold tracking-wide text-indigo-100 uppercase rounded-full border bg-indigo-500/30 border-white/20">
                             Welcome to &nbsp;<span class="font-black uppercase">Serge Pro</span>
                         </span>
                         <h2 id="modal-title"
-                            class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                            class="text-2xl font-extrabold tracking-tight sm:text-3xl">
                             Master the <span class="font-black uppercase">Serge Pro</span>
                         </h2>
-                        <p class="mt-2 text-sm sm:text-base text-indigo-100 max-w-lg leading-relaxed">
+                        <p class="mt-2 max-w-lg text-sm leading-relaxed text-indigo-100 sm:text-base">
                             We've prepared preloaded, interactive demo data so you can witness the platform's robust capabilities immediately.
                         </p>
                     </div>
                     <!-- Content Body: Platform Features Showcase -->
-                    <div class="px-6 py-6 sm:px-8 sm:py-8 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="px-6 py-6 space-y-6 sm:px-8 sm:py-8">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <!-- Portfolio Management Card -->
-                            <div class="flex flex-col p-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-xl transition-all duration-200 group">
-                                <div class="flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg group-hover:scale-110 transition-transform duration-200 mb-3">
+                            <div class="flex flex-col p-4 rounded-xl border transition-all duration-200 bg-slate-50 hover:bg-slate-100/80 border-slate-100 group">
+                                <div class="flex justify-center items-center mb-3 w-10 h-10 text-indigo-600 bg-indigo-100 rounded-lg transition-transform duration-200 group-hover:scale-110">
                                     {% heroicon_outline "briefcase" size="22" %}
                                 </div>
                                 <h3 class="text-sm font-bold text-slate-800">Portfolio Management</h3>
-                                <p class="mt-1 text-xs text-slate-500 leading-relaxed flex-grow">
+                                <p class="flex-grow mt-1 text-xs leading-relaxed text-slate-500">
                                     Track the complete performance of your projects, team members, and comprehensive portfolio health at a glance.
                                 </p>
                             </div>
                             <!-- Progress & Productivity Management Card -->
-                            <div class="flex flex-col p-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-xl transition-all duration-200 group">
-                                <div class="flex items-center justify-center w-10 h-10 bg-violet-100 text-violet-600 rounded-lg group-hover:scale-110 transition-transform duration-200 mb-3">
+                            <div class="flex flex-col p-4 rounded-xl border transition-all duration-200 bg-slate-50 hover:bg-slate-100/80 border-slate-100 group">
+                                <div class="flex justify-center items-center mb-3 w-10 h-10 text-violet-600 bg-violet-100 rounded-lg transition-transform duration-200 group-hover:scale-110">
                                     {% heroicon_outline "chart-bar" size="22" %}
                                 </div>
                                 <h3 class="text-sm font-bold text-slate-800">Progress & Productivity</h3>
-                                <p class="mt-1 text-xs text-slate-500 leading-relaxed flex-grow">
+                                <p class="flex-grow mt-1 text-xs leading-relaxed text-slate-500">
                                     Monitor daily resource utilisation, cost variances, and auto-generated cashflow forecasts based on real-time field performance.
                                 </p>
                             </div>
                             <!-- Project Estimator Card -->
-                            <div class="flex flex-col p-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-100 rounded-xl transition-all duration-200 group">
-                                <div class="flex items-center justify-center w-10 h-10 bg-cyan-100 text-cyan-600 rounded-lg group-hover:scale-110 transition-transform duration-200 mb-3">
+                            <div class="flex flex-col p-4 rounded-xl border transition-all duration-200 bg-slate-50 hover:bg-slate-100/80 border-slate-100 group">
+                                <div class="flex justify-center items-center mb-3 w-10 h-10 text-cyan-600 bg-cyan-100 rounded-lg transition-transform duration-200 group-hover:scale-110">
                                     {% heroicon_outline "calculator" size="22" %}
                                 </div>
                                 <h3 class="text-sm font-bold text-slate-800">Project Estimator</h3>
-                                <p class="mt-1 text-xs text-slate-500 leading-relaxed flex-grow">
+                                <p class="flex-grow mt-1 text-xs leading-relaxed text-slate-500">
                                     Rapidly build resource-based first-principles estimates, pricing schedules, and custom price libraries in a matter of minutes.
                                 </p>
                             </div>
                         </div>
                     </div>
                     <!-- Actions Footer -->
-                    <div class="px-6 py-5 sm:px-8 bg-slate-50 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                    <div class="flex flex-col-reverse gap-3 px-6 py-5 border-t sm:px-8 bg-slate-50 border-slate-100 sm:flex-row sm:justify-end">
                         <!-- Secondary CTA: View Profile -->
                         <a href="{{ request.user.detail_url }}"
                            id="demoModalProfileBtn"
-                           class="w-full sm:w-auto px-5 py-2.5 text-center text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 rounded-md border border-slate-200 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                           class="px-5 py-2.5 w-full text-sm font-semibold text-center bg-white rounded-md border shadow-sm transition-all duration-200 sm:w-auto text-slate-700 hover:bg-slate-100 border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
                             View Profile
                         </a>
                         <!-- Primary CTA: Create First Project -->
                         <a href="{% url 'project:project-create' %}"
                            id="demoModalCreateBtn"
-                           class="w-full sm:w-auto px-6 py-2.5 text-center text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                           class="px-6 py-2.5 w-full text-sm font-semibold text-center text-white bg-indigo-600 rounded-md shadow-lg transition-all duration-200 sm:w-auto hover:bg-indigo-700 hover:shadow-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                             Create Your First Project
                         </a>
                     </div>

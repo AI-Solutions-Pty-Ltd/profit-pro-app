@@ -285,6 +285,171 @@ class TestExporters:
         )
         assert filename == f"summary_combined_{expected_date}.pdf"
 
+    def test_special_items_exporters(self):
+        """Test exporters (PDF, Excel) with standard, addendum, and special items."""
+        from app.BillOfQuantities.exporters.cover_page_exporter import (
+            export_cover_page_to_xlsx,
+        )
+        from app.BillOfQuantities.exporters.detailed_report_exporter import (
+            export_detailed_report_to_xlsx,
+        )
+        from app.BillOfQuantities.tests.factories import ActualTransactionFactory
+
+        project = ProjectFactory.create(vat=True)
+        cert = PaymentCertificateFactory.create(project=project, certificate_number=2)
+
+        # Previous certificate to test previous calculations
+        prev_cert = PaymentCertificateFactory.create(
+            project=project, certificate_number=1, status="APPROVED"
+        )
+
+        structure = StructureFactory.create(project=project)
+        bill = BillFactory.create(structure=structure)
+        package = PackageFactory.create(bill=bill)
+
+        # 1. Standard Line Item
+        std_item = LineItemFactory.create(
+            project=project,
+            structure=structure,
+            bill=bill,
+            package=package,
+            is_work=True,
+            unit_price=Decimal("100.00"),
+            budgeted_quantity=Decimal("10.00"),
+            total_price=Decimal("1000.00"),
+            special_item=False,
+            addendum=False,
+        )
+
+        # 2. Addendum Line Item
+        add_item = LineItemFactory.create(
+            project=project,
+            structure=structure,
+            bill=bill,
+            package=package,
+            is_work=True,
+            unit_price=Decimal("150.00"),
+            budgeted_quantity=Decimal("5.00"),
+            total_price=Decimal("750.00"),
+            special_item=False,
+            addendum=True,
+        )
+
+        # 3. Special Line Item
+        spec_item = LineItemFactory.create(
+            project=project,
+            structure=None,
+            bill=None,
+            package=None,
+            is_work=True,
+            unit_price=Decimal("200.00"),
+            budgeted_quantity=Decimal("1.00"),
+            total_price=Decimal("200.00"),
+            special_item=True,
+            addendum=False,
+            description="Contractual Special Item A",
+        )
+
+        # Transactions for prev_cert
+        ActualTransactionFactory.create(
+            payment_certificate=prev_cert,
+            line_item=std_item,
+            quantity=Decimal("3.00"),
+            total_price=Decimal("300.00"),
+            claimed=True,
+            approved=True,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=prev_cert,
+            line_item=spec_item,
+            quantity=Decimal("0.50"),
+            total_price=Decimal("100.00"),
+            claimed=True,
+            approved=True,
+        )
+
+        # Transactions for current cert
+        ActualTransactionFactory.create(
+            payment_certificate=cert,
+            line_item=std_item,
+            quantity=Decimal("2.00"),
+            total_price=Decimal("200.00"),
+            claimed=True,
+            approved=True,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert,
+            line_item=add_item,
+            quantity=Decimal("1.00"),
+            total_price=Decimal("150.00"),
+            claimed=True,
+            approved=True,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert,
+            line_item=spec_item,
+            quantity=Decimal("0.25"),
+            total_price=Decimal("50.00"),
+            claimed=True,
+            approved=True,
+        )
+
+        # Test model property aggregations
+        assert cert.special_items_budget_total == Decimal("200.00")
+        assert cert.special_items_progressive_previous == Decimal("100.00")
+        assert cert.special_items_current_claim_total == Decimal("50.00")
+        assert cert.special_items_progressive_to_date == Decimal("150.00")
+
+        # Compile PDF report
+        pdf_file = compile_pdf_for_certificate(
+            cert,
+            include_front=True,
+            include_summary=True,
+            include_detailed=True,
+            is_abridged=False,
+        )
+        assert pdf_file is not None
+        assert pdf_file.size > 0
+
+        # Export detailed report to Excel
+        wb_detail = export_detailed_report_to_xlsx(cert, is_abridged=False)
+        assert "Special Items" in wb_detail.sheetnames
+        ws_special = wb_detail["Special Items"]
+
+        # Verify unified table rows and columns on Special Items sheet
+        assert ws_special.cell(row=5, column=1).value == "ADDENDUM LINE ITEMS"
+        assert ws_special.cell(row=6, column=1).value == add_item.description
+        assert ws_special.cell(row=6, column=3).value == Decimal(
+            "150.00"
+        )  # Current claim
+        assert ws_special.cell(row=8, column=1).value == "SPECIAL LINE ITEMS"
+        assert ws_special.cell(row=9, column=1).value == "Contractual Special Item A"
+        assert ws_special.cell(row=9, column=2).value == Decimal("100.00")  # Previous
+        assert ws_special.cell(row=9, column=3).value == Decimal("50.00")  # Current
+        assert ws_special.cell(row=9, column=4).value == Decimal("150.00")  # Total
+
+        # Export summary report to Excel
+        from app.BillOfQuantities.exporters.summary_report_exporter import (
+            export_summary_report_to_xlsx,
+        )
+
+        wb_summary = export_summary_report_to_xlsx(cert, is_abridged=False)
+        assert "Summary - Full" in wb_summary.sheetnames
+        ws_sum = wb_summary["Summary - Full"]
+
+        grand_total_row = None
+        for r in range(5, ws_sum.max_row + 1):
+            if ws_sum.cell(row=r, column=2).value == "GRAND TOTAL":
+                grand_total_row = r
+                break
+        assert grand_total_row is not None
+        # Grand total current claim should be contract (200) + addendum (150) + special (50) = 400.00
+        assert ws_sum.cell(row=grand_total_row, column=6).value == Decimal("400.00")
+
+        # Export cover page to Excel
+        wb_cover = export_cover_page_to_xlsx(cert)
+        assert "Cover Page" in wb_cover.sheetnames
+
 
 @pytest.mark.django_db
 class TestDownloadViews:

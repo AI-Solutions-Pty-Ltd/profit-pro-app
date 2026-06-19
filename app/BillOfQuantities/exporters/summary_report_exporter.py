@@ -157,13 +157,256 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
             current_row += 1
 
         # Totals
-        ws.cell(row=current_row, column=2, value="TOTAL EXCLUDING VAT").font = font_bold
+        ws.cell(row=current_row, column=2, value="SUBTOTAL WORK DONE").font = font_bold
         ws.cell(row=current_row, column=3, value=total_budget).alignment = align_right
         ws.cell(
             row=current_row, column=4, value=total_cumulative
         ).alignment = align_right
         ws.cell(row=current_row, column=5, value=total_previous).alignment = align_right
         ws.cell(row=current_row, column=6, value=total_current).alignment = align_right
+        for col in range(1, 7):
+            cell = ws.cell(row=current_row, column=col)
+            cell.font = font_bold
+            cell.fill = fill_footer
+        current_row += 2
+
+        # Contractual Special Items Section
+        if payment_certificate.has_contractual_special_items:
+            from app.BillOfQuantities.models.structure_models import LineItem
+
+            all_line_items = LineItem.construct_payment_certificate(payment_certificate)
+            addendum_items = all_line_items.filter(addendum=True, special_item=False)
+            special_items = all_line_items.filter(addendum=False, special_item=True)
+
+            ws.cell(
+                row=current_row, column=2, value="CONTRACTUAL SPECIAL ITEMS"
+            ).font = Font(bold=True, size=11)
+            for col in range(2, 7):
+                ws.cell(row=current_row, column=col).fill = fill_section
+            current_row += 1
+
+            # 1. Addendums
+            if addendum_items.exists():
+                ws.cell(
+                    row=current_row, column=2, value="Addendum Line Items"
+                ).font = font_bold
+                current_row += 1
+                for item in addendum_items:
+                    ws.cell(row=current_row, column=2, value=item.description)
+                    ws.cell(
+                        row=current_row, column=3, value=item.total_price
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=4, value=item.total_claimed
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=5, value=item.previous_claimed
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=6, value=item.current_claim
+                    ).alignment = align_right
+                    for col in range(1, 7):
+                        ws.cell(
+                            row=current_row, column=col
+                        ).border = border_bottom_light
+                    current_row += 1
+
+                # Subtotal Addendum
+                ws.cell(
+                    row=current_row, column=2, value="Subtotal Addendum Items"
+                ).alignment = align_right
+                ws.cell(row=current_row, column=2).font = font_bold
+                ws.cell(
+                    row=current_row,
+                    column=3,
+                    value=payment_certificate.addendum_budget_total,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=4,
+                    value=payment_certificate.addendum_progressive_to_date,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=5,
+                    value=payment_certificate.addendum_progressive_previous,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=6,
+                    value=payment_certificate.addendum_current_claim_total,
+                ).alignment = align_right
+                for col in range(1, 7):
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.font = font_bold
+                    cell.border = border_bottom_thick
+                current_row += 1
+
+            # 2. Special Line Items
+            if special_items.exists():
+                ws.cell(
+                    row=current_row, column=2, value="Special Line Items"
+                ).font = font_bold
+                current_row += 1
+                for item in special_items:
+                    ws.cell(row=current_row, column=2, value=item.description)
+                    ws.cell(
+                        row=current_row, column=3, value=item.total_price
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=4, value=item.total_claimed
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=5, value=item.previous_claimed
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=6, value=item.current_claim
+                    ).alignment = align_right
+                    for col in range(1, 7):
+                        ws.cell(
+                            row=current_row, column=col
+                        ).border = border_bottom_light
+                    current_row += 1
+
+                # Subtotal Special Items
+                ws.cell(
+                    row=current_row, column=2, value="Subtotal Special Items"
+                ).alignment = align_right
+                ws.cell(row=current_row, column=2).font = font_bold
+                ws.cell(
+                    row=current_row,
+                    column=3,
+                    value=payment_certificate.special_items_budget_total,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=4,
+                    value=payment_certificate.special_items_progressive_to_date,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=5,
+                    value=payment_certificate.special_items_progressive_previous,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=6,
+                    value=payment_certificate.special_items_current_claim_total,
+                ).alignment = align_right
+                for col in range(1, 7):
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.font = font_bold
+                    cell.border = border_bottom_thick
+                current_row += 1
+
+            # 3. Ledger Totals
+            ledger_items = payment_certificate.get_ledger_summary_items()
+            if ledger_items:
+                ws.cell(
+                    row=current_row, column=2, value="Ledger Totals"
+                ).font = font_bold
+                current_row += 1
+                for item in ledger_items:
+                    ws.cell(row=current_row, column=2, value=item["description"])
+                    ws.cell(row=current_row, column=3, value="").alignment = align_right
+                    ws.cell(
+                        row=current_row, column=4, value=item["total_amount"]
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=5, value=item["previous_amount"]
+                    ).alignment = align_right
+                    ws.cell(
+                        row=current_row, column=6, value=item["current_amount"]
+                    ).alignment = align_right
+                    for col in range(1, 7):
+                        ws.cell(
+                            row=current_row, column=col
+                        ).border = border_bottom_light
+                    current_row += 1
+
+                # Subtotal Ledger
+                ws.cell(
+                    row=current_row, column=2, value="Subtotal Ledger Items"
+                ).alignment = align_right
+                ws.cell(row=current_row, column=2).font = font_bold
+                ws.cell(row=current_row, column=3, value="").alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=4,
+                    value=payment_certificate.ledger_progressive_to_date,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=5,
+                    value=payment_certificate.ledger_progressive_previous,
+                ).alignment = align_right
+                ws.cell(
+                    row=current_row,
+                    column=6,
+                    value=payment_certificate.ledger_current_net_total,
+                ).alignment = align_right
+                for col in range(1, 7):
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.font = font_bold
+                    cell.border = border_bottom_thick
+                current_row += 1
+
+            # Grand Total Contractual Special Items
+            ws.cell(
+                row=current_row, column=2, value="TOTAL CONTRACTUAL SPECIAL ITEMS"
+            ).alignment = align_right
+            ws.cell(row=current_row, column=2).font = font_bold
+            ws.cell(
+                row=current_row,
+                column=3,
+                value=payment_certificate.addendum_budget_total
+                + payment_certificate.special_items_budget_total,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=4,
+                value=payment_certificate.contractual_special_items_progressive_to_date,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=5,
+                value=payment_certificate.contractual_special_items_progressive_previous,
+            ).alignment = align_right
+            ws.cell(
+                row=current_row,
+                column=6,
+                value=payment_certificate.contractual_special_items_current_claim_total,
+            ).alignment = align_right
+            for col in range(1, 7):
+                cell = ws.cell(row=current_row, column=col)
+                cell.font = font_bold
+                cell.fill = fill_section
+                cell.border = border_bottom_thick
+            current_row += 2
+
+        # Grand Total
+        ws.cell(row=current_row, column=2, value="GRAND TOTAL").font = font_bold
+        ws.cell(
+            row=current_row,
+            column=3,
+            value=payment_certificate.project.total_contract_value,
+        ).alignment = align_right
+        ws.cell(
+            row=current_row,
+            column=4,
+            value=payment_certificate.grand_total_progressive_to_date,
+        ).alignment = align_right
+        ws.cell(
+            row=current_row,
+            column=5,
+            value=payment_certificate.grand_total_progressive_previous,
+        ).alignment = align_right
+        ws.cell(
+            row=current_row,
+            column=6,
+            value=payment_certificate.current_claim_total
+            + payment_certificate.ledger_current_net_total,
+        ).alignment = align_right
         for col in range(1, 7):
             cell = ws.cell(row=current_row, column=col)
             cell.font = font_bold
