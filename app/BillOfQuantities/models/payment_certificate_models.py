@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.db import models
 from django.db.models import DecimalField, QuerySet, Value
@@ -253,6 +253,11 @@ class PaymentCertificate(BaseModel):
         )
 
     @property
+    def special_items_budget_total(self) -> Decimal:
+        """Get budget total of all project special line items."""
+        return sum_queryset(self.project.get_special_line_items, "total_price")
+
+    @property
     def special_items_annotated(self):
         # annotate all project special items with total_price up to current certificate
         special_items = self.project.get_special_line_items
@@ -377,14 +382,143 @@ class PaymentCertificate(BaseModel):
     @property
     def grand_total_progressive_previous(self) -> Decimal:
         """Total project value certified up to (but not including) this certificate (Work Items + Ledger Adjustments)."""
-        return self.work_progressive_previous + self.ledger_progressive_previous
+        return self.progressive_previous + self.ledger_progressive_previous
 
     @property
     def grand_total_progressive_to_date(self) -> Decimal:
         """The total project value certified to date (Work Items + Ledger Adjustments)."""
-        return self.work_progressive_to_date + self.ledger_progressive_to_date
+        return self.progressive_to_date + self.ledger_progressive_to_date
 
-    # add properties
+    @property
+    def addendum_budget_total(self) -> Decimal:
+        """Get budget total of all project addendum line items."""
+        return sum_queryset(
+            self.project.line_items.filter(addendum=True).exclude(special_item=True),
+            "total_price",
+        )
+
+    @property
+    def contractual_special_items_progressive_previous(self) -> Decimal:
+        """Sum of progressive previous amounts for Addendums, Special Items, and Ledger Totals."""
+        return (
+            self.addendum_progressive_previous
+            + self.special_items_progressive_previous
+            + self.ledger_progressive_previous
+        )
+
+    @property
+    def contractual_special_items_current_claim_total(self) -> Decimal:
+        """Sum of current claim totals for Addendums, Special Items, and Ledger Totals."""
+        return (
+            self.addendum_current_claim_total
+            + self.special_items_current_claim_total
+            + self.ledger_current_net_total
+        )
+
+    @property
+    def contractual_special_items_progressive_to_date(self) -> Decimal:
+        """Sum of progressive to date totals for Addendums, Special Items, and Ledger Totals."""
+        return (
+            self.addendum_progressive_to_date
+            + self.special_items_progressive_to_date
+            + self.ledger_progressive_to_date
+        )
+
+    @property
+    def has_contractual_special_items(self) -> bool:
+        """Return True if the certificate contains any Addendum, Special Items, or Ledger Adjustments."""
+        if self.project.line_items.filter(
+            models.Q(addendum=True) | models.Q(special_item=True)
+        ).exists():
+            return True
+
+        for attr in [
+            "advancepayment_transactions",
+            "retention_transactions",
+            "materialsonsite_transactions",
+            "escalation_transactions",
+            "specialitemtransaction_transactions",
+        ]:
+            if hasattr(self, attr) and getattr(self, attr).exists():
+                return True
+
+        if self.ledger_progressive_previous != 0:
+            return True
+
+        return False
+
+    def get_ledger_summary_items(self) -> list[dict[str, Any]]:
+        """Get list of ledger summary items with description, previous, current, and total amounts."""
+        items = []
+
+        # Advance Payments
+        ap_current = self.get_advance_payment_total()
+        ap_prev = self.previous_advance_payment_total
+        if ap_current != 0 or ap_prev != 0:
+            items.append(
+                {
+                    "description": "Advance Payments",
+                    "previous_amount": ap_prev,
+                    "current_amount": ap_current,
+                    "total_amount": ap_prev + ap_current,
+                }
+            )
+
+        # Retention
+        ret_current = self.get_retention_total()
+        ret_prev = self.previous_retention_total
+        if ret_current != 0 or ret_prev != 0:
+            items.append(
+                {
+                    "description": "Retention",
+                    "previous_amount": ret_prev,
+                    "current_amount": ret_current,
+                    "total_amount": ret_prev + ret_current,
+                }
+            )
+
+        # Materials on Site
+        mat_current = self.get_materials_on_site_total()
+        mat_prev = self.previous_materials_on_site_total
+        if mat_current != 0 or mat_prev != 0:
+            items.append(
+                {
+                    "description": "Materials on Site",
+                    "previous_amount": mat_prev,
+                    "current_amount": mat_current,
+                    "total_amount": mat_prev + mat_current,
+                }
+            )
+
+        # Escalation
+        esc_current = self.get_escalation_total()
+        esc_prev = self.previous_escalation_total
+        if esc_current != 0 or esc_prev != 0:
+            items.append(
+                {
+                    "description": "Escalation",
+                    "previous_amount": esc_prev,
+                    "current_amount": esc_current,
+                    "total_amount": esc_prev + esc_current,
+                }
+            )
+
+        # Special Items (from SpecialItemTransaction ledger model)
+        totals_by_type = self.get_special_item_totals_by_type()
+        prev_totals_by_type = self.previous_special_item_totals_by_type
+        for item_type, current in totals_by_type.items():
+            prev = prev_totals_by_type.get(item_type, Decimal("0.00"))
+            if current != 0 or prev != 0:
+                items.append(
+                    {
+                        "description": item_type,
+                        "previous_amount": prev,
+                        "current_amount": current,
+                        "total_amount": prev + current,
+                    }
+                )
+
+        return items
 
     # Helper functions for ledger totals
     def get_advance_payment_total(self) -> Decimal:

@@ -1323,6 +1323,16 @@ class PaymentCertificateValuationSummaryView(PaymentCertificateMixin, DetailView
 
         summary_data = get_valuation_summary_data(self.get_object(), abridged=False)
         context.update(summary_data)
+
+        # Query and add contractual special items line items to the context
+        all_line_items = LineItem.construct_payment_certificate(self.get_object())
+        context["special_line_items"] = all_line_items.filter(
+            special_item=True, addendum=False
+        )
+        context["addendum_line_items"] = all_line_items.filter(
+            addendum=True, special_item=False
+        )
+
         return context
 
 

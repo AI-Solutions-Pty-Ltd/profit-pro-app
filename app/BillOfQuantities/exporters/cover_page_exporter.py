@@ -217,33 +217,52 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     ws.cell(row=current_row, column=7).alignment = align_right
     current_row += 1
 
-    work_done_cum = payment_certificate.work_progressive_to_date or Decimal("0.00")
-    comp_events = payment_certificate.contract_current_claim_total or Decimal("0.00")
-    material = getattr(
-        payment_certificate, "material_on_site_to_date", Decimal("0.00")
-    )  # if exists
-    total_work_done = work_done_cum + comp_events + material
-    retention = getattr(
-        payment_certificate, "retention_to_date", Decimal("0.00")
-    )  # if exists
-    sub_total_1 = total_work_done - retention
-    prev_amount_due = payment_certificate.progressive_previous or Decimal("0.00")
-    sub_total_2 = payment_certificate.current_claim_total or Decimal("0.00")
-    vat_val_payment = sub_total_2 * Decimal("0.15") if project.vat else Decimal("0.00")
-    total_certified = sub_total_2 + vat_val_payment
+    work_progressive_previous = (
+        payment_certificate.work_progressive_previous or Decimal("0.00")
+    )
+    contract_current_claim_total = (
+        payment_certificate.contract_current_claim_total or Decimal("0.00")
+    )
+    addendum_current_claim_total = (
+        payment_certificate.addendum_current_claim_total or Decimal("0.00")
+    )
+    work_progressive_to_date = payment_certificate.work_progressive_to_date or Decimal(
+        "0.00"
+    )
+    progressive_to_date = payment_certificate.progressive_to_date or Decimal("0.00")
+    progressive_previous = payment_certificate.progressive_previous or Decimal("0.00")
+    current_claim_total = payment_certificate.current_claim_total or Decimal("0.00")
+
+    vat_val_payment = (
+        current_claim_total * Decimal("0.15") if project.vat else Decimal("0.00")
+    )
+    total_certified = current_claim_total + vat_val_payment
 
     payment_rows = [
-        (f"Value of Work Done (Cumulative — Cert No. {cert_num})", work_done_cum),
-        ("Plus: Compensation Events", comp_events),
-        ("Plus: Material On Site", material),
-        ("Total Value of Work Done", total_work_done),
-        ("Less: Retention", retention),
-        ("Sub Total", sub_total_1),
-        ("Less: Previous Amount Due", prev_amount_due),
-        ("Sub Total", sub_total_2),
-        ("Plus: V.A.T. at 15%" if project.vat else "No VAT", vat_val_payment),
-        ("TOTAL AMOUNT NOW CERTIFIED (incl. VAT)", total_certified),
+        (
+            f"Value of work done up to assessment interval #{cert_num}",
+            work_progressive_previous,
+        ),
+        ("Plus: Contract Compensation Events", contract_current_claim_total),
+        ("Plus: Addendum Compensation Events", addendum_current_claim_total),
+        ("Total value of work done", work_progressive_to_date),
     ]
+
+    for special_item in payment_certificate.special_items_annotated:
+        total = special_item.total or Decimal("0.00")
+        if total != 0:
+            prefix = "ADD" if total > 0 else "LESS"
+            payment_rows.append((f"{prefix}: {special_item.description}", total))
+
+    payment_rows.extend(
+        [
+            ("Sub Total", progressive_to_date),
+            ("LESS: Previous Amount Due", progressive_previous),
+            ("NET AMOUNT NOW CERTIFIED", current_claim_total),
+            ("Plus: V.A.T. at 15%" if project.vat else "No VAT", vat_val_payment),
+            ("TOTAL AMOUNT NOW CERTIFIED (incl. VAT)", total_certified),
+        ]
+    )
 
     for i, (desc, val) in enumerate(payment_rows):
         ws.row_dimensions[current_row].height = 16.5
@@ -258,10 +277,10 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
             ws.cell(row=current_row, column=1).font = font_white_bold
             cell_val.font = font_white_bold
         else:
-            if "Total" in desc or "Sub Total" in desc:
+            if "Total" in desc or "Sub Total" in desc or "NET AMOUNT" in desc:
                 ws.cell(row=current_row, column=1).font = font_bold
                 cell_val.font = font_bold
-            if "Less:" in desc:
+            if "Less:" in desc or "LESS:" in desc:
                 ws.cell(row=current_row, column=1).font = font_less
             # Alternate row fills
             if i % 2 != 0:
