@@ -23,6 +23,11 @@ class AdvancedPaymentCreateUpdateForm(forms.ModelForm):
             ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                 "-created_at"
             )
+            active_cert = self.project.active_payment_certificate
+            if active_cert:
+                if not self.instance.pk:
+                    self.fields["payment_certificate"].initial = active_cert
+                self.fields["payment_certificate"].disabled = True
 
     class Meta:
         model = AdvancePayment
@@ -52,6 +57,11 @@ class RetentionCreateUpdateCreateForm(forms.ModelForm):
             ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                 "-created_at"
             )
+            active_cert = self.project.active_payment_certificate
+            if active_cert:
+                if not self.instance.pk:
+                    self.fields["payment_certificate"].initial = active_cert
+                self.fields["payment_certificate"].disabled = True
 
     class Meta:
         model = Retention
@@ -79,6 +89,11 @@ class MaterialsOnSiteCreateUpdateForm(forms.ModelForm):
             ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                 "-created_at"
             )
+            active_cert = self.project.active_payment_certificate
+            if active_cert:
+                if not self.instance.pk:
+                    self.fields["payment_certificate"].initial = active_cert
+                self.fields["payment_certificate"].disabled = True
 
     class Meta:
         model = MaterialsOnSite
@@ -113,6 +128,11 @@ class EscalationCreateUpdateForm(forms.ModelForm):
             ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                 "-created_at"
             )
+            active_cert = self.project.active_payment_certificate
+            if active_cert:
+                if not self.instance.pk:
+                    self.fields["payment_certificate"].initial = active_cert
+                self.fields["payment_certificate"].disabled = True
 
     class Meta:
         model = Escalation

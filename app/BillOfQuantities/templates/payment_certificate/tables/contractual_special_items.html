@@ -2,10 +2,10 @@
 {% load template_extras %}
 {% load humanize %}
 {% if payment_certificate.has_contractual_special_items %}
-    <div class="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <div class="overflow-hidden mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
         <!-- Header -->
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center">
-            <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <div class="flex items-center px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h3 class="flex gap-2 items-center text-base font-bold text-gray-900">
                 <svg class="w-5 h-5 text-amber-500"
                      fill="currentColor"
                      viewBox="0 0 20 20">
@@ -19,9 +19,9 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Description</th>
-                        <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Previous Amount</th>
-                        <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Current Amount</th>
-                        <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Total Amount</th>
+                        <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Total Claimed</th>
+                        <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Previous Claimed</th>
+                        <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Current Claimed</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -30,7 +30,7 @@
                         <tr class="bg-gray-50/50">
                             <td colspan="4"
                                 class="px-6 py-2.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                                <span class="inline-flex items-center gap-1.5">
+                                <span class="inline-flex gap-1.5 items-center">
                                     <svg class="w-4 h-4 text-indigo-500"
                                          fill="none"
                                          stroke="currentColor"
@@ -44,17 +44,17 @@
                         {% for item in addendum_line_items %}
                             <tr class="hover:bg-gray-50/50">
                                 <td class="px-6 py-3 text-sm text-gray-900">{{ item.description }}</td>
+                                <td class="px-6 py-3 text-sm text-right text-gray-900 whitespace-nowrap">R {{ item.total_claimed|floatformat:2|intcomma }}</td>
                                 <td class="px-6 py-3 text-sm text-right text-gray-500 whitespace-nowrap">R {{ item.previous_claimed|floatformat:2|intcomma }}</td>
                                 <td class="px-6 py-3 text-sm font-medium text-right text-indigo-600 whitespace-nowrap">R {{ item.current_claim|floatformat:2|intcomma }}</td>
-                                <td class="px-6 py-3 text-sm text-right text-gray-900 whitespace-nowrap">R {{ item.total_claimed|floatformat:2|intcomma }}</td>
                             </tr>
                         {% endfor %}
                         <!-- Subtotal Addendum -->
-                        <tr class="bg-gray-50/30 font-semibold border-b border-gray-200">
+                        <tr class="font-semibold border-b border-gray-200 bg-gray-50/30">
                             <td class="px-6 py-2.5 text-xs font-bold text-right text-gray-500 uppercase">Subtotal Addendum Items</td>
+                            <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.addendum_progressive_to_date|floatformat:2|intcomma }}</td>
                             <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.addendum_progressive_previous|floatformat:2|intcomma }}</td>
                             <td class="px-6 py-2.5 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.addendum_current_claim_total|floatformat:2|intcomma }}</td>
-                            <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.addendum_progressive_to_date|floatformat:2|intcomma }}</td>
                         </tr>
                     {% endif %}
                     <!-- 2. Special Items -->
@@ -62,7 +62,7 @@
                         <tr class="bg-gray-50/50">
                             <td colspan="4"
                                 class="px-6 py-2.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                                <span class="inline-flex items-center gap-1.5">
+                                <span class="inline-flex gap-1.5 items-center">
                                     <svg class="w-4 h-4 text-indigo-500"
                                          fill="none"
                                          stroke="currentColor"
@@ -76,64 +76,53 @@
                         {% for item in special_line_items %}
                             <tr class="hover:bg-gray-50/50">
                                 <td class="px-6 py-3 text-sm text-gray-900">{{ item.description }}</td>
+                                <td class="px-6 py-3 text-sm text-right text-gray-900 whitespace-nowrap">R {{ item.total_claimed|floatformat:2|intcomma }}</td>
                                 <td class="px-6 py-3 text-sm text-right text-gray-500 whitespace-nowrap">R {{ item.previous_claimed|floatformat:2|intcomma }}</td>
                                 <td class="px-6 py-3 text-sm font-medium text-right text-indigo-600 whitespace-nowrap">R {{ item.current_claim|floatformat:2|intcomma }}</td>
-                                <td class="px-6 py-3 text-sm text-right text-gray-900 whitespace-nowrap">R {{ item.total_claimed|floatformat:2|intcomma }}</td>
                             </tr>
                         {% endfor %}
                         <!-- Subtotal Special Items -->
-                        <tr class="bg-gray-50/30 font-semibold border-b border-gray-200">
+                        <tr class="font-semibold border-b border-gray-200 bg-gray-50/30">
                             <td class="px-6 py-2.5 text-xs font-bold text-right text-gray-500 uppercase">Subtotal Special Items</td>
+                            <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.special_items_progressive_to_date|floatformat:2|intcomma }}</td>
                             <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.special_items_progressive_previous|floatformat:2|intcomma }}</td>
                             <td class="px-6 py-2.5 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.special_items_current_claim_total|floatformat:2|intcomma }}</td>
-                            <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.special_items_progressive_to_date|floatformat:2|intcomma }}</td>
                         </tr>
                     {% endif %}
                     <!-- 3. Ledger Totals -->
                     {% with ledger_items=payment_certificate.get_ledger_summary_items %}
                         {% if ledger_items %}
-                            <tr class="bg-gray-50/50">
-                                <td colspan="4"
-                                    class="px-6 py-2.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                                    <span class="inline-flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-indigo-500"
-                                             fill="none"
-                                             stroke="currentColor"
-                                             viewBox="0 0 24 24">
+                            {% comment %} <tr class="bg-gray-50/50">
+                                <td colspan="4" class="px-6 py-2.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                                    <span class="inline-flex gap-1.5 items-center">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                                         </svg>
                                         Ledger Totals
                                     </span>
-                                </td>
+                            </td> {% endcomment %}
+                        </tr>
+                        {% for item in ledger_items %}
+                            <tr class="hover:bg-gray-50/50">
+                                <td class="px-6 py-3 text-sm text-gray-900">{{ item.description }}</td>
+                                <td class="px-6 py-3 text-sm text-right text-gray-900 whitespace-nowrap">R {{ item.total_amount|floatformat:2|intcomma }}</td>
+                                <td class="px-6 py-3 text-sm text-right text-gray-500 whitespace-nowrap">R {{ item.previous_amount|floatformat:2|intcomma }}</td>
+                                <td class="px-6 py-3 text-sm font-medium text-right text-indigo-600 whitespace-nowrap">R {{ item.current_amount|floatformat:2|intcomma }}</td>
                             </tr>
-                            {% for item in ledger_items %}
-                                <tr class="hover:bg-gray-50/50">
-                                    <td class="px-6 py-3 text-sm text-gray-900">{{ item.description }}</td>
-                                    <td class="px-6 py-3 text-sm text-right text-gray-500 whitespace-nowrap">R {{ item.previous_amount|floatformat:2|intcomma }}</td>
-                                    <td class="px-6 py-3 text-sm font-medium text-right text-indigo-600 whitespace-nowrap">R {{ item.current_amount|floatformat:2|intcomma }}</td>
-                                    <td class="px-6 py-3 text-sm text-right text-gray-900 whitespace-nowrap">R {{ item.total_amount|floatformat:2|intcomma }}</td>
-                                </tr>
-                            {% endfor %}
-                            <!-- Subtotal Ledger -->
-                            <tr class="bg-gray-50/30 font-semibold border-b border-gray-200">
-                                <td class="px-6 py-2.5 text-xs font-bold text-right text-gray-500 uppercase">Subtotal Ledger Items</td>
-                                <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.ledger_progressive_previous|floatformat:2|intcomma }}</td>
-                                <td class="px-6 py-2.5 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.ledger_current_net_total|floatformat:2|intcomma }}</td>
-                                <td class="px-6 py-2.5 text-sm text-right text-gray-900 whitespace-nowrap">R {{ payment_certificate.ledger_progressive_to_date|floatformat:2|intcomma }}</td>
-                            </tr>
-                        {% endif %}
-                    {% endwith %}
-                </tbody>
-                <!-- Table Grand Total -->
-                <tfoot class="bg-indigo-50 divide-y divide-gray-200">
-                    <tr class="font-bold">
-                        <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 uppercase">Total Contractual Special Items</td>
-                        <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_progressive_previous|floatformat:2|intcomma }}</td>
-                        <td class="px-6 py-4 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_current_claim_total|floatformat:2|intcomma }}</td>
-                        <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_progressive_to_date|floatformat:2|intcomma }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </tbody>
+            <!-- Table Grand Total -->
+            <tfoot class="bg-indigo-50 divide-y divide-gray-200">
+                <tr class="font-bold">
+                    <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 uppercase">Total Contractual Special Items</td>
+                    <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_progressive_to_date|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_progressive_previous|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_current_claim_total|floatformat:2|intcomma }}</td>
+                </tr>
+            </tfoot>
+        </table>
     </div>
+</div>
 {% endif %}

@@ -82,24 +82,63 @@
                     </tbody>
                     <tfoot class="font-bold bg-gray-100 border-t-2 border-gray-300">
                         <tr>
-                            <td class="px-4 py-3 text-gray-900 uppercase">Total Excluding VAT</td>
+                            <td class="px-4 py-3 text-gray-900 uppercase">Total Work Done To Date</td>
                             <td class="px-4 py-3 font-mono text-right text-gray-900">{{ total_budget|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right text-gray-900">{{ total_cumulative|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right text-gray-900">{{ total_previous|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right text-indigo-700">{{ total_current|floatformat:2|intcomma }}</td>
                         </tr>
-                        <tr class="bg-indigo-50">
+                        {% comment %} <tr class="bg-indigo-50">
                             <td class="px-4 py-4 text-base text-indigo-900 uppercase">Grand Total</td>
                             <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">R {{ project.total_contract_value|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">R {{ payment_certificate.grand_total_progressive_to_date|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-4 font-mono text-lg text-right text-indigo-900">R {{ payment_certificate.grand_total_progressive_previous|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-4 font-mono text-lg text-right text-indigo-700">R {{ payment_certificate.current_claim_total|varadd:payment_certificate.ledger_current_net_total|floatformat:2|intcomma }}</td>
-                        </tr>
+                        </tr> {% endcomment %}
                     </tfoot>
                 </table>
             </div>
             <!-- Contractual Special Items -->
             {% include "payment_certificate/tables/contractual_special_items.html" %}
+            <div class="overflow-hidden mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <!-- Header -->
+                <div class="flex items-center px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <h3 class="flex gap-2 items-center text-base font-bold text-gray-900">Totals</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-xs font-semibold tracking-wider text-left text-gray-500 uppercase">Description</th>
+                                <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Total Claimed</th>
+                                <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Previous Claimed</th>
+                                <th class="px-6 py-3 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Current Claimed</th>
+                            </tr>
+                        </thead>
+                        <tr class="font-semibold">
+                            <td class="px-6 py-4 text-sm font-semibold text-left text-indigo-700 uppercase">Work Done To Date</td>
+                            <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contract_progressive_to_date|floatformat:2|intcomma }}</td>
+                            <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contract_progressive_previous|floatformat:2|intcomma }}</td>
+                            <td class="px-6 py-4 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.contract_current_claim_total|floatformat:2|intcomma }}</td>
+                        </tr>
+                        <tr class="font-semibold">
+                            <td class="px-6 py-4 text-sm font-semibold text-left text-indigo-700 uppercase">Total Contractual Special Items</td>
+                            <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_progressive_to_date|floatformat:2|intcomma }}</td>
+                            <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_progressive_previous|floatformat:2|intcomma }}</td>
+                            <td class="px-6 py-4 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.contractual_special_items_current_claim_total|floatformat:2|intcomma }}</td>
+                        </tr>
+                        <!-- Table Grand Total -->
+                        <tfoot class="bg-indigo-50 divide-y divide-gray-200">
+                            <tr class="font-bold">
+                                <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 uppercase">Grand Total</td>
+                                <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_work_plus_special_items_progressive_to_date|floatformat:2|intcomma }}</td>
+                                <td class="px-6 py-4 text-sm text-right text-indigo-900 whitespace-nowrap">R {{ payment_certificate.contractual_work_plus_special_items_progressive_previous|floatformat:2|intcomma }}</td>
+                                <td class="px-6 py-4 text-sm text-right text-indigo-600 whitespace-nowrap">R {{ payment_certificate.contractual_work_plus_special_items_current_claim_total|floatformat:2|intcomma }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock content %}
