@@ -1226,6 +1226,224 @@ class PaymentCertificateUnmarkFinalView(PaymentCertificateMixin, DetailView):
         )
 
 
+def get_resolved_cover_page_sections(payment_certificate) -> list[dict]:
+    """Resolve cover page sections and fields in their customized order with style metadata and raw values."""
+    import datetime
+    from decimal import Decimal
+
+    project = payment_certificate.project
+    cover_page_config = project.get_cover_page_config()
+
+    # Section A values
+    status_display = payment_certificate.get_status_display()
+    cert_date_str = (
+        payment_certificate.approved_on
+        or payment_certificate.assessment_date
+        or datetime.date.today()
+    )
+
+    # Section B values
+    orig_val = project.original_contract_value or Decimal("0.00")
+    amends_val = project.addendum_contract_value or Decimal("0.00")
+    sub_total_contract = orig_val + amends_val
+    vat_val_contract = (
+        sub_total_contract * Decimal("0.15") if project.vat else Decimal("0.00")
+    )
+    total_contract = sub_total_contract + vat_val_contract
+
+    # Section C values
+    work_progressive_previous = (
+        payment_certificate.work_progressive_previous or Decimal("0.00")
+    )
+    contract_current_claim_total = (
+        payment_certificate.contract_current_claim_total or Decimal("0.00")
+    )
+    addendum_current_claim_total = (
+        payment_certificate.addendum_current_claim_total or Decimal("0.00")
+    )
+    work_progressive_to_date = payment_certificate.work_progressive_to_date or Decimal(
+        "0.00"
+    )
+    progressive_to_date = payment_certificate.progressive_to_date or Decimal("0.00")
+    progressive_previous = payment_certificate.progressive_previous or Decimal("0.00")
+    current_claim_total = payment_certificate.current_claim_total or Decimal("0.00")
+    vat_val_payment = (
+        current_claim_total * Decimal("0.15") if project.vat else Decimal("0.00")
+    )
+    total_certified = current_claim_total + vat_val_payment
+
+    resolved_sections = []
+    section_order = cover_page_config.get("section_order") or [
+        "section_a",
+        "section_b",
+        "section_c",
+    ]
+
+    for sec_id in section_order:
+        sec_data = cover_page_config["sections"].get(sec_id)
+        if not sec_data:
+            continue
+
+        fields_data = []
+        for field in sec_data.get("fields", []):
+            if not field.get("enabled", True):
+                continue
+
+            fid = field["id"]
+            label = field["label"]
+
+            style = {
+                "is_bold": False,
+                "is_italic_gray": False,
+                "is_highlighted_navy": False,
+                "is_highlighted_orange": False,
+                "is_status": False,
+                "is_special_items": False,
+                "is_mono": True,
+            }
+
+            raw_val = None
+            if sec_id == "section_a":
+                style["is_mono"] = False
+                if fid == "contract_name":
+                    raw_val = project.name
+                elif fid == "contract_number":
+                    raw_val = project.contract_number or "N/A"
+                elif fid == "contract_clause":
+                    raw_val = project.contract_clause or "N/A"
+                elif fid == "description":
+                    raw_val = project.description or "N/A"
+                elif fid == "client":
+                    raw_val = project.client.name if project.client else "—"
+                elif fid == "status":
+                    raw_val = status_display
+                    style["is_status"] = True
+                elif fid == "assessment_date":
+                    d = payment_certificate.assessment_date or cert_date_str
+                    raw_val = (
+                        d.strftime("%d %B %Y") if hasattr(d, "strftime") else str(d)
+                    )
+                elif fid == "certificate_date":
+                    d = payment_certificate.approved_on or cert_date_str
+                    raw_val = (
+                        d.strftime("%d %B %Y") if hasattr(d, "strftime") else str(d)
+                    )
+
+            elif sec_id == "section_b":
+                if fid == "original_value":
+                    raw_val = orig_val
+                elif fid == "amendments_value":
+                    raw_val = amends_val
+                elif fid == "sub_total":
+                    raw_val = sub_total_contract
+                    style["is_bold"] = True
+                elif fid == "vat":
+                    if project.vat:
+                        raw_val = vat_val_contract
+                    else:
+                        raw_val = Decimal("0.00")
+                        label = "No VAT"
+                elif fid == "total_value":
+                    raw_val = total_contract
+                    style["is_bold"] = True
+                    style["is_highlighted_navy"] = True
+
+            elif sec_id == "section_c":
+                if fid == "work_progressive_previous":
+                    raw_val = work_progressive_previous
+                elif fid == "contract_current_claim_total":
+                    raw_val = contract_current_claim_total
+                elif fid == "addendum_current_claim_total":
+                    raw_val = addendum_current_claim_total
+                elif fid == "work_progressive_to_date":
+                    raw_val = work_progressive_to_date
+                    style["is_bold"] = True
+                elif fid == "special_items":
+                    raw_val = None
+                    style["is_special_items"] = True
+                    # Sub-items list
+                    special_items_list = []
+                    for item in payment_certificate.special_items_annotated:
+                        total = item.total or Decimal("0.00")
+                        if total != 0:
+                            prefix = "ADD" if total > 0 else "LESS"
+                            item_val = total
+                            if prefix == "LESS" and item_val > 0:
+                                item_val = -item_val
+
+                            is_negative = item_val < 0
+                            abs_val = abs(item_val)
+                            formatted_val = f"R {abs_val:,.2f}"
+                            if is_negative:
+                                formatted_val = f"-R {abs_val:,.2f}"
+
+                            special_items_list.append(
+                                {
+                                    "label": f"{prefix}: {item.description}",
+                                    "raw_value": item_val,
+                                    "formatted_value": formatted_val,
+                                }
+                            )
+                    field["special_items_list"] = special_items_list
+                elif fid == "progressive_to_date":
+                    raw_val = progressive_to_date
+                    style["is_bold"] = True
+                elif fid == "progressive_previous":
+                    raw_val = progressive_previous
+                    style["is_italic_gray"] = True
+                elif fid == "current_claim_total":
+                    raw_val = current_claim_total
+                    style["is_bold"] = True
+                elif fid == "vat_now":
+                    if project.vat:
+                        raw_val = vat_val_payment
+                    else:
+                        raw_val = Decimal("0.00")
+                        label = "No VAT"
+                elif fid == "total_certified":
+                    raw_val = total_certified
+                    style["is_bold"] = True
+                    style["is_highlighted_orange"] = True
+
+            # Negate value if label contains "less" (case-insensitive) and value is positive
+            if raw_val is not None and isinstance(raw_val, (Decimal, float, int)):
+                if label and "less" in label.lower() and raw_val > 0:
+                    raw_val = -raw_val
+
+            # Generate formatted value for currency fields
+            formatted_val = "—"
+            if raw_val is not None:
+                if isinstance(raw_val, (Decimal, float, int)):
+                    is_negative = raw_val < 0
+                    abs_val = abs(raw_val)
+                    formatted_val = f"R {abs_val:,.2f}"
+                    if is_negative:
+                        formatted_val = f"-R {abs_val:,.2f}"
+                else:
+                    formatted_val = str(raw_val)
+
+            fields_data.append(
+                {
+                    "id": fid,
+                    "label": label,
+                    "raw_value": raw_val,
+                    "style": style,
+                    "special_items_list": field.get("special_items_list", []),
+                    "formatted_value": formatted_val,
+                }
+            )
+
+        resolved_sections.append(
+            {
+                "id": sec_id,
+                "title": sec_data.get("title") or sec_id.upper().replace("_", " "),
+                "fields": fields_data,
+            }
+        )
+
+    return resolved_sections
+
+
 class PaymentCertificateCoverPageView(PaymentCertificateMixin, DetailView):
     """Render the cover page (project details, contract summary, cert summary) in-browser."""
 
@@ -1267,9 +1485,25 @@ class PaymentCertificateCoverPageView(PaymentCertificateMixin, DetailView):
         ]
 
     def get_context_data(self, **kwargs):
-        """Add project to context."""
+        """Add project and resolved cover page sections to context."""
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        project = self.get_project()
+        context["project"] = project
+
+        cover_config = project.get_cover_page_config()
+        flat_fields = {}
+        for sec_id, sec_data in cover_config.get("sections", {}).items():
+            flat_fields[sec_id] = {}
+            for field in sec_data.get("fields", []):
+                flat_fields[sec_id][field["id"]] = {
+                    "label": field["label"],
+                    "enabled": field["enabled"],
+                }
+        context["cover_fields"] = flat_fields
+        context["cover_page_config"] = cover_config
+        context["ordered_sections"] = get_resolved_cover_page_sections(
+            self.get_object()
+        )
         return context
 
 

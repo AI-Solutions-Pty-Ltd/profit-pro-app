@@ -1,14 +1,14 @@
 {% extends "base_full.html" %}
 {% load humanize %}
 {% load template_extras %}
-{% block title %}Cover Page — {{ project.name }} — PC #{{ payment_certificate.certificate_number }}{% endblock title %}
+{% block title %}{{ cover_page_config.title|default:"Cover Page" }} — {{ project.name }} — PC #{{ payment_certificate.certificate_number }}{% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Cover Page</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ cover_page_config.title|default:"Cover Page" }}</h1>
                     <p class="text-sm text-gray-500 mt-1">
                         Payment Certificate #{{ payment_certificate.certificate_number }} — {{ project.name }}
                     </p>
@@ -31,202 +31,77 @@
                     </a>
                 </div>
             </div>
-            <!-- Section A: Project Details -->
-            <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
-                    {% heroicon_outline "building-office" class="w-5 h-5 text-indigo-600" %}
-                    A. Project Details
-                </h2>
-                <div class="overflow-hidden rounded-lg border border-gray-200">
-                    <table class="w-full text-sm">
-                        <tbody class="divide-y divide-gray-200">
-                            <tr class="bg-white hover:bg-gray-50">
-                                <th class="px-4 py-3 text-left font-medium text-gray-600 w-1/3">Contract</th>
-                                <td class="px-4 py-3 text-gray-900">{{ project.name }}</td>
-                            </tr>
-                            <tr class="bg-white hover:bg-gray-50">
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Contract Number</th>
-                                <td class="px-4 py-3 text-gray-900">{{ project.contract_number|default:"N/A" }}</td>
-                            </tr>
-                            <tr class="bg-white hover:bg-gray-50">
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Contract Clause</th>
-                                <td class="px-4 py-3 text-gray-900">{{ project.contract_clause|default:"N/A" }}</td>
-                            </tr>
-                            <tr class="bg-white hover:bg-gray-50">
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Description</th>
-                                <td class="px-4 py-3 text-gray-900">{{ project.description|default:"N/A" }}</td>
-                            </tr>
-                            <tr class="bg-white hover:bg-gray-50">
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Client</th>
-                                <td class="px-4 py-3 text-gray-900">
-                                    {% if project.client %}
-                                        {{ project.client.name }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr class="bg-white hover:bg-gray-50">
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Certificate Status</th>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if payment_certificate.status == 'APPROVED' %}bg-green-100 text-green-800 {% elif payment_certificate.status == 'SUBMITTED' %}bg-amber-100 text-amber-800 {% elif payment_certificate.status == 'REJECTED' %}bg-red-100 text-red-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        {{ payment_certificate.get_status_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr class="bg-white hover:bg-gray-50">
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Assessment Date</th>
-                                <td class="px-4 py-3 text-gray-900">{{ payment_certificate.approved_on|date:"d F Y"|default:"—" }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <!-- Section B: Contract Summary -->
-            <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
-                    {% heroicon_outline "document-text" class="w-5 h-5 text-indigo-600" %}
-                    B. Contract Summary
-                </h2>
-                <div class="overflow-hidden rounded-lg border border-gray-200">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Contract</th>
-                                <th class="px-4 py-3 text-right font-medium text-gray-600">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Original Contract Value</td>
-                                <td class="px-4 py-3 text-right text-gray-900 font-mono">R {{ project.original_contract_value|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Total Contract Amendments To Date</td>
-                                <td class="px-4 py-3 text-right text-gray-900 font-mono">R {{ project.addendum_contract_value|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Sub Total (Excl. VAT)</td>
-                                <td class="px-4 py-3 text-right text-gray-900 font-mono">R {{ project.total_contract_value|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">
-                                    {% if project.vat %}
-                                        VAT 15%
-                                    {% else %}
-                                        No VAT
-                                    {% endif %}
-                                </td>
-                                <td class="px-4 py-3 text-right text-gray-900 font-mono">
-                                    {% if project.vat %}
-                                        R {{ project.total_contract_value|multiply:0.15|floatformat:2|intcomma }}
-                                    {% else %}
-                                        R 0.00
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr class="bg-indigo-50 font-bold">
-                                <td class="px-4 py-3 text-indigo-900">Total Contract Value (Incl. VAT)</td>
-                                <td class="px-4 py-3 text-right text-indigo-900 font-mono">
-                                    {% if project.vat %}
-                                        R {{ project.total_contract_value|multiply:1.15|floatformat:2|intcomma }}
-                                    {% else %}
-                                        R {{ project.total_contract_value|floatformat:2|intcomma }}
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <!-- Section C: Payment Certificate Summary -->
-            <div class="mb-4">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
-                    {% heroicon_outline "calculator" class="w-5 h-5 text-indigo-600" %}
-                    C. Payment Certificate Summary
-                </h2>
-                <div class="overflow-hidden rounded-lg border border-gray-200">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">Payment Due</th>
-                                <th class="px-4 py-3 text-right font-medium text-gray-600">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Value of work done up to assessment interval #{{ payment_certificate.certificate_number }}</td>
-                                <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ payment_certificate.work_progressive_previous|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Plus: Contract Compensation Events</td>
-                                <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ payment_certificate.contract_current_claim_total|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Plus: Addendum Compensation Events</td>
-                                <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ payment_certificate.addendum_current_claim_total|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Total value of work done</td>
-                                <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ payment_certificate.work_progressive_to_date|floatformat:2|intcomma }}</td>
-                            </tr>
-                            {% for special_item in payment_certificate.special_items_annotated %}
-                                {% if special_item.total %}
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-gray-900">
-                                            {% if special_item.total > 0 %}
-                                                ADD
+            <!-- Dynamic Resolved Sections -->
+            {% for section in ordered_sections %}
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
+                        {% if section.id == 'section_a' %}
+                            {% heroicon_outline "building-office" class="w-5 h-5 text-indigo-600" %}
+                        {% elif section.id == 'section_b' %}
+                            {% heroicon_outline "document-text" class="w-5 h-5 text-indigo-600" %}
+                        {% else %}
+                            {% heroicon_outline "calculator" class="w-5 h-5 text-indigo-600" %}
+                        {% endif %}
+                        {{ section.title }}
+                    </h2>
+                    <div class="overflow-hidden rounded-lg border border-gray-200">
+                        <table class="w-full text-sm">
+                            {% if section.id != 'section_a' %}
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">
+                                            {% if section.id == 'section_b' %}
+                                                Contract
                                             {% else %}
-                                                LESS
+                                                Payment Due
                                             {% endif %}
-                                            : {{ special_item.description }}
-                                        </td>
-                                        <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ special_item.total|default:0|floatformat:2|intcomma }}</td>
+                                        </th>
+                                        <th class="px-4 py-3 text-right font-medium text-gray-600">Value</th>
                                     </tr>
-                                {% endif %}
-                            {% endfor %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">Sub Total</td>
-                                <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">LESS: Previous Amount Due</td>
-                                <td class="px-4 py-3 text-right font-mono text-gray-900">R {{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-semibold text-gray-900">NET AMOUNT NOW CERTIFIED</td>
-                                <td class="px-4 py-3 text-right font-mono font-semibold text-gray-900">R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-gray-900">
-                                    {% if project.vat %}
-                                        VAT 15%
+                                </thead>
+                            {% endif %}
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for field in section.fields %}
+                                    {% if field.style.is_special_items %}
+                                        {% for item in field.special_items_list %}
+                                            <tr class="bg-white hover:bg-gray-50">
+                                                <td class="px-4 py-3 text-gray-900">{{ item.label }}</td>
+                                                <td class="px-4 py-3 text-right font-mono text-gray-900">{{ item.formatted_value }}</td>
+                                            </tr>
+                                        {% endfor %}
                                     {% else %}
-                                        No VAT
+                                        <tr class="{% if field.style.is_bold and section.id != 'section_a' %}bg-indigo-50 font-bold{% else %}bg-white hover:bg-gray-50{% endif %}">
+                                            {% if section.id == 'section_a' %}
+                                                <th class="px-4 py-3 text-left font-medium text-gray-600 w-1/3">{{ field.label }}</th>
+                                                <td class="px-4 py-3 text-gray-900">
+                                                    {% if field.style.is_status %}
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if payment_certificate.status == 'APPROVED' %}bg-green-100 text-green-800 {% elif payment_certificate.status == 'SUBMITTED' %}bg-amber-100 text-amber-800 {% elif payment_certificate.status == 'REJECTED' %}bg-red-100 text-red-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                            {{ field.raw_value }}
+                                                        </span>
+                                                    {% else %}
+                                                        {{ field.raw_value|default:"—" }}
+                                                    {% endif %}
+                                                </td>
+                                            {% else %}
+                                                <td class="px-4 py-3 {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %} {% if field.style.is_italic_gray %}text-italic-gray{% endif %}">
+                                                    {{ field.label }}
+                                                </td>
+                                                <td class="px-4 py-3 text-right font-mono {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %}">
+                                                    {% if field.style.is_mono %}
+                                                        {{ field.formatted_value }}
+                                                    {% else %}
+                                                        {{ field.raw_value }}
+                                                    {% endif %}
+                                                </td>
+                                            {% endif %}
+                                        </tr>
                                     {% endif %}
-                                </td>
-                                <td class="px-4 py-3 text-right font-mono text-gray-900">
-                                    {% if project.vat %}
-                                        R {{ payment_certificate.current_claim_total|multiply:0.15|floatformat:2|intcomma }}
-                                    {% else %}
-                                        R 0.00
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr class="bg-indigo-50 font-bold">
-                                <td class="px-4 py-4 text-indigo-900 text-base">TOTAL AMOUNT NOW CERTIFIED</td>
-                                <td class="px-4 py-4 text-right font-mono text-lg text-indigo-900">
-                                    {% if project.vat %}
-                                        R {{ payment_certificate.current_claim_total|multiply:1.15|floatformat:2|intcomma }}
-                                    {% else %}
-                                        R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 {% endblock content %}

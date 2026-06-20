@@ -62,6 +62,70 @@ class TestProjectReportConfig:
 
 
 @pytest.mark.django_db
+class TestProjectCoverConfig:
+    """Test cases for ProjectCoverConfigView."""
+
+    def setup_method(self):
+        self.project = ProjectFactory()
+        self.user = AccountFactory()
+        self.project.users.add(self.user)
+        from app.Project.models import ProjectRole, Role
+
+        ProjectRole.objects.get_or_create(
+            project=self.project, user=self.user, role=Role.ADMIN
+        )
+        self.url = reverse(
+            "project:project-cover-config", kwargs={"pk": self.project.pk}
+        )
+
+    def test_get_cover_config(self, client):
+        """Test successfully rendering cover config page."""
+        client.force_login(self.user)
+        response = client.get(self.url)
+        assert response.status_code == 200
+        assert "project/cover_config.html" in [t.name for t in response.templates]
+
+    def test_save_cover_config_success(self, client):
+        """Test successfully saving cover page configuration."""
+        client.force_login(self.user)
+
+        cover_data = {
+            "title": "CUSTOM COVER TITLE",
+            "sections": {
+                "section_a": {
+                    "title": "CUSTOM SECTION A",
+                    "fields": [
+                        {
+                            "id": "contract_name",
+                            "label": "Custom Contract Label",
+                            "enabled": True,
+                        }
+                    ],
+                }
+            },
+        }
+
+        data = {
+            "action": "save_cover_config",
+            "cover_config": json.dumps(cover_data),
+        }
+
+        response = client.post(self.url, data)
+        assert response.status_code == 302
+
+        self.project.refresh_from_db()
+        assert self.project.cover_page_config == cover_data
+
+        # Verify get_cover_page_config() resolves the custom title and field correctly
+        resolved_config = self.project.get_cover_page_config()
+        assert resolved_config["title"] == "CUSTOM COVER TITLE"
+        sec_a_fields = resolved_config["sections"]["section_a"]["fields"]
+        contract_field = next(f for f in sec_a_fields if f["id"] == "contract_name")
+        assert contract_field["label"] == "Custom Contract Label"
+        assert contract_field["enabled"] is True
+
+
+@pytest.mark.django_db
 class TestCompanyManagementSiteCards:
     """Test cases for CompanyManagementView site management cards."""
 

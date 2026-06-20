@@ -18,6 +18,8 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
         ws = wb.create_sheet(title="Cover Page")
 
     project = payment_certificate.project
+    cover_page_config = project.get_cover_page_config()
+
     cert_num = str(payment_certificate.certificate_number).zfill(2)
     cert_date = (
         payment_certificate.approved_on.strftime("%d %b %Y")
@@ -39,7 +41,6 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
 
     align_center = Alignment(horizontal="center", vertical="center")
     align_right = Alignment(horizontal="right", vertical="center")
-    Alignment(horizontal="left", vertical="center")
 
     fill_light_grey = PatternFill(
         start_color="FFF2F2F2", end_color="FFF2F2F2", fill_type="solid"
@@ -74,10 +75,9 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     ws.row_dimensions[2].height = 13.5
     ws.row_dimensions[3].height = 3.0
     ws.row_dimensions[4].height = 6.0
-    ws.row_dimensions[10].height = 6.0
 
     # Initialize all cells to white fill to avoid default gridlines
-    for row in range(1, 45):
+    for row in range(1, 55):
         for col in range(1, 8):
             ws.cell(row=row, column=col).fill = fill_white
             ws.cell(row=row, column=col).font = font_normal
@@ -86,7 +86,8 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     ws.cell(row=1, column=1, value="[ LOGO ]").font = font_bold
     ws.cell(row=1, column=1).alignment = align_center
 
-    title_cell = ws.cell(row=1, column=3, value="PAYMENT CERTIFICATE")
+    main_title = cover_page_config.get("title") or "PAYMENT CERTIFICATE"
+    title_cell = ws.cell(row=1, column=3, value=main_title)
     title_cell.font = font_title
     title_cell.alignment = align_center
     ws.merge_cells(start_row=1, start_column=3, end_row=1, end_column=6)
@@ -119,40 +120,7 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     for col in range(1, 8):
         ws.cell(row=3, column=col).fill = fill_separator
 
-    # Info Rows (5 to 9)
-    info_rows = [
-        ("Certificate No.", cert_num),
-        ("Assessment Date", cert_date),
-        ("Date of Certificate", cert_date),
-        ("Contract No.", project.contract_number or ""),
-        (
-            "Retention Free Amount",
-            f"R {getattr(project, 'retention_free_amount', Decimal('0.00')):,}",
-        ),
-    ]
-
-    for idx, (label, val) in enumerate(info_rows, start=5):
-        ws.row_dimensions[idx].height = 18.0
-        ws.cell(row=idx, column=1, value=label).font = Font(color=c_grey_text)
-        ws.cell(row=idx, column=1).alignment = align_right
-        ws.cell(row=idx, column=2, value=val).font = font_bold
-
-    # Contract Value Summary Header
-    ws.row_dimensions[11].height = 18.0
-    ws.cell(row=11, column=1, value="CONTRACT VALUE SUMMARY").font = font_bold
-    for col in range(1, 8):
-        ws.cell(row=11, column=col).fill = fill_light_grey
-        ws.cell(row=11, column=col).border = border_thin_top_bottom
-    ws.merge_cells(start_row=11, start_column=1, end_row=11, end_column=7)
-
-    # Contract Summary Column Headers
-    ws.row_dimensions[12].height = 15.75
-    ws.cell(row=12, column=1, value="Description").font = Font(color=c_grey_text)
-    ws.cell(row=12, column=7, value="Value (R)").font = Font(color=c_grey_text)
-    ws.cell(row=12, column=7).alignment = align_right
-
-    current_row = 13
-
+    # Dynamic Info Rows starting at Row 5
     orig_val = project.original_contract_value or Decimal("0.00")
     amends_val = project.addendum_contract_value or Decimal("0.00")
     sub_total_contract = orig_val + amends_val
@@ -160,62 +128,6 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
         sub_total_contract * Decimal("0.15") if project.vat else Decimal("0.00")
     )
     total_contract = sub_total_contract + vat_val_contract
-
-    contract_rows = [
-        ("Original Contract Value", orig_val),
-        ("Total Contract Amendments To Date", amends_val),
-        ("Sub Total", sub_total_contract),
-        ("VAT at 15%" if project.vat else "No VAT", vat_val_contract),
-        ("Total Contract Value (incl. VAT)", total_contract),
-    ]
-
-    for i, (desc, val) in enumerate(contract_rows):
-        ws.row_dimensions[current_row].height = 16.5
-        ws.cell(row=current_row, column=1, value=desc)
-        cell_val = ws.cell(row=current_row, column=7, value=val)
-        cell_val.number_format = "#,##0.00"
-
-        # Highlight total row
-        if "Total Contract Value" in desc:
-            for col in range(1, 8):
-                ws.cell(row=current_row, column=col).fill = fill_dark_blue
-            ws.cell(row=current_row, column=1).font = font_white_bold
-            cell_val.font = font_white_bold
-        else:
-            if "Total" in desc or "Sub Total" in desc:
-                ws.cell(row=current_row, column=1).font = font_bold
-                cell_val.font = font_bold
-            # Alternate row fills
-            if i % 2 != 0:
-                for col in range(1, 8):
-                    ws.cell(row=current_row, column=col).fill = fill_light_grey
-        current_row += 1
-
-    current_row += 1
-
-    # Payment Due Summary Header
-    ws.row_dimensions[current_row].height = 18.0
-    ws.cell(
-        row=current_row, column=1, value=f"PAYMENT DUE — CERTIFICATE NO. {cert_num}"
-    ).font = font_bold
-    for col in range(1, 8):
-        ws.cell(row=current_row, column=col).fill = fill_light_grey
-        ws.cell(row=current_row, column=col).border = border_thin_top_bottom
-    ws.merge_cells(
-        start_row=current_row, start_column=1, end_row=current_row, end_column=7
-    )
-    current_row += 1
-
-    # Payment Summary Column Headers
-    ws.row_dimensions[current_row].height = 15.75
-    ws.cell(row=current_row, column=1, value="Description").font = Font(
-        color=c_grey_text
-    )
-    ws.cell(row=current_row, column=7, value="Amount (R)").font = Font(
-        color=c_grey_text
-    )
-    ws.cell(row=current_row, column=7).alignment = align_right
-    current_row += 1
 
     work_progressive_previous = (
         payment_certificate.work_progressive_previous or Decimal("0.00")
@@ -238,58 +150,237 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     )
     total_certified = current_claim_total + vat_val_payment
 
-    payment_rows = [
-        (
-            f"Value of work done up to assessment interval #{cert_num}",
-            work_progressive_previous,
-        ),
-        ("Plus: Contract Compensation Events", contract_current_claim_total),
-        ("Plus: Addendum Compensation Events", addendum_current_claim_total),
-        ("Total value of work done", work_progressive_to_date),
+    section_order = cover_page_config.get("section_order") or [
+        "section_a",
+        "section_b",
+        "section_c",
     ]
+    current_row = 5
 
-    for special_item in payment_certificate.special_items_annotated:
-        total = special_item.total or Decimal("0.00")
-        if total != 0:
-            prefix = "ADD" if total > 0 else "LESS"
-            payment_rows.append((f"{prefix}: {special_item.description}", total))
+    for sec_id in section_order:
+        if sec_id == "section_a":
+            info_rows = []
+            sec_a_fields = cover_page_config["sections"]["section_a"]["fields"]
+            for field in sec_a_fields:
+                fid = field["id"]
+                label = field["label"]
+                enabled = field["enabled"]
+                if not enabled:
+                    continue
 
-    payment_rows.extend(
-        [
-            ("Sub Total", progressive_to_date),
-            ("LESS: Previous Amount Due", progressive_previous),
-            ("NET AMOUNT NOW CERTIFIED", current_claim_total),
-            ("Plus: V.A.T. at 15%" if project.vat else "No VAT", vat_val_payment),
-            ("TOTAL AMOUNT NOW CERTIFIED (incl. VAT)", total_certified),
-        ]
-    )
+                val = ""
+                if fid == "contract_name":
+                    val = project.name
+                elif fid == "contract_number":
+                    val = project.contract_number or ""
+                elif fid == "contract_clause":
+                    val = project.contract_clause or ""
+                elif fid == "description":
+                    val = project.description or ""
+                elif fid == "client":
+                    val = project.client.name if project.client else ""
+                elif fid == "status":
+                    val = payment_certificate.get_status_display()
+                elif fid == "assessment_date":
+                    val = cert_date
+                elif fid == "certificate_date":
+                    val = cert_date
 
-    for i, (desc, val) in enumerate(payment_rows):
-        ws.row_dimensions[current_row].height = 16.5
-        ws.cell(row=current_row, column=1, value=desc)
-        cell_val = ws.cell(row=current_row, column=7, value=val)
-        cell_val.number_format = "#,##0.00"
+                info_rows.append((label, val))
 
-        # Highlight total row
-        if "TOTAL AMOUNT" in desc:
+            for label, val in info_rows:
+                ws.row_dimensions[current_row].height = 18.0
+                ws.cell(row=current_row, column=1, value=label).font = Font(
+                    color=c_grey_text
+                )
+                ws.cell(row=current_row, column=1).alignment = align_right
+                ws.cell(row=current_row, column=2, value=val).font = font_bold
+                current_row += 1
+
+            current_row += 1  # Leave an empty row
+
+        elif sec_id == "section_b":
+            sec_b_title = cover_page_config["sections"]["section_b"]["title"]
+            ws.row_dimensions[current_row].height = 18.0
+            ws.cell(row=current_row, column=1, value=sec_b_title).font = font_bold
             for col in range(1, 8):
-                ws.cell(row=current_row, column=col).fill = fill_gold
-            ws.cell(row=current_row, column=1).font = font_white_bold
-            cell_val.font = font_white_bold
-        else:
-            if "Total" in desc or "Sub Total" in desc or "NET AMOUNT" in desc:
-                ws.cell(row=current_row, column=1).font = font_bold
-                cell_val.font = font_bold
-            if "Less:" in desc or "LESS:" in desc:
-                ws.cell(row=current_row, column=1).font = font_less
-            # Alternate row fills
-            if i % 2 != 0:
-                for col in range(1, 8):
-                    ws.cell(row=current_row, column=col).fill = fill_light_grey
-        current_row += 1
+                ws.cell(row=current_row, column=col).fill = fill_light_grey
+                ws.cell(row=current_row, column=col).border = border_thin_top_bottom
+            ws.merge_cells(
+                start_row=current_row,
+                start_column=1,
+                end_row=current_row,
+                end_column=7,
+            )
+            current_row += 1
+
+            ws.row_dimensions[current_row].height = 15.75
+            ws.cell(row=current_row, column=1, value="Description").font = Font(
+                color=c_grey_text
+            )
+            ws.cell(row=current_row, column=7, value="Value (R)").font = Font(
+                color=c_grey_text
+            )
+            ws.cell(row=current_row, column=7).alignment = align_right
+            current_row += 1
+
+            contract_rows = []
+            sec_b_fields = cover_page_config["sections"]["section_b"]["fields"]
+            for field in sec_b_fields:
+                fid = field["id"]
+                label = field["label"]
+                enabled = field["enabled"]
+                if not enabled:
+                    continue
+
+                val = Decimal("0.00")
+                if fid == "original_value":
+                    val = orig_val
+                elif fid == "amendments_value":
+                    val = amends_val
+                elif fid == "sub_total":
+                    val = sub_total_contract
+                elif fid == "vat":
+                    val = vat_val_contract
+                elif fid == "total_value":
+                    val = total_contract
+
+                contract_rows.append((label, val, fid))
+
+            for i, (desc, val, fid) in enumerate(contract_rows):
+                ws.row_dimensions[current_row].height = 16.5
+                ws.cell(row=current_row, column=1, value=desc)
+                if (
+                    desc
+                    and "less" in desc.lower()
+                    and isinstance(val, (Decimal, float, int))
+                    and val > 0
+                ):
+                    val = -val
+                cell_val = ws.cell(row=current_row, column=7, value=val)
+                cell_val.number_format = "#,##0.00"
+
+                if fid == "total_value":
+                    for col in range(1, 8):
+                        ws.cell(row=current_row, column=col).fill = fill_dark_blue
+                    ws.cell(row=current_row, column=1).font = font_white_bold
+                    cell_val.font = font_white_bold
+                else:
+                    if fid in ["sub_total", "total_value"]:
+                        ws.cell(row=current_row, column=1).font = font_bold
+                        cell_val.font = font_bold
+                    if i % 2 != 0:
+                        for col in range(1, 8):
+                            ws.cell(row=current_row, column=col).fill = fill_light_grey
+                current_row += 1
+
+            current_row += 1  # Leave an empty row
+
+        elif sec_id == "section_c":
+            sec_c_title = cover_page_config["sections"]["section_c"]["title"]
+            ws.row_dimensions[current_row].height = 18.0
+            ws.cell(
+                row=current_row,
+                column=1,
+                value=f"{sec_c_title} — CERTIFICATE NO. {cert_num}",
+            ).font = font_bold
+            for col in range(1, 8):
+                ws.cell(row=current_row, column=col).fill = fill_light_grey
+                ws.cell(row=current_row, column=col).border = border_thin_top_bottom
+            ws.merge_cells(
+                start_row=current_row,
+                start_column=1,
+                end_row=current_row,
+                end_column=7,
+            )
+            current_row += 1
+
+            ws.row_dimensions[current_row].height = 15.75
+            ws.cell(row=current_row, column=1, value="Description").font = Font(
+                color=c_grey_text
+            )
+            ws.cell(row=current_row, column=7, value="Amount (R)").font = Font(
+                color=c_grey_text
+            )
+            ws.cell(row=current_row, column=7).alignment = align_right
+            current_row += 1
+
+            payment_rows = []
+            sec_c_fields = cover_page_config["sections"]["section_c"]["fields"]
+            for field in sec_c_fields:
+                fid = field["id"]
+                label = field["label"]
+                enabled = field["enabled"]
+                if not enabled:
+                    continue
+
+                if fid == "work_progressive_previous":
+                    payment_rows.append((label, work_progressive_previous, fid))
+                elif fid == "contract_current_claim_total":
+                    payment_rows.append((label, contract_current_claim_total, fid))
+                elif fid == "addendum_current_claim_total":
+                    payment_rows.append((label, addendum_current_claim_total, fid))
+                elif fid == "work_progressive_to_date":
+                    payment_rows.append((label, work_progressive_to_date, fid))
+                elif fid == "special_items":
+                    for special_item in payment_certificate.special_items_annotated:
+                        total = special_item.total or Decimal("0.00")
+                        if total != 0:
+                            prefix = "ADD" if total > 0 else "LESS"
+                            payment_rows.append(
+                                (
+                                    f"{prefix}: {special_item.description}",
+                                    total,
+                                    "special_item",
+                                )
+                            )
+                elif fid == "progressive_to_date":
+                    payment_rows.append((label, progressive_to_date, fid))
+                elif fid == "progressive_previous":
+                    payment_rows.append((label, progressive_previous, fid))
+                elif fid == "current_claim_total":
+                    payment_rows.append((label, current_claim_total, fid))
+                elif fid == "vat_now":
+                    payment_rows.append((label, vat_val_payment, fid))
+                elif fid == "total_certified":
+                    payment_rows.append((label, total_certified, fid))
+
+            for i, (desc, val, fid) in enumerate(payment_rows):
+                ws.row_dimensions[current_row].height = 16.5
+                ws.cell(row=current_row, column=1, value=desc)
+                if (
+                    desc
+                    and "less" in desc.lower()
+                    and isinstance(val, (Decimal, float, int))
+                    and val > 0
+                ):
+                    val = -val
+                cell_val = ws.cell(row=current_row, column=7, value=val)
+                cell_val.number_format = "#,##0.00"
+
+                if fid == "total_certified":
+                    for col in range(1, 8):
+                        ws.cell(row=current_row, column=col).fill = fill_gold
+                    ws.cell(row=current_row, column=1).font = font_white_bold
+                    cell_val.font = font_white_bold
+                else:
+                    if fid in [
+                        "progressive_to_date",
+                        "current_claim_total",
+                        "work_progressive_to_date",
+                    ]:
+                        ws.cell(row=current_row, column=1).font = font_bold
+                        cell_val.font = font_bold
+                    if fid == "progressive_previous":
+                        ws.cell(row=current_row, column=1).font = font_less
+                    if i % 2 != 0:
+                        for col in range(1, 8):
+                            ws.cell(row=current_row, column=col).fill = fill_light_grey
+                current_row += 1
+
+            current_row += 1  # Leave an empty row
 
     # Retention Note
-
     note = ""
     ws.cell(row=current_row, column=1, value=note).font = font_italic_small
     ws.merge_cells(
