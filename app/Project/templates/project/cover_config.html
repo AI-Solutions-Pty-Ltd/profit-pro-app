@@ -1,0 +1,655 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}
+    Cover Page Customization - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <div class="mb-6 bg-white rounded-lg shadow-sm">
+            <div class="px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Cover Page Customization</h1>
+                        <p class="mt-1 text-sm text-gray-600">Customize document title, section headings, field labels, and visibility for {{ project.name }}</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'project:project-setup' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "arrow-left" size="20" %}
+                            <span class="ml-2">Back to Project Setup</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <!-- Left Panel: Configuration Form (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Configuration Options</h2>
+                            <p class="mt-1 text-xs text-gray-600">Customize labels and toggle visibility for sections and fields.</p>
+                        </div>
+                        <button type="button"
+                                id="reset-cover-btn"
+                                class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors focus:outline-none">
+                            Reset to Defaults
+                        </button>
+                    </div>
+                    
+                    <form method="post" id="cover-config-form" class="p-6 space-y-6">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_cover_config">
+                        <input type="hidden" name="cover_config" id="cover-config-input">
+
+                        <!-- Main Document Title -->
+                        <div class="p-4 rounded-lg border border-gray-100 bg-slate-50/50">
+                            <label for="main-title-input" class="block text-sm font-bold text-gray-700 mb-2">Main Cover Page Title</label>
+                            <input type="text" id="main-title-input" class="w-full max-w-md input input-bordered input-sm" placeholder="PAYMENT CERTIFICATE">
+                            <p class="mt-1 text-xs text-gray-500">Displayed at the top of the cover page (e.g. PAYMENT CERTIFICATE, INTERIM VALUATION).</p>
+                        </div>
+
+                        <!-- Accordion for Sections A, B, and C -->
+                        <div id="sections-container" class="space-y-4">
+                            <!-- Section A Accordion -->
+                            <div class="collapse collapse-arrow border border-gray-200 bg-white rounded-box" data-section-id="section_a">
+                                <input type="checkbox" checked /> 
+                                <div class="collapse-title text-sm font-semibold text-gray-800 flex items-center justify-between pr-12">
+                                    <div class="flex items-center">
+                                        {% heroicon_outline "building-office" class="w-4 h-4 mr-2 text-indigo-600" %}
+                                        Section A: Project Details Config
+                                    </div>
+                                    <div class="flex items-center space-x-1 relative z-20">
+                                        <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-indigo-600 btn-section-up" data-sec="section_a">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-indigo-600 btn-section-down" data-sec="section_a">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="collapse-content space-y-4 pt-2">
+                                    <div>
+                                        <label for="sec-a-title-input" class="block text-xs font-bold text-gray-600 mb-1">Section Title</label>
+                                        <input type="text" id="sec-a-title-input" class="w-full max-w-sm input input-bordered input-xs" placeholder="A. PROJECT DETAILS">
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="table table-xs w-full">
+                                            <thead>
+                                                <tr>
+                                                    <th class="w-16 text-center">Visible</th>
+                                                    <th>Default Label</th>
+                                                    <th>Custom Label</th>
+                                                    <th class="w-24 text-center">Order</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sec-a-fields-body">
+                                                <!-- Populated via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section B Accordion -->
+                            <div class="collapse collapse-arrow border border-gray-200 bg-white rounded-box" data-section-id="section_b">
+                                <input type="checkbox" /> 
+                                <div class="collapse-title text-sm font-semibold text-gray-800 flex items-center justify-between pr-12">
+                                    <div class="flex items-center">
+                                        {% heroicon_outline "document-text" class="w-4 h-4 mr-2 text-indigo-600" %}
+                                        Section B: Contract Summary Config
+                                    </div>
+                                    <div class="flex items-center space-x-1 relative z-20">
+                                        <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-indigo-600 btn-section-up" data-sec="section_b">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-indigo-600 btn-section-down" data-sec="section_b">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="collapse-content space-y-4 pt-2">
+                                    <div>
+                                        <label for="sec-b-title-input" class="block text-xs font-bold text-gray-600 mb-1">Section Title</label>
+                                        <input type="text" id="sec-b-title-input" class="w-full max-w-sm input input-bordered input-xs" placeholder="B. CONTRACT SUMMARY">
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="table table-xs w-full">
+                                            <thead>
+                                                <tr>
+                                                    <th class="w-16 text-center">Visible</th>
+                                                    <th>Default Label</th>
+                                                    <th>Custom Label</th>
+                                                    <th class="w-24 text-center">Order</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sec-b-fields-body">
+                                                <!-- Populated via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section C Accordion -->
+                            <div class="collapse collapse-arrow border border-gray-200 bg-white rounded-box" data-section-id="section_c">
+                                <input type="checkbox" /> 
+                                <div class="collapse-title text-sm font-semibold text-gray-800 flex items-center justify-between pr-12">
+                                    <div class="flex items-center">
+                                        {% heroicon_outline "calculator" class="w-4 h-4 mr-2 text-indigo-600" %}
+                                        Section C: Payment Summary Config
+                                    </div>
+                                    <div class="flex items-center space-x-1 relative z-20">
+                                        <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-indigo-600 btn-section-up" data-sec="section_c">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-indigo-600 btn-section-down" data-sec="section_c">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="collapse-content space-y-4 pt-2">
+                                    <div>
+                                        <label for="sec-c-title-input" class="block text-xs font-bold text-gray-600 mb-1">Section Title</label>
+                                        <input type="text" id="sec-c-title-input" class="w-full max-w-sm input input-bordered input-xs" placeholder="C. PAYMENT CERTIFICATE SUMMARY">
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="table table-xs w-full">
+                                            <thead>
+                                                <tr>
+                                                    <th class="w-16 text-center">Visible</th>
+                                                    <th>Default Label</th>
+                                                    <th>Custom Label</th>
+                                                    <th class="w-24 text-center">Order</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sec-c-fields-body">
+                                                <!-- Populated via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex justify-end pt-4 border-t border-gray-200">
+                            <button type="submit"
+                                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "check" size="20" %}
+                                <span class="ml-2">Save Cover Configuration</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Right Panel: Cover Page Mock Preview (5 cols) -->
+            <div class="lg:col-span-5">
+                <div class="sticky top-6 overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center gap-1.5">
+                        {% heroicon_outline "eye" class="w-4 h-4 text-indigo-600" %}
+                        <h2 class="text-xs font-bold tracking-wider text-indigo-900 uppercase">Live Cover Page Preview</h2>
+                    </div>
+                    
+                    <div class="p-6 bg-slate-100 max-h-[80vh] overflow-y-auto">
+                        <!-- Cover Page Mock Document Canvas -->
+                        <div id="preview-canvas" class="p-8 bg-white shadow-md rounded border border-gray-300 min-h-[600px] text-xs font-sans text-gray-800 space-y-6">
+                            <!-- Logo Placeholder -->
+                            <div class="flex justify-between items-center pb-3 border-b border-gray-300">
+                                <div class="bg-gray-100 text-gray-400 font-bold px-4 py-2 rounded text-center border border-dashed border-gray-300">
+                                    [ LOGO ]
+                                </div>
+                                <div class="text-right text-[10px] text-gray-500">
+                                    Cert No. 01 <br>
+                                    19 Jun 2026
+                                </div>
+                            </div>
+
+                            <!-- Document Title -->
+                            <h1 id="preview-doc-title" class="text-center text-lg font-bold uppercase tracking-wide border-b-2 border-gray-800 pb-1 pt-2">
+                                PAYMENT CERTIFICATE
+                            </h1>
+                            
+                            <!-- Section A Preview -->
+                            <div id="preview-sec-a">
+                                <h3 id="preview-sec-a-title" class="font-bold text-gray-900 border-b border-gray-200 pb-1 uppercase text-[10px] mb-2 tracking-wider">
+                                    A. PROJECT DETAILS
+                                </h3>
+                                <table class="w-full text-[10px]">
+                                    <tbody id="preview-sec-a-tbody" class="divide-y divide-gray-100">
+                                        <!-- Dynamic mock fields -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Section B Preview -->
+                            <div id="preview-sec-b">
+                                <h3 id="preview-sec-b-title" class="font-bold text-gray-900 border-b border-gray-200 pb-1 uppercase text-[10px] mb-2 tracking-wider">
+                                    B. CONTRACT SUMMARY
+                                </h3>
+                                <table class="w-full text-[10px]">
+                                    <tbody id="preview-sec-b-tbody" class="divide-y divide-gray-100">
+                                        <!-- Dynamic mock fields -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Section C Preview -->
+                            <div id="preview-sec-c">
+                                <h3 id="preview-sec-c-title" class="font-bold text-gray-900 border-b border-gray-200 pb-1 uppercase text-[10px] mb-2 tracking-wider">
+                                    C. PAYMENT CERTIFICATE SUMMARY
+                                </h3>
+                                <table class="w-full text-[10px]">
+                                    <tbody id="preview-sec-c-tbody" class="divide-y divide-gray-100">
+                                        <!-- Dynamic mock fields -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        (function() {
+            let config = {};
+            try {
+                config = JSON.parse('{{ cover_page_config_json|escapejs }}');
+            } catch (e) {
+                console.error("Failed to parse cover configuration", e);
+            }
+
+            // Initialize orders if missing
+            config.section_order = config.section_order || ["section_a", "section_b", "section_c"];
+
+            const standardDefaults = {
+                "title": "PAYMENT CERTIFICATE",
+                "sections": {
+                    "section_a": {
+                        "title": "A. PROJECT DETAILS",
+                        "fields": [
+                            {"id": "contract_name", "label": "Contract", "enabled": true, "mock": "School Project 1"},
+                            {"id": "contract_number", "label": "Contract Number", "enabled": true, "mock": "SP-2026-001"},
+                            {"id": "contract_clause", "label": "Contract Clause", "enabled": true, "mock": "JBCC Clause 25"},
+                            {"id": "description", "label": "Description", "enabled": true, "mock": "Construction of new classrooms"},
+                            {"id": "client", "label": "Client", "enabled": true, "mock": "Department of Education"},
+                            {"id": "status", "label": "Certificate Status", "enabled": true, "mock": "APPROVED"},
+                            {"id": "assessment_date", "label": "Assessment Date", "enabled": true, "mock": "15 Jun 2026"},
+                            {"id": "certificate_date", "label": "Date of Certificate", "enabled": true, "mock": "19 Jun 2026"},
+                        ]
+                    },
+                    "section_b": {
+                        "title": "B. CONTRACT SUMMARY",
+                        "fields": [
+                            {"id": "original_value", "label": "Original Contract Value", "enabled": true, "mock": "R 5,000,000.00"},
+                            {"id": "amendments_value", "label": "Total Contract Amendments To Date", "enabled": true, "mock": "R 250,000.00"},
+                            {"id": "sub_total", "label": "Sub Total (Excl. VAT)", "enabled": true, "mock": "R 5,250,000.00"},
+                            {"id": "vat", "label": "VAT 15%", "enabled": true, "mock": "R 787,500.00"},
+                            {"id": "total_value", "label": "Total Contract Value (Incl. VAT)", "enabled": true, "mock": "R 6,037,500.00"},
+                        ]
+                    },
+                    "section_c": {
+                        "title": "C. PAYMENT CERTIFICATE SUMMARY",
+                        "fields": [
+                            {"id": "work_progressive_previous", "label": "Value of work done up to assessment interval", "enabled": true, "mock": "R 1,200,000.00"},
+                            {"id": "contract_current_claim_total", "label": "Plus: Contract Compensation Events", "enabled": true, "mock": "R 50,000.00"},
+                            {"id": "addendum_current_claim_total", "label": "Plus: Addendum Compensation Events", "enabled": true, "mock": "R 15,000.00"},
+                            {"id": "work_progressive_to_date", "label": "Total value of work done", "enabled": true, "mock": "R 1,265,000.00"},
+                            {"id": "special_items", "label": "Special Items", "enabled": true, "mock": "ADD: Advance Payment"},
+                            {"id": "progressive_to_date", "label": "Sub Total", "enabled": true, "mock": "R 1,265,000.00"},
+                            {"id": "progressive_previous", "label": "LESS: Previous Amount Due", "enabled": true, "mock": "R 900,000.00"},
+                            {"id": "current_claim_total", "label": "NET AMOUNT NOW CERTIFIED", "enabled": true, "mock": "R 365,000.00"},
+                            {"id": "vat_now", "label": "VAT 15%", "enabled": true, "mock": "R 54,750.00"},
+                            {"id": "total_certified", "label": "TOTAL AMOUNT NOW CERTIFIED", "enabled": true, "mock": "R 419,750.00"},
+                        ]
+                    }
+                }
+            };
+
+            // Main inputs
+            const mainTitleInput = document.getElementById('main-title-input');
+            const secATitleInput = document.getElementById('sec-a-title-input');
+            const secBTitleInput = document.getElementById('sec-b-title-input');
+            const secCTitleInput = document.getElementById('sec-c-title-input');
+
+            // Preview outputs
+            const previewDocTitle = document.getElementById('preview-doc-title');
+            const previewSecATitle = document.getElementById('preview-sec-a-title');
+            const previewSecBTitle = document.getElementById('preview-sec-b-title');
+            const previewSecCTitle = document.getElementById('preview-sec-c-title');
+
+            const secAFieldsBody = document.getElementById('sec-a-fields-body');
+            const secBFieldsBody = document.getElementById('sec-b-fields-body');
+            const secCFieldsBody = document.getElementById('sec-c-fields-body');
+
+            const previewSecATbody = document.getElementById('preview-sec-a-tbody');
+            const previewSecBTbody = document.getElementById('preview-sec-b-tbody');
+            const previewSecCTbody = document.getElementById('preview-sec-c-tbody');
+
+            const configInput = document.getElementById('cover-config-input');
+            const configForm = document.getElementById('cover-config-form');
+            const resetBtn = document.getElementById('reset-cover-btn');
+
+            function getOriginalLabel(secId, fieldId) {
+                const sec = standardDefaults.sections[secId];
+                if (!sec) return fieldId;
+                const field = sec.fields.find(f => f.id === fieldId);
+                return field ? field.label : fieldId;
+            }
+
+            function getMockValue(secId, fieldId) {
+                const sec = standardDefaults.sections[secId];
+                if (!sec) return "—";
+                const field = sec.fields.find(f => f.id === fieldId);
+                return field ? field.mock : "—";
+            }
+
+            // Return fields sorted by custom list order, appending missing default fields
+            function getOrderedFields(secId) {
+                const defaultFields = standardDefaults.sections[secId].fields;
+                const userFields = config.sections?.[secId]?.fields || [];
+                const ordered = [];
+
+                userFields.forEach(uf => {
+                    const df = defaultFields.find(f => f.id === uf.id);
+                    if (df) {
+                        ordered.push({
+                            id: df.id,
+                            label: uf.label !== undefined ? uf.label : df.label,
+                            enabled: uf.enabled !== undefined ? uf.enabled : df.enabled,
+                            mock: df.mock
+                        });
+                    }
+                });
+
+                defaultFields.forEach(df => {
+                    if (!ordered.some(f => f.id === df.id)) {
+                        ordered.push({
+                            id: df.id,
+                            label: df.label,
+                            enabled: df.enabled,
+                            mock: df.mock
+                        });
+                    }
+                });
+
+                return ordered;
+            }
+
+            function reorderSectionDOM() {
+                const container = document.getElementById('sections-container');
+                const order = config.section_order || ["section_a", "section_b", "section_c"];
+                order.forEach(secId => {
+                    const element = document.querySelector(`[data-section-id="${secId}"]`);
+                    if (element && container) {
+                        container.appendChild(element);
+                    }
+                });
+            }
+
+            function reorderPreviewDOM() {
+                const canvas = document.getElementById('preview-canvas');
+                const order = config.section_order || ["section_a", "section_b", "section_c"];
+                order.forEach(secId => {
+                    const element = document.getElementById(`preview-sec-${secId.replace('section_', '')}`);
+                    if (element && canvas) {
+                        canvas.appendChild(element);
+                    }
+                });
+            }
+
+            function buildFormElements() {
+                // Main Title
+                mainTitleInput.value = config.title || standardDefaults.title;
+                
+                // Section A
+                const secA = config.sections?.section_a || {};
+                secATitleInput.value = secA.title || standardDefaults.sections.section_a.title;
+                populateSectionTable(secAFieldsBody, 'section_a');
+
+                // Section B
+                const secB = config.sections?.section_b || {};
+                secBTitleInput.value = secB.title || standardDefaults.sections.section_b.title;
+                populateSectionTable(secBFieldsBody, 'section_b');
+
+                // Section C
+                const secC = config.sections?.section_c || {};
+                secCTitleInput.value = secC.title || standardDefaults.sections.section_c.title;
+                populateSectionTable(secCFieldsBody, 'section_c');
+
+                reorderSectionDOM();
+                reorderPreviewDOM();
+                updatePreview();
+            }
+
+            function populateSectionTable(tbody, secId) {
+                tbody.innerHTML = '';
+                const fields = getOrderedFields(secId);
+
+                fields.forEach(field => {
+                    const uf = config.sections?.[secId]?.fields?.find(f => f.id === field.id) || {};
+                    const customLabel = uf.label !== undefined ? uf.label : '';
+
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-field-id', field.id);
+                    tr.innerHTML = `
+                        <td class="text-center">
+                            <input type="checkbox" data-sec="${secId}" data-id="${field.id}" class="checkbox checkbox-xs checkbox-primary field-enable-checkbox" ${field.enabled ? 'checked' : ''}>
+                        </td>
+                        <td class="font-medium text-gray-500">${getOriginalLabel(secId, field.id)}</td>
+                        <td>
+                            <input type="text" data-sec="${secId}" data-id="${field.id}" value="${customLabel}" class="w-full input input-bordered input-xs field-label-input" placeholder="${getOriginalLabel(secId, field.id)}">
+                        </td>
+                        <td class="text-center">
+                            <div class="flex justify-center space-x-1">
+                                <button type="button" class="btn btn-xs btn-ghost btn-field-up" data-sec="${secId}" data-id="${field.id}">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                </button>
+                                <button type="button" class="btn btn-xs btn-ghost btn-field-down" data-sec="${secId}" data-id="${field.id}">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function updatePreview() {
+                // Update titles
+                previewDocTitle.textContent = mainTitleInput.value || standardDefaults.title;
+                previewSecATitle.textContent = secATitleInput.value || standardDefaults.sections.section_a.title;
+                previewSecBTitle.textContent = secBTitleInput.value || standardDefaults.sections.section_b.title;
+                previewSecCTitle.textContent = secCTitleInput.value || standardDefaults.sections.section_c.title;
+
+                // Render Sections Mock
+                renderSectionMock(previewSecATbody, 'section_a');
+                renderSectionMock(previewSecBTbody, 'section_b');
+                renderSectionMock(previewSecCTbody, 'section_c');
+
+                // Update hidden input stringified json
+                serializeConfig();
+            }
+
+            function renderSectionMock(tbody, secId) {
+                tbody.innerHTML = '';
+                const fields = getOrderedFields(secId);
+                
+                fields.forEach(df => {
+                    const checkbox = document.querySelector(`.field-enable-checkbox[data-sec="${secId}"][data-id="${df.id}"]`);
+                    const labelInput = document.querySelector(`.field-label-input[data-sec="${secId}"][data-id="${df.id}"]`);
+                    
+                    const isEnabled = checkbox ? checkbox.checked : df.enabled;
+                    const customLabel = labelInput ? labelInput.value.trim() : '';
+                    const finalLabel = customLabel || df.label;
+
+                    if (isEnabled) {
+                        const tr = document.createElement('tr');
+                        const isNumeric = df.mock.startsWith('R') || df.mock.includes('0.00');
+                        let displayMock = df.mock;
+                        if (finalLabel && finalLabel.toLowerCase().includes('less')) {
+                            if (displayMock.startsWith('R ') && !displayMock.startsWith('-')) {
+                                displayMock = '-R ' + displayMock.slice(2);
+                            } else if (!displayMock.startsWith('-')) {
+                                displayMock = '-' + displayMock;
+                            }
+                        }
+                        tr.innerHTML = `
+                            <td class="py-1 text-gray-500 font-semibold text-left">${finalLabel}</td>
+                            <td class="py-1 text-gray-900 ${isNumeric ? 'text-right font-mono' : 'text-left'}" style="${isNumeric ? 'width: 40%' : 'width: 60%'}">
+                                ${displayMock}
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
+
+                if (tbody.children.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="2" class="py-2 text-center text-gray-400 italic">No visible fields in this section</td></tr>`;
+                }
+            }
+
+            function serializeConfig() {
+                const configOut = {
+                    title: mainTitleInput.value,
+                    section_order: config.section_order || ["section_a", "section_b", "section_c"],
+                    sections: {
+                        section_a: { title: secATitleInput.value, fields: [] },
+                        section_b: { title: secBTitleInput.value, fields: [] },
+                        section_c: { title: secCTitleInput.value, fields: [] }
+                    }
+                };
+
+                ['section_a', 'section_b', 'section_c'].forEach(secId => {
+                    const fields = getOrderedFields(secId);
+                    fields.forEach(df => {
+                        const checkbox = document.querySelector(`.field-enable-checkbox[data-sec="${secId}"][data-id="${df.id}"]`);
+                        const labelInput = document.querySelector(`.field-label-input[data-sec="${secId}"][data-id="${df.id}"]`);
+                        
+                        configOut.sections[secId].fields.push({
+                            id: df.id,
+                            label: labelInput ? labelInput.value.trim() : '',
+                            enabled: checkbox ? checkbox.checked : df.enabled
+                        });
+                    });
+                });
+
+                configInput.value = JSON.stringify(configOut);
+                // Maintain global config state in memory
+                config = configOut;
+            }
+
+            // Bind Event Listeners
+            mainTitleInput.addEventListener('input', updatePreview);
+            secATitleInput.addEventListener('input', updatePreview);
+            secBTitleInput.addEventListener('input', updatePreview);
+            secCTitleInput.addEventListener('input', updatePreview);
+
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('field-enable-checkbox')) {
+                    updatePreview();
+                }
+            });
+
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('field-label-input')) {
+                    updatePreview();
+                }
+            });
+
+            // Section Reordering Listeners
+            document.addEventListener('click', function(e) {
+                const upBtn = e.target.closest('.btn-section-up');
+                const downBtn = e.target.closest('.btn-section-down');
+
+                if (upBtn || downBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const btn = upBtn || downBtn;
+                    const secId = btn.getAttribute('data-sec');
+                    const direction = upBtn ? -1 : 1;
+                    
+                    const order = config.section_order || ["section_a", "section_b", "section_c"];
+                    const index = order.indexOf(secId);
+                    const newIndex = index + direction;
+                    
+                    if (newIndex >= 0 && newIndex < order.length) {
+                        const temp = order[index];
+                        order[index] = order[newIndex];
+                        order[newIndex] = temp;
+                        
+                        config.section_order = order;
+                        
+                        reorderSectionDOM();
+                        reorderPreviewDOM();
+                        serializeConfig();
+                    }
+                }
+            });
+
+            // Field Reordering Listeners
+            document.addEventListener('click', function(e) {
+                const upBtn = e.target.closest('.btn-field-up');
+                const downBtn = e.target.closest('.btn-field-down');
+
+                if (upBtn || downBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const btn = upBtn || downBtn;
+                    const secId = btn.getAttribute('data-sec');
+                    const fieldId = btn.getAttribute('data-id');
+                    const direction = upBtn ? -1 : 1;
+                    
+                    const fields = getOrderedFields(secId);
+                    const index = fields.findIndex(f => f.id === fieldId);
+                    const newIndex = index + direction;
+                    
+                    if (newIndex >= 0 && newIndex < fields.length) {
+                        // Swap
+                        const temp = fields[index];
+                        fields[index] = fields[newIndex];
+                        fields[newIndex] = temp;
+                        
+                        config.sections[secId].fields = fields.map(f => {
+                            const checkbox = document.querySelector(`.field-enable-checkbox[data-sec="${secId}"][data-id="${f.id}"]`);
+                            const labelInput = document.querySelector(`.field-label-input[data-sec="${secId}"][data-id="${f.id}"]`);
+                            return {
+                                id: f.id,
+                                label: labelInput ? labelInput.value.trim() : f.label,
+                                enabled: checkbox ? checkbox.checked : f.enabled
+                            };
+                        });
+                        
+                        // Re-render table and preview
+                        const tbody = document.getElementById(`sec-${secId.replace('section_', '')}-fields-body`);
+                        populateSectionTable(tbody, secId);
+                        updatePreview();
+                    }
+                }
+            });
+
+            resetBtn.addEventListener('click', function() {
+                if (confirm("Are you sure you want to reset all titles and field settings to standard defaults?")) {
+                    config = JSON.parse(JSON.stringify(standardDefaults));
+                    config.section_order = ["section_a", "section_b", "section_c"];
+                    buildFormElements();
+                }
+            });
+
+            configForm.addEventListener('submit', function() {
+                serializeConfig();
+            });
+
+            // Initialize
+            buildFormElements();
+        })();
+    </script>
+{% endblock content %}

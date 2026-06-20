@@ -1,98 +1,55 @@
+# Implementation Plan: Negative Sign on Less Items
+
 ## Goal
-Group Addendum Line Items, Special Items, and Ledger Totals Summary Items into a single table called "Contractual Special Items", with columns: Description, Previous Amount, Current Amount, and Total Amount, including subtotals for each section and a grand total. Integrate this table across all views (Valuation Summary, View Detailed, Detail pages), the PDF payment certificate, and the Excel Detailed and Summary exports.
+Add a negative sign to the formatted number/currency values for cover page report items whose labels contain the word "less" (case-insensitive). This must display correctly in:
+1. Browser HTML Cover Page view (`cover_page.html`).
+2. Compiled PDF Cover Page report (`1-front-page.html`).
+3. Exported Excel cover page spreadsheet (`cover_page_exporter.py`).
+4. Live Cover Page configuration preview mockup (`cover_config.html`).
 
 ## Assumptions
-- Addendum Line Items are `LineItem` instances where `addendum=True` and `special_item=False`.
-- Special Items are `LineItem` instances where `special_item=True` and `addendum=False`.
-- Ledger Totals are the summary adjustments (Advance Payments, Retention, Materials on Site, Escalation, and Other special item types).
-- Calculations of all subtotals and grand totals must match existing database/model fields exactly.
+- Only presentation-layer logic is modified. No database updates or total calculation changes are done.
+- Labels are scanned case-insensitively for the substring `"less"`.
+- If a value is already negative (e.g., a special item with negative value), it remains negative and is not double-negated.
 
 ## Plan
 
-### Step 1: Update PaymentCertificate Model Properties
-- **Files**: [payment_certificate_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/models/payment_certificate_models.py)
-- **Change**:
-  - Add `addendum_budget_total` property.
-  - Add properties: `contractual_special_items_progressive_previous`, `contractual_special_items_current_claim_total`, `contractual_special_items_progressive_to_date`, `has_contractual_special_items`.
-  - Add `get_ledger_summary_items()` helper method.
-  - Update `grand_total_progressive_previous` and `grand_total_progressive_to_date` to include special items (use `progressive_previous`/`progressive_to_date` instead of `work_progressive_previous`/`work_progressive_to_date`).
-- **Verify**: Run exporter tests:
-  `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py`
-
-### Step 2: Update Valuation Summary Task Data Extraction
-- **Files**: [tasks.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/tasks.py)
-- **Change**:
-  - In `get_valuation_summary_data()`, skip line items where `item.addendum` is True.
-  - Remove the virtual `"SPECIAL ITEMS"` section code block.
-- **Verify**: Run summary data extraction tests:
-  `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_get_valuation_summary_data`
-
-### Step 3: Update Valuation Summary View
+### Step 1: Update `get_resolved_cover_page_sections` in `payment_certificate_views.py`
 - **Files**: [payment_certificate_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/views/payment_certificate_views.py)
 - **Change**:
-  - In `PaymentCertificateValuationSummaryView.get_context_data()`, query and add `addendum_line_items` and `special_line_items` to the context dictionary.
-- **Verify**: Compile views tests:
-  `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py`
+  - In `get_resolved_cover_page_sections`, check if the resolved label contains `"less"` (case-insensitive) and the raw numeric value is positive (`> 0`). If so, negate `raw_val` (make it negative).
+  - Add a `"formatted_value"` key to the dictionary. Format it using South African Rand layout: if value is negative, format it as `-R X,XXX.XX` (prefixing `-R`), otherwise `R X,XXX.XX`.
+- **Verify**: Run Django system check: `.venv\Scripts\python.exe manage.py check`
 
-### Step 4: Create Reusable HTML Template Partial
-- **Files**: [contractual_special_items.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/templates/payment_certificate/tables/contractual_special_items.html) [NEW]
+### Step 2: Update browser HTML template `cover_page.html`
+- **Files**: [cover_page.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/templates/payment_certificate/section_views/cover_page.html)
 - **Change**:
-  - Create a clean HTML table using standard styling.
-  - Include three subsections: Addendum Line Items, Special Items, and Ledger Totals.
-  - For each subsection, render rows with Description, Previous, Current, and Total.
-  - Display subsection subtotals and table grand totals at the bottom.
-- **Verify**: Verify file creation and template syntax.
+  - In the loop rendering `field.style.is_mono` items, output `{{ field.formatted_value }}` instead of `R {{ field.raw_value|floatformat:2|intcomma }}`.
+- **Verify**: Run pytest on payment certificate section views.
 
-### Step 5: Integrate Table in Django templates
-- **Files**: 
-  - [payment_certificate_detail.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/templates/payment_certificate/payment_certificate_detail.html)
-  - [view_detailed.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/templates/payment_certificate/section_views/view_detailed.html)
-  - [valuation_summary.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/templates/payment_certificate/section_views/valuation_summary.html)
+### Step 3: Update Excel exporter `cover_page_exporter.py`
+- **Files**: [cover_page_exporter.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/exporters/cover_page_exporter.py)
 - **Change**:
-  - In `payment_certificate_detail.html` and `view_detailed.html`, replace separate addendum, special items, and ledger totals sections with the unified table template.
-  - In `valuation_summary.html`, include `contractual_special_items.html` below the main table, and update the Grand Total section of the page to sum BOQ totals and Contractual Special Items totals.
-- **Verify**: Launch dev server and visually inspect screens.
+  - In `export_cover_page_to_xlsx`, scan `contract_rows` and `payment_rows` during iteration. If description contains `"less"` (case-insensitive) and value is positive, negate it.
+- **Verify**: Run pytest on exporters.
 
-### Step 6: Update PDF Detailed Template
-- **Files**: [3-detailed.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/templates/pdf_templates/valterra_rpm/3-detailed.html)
+### Step 4: Update JS Live Preview in `cover_config.html`
+- **Files**: [cover_config.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/cover_config.html)
 - **Change**:
-  - Replace the separate tables for Addendum Line Items and Special Items with the unified "Contractual Special Items" table (styled cleanly for A4 landscape).
-- **Verify**: Run PDF compile tests:
-  `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_compile_pdf`
+  - In JS `renderSectionMock(tbody, secId)`, if a field label contains `"less"` (case-insensitive) and the mock value represents a positive currency (e.g. starts with `R` or has `0.00`), prefix it with a negative sign (e.g., `-R 900,000.00`).
+- **Verify**: Verify the mock rendering is correct.
 
-### Step 7: Update Excel Detailed Report Exporter
-- **Files**: [detailed_report_exporter.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/exporters/detailed_report_exporter.py)
+### Step 5: Add tests and verify
+- **Files**:
+  - [test_exporters.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/tests/test_exporters.py)
+  - [test_payment_certificate_section_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/tests/test_payment_certificate_section_views.py)
 - **Change**:
-  - Remove the addendum items append logic from standard structure sheets.
-  - Rename sheet `"Special Items"` to `"Special Items"` (or keep as is) and render the unified "Contractual Special Items" table.
-- **Verify**: Run Excel exporter tests:
-  `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py`
-
-### Step 8: Update Excel Summary Report Exporter
-- **Files**: [summary_report_exporter.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/exporters/summary_report_exporter.py)
-- **Change**:
-  - Render the "Contractual Special Items" table below the main BOQ summary section.
-  - Align columns with the main sheet (Description: Col 2, Previous: Col 5, Current: Col 6, Total: Col 4).
-  - Update the Grand Total certified values at the bottom of the summary sheet.
-- **Verify**: Run summary report exporter tests.
-
-### Step 9: Add Verification Tests
-- **Files**: [test_exporters.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/tests/test_exporters.py)
-- **Change**:
-  - Add comprehensive test case assertions for the combined table structure, calculations, PDF outputs, and Excel sheets.
-- **Verify**: `.venv\Scripts\python.exe -m pytest`
+  - Add assertions verifying that the previous amount due (which has label starting with "LESS:") renders as negative (`-R 900,000.00` in HTML/mock, `-900,000.00` in Excel, and `-900 000.00` in PDF).
+- **Verify**: Run all tests.
 
 ## Risks & mitigations
-- **Risk**: Missing layout styling causing PDF overlap.
-  - *Mitigation*: Ensure clean page breaks or borders are defined for the new table inside the PDF template.
-- **Risk**: Ledger adjustments sign inversion.
-  - *Mitigation*: Sum positive `amount` for list rows but use `signed_amount` for subtotals (matches current design).
+- **Double Negation**: Special items that are already negative in the database might be negated again.
+  - *Mitigation*: Ensure the negation only triggers on positive values (`val > 0`).
 
 ## Rollback plan
-- In case of issues, run:
-  - `git checkout app/BillOfQuantities/exporters/`
-  - `git checkout app/BillOfQuantities/models/`
-  - `git checkout app/BillOfQuantities/templates/`
-  - `git checkout app/BillOfQuantities/views/`
-  - `git checkout app/BillOfQuantities/tasks.py`
-  - `git checkout app/BillOfQuantities/tests/`
+- Git rollback: `git checkout -- <files>`

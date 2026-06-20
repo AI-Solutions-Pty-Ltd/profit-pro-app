@@ -105,6 +105,66 @@ class TestPaymentCertificateCoverPageView:
         response = client.get(url)
         assert response.status_code == 200
 
+    def test_cover_page_custom_config_rendering(self, client):
+        """Test that custom cover page config title and field visibilities render in HTML."""
+        user, project, cert = _make_user_with_cert()
+        client.force_login(user)
+
+        custom_config = {
+            "title": "CUSTOM HTML COVER TITLE",
+            "sections": {
+                "section_a": {
+                    "title": "CUSTOM SEC A TITLE",
+                    "fields": [
+                        {
+                            "id": "contract_name",
+                            "label": "Custom Contract Label",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "contract_number",
+                            "label": "Custom Contract Num",
+                            "enabled": False,
+                        },
+                        {
+                            "id": "contract_clause",
+                            "label": "Custom Clause",
+                            "enabled": True,
+                        },
+                        {"id": "description", "label": "Custom Desc", "enabled": True},
+                        {"id": "client", "label": "Custom Client", "enabled": True},
+                        {"id": "status", "label": "Custom Status", "enabled": True},
+                        {
+                            "id": "assessment_date",
+                            "label": "Custom Assess Date",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "certificate_date",
+                            "label": "Custom Cert Date",
+                            "enabled": True,
+                        },
+                    ],
+                },
+                "section_b": {"title": "CUSTOM SEC B TITLE", "fields": []},
+                "section_c": {"title": "CUSTOM SEC C TITLE", "fields": []},
+            },
+        }
+        project.cover_page_config = custom_config
+        project.save()
+
+        url = reverse(
+            "bill_of_quantities:payment-certificate-cover-page",
+            kwargs={"project_pk": project.pk, "pk": cert.pk},
+        )
+        response = client.get(url)
+        assert response.status_code == 200
+
+        html = response.content.decode("utf-8")
+        assert "CUSTOM HTML COVER TITLE" in html
+        assert "Custom Contract Label" in html
+        assert "Custom Contract Num" not in html
+
 
 # ===========================================================================
 # Valuation Summary View
@@ -335,3 +395,51 @@ class TestSectionViewURLs:
             assert response.status_code == 200, (
                 f"Expected 200 for {url}, got {response.status_code}"
             )
+
+
+class TestCoverPageNegativeFormatting:
+    """Test that items with 'less' in their label are formatted with negative signs."""
+
+    def test_less_indicators_negated_and_formatted(self, client):
+        """Verify get_resolved_cover_page_sections negates and formats 'less' fields correctly."""
+        from decimal import Decimal
+        from unittest.mock import PropertyMock, patch
+
+        from app.BillOfQuantities.views.payment_certificate_views import (
+            get_resolved_cover_page_sections,
+        )
+
+        user, project, cert = _make_user_with_cert()
+        client.force_login(user)
+
+        with patch(
+            "app.BillOfQuantities.models.payment_certificate_models.PaymentCertificate.progressive_previous",
+            new_callable=PropertyMock,
+        ) as mock_prev:
+            mock_prev.return_value = Decimal("900000.00")
+
+            sections = get_resolved_cover_page_sections(cert)
+
+            # Find progressive_previous field in the resolved sections
+            found_field = None
+            for sec in sections:
+                for field in sec["fields"]:
+                    if field["id"] == "progressive_previous":
+                        found_field = field
+                        break
+
+            assert found_field is not None
+            # Should be negated
+            assert found_field["raw_value"] == Decimal("-900000.00")
+            # Should be formatted with -R prefix in South African style
+            assert found_field["formatted_value"] == "-R 900,000.00"
+
+            # Verify page renders the correct formatted value
+            url = reverse(
+                "bill_of_quantities:payment-certificate-cover-page",
+                kwargs={"project_pk": project.pk, "pk": cert.pk},
+            )
+            response = client.get(url)
+            assert response.status_code == 200
+            html = response.content.decode("utf-8")
+            assert "-R 900,000.00" in html

@@ -83,6 +83,11 @@ class Project(BaseModel):
         blank=True,
         help_text="Custom configuration for report columns (name, visibility, and order)",
     )
+    cover_page_config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Custom configuration for cover page report, headers and titles",
+    )
     start_date = models.DateField(null=True, blank=True)
 
     end_date = models.DateField(null=True, blank=True)
@@ -363,6 +368,169 @@ class Project(BaseModel):
             return resolved
 
         return default_columns
+
+    def get_cover_page_config(self) -> dict:
+        """Get the resolved cover page configuration, falling back to defaults."""
+        default_config = {
+            "title": "PAYMENT CERTIFICATE",
+            "sections": {
+                "section_a": {
+                    "title": "A. PROJECT DETAILS",
+                    "fields": [
+                        {"id": "contract_name", "label": "Contract", "enabled": True},
+                        {
+                            "id": "contract_number",
+                            "label": "Contract Number",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "contract_clause",
+                            "label": "Contract Clause",
+                            "enabled": True,
+                        },
+                        {"id": "description", "label": "Description", "enabled": True},
+                        {"id": "client", "label": "Client", "enabled": True},
+                        {
+                            "id": "status",
+                            "label": "Certificate Status",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "assessment_date",
+                            "label": "Assessment Date",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "certificate_date",
+                            "label": "Date of Certificate",
+                            "enabled": True,
+                        },
+                    ],
+                },
+                "section_b": {
+                    "title": "B. CONTRACT SUMMARY",
+                    "fields": [
+                        {
+                            "id": "original_value",
+                            "label": "Original Contract Value",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "amendments_value",
+                            "label": "Total Contract Amendments To Date",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "sub_total",
+                            "label": "Sub Total (Excl. VAT)",
+                            "enabled": True,
+                        },
+                        {"id": "vat", "label": "VAT 15%", "enabled": True},
+                        {
+                            "id": "total_value",
+                            "label": "Total Contract Value (Incl. VAT)",
+                            "enabled": True,
+                        },
+                    ],
+                },
+                "section_c": {
+                    "title": "C. PAYMENT CERTIFICATE SUMMARY",
+                    "fields": [
+                        {
+                            "id": "work_progressive_previous",
+                            "label": "Value of work done up to assessment interval",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "contract_current_claim_total",
+                            "label": "Plus: Contract Compensation Events",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "addendum_current_claim_total",
+                            "label": "Plus: Addendum Compensation Events",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "work_progressive_to_date",
+                            "label": "Total value of work done",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "special_items",
+                            "label": "Special Items",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "progressive_to_date",
+                            "label": "Sub Total",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "progressive_previous",
+                            "label": "LESS: Previous Amount Due",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "current_claim_total",
+                            "label": "NET AMOUNT NOW CERTIFIED",
+                            "enabled": True,
+                        },
+                        {"id": "vat_now", "label": "VAT 15%", "enabled": True},
+                        {
+                            "id": "total_certified",
+                            "label": "TOTAL AMOUNT NOW CERTIFIED",
+                            "enabled": True,
+                        },
+                    ],
+                },
+            },
+        }
+
+        if not self.cover_page_config or not isinstance(self.cover_page_config, dict):
+            return default_config
+
+        resolved = {
+            "title": self.cover_page_config.get("title") or default_config["title"],
+            "sections": {},
+            "section_order": self.cover_page_config.get("section_order")
+            if self.cover_page_config.get("section_order") is not None
+            else ["section_a", "section_b", "section_c"],
+        }
+
+        for sec_id, default_sec in default_config["sections"].items():
+            user_sec = self.cover_page_config.get("sections", {}).get(sec_id, {})
+            resolved_fields = []
+
+            # Loop through user custom-ordered fields first
+            for uf in user_sec.get("fields", []):
+                df = next(
+                    (f for f in default_sec["fields"] if f["id"] == uf.get("id")),
+                    None,
+                )
+                if df:
+                    resolved_fields.append(
+                        {
+                            "id": df["id"],
+                            "label": uf.get("label")
+                            if uf.get("label") is not None
+                            else df["label"],
+                            "enabled": uf.get("enabled")
+                            if uf.get("enabled") is not None
+                            else df["enabled"],
+                        }
+                    )
+            # Append any default fields that are missing in user_sec fields list
+            for df in default_sec["fields"]:
+                if not any(f["id"] == df["id"] for f in resolved_fields):
+                    resolved_fields.append(df)
+
+            resolved["sections"][sec_id] = {
+                "title": user_sec.get("title") or default_sec["title"],
+                "fields": resolved_fields,
+            }
+
+        return resolved
 
     def __str__(self):
         return self.name
