@@ -450,6 +450,338 @@ class TestExporters:
         wb_cover = export_cover_page_to_xlsx(cert)
         assert "Cover Page" in wb_cover.sheetnames
 
+    def test_cover_page_custom_config(self):
+        """Test that cover page config custom titles, headers, and disabled fields are respected in Excel and PDF/HTML context."""
+        from app.BillOfQuantities.exporters.cover_page_exporter import (
+            export_cover_page_to_xlsx,
+        )
+
+        project = ProjectFactory.create(name="Alpha Project")
+
+        # 1. Verify standard fallbacks (default config)
+        cert_default = PaymentCertificateFactory.create(
+            project=project, certificate_number=1
+        )
+
+        # Render default Excel
+        wb_default = export_cover_page_to_xlsx(cert_default)
+        ws_default = wb_default["Cover Page"]
+
+        # Verify default title is in the merged cell
+        assert ws_default.cell(row=1, column=3).value == "PAYMENT CERTIFICATE"
+
+        # Find default labels
+        found_contract_name = False
+        found_description = False
+        found_original_value = False
+        found_sub_total = False
+
+        for r in range(5, ws_default.max_row + 1):
+            val_col1 = ws_default.cell(row=r, column=1).value
+            if val_col1 == "Contract":
+                found_contract_name = True
+            elif val_col1 == "Description":
+                found_description = True
+            elif val_col1 == "Original Contract Value":
+                found_original_value = True
+            elif val_col1 == "Sub Total (Excl. VAT)":
+                found_sub_total = True
+
+        assert found_contract_name is True
+        assert found_description is True
+        assert found_original_value is True
+        assert found_sub_total is True
+
+        # Compile PDF with default config and check it runs
+        pdf_file_default = compile_pdf_for_certificate(cert_default)
+        assert pdf_file_default is not None
+        assert pdf_file_default.size > 0
+
+        # 2. Verify customized config
+        custom_config = {
+            "title": "SUPERPAYMENT REPORT",
+            "sections": {
+                "section_a": {
+                    "title": "SUPER SECTION A",
+                    "fields": [
+                        {
+                            "id": "contract_name",
+                            "label": "Super Project Name",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "contract_number",
+                            "label": "Contract Identifier",
+                            "enabled": False,
+                        },
+                        {
+                            "id": "contract_clause",
+                            "label": "Clause Info",
+                            "enabled": True,
+                        },
+                        {"id": "description", "label": "Brief Desc", "enabled": False},
+                        {"id": "client", "label": "Super Client", "enabled": True},
+                        {"id": "status", "label": "Assessment Status", "enabled": True},
+                        {"id": "assessment_date", "label": "Val Date", "enabled": True},
+                        {
+                            "id": "certificate_date",
+                            "label": "Cert Date",
+                            "enabled": True,
+                        },
+                    ],
+                },
+                "section_b": {
+                    "title": "SUPER SECTION B",
+                    "fields": [
+                        {
+                            "id": "original_value",
+                            "label": "Super Orig Val",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "amendments_value",
+                            "label": "Super Amends",
+                            "enabled": False,
+                        },
+                        {"id": "sub_total", "label": "Super Subtotal", "enabled": True},
+                        {"id": "vat", "label": "Super VAT", "enabled": True},
+                        {"id": "total_value", "label": "Super Total", "enabled": True},
+                    ],
+                },
+                "section_c": {
+                    "title": "SUPER SECTION C",
+                    "fields": [
+                        {
+                            "id": "work_progressive_previous",
+                            "label": "Super Prev Progressive",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "contract_current_claim_total",
+                            "label": "Super Current Contract",
+                            "enabled": False,
+                        },
+                        {
+                            "id": "addendum_current_claim_total",
+                            "label": "Super Current Addendum",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "work_progressive_to_date",
+                            "label": "Super Prog To Date",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "special_items",
+                            "label": "Super Special Items",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "progressive_to_date",
+                            "label": "Super Progressive Sum",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "progressive_previous",
+                            "label": "Super Prev Progressive Sum",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "current_claim_total",
+                            "label": "Super Current Certified",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "vat_now",
+                            "label": "Super Current VAT",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "total_certified",
+                            "label": "Super Grand Total",
+                            "enabled": True,
+                        },
+                    ],
+                },
+            },
+        }
+
+        project.cover_page_config = custom_config
+        project.save()
+
+        cert_custom = PaymentCertificateFactory.create(
+            project=project, certificate_number=2
+        )
+
+        # Render customized Excel
+        wb_custom = export_cover_page_to_xlsx(cert_custom)
+        ws_custom = wb_custom["Cover Page"]
+
+        # Verify custom title
+        assert ws_custom.cell(row=1, column=3).value == "SUPERPAYMENT REPORT"
+
+        # Verify custom Section B Title
+        sec_b_title_found = False
+        sec_c_title_found = False
+
+        # Find custom labels and check exclusions
+        found_custom_contract_name = False
+        found_custom_contract_num = False
+        found_custom_description = False
+        found_custom_original_value = False
+        found_custom_amendments = False
+        found_custom_prev_work = False
+        found_custom_current_contract = False
+
+        for r in range(1, ws_custom.max_row + 1):
+            val_col1 = ws_custom.cell(row=r, column=1).value
+            if val_col1 == "SUPER SECTION B":
+                sec_b_title_found = True
+            elif val_col1 == "SUPER SECTION C — CERTIFICATE NO. 02":
+                sec_c_title_found = True
+            elif val_col1 == "Super Project Name":
+                found_custom_contract_name = True
+            elif val_col1 == "Contract Identifier":
+                found_custom_contract_num = True
+            elif val_col1 == "Brief Desc":
+                found_custom_description = True
+            elif val_col1 == "Super Orig Val":
+                found_custom_original_value = True
+            elif val_col1 == "Super Amends":
+                found_custom_amendments = True
+            elif val_col1 == "Super Prev Progressive":
+                found_custom_prev_work = True
+            elif val_col1 == "Super Current Contract":
+                found_custom_current_contract = True
+
+        assert sec_b_title_found is True
+        assert sec_c_title_found is True
+        assert found_custom_contract_name is True
+        assert found_custom_contract_num is False
+        assert found_custom_description is False
+        assert found_custom_original_value is True
+        assert found_custom_amendments is False
+        assert found_custom_prev_work is True
+        assert found_custom_current_contract is False
+
+        # Compile PDF with custom config and check it runs without issues
+        pdf_file_custom = compile_pdf_for_certificate(cert_custom)
+        assert pdf_file_custom is not None
+        assert pdf_file_custom.size > 0
+
+    def test_cover_page_custom_ordering(self):
+        """Test that cover page config custom section ordering and field ordering are respected in Excel and PDF outputs."""
+        from app.BillOfQuantities.exporters.cover_page_exporter import (
+            export_cover_page_to_xlsx,
+        )
+
+        project = ProjectFactory.create(name="Custom Ordered Project")
+
+        # Configure custom ordering: Section C first, then A, then B
+        custom_config = {
+            "title": "ORDERED REPORT",
+            "section_order": ["section_c", "section_a", "section_b"],
+            "sections": {
+                "section_a": {
+                    "title": "ORDERED A",
+                    "fields": [
+                        # Put assessment_date before contract_name
+                        {
+                            "id": "assessment_date",
+                            "label": "Custom Val Date",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "contract_name",
+                            "label": "Custom Project Name",
+                            "enabled": True,
+                        },
+                    ],
+                },
+                "section_b": {
+                    "title": "ORDERED B",
+                    "fields": [
+                        {
+                            "id": "sub_total",
+                            "label": "Custom Subtotal",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "original_value",
+                            "label": "Custom Orig Val",
+                            "enabled": True,
+                        },
+                    ],
+                },
+                "section_c": {
+                    "title": "ORDERED C",
+                    "fields": [
+                        {
+                            "id": "current_claim_total",
+                            "label": "Custom Net Claim",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "total_certified",
+                            "label": "Custom Grand Total",
+                            "enabled": True,
+                        },
+                    ],
+                },
+            },
+        }
+
+        project.cover_page_config = custom_config
+        project.save()
+
+        cert = PaymentCertificateFactory.create(project=project, certificate_number=3)
+
+        # Export to Excel
+        wb = export_cover_page_to_xlsx(cert)
+        ws = wb["Cover Page"]
+
+        # Track row indices where the section titles and custom fields appear in the output
+        row_indices = {}
+
+        for r in range(1, ws.max_row + 1):
+            val_col1 = ws.cell(row=r, column=1).value
+            if not val_col1:
+                continue
+            if "ORDERED B" in val_col1:
+                row_indices["section_b_title"] = r
+            elif "ORDERED C" in val_col1:
+                row_indices["section_c_title"] = r
+            elif "Custom Val Date" in val_col1:
+                row_indices["assessment_date"] = r
+            elif "Custom Project Name" in val_col1:
+                row_indices["contract_name"] = r
+            elif "Custom Subtotal" in val_col1:
+                row_indices["sub_total"] = r
+            elif "Custom Orig Val" in val_col1:
+                row_indices["original_value"] = r
+            elif "Custom Net Claim" in val_col1:
+                row_indices["current_claim_total"] = r
+            elif "Custom Grand Total" in val_col1:
+                row_indices["total_certified"] = r
+
+        # Assert Section order: C first, then A, then B
+        assert row_indices["section_c_title"] < row_indices["assessment_date"]
+        assert row_indices["contract_name"] < row_indices["section_b_title"]
+
+        # Assert Section A field order: assessment_date before contract_name
+        assert row_indices["assessment_date"] < row_indices["contract_name"]
+
+        # Assert Section B field order: sub_total before original_value
+        assert row_indices["sub_total"] < row_indices["original_value"]
+
+        # Assert Section C field order: current_claim_total before total_certified
+        assert row_indices["current_claim_total"] < row_indices["total_certified"]
+
+        # Compile PDF with custom ordered config and check it runs without issues
+        pdf_file = compile_pdf_for_certificate(cert)
+        assert pdf_file is not None
+        assert pdf_file.size > 0
+
 
 @pytest.mark.django_db
 class TestDownloadViews:
@@ -494,3 +826,42 @@ class TestDownloadViews:
         assert response["Content-Type"] == "application/pdf"
         assert "Content-Disposition" in response
         assert "cover-summary-detailed_abridged_" in response["Content-Disposition"]
+
+
+@pytest.mark.django_db
+class TestCoverPageExporterNegation:
+    """Test that the cover page Excel exporter correctly negates values for fields with 'less' indicators."""
+
+    def test_exporter_negates_less_fields(self):
+        """Verify export_cover_page_to_xlsx negates fields with 'less' in their label."""
+        from decimal import Decimal
+        from unittest.mock import PropertyMock, patch
+
+        from app.BillOfQuantities.exporters.cover_page_exporter import (
+            export_cover_page_to_xlsx,
+        )
+
+        user = AccountFactory.create()
+        project = ProjectFactory.create(users=user)
+        cert = PaymentCertificateFactory.create(project=project)
+
+        with patch(
+            "app.BillOfQuantities.models.payment_certificate_models.PaymentCertificate.progressive_previous",
+            new_callable=PropertyMock,
+        ) as mock_prev:
+            mock_prev.return_value = Decimal("900000.00")
+
+            wb = export_cover_page_to_xlsx(cert)
+            ws = wb["Cover Page"]
+
+            # Search for row with label containing 'LESS: Previous Amount Due' and check value in column 7
+            found_row_val = None
+            for r in range(1, ws.max_row + 1):
+                cell_label = ws.cell(row=r, column=1).value
+                if cell_label and "less" in str(cell_label).lower():
+                    found_row_val = ws.cell(row=r, column=7).value
+                    break
+
+            assert found_row_val is not None
+            # Should be negated
+            assert found_row_val == Decimal("-900000.00")

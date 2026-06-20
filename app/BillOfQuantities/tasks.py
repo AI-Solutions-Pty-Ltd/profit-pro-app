@@ -247,6 +247,20 @@ def compile_pdf_for_certificate(
     all_columns = project.get_column_config()
     active_columns = [col for col in all_columns if col.get("enabled", True)]
 
+    cover_config = project.get_cover_page_config()
+    flat_fields = {}
+    for sec_id, sec_data in cover_config.get("sections", {}).items():
+        flat_fields[sec_id] = {}
+        for field in sec_data.get("fields", []):
+            flat_fields[sec_id][field["id"]] = {
+                "label": field["label"],
+                "enabled": field["enabled"],
+            }
+
+    from app.BillOfQuantities.views.payment_certificate_views import (
+        get_resolved_cover_page_sections,
+    )
+
     context = {
         "payment_certificate": payment_certificate,
         "project": project,
@@ -254,6 +268,9 @@ def compile_pdf_for_certificate(
         "vat_rate": settings.VAT_RATE,
         "is_abridged": is_abridged,
         "columns": active_columns,
+        "cover_page_config": cover_config,
+        "cover_fields": flat_fields,
+        "ordered_sections": get_resolved_cover_page_sections(payment_certificate),
     }
 
     # Gather data based on abridged flag
