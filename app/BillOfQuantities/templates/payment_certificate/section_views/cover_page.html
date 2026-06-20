@@ -33,70 +33,74 @@
             </div>
             <!-- Dynamic Resolved Sections -->
             {% for section in ordered_sections %}
-            <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
-                    {% if section.id == 'section_a' %}
-                        {% heroicon_outline "building-office" class="w-5 h-5 text-indigo-600" %}
-                    {% elif section.id == 'section_b' %}
-                        {% heroicon_outline "document-text" class="w-5 h-5 text-indigo-600" %}
-                    {% else %}
-                        {% heroicon_outline "calculator" class="w-5 h-5 text-indigo-600" %}
-                    {% endif %}
-                    {{ section.title }}
-                </h2>
-                <div class="overflow-hidden rounded-lg border border-gray-200">
-                    <table class="w-full text-sm">
-                        {% if section.id != 'section_a' %}
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left font-medium text-gray-600">
-                                    {% if section.id == 'section_b' %}Contract{% else %}Payment Due{% endif %}
-                                </th>
-                                <th class="px-4 py-3 text-right font-medium text-gray-600">Value</th>
-                            </tr>
-                        </thead>
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
+                        {% if section.id == 'section_a' %}
+                            {% heroicon_outline "building-office" class="w-5 h-5 text-indigo-600" %}
+                        {% elif section.id == 'section_b' %}
+                            {% heroicon_outline "document-text" class="w-5 h-5 text-indigo-600" %}
+                        {% else %}
+                            {% heroicon_outline "calculator" class="w-5 h-5 text-indigo-600" %}
                         {% endif %}
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            {% for field in section.fields %}
-                                {% if field.style.is_special_items %}
-                                    {% for item in field.special_items_list %}
-                                        <tr class="bg-white hover:bg-gray-50">
-                                            <td class="px-4 py-3 text-gray-900">{{ item.label }}</td>
-                                            <td class="px-4 py-3 text-right font-mono text-gray-900">{{ item.formatted_value }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr class="{% if field.style.is_bold and section.id != 'section_a' %}bg-indigo-50 font-bold{% else %}bg-white hover:bg-gray-50{% endif %}">
-                                        {% if section.id == 'section_a' %}
-                                            <th class="px-4 py-3 text-left font-medium text-gray-600 w-1/3">{{ field.label }}</th>
-                                            <td class="px-4 py-3 text-gray-900">
-                                                {% if field.style.is_status %}
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if payment_certificate.status == 'APPROVED' %}bg-green-100 text-green-800 {% elif payment_certificate.status == 'SUBMITTED' %}bg-amber-100 text-amber-800 {% elif payment_certificate.status == 'REJECTED' %}bg-red-100 text-red-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                                        {{ field.raw_value }}
-                                                    </span>
-                                                {% else %}
-                                                    {{ field.raw_value|default:"—" }}
-                                                {% endif %}
-                                            </td>
-                                        {% else %}
-                                            <td class="px-4 py-3 {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %} {% if field.style.is_italic_gray %}text-italic-gray{% endif %}">
-                                                {{ field.label }}
-                                            </td>
-                                            <td class="px-4 py-3 text-right font-mono {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %}">
-                                                {% if field.style.is_mono %}
-                                                    {{ field.formatted_value }}
-                                                {% else %}
-                                                    {{ field.raw_value }}
-                                                {% endif %}
-                                            </td>
-                                        {% endif %}
+                        {{ section.title }}
+                    </h2>
+                    <div class="overflow-hidden rounded-lg border border-gray-200">
+                        <table class="w-full text-sm">
+                            {% if section.id != 'section_a' %}
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">
+                                            {% if section.id == 'section_b' %}
+                                                Contract
+                                            {% else %}
+                                                Payment Due
+                                            {% endif %}
+                                        </th>
+                                        <th class="px-4 py-3 text-right font-medium text-gray-600">Value</th>
                                     </tr>
-                                {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </thead>
+                            {% endif %}
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for field in section.fields %}
+                                    {% if field.style.is_special_items %}
+                                        {% for item in field.special_items_list %}
+                                            <tr class="bg-white hover:bg-gray-50">
+                                                <td class="px-4 py-3 text-gray-900">{{ item.label }}</td>
+                                                <td class="px-4 py-3 text-right font-mono text-gray-900">{{ item.formatted_value }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr class="{% if field.style.is_bold and section.id != 'section_a' %}bg-indigo-50 font-bold{% else %}bg-white hover:bg-gray-50{% endif %}">
+                                            {% if section.id == 'section_a' %}
+                                                <th class="px-4 py-3 text-left font-medium text-gray-600 w-1/3">{{ field.label }}</th>
+                                                <td class="px-4 py-3 text-gray-900">
+                                                    {% if field.style.is_status %}
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if payment_certificate.status == 'APPROVED' %}bg-green-100 text-green-800 {% elif payment_certificate.status == 'SUBMITTED' %}bg-amber-100 text-amber-800 {% elif payment_certificate.status == 'REJECTED' %}bg-red-100 text-red-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                            {{ field.raw_value }}
+                                                        </span>
+                                                    {% else %}
+                                                        {{ field.raw_value|default:"—" }}
+                                                    {% endif %}
+                                                </td>
+                                            {% else %}
+                                                <td class="px-4 py-3 {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %} {% if field.style.is_italic_gray %}text-italic-gray{% endif %}">
+                                                    {{ field.label }}
+                                                </td>
+                                                <td class="px-4 py-3 text-right font-mono {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %}">
+                                                    {% if field.style.is_mono %}
+                                                        {{ field.formatted_value }}
+                                                    {% else %}
+                                                        {{ field.raw_value }}
+                                                    {% endif %}
+                                                </td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
             {% endfor %}
         </div>
     </div>
