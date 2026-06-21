@@ -35,6 +35,11 @@ urlpatterns = [
         name="project-report-config",
     ),
     path(
+        "<int:pk>/cover-config/",
+        project_views.ProjectCoverConfigView.as_view(),
+        name="project-cover-config",
+    ),
+    path(
         "<int:pk>/wbs/",
         project_views.ProjectWBSDetailView.as_view(),
         name="project-wbs-detail",

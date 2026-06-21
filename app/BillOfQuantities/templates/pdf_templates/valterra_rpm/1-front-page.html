@@ -1,4 +1,4 @@
-{% load l10n %}
+{% load l10n mathfilters humanize %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -71,7 +71,6 @@
             .metadata-container {
                 width: 50%;
                 margin-left: 0;
-                margin-bottom: 16px;
                 margin-bottom: 16px;
             }
             table.metadata-table {
@@ -151,14 +150,6 @@
             .text-italic-gray {
                 font-style: italic;
                 color: #6b7280;
-            }
-            .note-text {
-                font-size: 8pt;
-                font-style: italic;
-                color: #6b7280;
-                margin-top: -10px;
-                margin-bottom: 15px;
-                padding-left: 8px;
             }
             
             table.auth-table {
@@ -246,7 +237,7 @@
                     {% endif %}
                 </td>
                 <td class="title-box">
-                    PAYMENT CERTIFICATE
+                    {{ cover_page_config.title|default:"PAYMENT CERTIFICATE" }}
                 </td>
                 <td class="cert-box">
                     <div class="cert-title">Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }}</div>
@@ -260,130 +251,66 @@
         </div>
         <div class="header-divider"></div>
         
-        <div class="metadata-container">
-            <table class="metadata-table">
-                <tr>
-                    <td class="label-cell">Certificate No.</td>
-                    <td class="value-cell">{{ payment_certificate.certificate_number|stringformat:"02d" }}</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Assessment Date</td>
-                    <td class="value-cell">{{ payment_certificate.assessment_date|date:"d M Y"|default:now|date:"d M Y" }}</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Date of Certificate</td>
-                    <td class="value-cell">{{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Contract No.</td>
-                    <td class="value-cell">{{ project.contract_number|default:"N/A" }}</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Retention Free Amount</td>
-                    <td class="value-cell">R {{ project.total_contract_value|mul:0.2|floatformat:2|space_intcomma }}</td>
-                </tr>
-            </table>
-        </div>
-        
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th colspan="2" class="section-title">CONTRACT VALUE SUMMARY</th>
-                </tr>
-                <tr>
-                    <th class="col-header" style="text-align: left;">Description</th>
-                    <th class="text-right col-header" style="width: 30%;">Value (R)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="row-light">
-                    <td>Original Contract Value</td>
-                    <td class="text-right">{{ project.original_contract_value|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr>
-                    <td>Total Contract Amendments To Date</td>
-                    <td class="text-right">
-                        {% if project.addendum_contract_value and project.addendum_contract_value != 0 %}
-                            {{ project.addendum_contract_value|floatformat:2|space_intcomma }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr class="row-light total-row">
-                    <td>Sub Total</td>
-                    <td class="text-right">{{ project.total_contract_value|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr>
-                    <td>VAT at 15%</td>
-                    <td class="text-right">{{ project.total_contract_value|mul:0.15|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr class="highlight-navy">
-                    <td>Total Contract Value (incl. VAT)</td>
-                    <td class="text-right">{{ project.total_contract_value|mul:1.15|floatformat:2|space_intcomma }}</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th colspan="2" class="section-title">
-                        PAYMENT DUE &mdash; CERTIFICATE NO. {{ payment_certificate.certificate_number|stringformat:"02d" }}
-                    </th>
-                </tr>
-                <tr>
-                    <th class="col-header" style="text-align: left;">Description</th>
-                    <th class="text-right col-header" style="width: 30%;">Amount (R)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="row-light">
-                    <td>Value of Work Done (Cumulative &ndash; Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }})</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr>
-                    <td class="text-italic-gray">Plus: Compensation Events</td>
-                    <td class="text-right text-italic-gray">-</td>
-                </tr>
-                <tr class="row-light">
-                    <td class="text-italic-gray">Plus: Material On Site</td>
-                    <td class="text-right text-italic-gray">-</td>
-                </tr>
-                <tr class="total-row">
-                    <td>Total Value of Work Done</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr class="row-light">
-                    <td class="text-italic-gray">Less: Retention</td>
-                    <td class="text-right text-italic-gray">-</td>
-                </tr>
-                <tr class="total-row">
-                    <td>Sub Total</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr class="row-light">
-                    <td class="text-italic-gray">Less: Previous Amount Due</td>
-                    <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td>Sub Total</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr class="row-light">
-                    <td class="text-italic-gray">Plus: V.A.T. at 15%</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:0.15|floatformat:2|space_intcomma }}</td>
-                </tr>
-                <tr class="highlight-orange">
-                    <td>TOTAL AMOUNT NOW CERTIFIED (incl. VAT)</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|mul:1.15|floatformat:2|space_intcomma }}</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <div class="note-text">
-            
-        </div>
+        <!-- Dynamic Resolved Sections -->
+        {% for section in ordered_sections %}
+            {% if section.id == 'section_a' %}
+                <div class="metadata-container">
+                    <table class="metadata-table">
+                        {% for field in section.fields %}
+                        <tr>
+                            <td class="label-cell">{{ field.label }}</td>
+                            <td class="value-cell">{{ field.raw_value|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% else %}
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="section-title">
+                                {% if section.id == 'section_c' %}
+                                    {{ section.title }} &mdash; CERTIFICATE NO. {{ payment_certificate.certificate_number|stringformat:"02d" }}
+                                {% else %}
+                                    {{ section.title }}
+                                {% endif %}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th class="col-header" style="text-align: left;">Description</th>
+                            <th class="text-right col-header" style="width: 30%;">
+                                {% if section.id == 'section_b' %}Value (R){% else %}Amount (R){% endif %}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for field in section.fields %}
+                            {% if field.style.is_special_items %}
+                                {% for item in field.special_items_list %}
+                                    <tr class="{% cycle 'row-light' '' %}">
+                                        <td>{{ item.label }}</td>
+                                        <td class="text-right">{{ item.raw_value|floatformat:2|space_intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr class="{% if field.style.is_highlighted_navy %}highlight-navy{% elif field.style.is_highlighted_orange %}highlight-orange{% elif field.style.is_bold %}total-row{% endif %} {% if not field.style.is_bold %}{% cycle 'row-light' '' %}{% endif %}">
+                                    <td class="{% if field.style.is_italic_gray %}text-italic-gray{% endif %}">
+                                        {{ field.label }}
+                                    </td>
+                                    <td class="text-right">
+                                        {% if field.style.is_mono %}
+                                            {{ field.raw_value|floatformat:2|space_intcomma }}
+                                        {% else %}
+                                            {{ field.raw_value }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endfor %}
         
         <table class="auth-table">
             <thead>

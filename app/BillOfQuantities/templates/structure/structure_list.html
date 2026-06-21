@@ -28,7 +28,22 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-3">
-                        {% if not structures %}
+                        {% if structures %}
+                            <div class="inline-flex rounded-md shadow-sm" role="group">
+                                <button type="button"
+                                        id="btn-expand-all"
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-md border border-indigo-600 transition-all duration-150 hover:bg-indigo-700 focus:z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {% heroicon_outline "chevron-double-down" size="16" class="mr-1.5" %}
+                                    Expand All
+                                </button>
+                                <button type="button"
+                                        id="btn-collapse-all"
+                                        class="inline-flex items-center px-3 py-2 -ml-px text-sm font-medium text-gray-700 bg-white rounded-r-md border border-gray-300 transition-all duration-150 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {% heroicon_outline "chevron-double-up" size="16" class="mr-1.5" %}
+                                    Collapse All
+                                </button>
+                            </div>
+                        {% else %}
                             <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 {% heroicon_outline "arrow-up-tray" size="20" class="mr-2" %}
@@ -64,18 +79,16 @@
                                                 <p>{% with total_value=structure.get_total_value %}Total: R {{ total_value|floatformat:2|intcomma }}{% endwith %}</p>
                                             </div>
                                         </div>
-                                        <div class="flex items-center space-x-2">
-                                            <a href="{% url 'bill_of_quantities:structure-update' project.pk structure.pk %}"
-                                               class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        {% comment %} <div class="flex items-center space-x-2">
+                                            <a href="{% url 'bill_of_quantities:structure-update' project.pk structure.pk %}" class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                                 {% heroicon_outline "pencil" size="16" class="mr-1" %}
                                             </a>
-                                            <a href="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}"
-                                               class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                            <a href="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}" class="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-white rounded-md border border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                                                 {% heroicon_outline "trash" size="16" class="mr-1" %}
                                             </a>
-                                        </div>
+                                        </div> {% endcomment %}
                                     </div>
-                                    <details class="mt-2 group">
+                                    <details class="mt-2 group" open>
                                         <summary class="flex items-center list-none cursor-pointer">
                                             <span class="font-bold uppercase tracking-widest text-[9px] text-gray-500">Bills</span>
                                             <div class="ml-1 text-gray-400 transition-transform group-open:rotate-180">
@@ -84,7 +97,7 @@
                                         </summary>
                                         <ul class="mt-1 space-y-1">
                                             {% for bill in structure.bills.all %}
-                                                <li class="flex items-center justify-between text-[11px] text-gray-600">
+                                                <li class="flex justify-between items-center text-xs text-gray-600">
                                                     <div class="flex items-center">
                                                         <span class="mr-2 w-1 h-1 bg-indigo-400 rounded-full"></span>
                                                         {{ bill.name }}
@@ -127,3 +140,76 @@
         </div>
     </div>
 {% endblock content %}
+{% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnExpandAll = document.getElementById('btn-expand-all');
+        const btnCollapseAll = document.getElementById('btn-collapse-all');
+        const detailsElements = document.querySelectorAll('details.group');
+
+        const activeClasses = ['text-white', 'bg-indigo-600', 'border-indigo-600', 'hover:bg-indigo-700'];
+        const inactiveClasses = ['text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-50'];
+
+        function setButtonState(btn, active) {
+            if (!btn) return;
+            if (active) {
+                btn.classList.add(...activeClasses);
+                btn.classList.remove(...inactiveClasses);
+                btn.style.borderColor = '#4f46e5'; // Indigo-600
+            } else {
+                btn.classList.add(...inactiveClasses);
+                btn.classList.remove(...activeClasses);
+                btn.style.borderColor = ''; // reset to stylesheet border
+            }
+        }
+
+        function updateButtonHighlight() {
+            let allOpen = true;
+            let allClosed = true;
+
+            detailsElements.forEach(el => {
+                if (el.hasAttribute('open')) {
+                    allClosed = false;
+                } else {
+                    allOpen = false;
+                }
+            });
+
+            if (allOpen) {
+                setButtonState(btnExpandAll, true);
+                setButtonState(btnCollapseAll, false);
+            } else if (allClosed) {
+                setButtonState(btnExpandAll, false);
+                setButtonState(btnCollapseAll, true);
+            } else {
+                setButtonState(btnExpandAll, false);
+                setButtonState(btnCollapseAll, false);
+            }
+        }
+
+        if (btnExpandAll && btnCollapseAll) {
+            btnExpandAll.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                detailsElements.forEach(el => el.setAttribute('open', ''));
+                updateButtonHighlight();
+            });
+
+            btnCollapseAll.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                detailsElements.forEach(el => el.removeAttribute('open'));
+                updateButtonHighlight();
+            });
+
+            // Listen for manual toggle on details elements
+            detailsElements.forEach(el => {
+                el.addEventListener('toggle', updateButtonHighlight);
+            });
+
+            // Initialize button highlight states
+            updateButtonHighlight();
+        }
+    });
+    </script>
+{% endblock extra_js %}

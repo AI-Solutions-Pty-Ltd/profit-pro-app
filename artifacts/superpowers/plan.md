@@ -1,87 +1,55 @@
-# Superpowers Plan: Refactor Consultants to Support Multiple Consultants
+# Implementation Plan: Negative Sign on Less Items
 
 ## Goal
-Refactor consultants in the application to support assigning multiple consultant companies to a project, separating them into Lead Consultants and regular Consultants.
+Add a negative sign to the formatted number/currency values for cover page report items whose labels contain the word "less" (case-insensitive). This must display correctly in:
+1. Browser HTML Cover Page view (`cover_page.html`).
+2. Compiled PDF Cover Page report (`1-front-page.html`).
+3. Exported Excel cover page spreadsheet (`cover_page_exporter.py`).
+4. Live Cover Page configuration preview mockup (`cover_config.html`).
 
 ## Assumptions
-- Virtual environment `.venv` exists and contains all required django/pytest packages.
-- Pytest is used for testing.
-- The project has existing migrations that we can append to.
+- Only presentation-layer logic is modified. No database updates or total calculation changes are done.
+- Labels are scanned case-insensitively for the substring `"less"`.
+- If a value is already negative (e.g., a special item with negative value), it remains negative and is not double-negated.
 
 ## Plan
 
-### 1. Extend Company Type Choices
-- **Files**: [company_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/company/company_models.py)
-- **Change**: Add `CONSULTANT = "CONSULTANT", "Consultant"` to the `Company.Type` choices.
-- **Verify**: Inspect the file and run a quick python shell verification:
-  ```bash
-  .venv\Scripts\python.exe -c "from app.Project.models import Company; print(Company.Type.CONSULTANT)"
-  ```
-
-### 2. Add Many-to-Many Field to Project Model
-- **Files**: [projects_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/projects_models.py)
-- **Change**: 
-  - Add `consultants` ManyToManyField to `Project` model (pointing to `Company`).
-  - Add a `@property` for `lead_consultant` returning the first company of type `LEAD_CONSULTANT` for backwards compatibility.
-  - Temporarily keep the `lead_consultant` ForeignKey field in the DB to write a data migration.
-- **Verify**: Run `makemigrations` to generate schema changes.
-
-### 3. Data Migration and ForeignKey Removal
-- **Files**: [projects_models.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/projects/projects_models.py), migration files
-- **Change**: 
-  - Create a migration to add the ManyToMany relationship.
-  - Write a data migration script to copy existing `lead_consultant_id` values for all projects to the new ManyToMany relation.
-  - Remove `lead_consultant` ForeignKey from the `Project` model.
-  - Generate the final schema migration to drop the old `lead_consultant` ForeignKey column.
-- **Verify**: Run `.venv\Scripts\python.exe manage.py migrate` to apply all migrations and verify no errors.
-
-### 4. Update Forms
-- **Files**: [forms.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/forms/forms.py)
+### Step 1: Update `get_resolved_cover_page_sections` in `payment_certificate_views.py`
+- **Files**: [payment_certificate_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/views/payment_certificate_views.py)
 - **Change**:
-  - Update `ProjectLeadConsultantForm` to work with ManyToMany (allowing selection of lead consultants).
-  - Create a new `ProjectConsultantForm` for assigning regular consultants.
-  - Update `LeadConsultantQuickCreateForm` if necessary to handle the type properly.
-- **Verify**: Verify forms validate and return correct querysets.
+  - In `get_resolved_cover_page_sections`, check if the resolved label contains `"less"` (case-insensitive) and the raw numeric value is positive (`> 0`). If so, negate `raw_val` (make it negative).
+  - Add a `"formatted_value"` key to the dictionary. Format it using South African Rand layout: if value is negative, format it as `-R X,XXX.XX` (prefixing `-R`), otherwise `R X,XXX.XX`.
+- **Verify**: Run Django system check: `.venv\Scripts\python.exe manage.py check`
 
-### 5. Update Views and URLs
-- **Files**: 
-  - [project_lead_consultant_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/project_lead_consultant_views.py)
-  - [project_lead_consultant_urls.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/urls/project_lead_consultant_urls.py)
-  - [lead_consultant_management_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/views/lead_consultant_management_views.py)
+### Step 2: Update browser HTML template `cover_page.html`
+- **Files**: [cover_page.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/templates/payment_certificate/section_views/cover_page.html)
 - **Change**:
-  - Update `ProjectAllocateLeadConsultantView` and `ProjectLeadConsultantRemoveView` to add/remove to `project.consultants` instead of setting `project.lead_consultant`.
-  - Add new views `ProjectAllocateConsultantView` and `ProjectConsultantRemoveView` for regular consultants.
-  - Update management list, create, and update views to support both `LEAD_CONSULTANT` and `CONSULTANT` types.
-  - Add URL patterns for regular consultant allocation and removal.
-- **Verify**: Check URL routing and ensure no view crashes.
+  - In the loop rendering `field.style.is_mono` items, output `{{ field.formatted_value }}` instead of `R {{ field.raw_value|floatformat:2|intcomma }}`.
+- **Verify**: Run pytest on payment certificate section views.
 
-### 6. Update Templates
+### Step 3: Update Excel exporter `cover_page_exporter.py`
+- **Files**: [cover_page_exporter.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/exporters/cover_page_exporter.py)
+- **Change**:
+  - In `export_cover_page_to_xlsx`, scan `contract_rows` and `payment_rows` during iteration. If description contains `"less"` (case-insensitive) and value is positive, negate it.
+- **Verify**: Run pytest on exporters.
+
+### Step 4: Update JS Live Preview in `cover_config.html`
+- **Files**: [cover_config.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/cover_config.html)
+- **Change**:
+  - In JS `renderSectionMock(tbody, secId)`, if a field label contains `"less"` (case-insensitive) and the mock value represents a positive currency (e.g. starts with `R` or has `0.00`), prefix it with a negative sign (e.g., `-R 900,000.00`).
+- **Verify**: Verify the mock rendering is correct.
+
+### Step 5: Add tests and verify
 - **Files**:
-  - [project_setup.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Project/templates/project/project_setup.html)
-  - [lead_consultant_list.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/lead_consultant/lead_consultant_list.html)
-  - [allocate_lead_consultant_form.html](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/templates/lead_consultant/allocate_lead_consultant_form.html)
+  - [test_exporters.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/tests/test_exporters.py)
+  - [test_payment_certificate_section_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/tests/test_payment_certificate_section_views.py)
 - **Change**:
-  - Update `project_setup.html`'s "Consultant Management" card to display all assigned Lead Consultants and Consultants, along with the two allocation buttons (`+ Assign Lead Consultant` and `+ Assign Consultant`) and remove links for each company.
-  - Update `lead_consultant_list.html` to manage both lead and regular consultant companies.
-- **Verify**: Load the project setup page and verify correct UI rendering.
-
-### 7. Update and Run Tests
-- **Files**:
-  - [test_allocation_fixes.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/tests/test_allocation_fixes.py)
-  - [test_lead_consultant_views.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/Consultant/tests/test_lead_consultant_views.py)
-- **Change**: Update the unit tests to mock and test ManyToMany consultant assignment and filtering.
-- **Verify**: Run all tests:
-  ```bash
-  .venv\Scripts\python.exe -m pytest app/Consultant/tests/
-  ```
+  - Add assertions verifying that the previous amount due (which has label starting with "LESS:") renders as negative (`-R 900,000.00` in HTML/mock, `-900,000.00` in Excel, and `-900 000.00` in PDF).
+- **Verify**: Run all tests.
 
 ## Risks & mitigations
-- **Risk**: Database query failure in other modules that expect `project.lead_consultant` as an ORM relation.
-  - *Mitigation*: Adding the `@property` handles direct attribute access. Any DB query filters (`lead_consultant=...`) will be refactored to query `consultants=...`.
-- **Risk**: Data loss during migration.
-  - *Mitigation*: The data migration will be fully tested and run before the schema column is deleted.
+- **Double Negation**: Special items that are already negative in the database might be negated again.
+  - *Mitigation*: Ensure the negation only triggers on positive values (`val > 0`).
 
 ## Rollback plan
-- Revert git changes using `git checkout -- .`.
-- Roll back migration using `.venv\Scripts\python.exe manage.py migrate Project <previous_migration_name>`.
-
+- Git rollback: `git checkout -- <files>`

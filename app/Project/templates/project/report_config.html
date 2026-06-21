@@ -39,18 +39,18 @@
                         <div class="space-y-6">
                             <!-- Column Config List -->
                             <div>
-                                <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
-                                    <table class="min-w-full divide-y divide-gray-200" id="columns-config-table">
-                                        <thead class="bg-gray-50">
+                                <div class="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <table class="table w-full table-zebra table-sm" id="columns-config-table">
+                                        <thead>
                                             <tr>
-                                                <th class="px-3 py-2 w-16 text-xs font-semibold text-left text-center text-gray-500 uppercase">Order</th>
-                                                <th class="px-3 py-2 w-16 text-xs font-semibold text-left text-center text-gray-500 uppercase">Visible</th>
-                                                <th class="px-3 py-2 text-xs font-semibold text-left text-gray-500 uppercase">Default Header</th>
-                                                <th class="px-3 py-2 text-xs font-semibold text-left text-gray-500 uppercase">Custom Label</th>
-                                                <th class="px-3 py-2 w-28 text-xs font-semibold text-center text-gray-500 uppercase">Actions</th>
+                                                <th class="w-16 text-center">Order</th>
+                                                <th class="w-16 text-center">Visible</th>
+                                                <th>Default Header</th>
+                                                <th>Custom Label</th>
+                                                <th class="w-28 text-center">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-gray-200" id="columns-config-list">
+                                        <tbody id="columns-config-list">
                                             <!-- Will be populated via JS -->
                                         </tbody>
                                     </table>
@@ -136,22 +136,22 @@
                 listContainer.innerHTML = '';
                 columns.forEach((col, idx) => {
                     const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50 transition-colors';
+                    tr.className = 'hover';
                     tr.innerHTML = `
-                        <td class="px-3 py-2 text-xs font-medium text-center text-gray-500">${idx + 1}</td>
-                        <td class="px-3 py-2 text-center">
-                            <input type="checkbox" data-id="${col.id}" class="text-indigo-600 rounded border-gray-300 col-enable-checkbox focus:ring-indigo-500" ${col.enabled ? 'checked' : ''}>
+                        <td class="font-medium text-center">${idx + 1}</td>
+                        <td class="text-center">
+                            <input type="checkbox" data-id="${col.id}" class="checkbox checkbox-sm checkbox-primary col-enable-checkbox" ${col.enabled ? 'checked' : ''}>
                         </td>
-                        <td class="px-3 py-2 text-xs font-medium text-gray-900">${getOriginalHeader(col.id)}</td>
-                        <td class="px-3 py-2">
-                            <input type="text" data-id="${col.id}" value="${col.label || ''}" class="block px-2 py-1 w-full text-xs rounded border-gray-300 shadow-sm col-label-input focus:border-indigo-500 focus:ring-indigo-500">
+                        <td class="font-medium">${getOriginalHeader(col.id)}</td>
+                        <td>
+                            <input type="text" data-id="${col.id}" value="${col.label || ''}" class="w-full max-w-xs input input-bordered input-sm col-label-input">
                         </td>
-                        <td class="px-3 py-2 space-x-1 text-center">
-                            <button type="button" class="p-1 text-gray-400 transition-colors hover:text-indigo-600 disabled:opacity-30 btn-move-up" data-index="${idx}" ${idx === 0 ? 'disabled' : ''}>
-                                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        <td class="flex items-center space-x-4 text-center">
+                            <button type="button" class="btn btn-ghost btn-xs btn-square btn-move-up" data-index="${idx}" ${idx === 0 ? 'disabled' : ''} title="Move Up">
+                                {% heroicon_outline "chevron-up" class="size-4" %}
                             </button>
-                            <button type="button" class="p-1 text-gray-400 transition-colors hover:text-indigo-600 disabled:opacity-30 btn-move-down" data-index="${idx}" ${idx === columns.length - 1 ? 'disabled' : ''}>
-                                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <button type="button" class="btn btn-ghost btn-xs btn-square btn-move-down" data-index="${idx}" ${idx === columns.length - 1 ? 'disabled' : ''} title="Move Down">
+                                {% heroicon_outline "chevron-down" class="size-4" %}
                             </button>
                         </td>
                     `;
