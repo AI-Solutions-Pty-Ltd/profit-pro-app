@@ -316,9 +316,9 @@
                             {% for line_item in addendum_items_flat %}
                                 <tr class="item-row">
                                     <td><div class="tl" style="padding-left:12px;">{{ line_item.description }}</div></td>
-                                    <td><div class="tr">R {{ line_item.previous_claimed|floatformat:2|space_intcomma }}</div></td>
-                                    <td><div class="tr">R {{ line_item.current_claim|floatformat:2|space_intcomma }}</div></td>
-                                    <td><div class="tr">R {{ line_item.total_claimed|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">{% if line_item.is_work %}R {{ line_item.previous_claimed|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if line_item.is_work %}R {{ line_item.current_claim|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if line_item.is_work %}R {{ line_item.total_claimed|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                 </tr>
                             {% endfor %}
                             <tr class="bill-total-row">
@@ -337,9 +337,9 @@
                             {% for line_item in special_items %}
                                 <tr class="item-row">
                                     <td><div class="tl" style="padding-left:12px;">{{ line_item.description }}</div></td>
-                                    <td><div class="tr">R {{ line_item.previous_claimed|floatformat:2|space_intcomma }}</div></td>
-                                    <td><div class="tr">R {{ line_item.current_claim|floatformat:2|space_intcomma }}</div></td>
-                                    <td><div class="tr">R {{ line_item.total_claimed|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">{% if line_item.is_work %}R {{ line_item.previous_claimed|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if line_item.is_work %}R {{ line_item.current_claim|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
+                                    <td><div class="tr">{% if line_item.is_work %}R {{ line_item.total_claimed|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                 </tr>
                             {% endfor %}
                             <tr class="bill-total-row">
