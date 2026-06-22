@@ -131,6 +131,18 @@ class ProjectDocumentForm(forms.ModelForm):
 class DrawingForm(forms.ModelForm):
     """Form for managing project drawings."""
 
+    wbs_level = forms.ChoiceField(
+        choices=[],
+        required=False,
+        label="WBS Level",
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+            }
+        ),
+        help_text="Select the WBS level this drawing belongs to",
+    )
+
     class Meta:
         model = Drawing
         fields = [
@@ -138,9 +150,7 @@ class DrawingForm(forms.ModelForm):
             "name",
             "revision_number",
             "discipline",
-            "parent",
             "category",
-            "sub_category",
             "file",
             "notes",
         ]
@@ -168,17 +178,7 @@ class DrawingForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "parent": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
             "category": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "sub_category": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
@@ -201,35 +201,79 @@ class DrawingForm(forms.ModelForm):
         from app.Project.projects.projects_models import (
             Category,
             Discipline,
+            Group,
             SubCategory,
         )
 
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
 
+        if not project and self.instance and getattr(self.instance, "project_id", None):
+            project = self.instance.project
+
         if project:
-            # Filter all hierarchy fields by project
+            self.instance.project = project
+            # Filter discipline and category by project
             self.fields["discipline"].queryset = Discipline.objects.filter(
                 project=project, deleted=False
             ).order_by("name")
             self.fields["category"].queryset = Category.objects.filter(
                 project=project, deleted=False
             ).order_by("name")
-            self.fields["sub_category"].queryset = SubCategory.objects.filter(
-                project=project, deleted=False
-            ).order_by("name")
-            self.fields["parent"].queryset = Drawing.objects.filter(
-                project=project, deleted=False
-            ).order_by("drawing_number")
 
-            # Exclude current instance from parent choices if editing
+            # Build hierarchical options for WBS Levels
+            wbs_choices = [("", "---------")]
+            categories = Category.objects.filter(project=project, deleted=False).order_by("name")
+            for cat in categories:
+                wbs_choices.append((f"category_{cat.pk}", f"L1: {cat.name}"))
+                subcategories = cat.subcategories.filter(deleted=False).order_by("name")
+                for sub in subcategories:
+                    wbs_choices.append((f"subcategory_{sub.pk}", f"  L2: {sub.name}"))
+                    groups = sub.groups.filter(deleted=False).order_by("name")
+                    for grp in groups:
+                        wbs_choices.append((f"group_{grp.pk}", f"    L3: {grp.name}"))
+            self.fields["wbs_level"].choices = wbs_choices
+
+            # Set initial value for wbs_level when editing
             if self.instance and self.instance.pk:
-                self.fields["parent"].queryset = self.fields["parent"].queryset.exclude(
-                    pk=self.instance.pk
-                )
+                if self.instance.group_id:
+                    self.initial["wbs_level"] = f"group_{self.instance.group_id}"
+                elif self.instance.sub_category_id:
+                    self.initial["wbs_level"] = f"subcategory_{self.instance.sub_category_id}"
+                elif self.instance.category_id:
+                    self.initial["wbs_level"] = f"category_{self.instance.category_id}"
 
-        # Make some fields optional if they aren't strictly required
-        self.fields["parent"].required = False
         self.fields["category"].required = False
-        self.fields["sub_category"].required = False
         self.fields["notes"].required = False
+
+    def save(self, commit=True):
+        from app.Project.projects.projects_models import Group, SubCategory
+
+        instance = super().save(commit=False)
+        wbs_level = self.cleaned_data.get("wbs_level")
+        
+        # Reset and resolve from WBS level selection
+        instance.category = self.cleaned_data.get("category")
+        instance.sub_category = None
+        instance.group = None
+
+        if wbs_level:
+            level_type, level_id = wbs_level.split("_")
+            if level_type == "category":
+                instance.category_id = int(level_id)
+            elif level_type == "subcategory":
+                sub_cat = SubCategory.objects.filter(pk=level_id, deleted=False).first()
+                if sub_cat:
+                    instance.category = sub_cat.category
+                    instance.sub_category = sub_cat
+            elif level_type == "group":
+                grp = Group.objects.filter(pk=level_id, deleted=False).first()
+                if grp:
+                    instance.group = grp
+                    if grp.sub_category:
+                        instance.sub_category = grp.sub_category
+                        instance.category = grp.sub_category.category
+
+        if commit:
+            instance.save()
+        return instance

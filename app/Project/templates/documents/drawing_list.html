@@ -37,7 +37,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drawing No.</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Revision</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discipline</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WBS (L1/L2)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WBS Level</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -51,9 +51,6 @@
                                         </div>
                                         <div class="ml-3">
                                             <span class="text-sm font-bold text-gray-900">{{ drawing.drawing_number }}</span>
-                                            {% if drawing.parent %}
-                                                <div class="text-xs text-gray-400">Sub-drawing of {{ drawing.parent.drawing_number }}</div>
-                                            {% endif %}
                                         </div>
                                     </div>
                                 </td>
@@ -74,11 +71,14 @@
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500">
                                     <div class="flex flex-col space-y-1">
-                                        {% if drawing.category %}
-                                            <span class="text-xs bg-gray-100 px-2 py-0.5 rounded">{{ drawing.category.name }}</span>
-                                        {% endif %}
-                                        {% if drawing.sub_category %}
-                                            <span class="text-xs bg-gray-50 px-2 py-0.5 rounded text-gray-400">{{ drawing.sub_category.name }}</span>
+                                        {% if drawing.group %}
+                                            <span class="text-xs bg-purple-50 text-purple-700 border border-purple-100 px-2 py-0.5 rounded">L3: {{ drawing.group.name }}</span>
+                                        {% elif drawing.sub_category %}
+                                            <span class="text-xs bg-green-50 text-green-700 border border-green-100 px-2 py-0.5 rounded">L2: {{ drawing.sub_category.name }}</span>
+                                        {% elif drawing.category %}
+                                            <span class="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded">L1: {{ drawing.category.name }}</span>
+                                        {% else %}
+                                            <span class="text-xs text-gray-400">—</span>
                                         {% endif %}
                                     </div>
                                 </td>
