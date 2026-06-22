@@ -843,6 +843,13 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
 
         # Check if custom sections are specified via checkboxes
         has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+        if has_selections:
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+            force_regenerate = bool(request.GET.get("force"))
+            if include_front and include_summary and include_detailed and not force_regenerate:
+                has_selections = False
 
         if has_selections:
             include_front = request.GET.get("front") in ["1", "on", "true"]
@@ -947,6 +954,13 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
 
         # Check if custom sections are specified via checkboxes
         has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+        if has_selections:
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+            force_regenerate = bool(request.GET.get("force"))
+            if include_front and include_summary and include_detailed and not force_regenerate:
+                has_selections = False
 
         if has_selections:
             include_front = request.GET.get("front") in ["1", "on", "true"]
@@ -1665,6 +1679,13 @@ class PaymentCertificateDownloadUnifiedXLSXView(PaymentCertificateMixin, View):
         )
 
         has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+        if has_selections:
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+            force_regenerate = bool(request.GET.get("force"))
+            if include_front and include_summary and include_detailed and not force_regenerate:
+                has_selections = False
 
         if has_selections:
             # On-the-fly generation for custom selections (synchronous for now, or just redirect)
@@ -1763,6 +1784,13 @@ class PaymentCertificateDownloadUnifiedAbridgedXLSXView(PaymentCertificateMixin,
         )
 
         has_selections = any(k in request.GET for k in ["front", "summary", "detailed"])
+        if has_selections:
+            include_front = request.GET.get("front") in ["1", "on", "true"]
+            include_summary = request.GET.get("summary") in ["1", "on", "true"]
+            include_detailed = request.GET.get("detailed") in ["1", "on", "true"]
+            force_regenerate = bool(request.GET.get("force"))
+            if include_front and include_summary and include_detailed and not force_regenerate:
+                has_selections = False
 
         if has_selections:
             include_front = request.GET.get("front") in ["1", "on", "true"]
