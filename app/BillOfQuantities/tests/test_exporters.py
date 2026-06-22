@@ -782,6 +782,40 @@ class TestExporters:
         assert pdf_file is not None
         assert pdf_file.size > 0
 
+    def test_bill_natural_sorting(self):
+        """Test that get_valuation_summary_data groups and sorts bills naturally by bill_number."""
+        project = ProjectFactory.create()
+        cert = PaymentCertificateFactory.create(project=project)
+        structure = StructureFactory.create(project=project)
+        
+        # Create bills with numbers: Bill 10, Bill 2, Bill 1
+        bill_10 = BillFactory.create(structure=structure, name="Bill B", bill_number="Bill 10")
+        bill_2 = BillFactory.create(structure=structure, name="Bill A", bill_number="Bill 2")
+        bill_1 = BillFactory.create(structure=structure, name="Bill C", bill_number="Bill 1")
+        
+        pkg_10 = PackageFactory.create(bill=bill_10)
+        pkg_2 = PackageFactory.create(bill=bill_2)
+        pkg_1 = PackageFactory.create(bill=bill_1)
+        
+        for pkg in [pkg_10, pkg_2, pkg_1]:
+            LineItemFactory.create(
+                project=project,
+                structure=structure,
+                bill=pkg.bill,
+                package=pkg,
+                is_work=True,
+                total_price=Decimal("100.00"),
+            )
+            
+        data = get_valuation_summary_data(cert)
+        bills = data["grouped_sections"][0]["bills"]
+        
+        # Natural sorting order by bill_number: Bill 1, Bill 2, Bill 10
+        assert bills[0]["bill_number"] == "Bill 1"
+        assert bills[1]["bill_number"] == "Bill 2"
+        assert bills[2]["bill_number"] == "Bill 10"
+
+
 
 @pytest.mark.django_db
 class TestDownloadViews:
