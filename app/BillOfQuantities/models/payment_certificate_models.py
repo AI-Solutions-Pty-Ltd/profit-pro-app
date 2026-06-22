@@ -530,12 +530,15 @@ class PaymentCertificate(BaseModel):
         # Special Items (from SpecialItemTransaction ledger model)
         totals_by_type = self.get_special_item_totals_by_type()
         prev_totals_by_type = self.previous_special_item_totals_by_type
+        from .ledger_models import SpecialItemTransaction
+        special_item_choices = dict(SpecialItemTransaction.SpecialItemType.choices)
         for item_type, current in totals_by_type.items():
             prev = prev_totals_by_type.get(item_type, Decimal("0.00"))
             if current != 0 or prev != 0:
+                label = special_item_choices.get(item_type, item_type)
                 items.append(
                     {
-                        "description": item_type,
+                        "description": label,
                         "previous_amount": prev,
                         "current_amount": current,
                         "total_amount": prev + current,

@@ -157,7 +157,7 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
             current_row += 1
 
         # Totals
-        ws.cell(row=current_row, column=2, value="SUBTOTAL WORK DONE").font = font_bold
+        ws.cell(row=current_row, column=2, value="Total Work Done to Date").font = font_bold
         ws.cell(row=current_row, column=3, value=total_budget).alignment = align_right
         ws.cell(
             row=current_row, column=4, value=total_cumulative
@@ -302,10 +302,6 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
             # 3. Ledger Totals
             ledger_items = payment_certificate.get_ledger_summary_items()
             if ledger_items:
-                ws.cell(
-                    row=current_row, column=2, value="Ledger Totals"
-                ).font = font_bold
-                current_row += 1
                 for item in ledger_items:
                     ws.cell(row=current_row, column=2, value=item["description"])
                     ws.cell(row=current_row, column=3, value="").alignment = align_right
@@ -323,33 +319,6 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
                             row=current_row, column=col
                         ).border = border_bottom_light
                     current_row += 1
-
-                # Subtotal Ledger
-                ws.cell(
-                    row=current_row, column=2, value="Subtotal Ledger Items"
-                ).alignment = align_right
-                ws.cell(row=current_row, column=2).font = font_bold
-                ws.cell(row=current_row, column=3, value="").alignment = align_right
-                ws.cell(
-                    row=current_row,
-                    column=4,
-                    value=payment_certificate.ledger_progressive_to_date,
-                ).alignment = align_right
-                ws.cell(
-                    row=current_row,
-                    column=5,
-                    value=payment_certificate.ledger_progressive_previous,
-                ).alignment = align_right
-                ws.cell(
-                    row=current_row,
-                    column=6,
-                    value=payment_certificate.ledger_current_net_total,
-                ).alignment = align_right
-                for col in range(1, 7):
-                    cell = ws.cell(row=current_row, column=col)
-                    cell.font = font_bold
-                    cell.border = border_bottom_thick
-                current_row += 1
 
             # Grand Total Contractual Special Items
             ws.cell(
