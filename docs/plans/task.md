@@ -32,3 +32,14 @@
 | **TSK-30** | Update Excel exporter cover_page_exporter.py | [x] | Run pytest on exporters |
 | **TSK-31** | Update JS Live Preview in cover_config.html | [x] | Verify live mockup preview |
 | **TSK-32** | Add tests and verify | [x] | Run all pytest suites |
+| **TSK-33** | Database Migration for Drawing model (remove parent, add group) | [x] | Run makemigrations and migrate |
+| **TSK-34** | Update admin.py configuration | [x] | Run django check |
+| **TSK-35** | Update DrawingFactory and unit tests in test_drawings.py | [x] | Run pytest test_drawings.py |
+| **TSK-36** | Refactor DrawingForm with WBS level ChoiceField | [x] | Verify form initialization and save logic |
+| **TSK-37** | Update templates (drawing_form.html, drawing_list.html) | [x] | Verify form fields rendering and list view layout |
+| **TSK-38** | Verify Form and View Logic in Integration Tests | [x] | Run all pytest suites |
+| **TSK-39** | Add `category` field back to `DrawingForm` and implement resolution logic | [x] | Verify form validation and save resolution |
+| **TSK-40** | Render `category` field in `drawing_form.html` template | [x] | Verify form rendering |
+| **TSK-41** | Update and verify drawing tests | [x] | Run pytest test_drawings.py |
+
+

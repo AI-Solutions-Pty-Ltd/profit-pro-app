@@ -175,15 +175,16 @@ class DrawingAdmin(SoftDeleteAdmin):
         "discipline",
         "category",
         "sub_category",
+        "group",
     ]
     search_fields = ["drawing_number", "name", "project__name", "notes"]
     readonly_fields = ["created_at", "updated_at"]
     autocomplete_fields = [
         "project",
         "discipline",
-        "parent",
         "category",
         "sub_category",
+        "group",
     ]
 
 

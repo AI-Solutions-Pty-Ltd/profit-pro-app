@@ -498,6 +498,7 @@ class DrawingFactory(DjangoModelFactory):
     discipline = SubFactory(DisciplineFactory)
     category = SubFactory(CategoryFactory)
     sub_category = SubFactory(SubCategoryFactory)
+    group = None
     file = factory.django.FileField(filename="test_drawing.pdf")
     notes = Faker("text")
 
