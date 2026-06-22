@@ -15,6 +15,7 @@ from .models import (
     ContractualComplianceDialogFile,
     Discipline,
     Drawing,
+    DrawingType,
     FinalAccountCompliance,
     FinalAccountComplianceDialog,
     FinalAccountComplianceDialogFile,
@@ -384,6 +385,16 @@ class DisciplineAdmin(SoftDeleteAdmin):
         "name",
         "description",
     ]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(DrawingType)
+class DrawingTypeAdmin(SoftDeleteAdmin):
+    """Admin for DrawingType model."""
+
+    list_display = ["name", "project", "description", "deleted", "created_at"]
+    list_filter = ["project", "deleted", "created_at"]
+    search_fields = ["name", "project__name", "description"]
     readonly_fields = ["created_at", "updated_at"]
 
 

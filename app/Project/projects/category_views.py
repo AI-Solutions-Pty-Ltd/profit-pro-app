@@ -15,12 +15,14 @@ from app.Project.models.project_roles_models import Role
 from app.Project.projects.category_forms import (
     CategoryForm,
     DisciplineForm,
+    DrawingTypeForm,
     GroupForm,
     SubCategoryForm,
 )
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    DrawingType,
     Group,
     SubCategory,
 )
@@ -778,3 +780,94 @@ class GroupBudgetUpdateView(UserHasProjectRoleGenericMixin, APIView):
             },
             status=200,
         )
+
+
+# ============================================================================
+# DrawingType CRUD Views
+# ============================================================================
+
+
+class DrawingTypeListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """List all drawing types for a project."""
+
+    model = DrawingType
+    template_name = "project/drawing_types/drawing_type_manage.html"
+    context_object_name = "drawing_types"
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for the drawing type list page."""
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(title="Drawing Types", url=None),
+        ]
+
+    def get_queryset(self):
+        """Return drawing types for this project."""
+        return DrawingType.objects.filter(
+            project=self.get_project(), deleted=False
+        ).order_by("name")
+
+    def get_context_data(self, **kwargs):
+        """Add drawing type form and project to context."""
+        context = super().get_context_data(**kwargs)
+        context["drawing_type_form"] = DrawingTypeForm()
+        context["project"] = self.get_project()
+        return context
+
+
+class DrawingTypeCreateView(UserHasProjectRoleGenericMixin, APIView):
+    """Create a new drawing type."""
+
+    model = DrawingType
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for drawing type creation."""
+        form = DrawingTypeForm(request.data)
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            dt = form.save()
+            messages.success(request, f"Drawing type '{dt.name}' created successfully.")
+            return Response({"success": True, "id": dt.pk, "name": dt.name}, status=200)
+        return Response(dict(form.errors), status=400)
+
+
+class DrawingTypeUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update a drawing type."""
+
+    model = DrawingType
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for drawing type update."""
+        dt = get_object_or_404(DrawingType, project=self.get_project(), pk=pk)
+        form = DrawingTypeForm(request.data, instance=dt)
+        if form.is_valid():
+            dt = form.save()
+            messages.success(request, f"Drawing type '{dt.name}' updated successfully.")
+            return Response({"success": True, "id": dt.pk, "name": dt.name}, status=200)
+        return Response(dict(form.errors), status=400)
+
+
+class DrawingTypeDeleteView(UserHasProjectRoleGenericMixin, APIView):
+    """Delete a drawing type."""
+
+    model = DrawingType
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for deletion."""
+        dt = get_object_or_404(DrawingType, project=self.get_project(), pk=pk)
+        name = dt.name
+        dt.soft_delete()
+        messages.success(request, f"Drawing type '{name}' deleted.")
+        return Response({"success": True}, status=200)

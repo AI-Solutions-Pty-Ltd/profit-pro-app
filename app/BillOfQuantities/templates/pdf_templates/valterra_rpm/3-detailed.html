@@ -374,9 +374,6 @@
                         <!-- 3. Ledger Totals -->
                         {% with ledger_items=payment_certificate.get_ledger_summary_items %}
                             {% if ledger_items %}
-                                <tr class="bill-header-row">
-                                    <td colspan="4"><div class="tl" style="padding-left:4px;">LEDGER TOTALS</div></td>
-                                </tr>
                                 {% for item in ledger_items %}
                                     <tr class="item-row">
                                         <td><div class="tl" style="padding-left:12px;">{{ item.description }}</div></td>
@@ -385,12 +382,12 @@
                                         <td><div class="tr">R {{ item.total_amount|floatformat:2|space_intcomma }}</div></td>
                                     </tr>
                                 {% endfor %}
-                                <tr class="bill-total-row">
+                                {% comment %} <tr class="bill-total-row">
                                     <td><div class="tr" style="padding-right:8px; font-weight:bold;">Subtotal Ledger Items</div></td>
                                     <td><div class="tr">R {{ payment_certificate.ledger_progressive_previous|floatformat:2|space_intcomma }}</div></td>
                                     <td><div class="tr">R {{ payment_certificate.ledger_current_net_total|floatformat:2|space_intcomma }}</div></td>
                                     <td><div class="tr">R {{ payment_certificate.ledger_progressive_to_date|floatformat:2|space_intcomma }}</div></td>
-                                </tr>
+                                </tr> {% endcomment %}
                             {% endif %}
                         {% endwith %}
 

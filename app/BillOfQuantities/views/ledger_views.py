@@ -128,6 +128,19 @@ def get_ledger_transactions_with_balance(model_class, project):
     return transactions_with_balance, current_balance
 
 
+def get_cert_redirect_info(view_instance):
+    """Get certificate ID and cancel_url from request if present."""
+    cert_id = view_instance.request.GET.get("certificate") or view_instance.request.POST.get("certificate")
+    if not cert_id:
+        return None, None
+    project_pk = view_instance.kwargs.get("project_pk")
+    cancel_url = reverse(
+        "bill_of_quantities:payment-certificate-edit",
+        kwargs={"project_pk": project_pk, "pk": cert_id}
+    )
+    return cert_id, cancel_url
+
+
 class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
     """List all advance payments for a project."""
 
@@ -172,6 +185,10 @@ class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
             project=project
         )
 
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
+
         return context
 
 
@@ -209,6 +226,12 @@ class AdvancePaymentCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
 
     def get_success_url(self):
         """Redirect to advance payment list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:advance-payment-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -220,6 +243,9 @@ class AdvancePaymentCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context["project"] = self.get_project()
         context["is_create"] = True
         context["advanced_payment_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -262,6 +288,12 @@ class AdvancePaymentUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
 
     def get_success_url(self):
         """Redirect to advance payment list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:advance-payment-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -273,6 +305,9 @@ class AdvancePaymentUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context["project"] = self.get_project()
         context["is_create"] = False
         context["advanced_payment_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -310,6 +345,12 @@ class AdvancePaymentDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
 
     def get_success_url(self):
         """Redirect to advance payment list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:advance-payment-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -319,6 +360,9 @@ class AdvancePaymentDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -368,6 +412,11 @@ class RetentionListView(SubscriptionAndRoleRequiredMixin, ListView):
         context["retention_percentage"] = project.retention_percentage
         context["retention_limit"] = project.retention_limit_percentage
         context["retention_form"] = RetentionCreateUpdateCreateForm(project=project)
+
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
+
         return context
 
 
@@ -403,6 +452,12 @@ class RetentionCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
 
     def get_success_url(self):
         """Redirect to retention list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:retention-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -414,6 +469,9 @@ class RetentionCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context["project"] = self.get_project()
         context["is_create"] = True
         context["retention_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -454,6 +512,12 @@ class RetentionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
 
     def get_success_url(self):
         """Redirect to retention list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:retention-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -465,6 +529,9 @@ class RetentionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context["project"] = self.get_project()
         context["is_create"] = False
         context["retention_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -500,6 +567,12 @@ class RetentionDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
 
     def get_success_url(self):
         """Redirect to retention list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:retention-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -509,6 +582,9 @@ class RetentionDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -749,6 +825,11 @@ class EscalationListView(SubscriptionAndRoleRequiredMixin, ListView):
         context["current_balance"] = current_balance
 
         context["escalation_form"] = EscalationCreateUpdateForm(project=project)
+
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
+
         return context
 
 
@@ -784,6 +865,12 @@ class EscalationCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
 
     def get_success_url(self):
         """Redirect to escalation list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:escalation-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -795,6 +882,9 @@ class EscalationCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context["project"] = self.get_project()
         context["is_create"] = True
         context["escalation_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -835,6 +925,12 @@ class EscalationUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
 
     def get_success_url(self):
         """Redirect to escalation list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:escalation-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -846,6 +942,9 @@ class EscalationUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context["project"] = self.get_project()
         context["is_create"] = False
         context["escalation_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -881,6 +980,12 @@ class EscalationDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
 
     def get_success_url(self):
         """Redirect to escalation list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:escalation-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -890,6 +995,9 @@ class EscalationDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -960,6 +1068,10 @@ class SpecialItemTransactionListView(SubscriptionAndRoleRequiredMixin, ListView)
             transactions_with_balance.append(txn_data)
         context["transactions"] = transactions_with_balance
 
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
+
         return context
 
 
@@ -1024,6 +1136,12 @@ class SpecialItemTransactionCreateView(SubscriptionAndRoleRequiredMixin, CreateV
 
     def get_success_url(self):
         """Redirect to special item list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:special-item-ledger-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -1034,6 +1152,9 @@ class SpecialItemTransactionCreateView(SubscriptionAndRoleRequiredMixin, CreateV
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = True
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -1103,6 +1224,12 @@ class SpecialItemTransactionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateV
 
     def get_success_url(self):
         """Redirect to special item list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:special-item-ledger-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -1113,6 +1240,9 @@ class SpecialItemTransactionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateV
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = False
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -1148,6 +1278,12 @@ class SpecialItemTransactionDeleteView(SubscriptionAndRoleRequiredMixin, DeleteV
 
     def get_success_url(self):
         """Redirect to special item list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:special-item-ledger-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -1157,4 +1293,7 @@ class SpecialItemTransactionDeleteView(SubscriptionAndRoleRequiredMixin, DeleteV
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context

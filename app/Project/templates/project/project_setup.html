@@ -563,12 +563,12 @@
                             <div>
                                 <h4 class="text-sm font-medium text-gray-900">{{ project.client.name }}</h4>
                                 <p class="mt-1 text-xs text-gray-600">{{ project.client.users.count }} user(s) assigned</p>
-                                <div class="mt-4 border-t border-gray-100 pt-3">
-                                    <h5 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Assigned Users & Roles</h5>
-                                    <ul class="divide-y divide-gray-100 mb-3">
+                                <div class="pt-3 mt-4 border-t border-gray-100">
+                                    <h5 class="mb-2 text-xs font-semibold tracking-wider text-gray-500 uppercase">Assigned Users & Roles</h5>
+                                    <ul class="mb-3 divide-y divide-gray-100">
                                         {% for user_role in project.project_company_user_roles.all %}
                                             {% if user_role.company == project.client %}
-                                                <li class="py-2 flex justify-between items-center text-xs">
+                                                <li class="flex justify-between items-center py-2 text-xs">
                                                     <div class="flex flex-col">
                                                         <span class="font-medium text-gray-900">{{ user_role.user.first_name }} {{ user_role.user.last_name }}</span>
                                                         <span class="text-gray-500">{{ user_role.user.email }}</span>
@@ -576,16 +576,16 @@
                                                     <div class="flex items-center space-x-2">
                                                         <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800">{{ user_role.role }}</span>
                                                         <a href="{% url 'client:stakeholder-role:update' project.pk project.client.pk user_role.pk %}"
-                                                           class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
+                                                           class="font-medium text-indigo-600 hover:text-indigo-900">Edit</a>
                                                         <a href="{% url 'client:stakeholder-role:remove' project.pk project.client.pk user_role.pk %}"
-                                                           class="text-red-600 hover:text-red-900 font-medium">Remove</a>
+                                                           class="font-medium text-red-600 hover:text-red-900">Remove</a>
                                                     </div>
                                                 </li>
                                             {% endif %}
                                         {% endfor %}
                                     </ul>
                                     <a href="{% url 'client:stakeholder-role:allocate' project.pk project.client.pk %}"
-                                       class="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white rounded border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                         {% heroicon_outline "plus" size="14" class="mr-1" %}
                                         Assign User & Role
                                     </a>
@@ -642,12 +642,12 @@
                                 {% if project.contractor.vat_number %}
                                     <p class="text-xs text-gray-600">VAT: {{ project.contractor.vat_number }}</p>
                                 {% endif %}
-                                <div class="mt-4 border-t border-gray-100 pt-3">
-                                    <h5 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Assigned Users & Roles</h5>
-                                    <ul class="divide-y divide-gray-100 mb-3">
+                                <div class="pt-3 mt-4 border-t border-gray-100">
+                                    <h5 class="mb-2 text-xs font-semibold tracking-wider text-gray-500 uppercase">Assigned Users & Roles</h5>
+                                    <ul class="mb-3 divide-y divide-gray-100">
                                         {% for user_role in project.project_company_user_roles.all %}
                                             {% if user_role.company == project.contractor %}
-                                                <li class="py-2 flex justify-between items-center text-xs">
+                                                <li class="flex justify-between items-center py-2 text-xs">
                                                     <div class="flex flex-col">
                                                         <span class="font-medium text-gray-900">{{ user_role.user.first_name }} {{ user_role.user.last_name }}</span>
                                                         <span class="text-gray-500">{{ user_role.user.email }}</span>
@@ -655,16 +655,16 @@
                                                     <div class="flex items-center space-x-2">
                                                         <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">{{ user_role.role }}</span>
                                                         <a href="{% url 'client:stakeholder-role:update' project.pk project.contractor.pk user_role.pk %}"
-                                                           class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
+                                                           class="font-medium text-indigo-600 hover:text-indigo-900">Edit</a>
                                                         <a href="{% url 'client:stakeholder-role:remove' project.pk project.contractor.pk user_role.pk %}"
-                                                           class="text-red-600 hover:text-red-900 font-medium">Remove</a>
+                                                           class="font-medium text-red-600 hover:text-red-900">Remove</a>
                                                     </div>
                                                 </li>
                                             {% endif %}
                                         {% endfor %}
                                     </ul>
                                     <a href="{% url 'client:stakeholder-role:allocate' project.pk project.contractor.pk %}"
-                                       class="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white rounded border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                         {% heroicon_outline "plus" size="14" class="mr-1" %}
                                         Assign User & Role
                                     </a>
@@ -728,25 +728,25 @@
                                                     {% if consultant.vat_number %}
                                                         <p class="text-xs text-gray-600">VAT: {{ consultant.vat_number }}</p>
                                                     {% endif %}
-                                                    <div class="mt-3 border-t border-gray-200 pt-2">
+                                                    <div class="pt-2 mt-3 border-t border-gray-200">
                                                         <h6 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Assigned Users:</h6>
-                                                        <ul class="space-y-1 mb-2">
+                                                        <ul class="mb-2 space-y-1">
                                                             {% for user_role in project.project_company_user_roles.all %}
                                                                 {% if user_role.company == consultant %}
-                                                                    <li class="text-xs flex justify-between items-center bg-white p-1 rounded border border-gray-100">
-                                                                        <span class="text-gray-900 font-medium">{{ user_role.user.first_name }} {{ user_role.user.last_name }} ({{ user_role.role }})</span>
+                                                                    <li class="flex justify-between items-center p-1 text-xs bg-white rounded border border-gray-100">
+                                                                        <span class="font-medium text-gray-900">{{ user_role.user.first_name }} {{ user_role.user.last_name }} ({{ user_role.role }})</span>
                                                                         <div class="space-x-2 text-[10px]">
                                                                             <a href="{% url 'client:stakeholder-role:update' project.pk consultant.pk user_role.pk %}"
-                                                                               class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
+                                                                               class="font-medium text-indigo-600 hover:text-indigo-900">Edit</a>
                                                                             <a href="{% url 'client:stakeholder-role:remove' project.pk consultant.pk user_role.pk %}"
-                                                                               class="text-red-600 hover:text-red-900 font-medium">Remove</a>
+                                                                               class="font-medium text-red-600 hover:text-red-900">Remove</a>
                                                                         </div>
                                                                     </li>
                                                                 {% endif %}
                                                             {% endfor %}
                                                         </ul>
                                                         <a href="{% url 'client:stakeholder-role:allocate' project.pk consultant.pk %}"
-                                                           class="text-xs text-indigo-600 hover:text-indigo-900 font-semibold inline-flex items-center">
+                                                           class="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-900">
                                                             {% heroicon_outline "plus" size="12" class="mr-0.5" %} Assign User & Role
                                                         </a>
                                                     </div>
@@ -780,25 +780,25 @@
                                                     {% if consultant.vat_number %}
                                                         <p class="text-xs text-gray-600">VAT: {{ consultant.vat_number }}</p>
                                                     {% endif %}
-                                                    <div class="mt-3 border-t border-gray-200 pt-2">
+                                                    <div class="pt-2 mt-3 border-t border-gray-200">
                                                         <h6 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Assigned Users:</h6>
-                                                        <ul class="space-y-1 mb-2">
+                                                        <ul class="mb-2 space-y-1">
                                                             {% for user_role in project.project_company_user_roles.all %}
                                                                 {% if user_role.company == consultant %}
-                                                                    <li class="text-xs flex justify-between items-center bg-white p-1 rounded border border-gray-100">
-                                                                        <span class="text-gray-900 font-medium">{{ user_role.user.first_name }} {{ user_role.user.last_name }} ({{ user_role.role }})</span>
+                                                                    <li class="flex justify-between items-center p-1 text-xs bg-white rounded border border-gray-100">
+                                                                        <span class="font-medium text-gray-900">{{ user_role.user.first_name }} {{ user_role.user.last_name }} ({{ user_role.role }})</span>
                                                                         <div class="space-x-2 text-[10px]">
                                                                             <a href="{% url 'client:stakeholder-role:update' project.pk consultant.pk user_role.pk %}"
-                                                                               class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
+                                                                               class="font-medium text-indigo-600 hover:text-indigo-900">Edit</a>
                                                                             <a href="{% url 'client:stakeholder-role:remove' project.pk consultant.pk user_role.pk %}"
-                                                                               class="text-red-600 hover:text-red-900 font-medium">Remove</a>
+                                                                               class="font-medium text-red-600 hover:text-red-900">Remove</a>
                                                                         </div>
                                                                     </li>
                                                                 {% endif %}
                                                             {% endfor %}
                                                         </ul>
                                                         <a href="{% url 'client:stakeholder-role:allocate' project.pk consultant.pk %}"
-                                                           class="text-xs text-indigo-600 hover:text-indigo-900 font-semibold inline-flex items-center">
+                                                           class="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-900">
                                                             {% heroicon_outline "plus" size="12" class="mr-0.5" %} Assign User & Role
                                                         </a>
                                                     </div>
@@ -942,19 +942,47 @@
         <div class="overflow-hidden bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Project Work Breakdown Structures</h2>
-                <p class="mt-1 text-sm text-gray-600">Manage categories, sub-categories, and disciplines</p>
+                <p class="mt-1 text-sm text-gray-600">Setup categories, sub-categories, and disciplines</p>
             </div>
             <div class="px-6 py-4">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
-                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Manage Categories</h3>
+                     <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
+                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Setup WBS</h3>
                         <p class="mb-3 text-xs text-gray-600">Create and manage project categories for classification</p>
                         <a href="{% url 'project:project-category-list' project.pk %}"
                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "tag" size="16" %}
-                            <span class="ml-2">Manage Level 1 Categories</span>
+                            <span class="ml-2">Setup WBS Level </span>
                         </a>
                     </div>
+                     <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
+                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Setup  Disciplines</h3>
+                        <p class="mb-3 text-xs text-gray-600">Create and manage project categories for classification</p>
+                        <a href="{% url 'project:project-discipline-list' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "tag" size="16" %}
+                            <span class="ml-2">Setup Disciplines</span>
+                        </a>
+                    </div>
+                     <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
+                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Setup Drawing Types</h3>
+                        <p class="mb-3 text-xs text-gray-600">Create and manage drawing types (e.g., Tender, Construction, Information, Shop)</p>
+                        <a href="{% url 'project:project-drawing-type-list' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "document" size="16" %}
+                            <span class="ml-2">Setup Drawing Types</span>
+                        </a>
+                    </div>
+                    <div class="p-4 rounded-lg border border-gray-200 transition-all duration-200 hover:border-indigo-300 hover:shadow-md">
+                        <h3 class="mb-1 text-sm font-semibold text-gray-900">Setup Project Levels</h3>
+                        <p class="mb-3 text-xs text-gray-600">Create and manage project categories for classification</p>
+                        <a href="{% url 'project:project-category-list' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md border border-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "tag" size="16" %}
+                            <span class="ml-2">Setup Project Levels</span>
+                        </a>
+                    </div>
+                                  
                 </div>
             </div>
         </div>

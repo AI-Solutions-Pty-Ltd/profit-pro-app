@@ -18,6 +18,7 @@ from app.Project.models import (
     Company,
     ContractualCompliance,
     Drawing,
+    DrawingType,
     FinalAccountCompliance,
     Milestone,
     PlannedValue,
@@ -413,6 +414,7 @@ class DisciplineFactory(DjangoModelFactory):
 
     class Meta:
         model = "Project.Discipline"
+        django_get_or_create = ("project", "name")
 
     project = SubFactory(ProjectFactory)
     name = Sequence(lambda n: f"Discipline {n}")
@@ -499,8 +501,21 @@ class DrawingFactory(DjangoModelFactory):
     category = SubFactory(CategoryFactory)
     sub_category = SubFactory(SubCategoryFactory)
     group = None
+    drawing_type = None
     file = factory.django.FileField(filename="test_drawing.pdf")
     notes = Faker("text")
+
+
+class DrawingTypeFactory(DjangoModelFactory):
+    """Factory for DrawingType model."""
+
+    class Meta:
+        model = DrawingType
+        django_get_or_create = ("project", "name")
+
+    name = Sequence(lambda n: f"Custom Drawing Type {n}")
+    description = Faker("text")
+    project = SubFactory(ProjectFactory)
 
 
 class SignatoriesFactory(DjangoModelFactory):

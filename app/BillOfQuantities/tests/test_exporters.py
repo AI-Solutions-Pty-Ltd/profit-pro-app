@@ -787,16 +787,16 @@ class TestExporters:
         project = ProjectFactory.create()
         cert = PaymentCertificateFactory.create(project=project)
         structure = StructureFactory.create(project=project)
-        
+
         # Create bills with numbers: Bill 10, Bill 2, Bill 1
         bill_10 = BillFactory.create(structure=structure, name="Bill B", bill_number="Bill 10")
         bill_2 = BillFactory.create(structure=structure, name="Bill A", bill_number="Bill 2")
         bill_1 = BillFactory.create(structure=structure, name="Bill C", bill_number="Bill 1")
-        
+
         pkg_10 = PackageFactory.create(bill=bill_10)
         pkg_2 = PackageFactory.create(bill=bill_2)
         pkg_1 = PackageFactory.create(bill=bill_1)
-        
+
         for pkg in [pkg_10, pkg_2, pkg_1]:
             LineItemFactory.create(
                 project=project,
@@ -806,10 +806,10 @@ class TestExporters:
                 is_work=True,
                 total_price=Decimal("100.00"),
             )
-            
+
         data = get_valuation_summary_data(cert)
         bills = data["grouped_sections"][0]["bills"]
-        
+
         # Natural sorting order by bill_number: Bill 1, Bill 2, Bill 10
         assert bills[0]["bill_number"] == "Bill 1"
         assert bills[1]["bill_number"] == "Bill 2"
@@ -835,7 +835,7 @@ class TestDownloadViews:
         )
 
         # Test custom request with selected options
-        response = client.get(url, {"front": "on", "summary": "on", "detailed": "on"})
+        response = client.get(url, {"front": "on", "summary": "on", "detailed": "on", "force": "on"})
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
         assert "Content-Disposition" in response
@@ -855,7 +855,7 @@ class TestDownloadViews:
         )
 
         # Test custom request with selected options
-        response = client.get(url, {"front": "on", "summary": "on", "detailed": "on"})
+        response = client.get(url, {"front": "on", "summary": "on", "detailed": "on", "force": "on"})
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
         assert "Content-Disposition" in response

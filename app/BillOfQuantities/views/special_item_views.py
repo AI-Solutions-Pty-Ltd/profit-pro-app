@@ -60,6 +60,12 @@ class SpecialItemListView(SpecialItemMixin, ListView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        cert_id = self.request.GET.get("certificate")
+        if cert_id:
+            context["cancel_url"] = reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+            )
         return context
 
 
@@ -130,6 +136,12 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
 
     def get_success_url(self: "SpecialItemCreateView"):
         """Redirect to special item list."""
+        cert_id = self.request.GET.get("certificate")
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+            )
         return reverse(
             "bill_of_quantities:special-item-list",
             kwargs={"project_pk": self.get_project().pk},
@@ -139,6 +151,12 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        cert_id = self.request.GET.get("certificate")
+        if cert_id:
+            context["cancel_url"] = reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+            )
         return context
 
 
@@ -193,6 +211,12 @@ class SpecialItemUpdateView(SpecialItemMixin, UpdateView):
 
     def get_success_url(self: "SpecialItemUpdateView"):
         """Redirect to special item list."""
+        cert_id = self.request.GET.get("certificate")
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+            )
         return reverse(
             "bill_of_quantities:special-item-list",
             kwargs={"project_pk": self.get_project().pk},
@@ -202,6 +226,12 @@ class SpecialItemUpdateView(SpecialItemMixin, UpdateView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        cert_id = self.request.GET.get("certificate")
+        if cert_id:
+            context["cancel_url"] = reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+            )
         return context
 
 
@@ -248,6 +278,12 @@ class SpecialItemDeleteView(SpecialItemMixin, DeleteView):
 
     def get_success_url(self: "SpecialItemDeleteView"):
         """Redirect to special item list."""
+        cert_id = self.request.GET.get("certificate")
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+            )
         return reverse(
             "bill_of_quantities:special-item-list",
             kwargs={"project_pk": self.get_project().pk},
@@ -257,4 +293,10 @@ class SpecialItemDeleteView(SpecialItemMixin, DeleteView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        cert_id = self.request.GET.get("certificate")
+        if cert_id:
+            context["cancel_url"] = reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+            )
         return context
