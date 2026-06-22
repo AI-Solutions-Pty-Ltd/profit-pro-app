@@ -129,6 +129,42 @@
                 border-top: 1px solid #e5e7eb;
                 padding-top: 5px;
             }
+            .page-break { page-break-before: always; }
+            
+            /* Styles for contractual special items table (copied from 3-detailed.html) */
+            table.items-table {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+                margin-top: 4px;
+            }
+            table.items-table th {
+                padding: 0;
+                background: #1e3a5f;
+                color: #fff;
+                font-weight: bold;
+                font-size: 6.5pt;
+                border-bottom: 2px solid #fff;
+                vertical-align: bottom;
+            }
+            table.items-table td {
+                padding: 0;
+                vertical-align: middle;
+            }
+            table.items-table th > div,
+            table.items-table td > div {
+                overflow: hidden;
+                width: 100%;
+                padding: 3px 4px;
+                word-break: break-word;
+            }
+            .bill-header-row { background: #f3f4f6; color: #374151; font-weight: bold; font-size: 7.5pt; }
+            .item-row        { background: #fff; border-bottom: 1px solid #f3f4f6; font-size: 7.5pt; }
+            .bill-total-row  { font-weight: bold; background: #f9fafb; border-top: 1px solid #111827; border-bottom: 2px solid #111827; font-size: 7.5pt; }
+            
+            .tr  { text-align: right;  }
+            .tc  { text-align: center; }
+            .tl  { text-align: left;   }
         </style>
     </head>
     <body>
@@ -146,7 +182,7 @@
                     {% endif %}
                 </td>
                 <td class="center-box">
-                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;">BILL OF QUANTITIES &mdash; SUMMARY</div>
+                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;">VALUATION SUMMARY</div>
                 </td>
                 <td class="cert-box">
                     <div style="font-size: 8.5pt; margin-bottom: 2px;">Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }}</div>
@@ -225,6 +261,129 @@
                 </tr>
             </tbody>
         </table>
+
+        {# Contractual Special Items #}
+        {% if payment_certificate.has_contractual_special_items %}
+            <div class="page-break">
+                <table class="title-table">
+                    <tr>
+                        <td class="logo-box">
+                            {% if project.logo %}
+                                <img src="{{ project.logo.url }}" style="max-height:60px; max-width:150px">
+                            {% elif project.contractor.logo %}
+                                <img src="{{ project.contractor.logo.url }}" style="max-height:60px; max-width:150px">
+                            {% elif project.client.logo %}
+                                <img src="{{ project.client.logo.url }}" style="max-height:60px; max-width:150px">
+                            {% else %}
+                                <span style="color: #9ca3af; font-style: italic; font-size: 11pt;">[ LOGO ]</span>
+                            {% endif %}
+                        </td>
+                        <td class="center-box">
+                            <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;">CONTRACTUAL SPECIAL ITEMS</div>
+                        </td>
+                        <td class="cert-box">
+                            <div style="font-size: 8.5pt; margin-bottom: 2px;">Cert No. {{ payment_certificate.certificate_number|stringformat:"02d" }}</div>
+                            <div style="font-size: 8.5pt;">{{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="subtitle-row">
+                    {{ project.name }} - Infrastructure Upgrade - Payment Certificate No. {{ payment_certificate.certificate_number|stringformat:"02d" }} - {{ payment_certificate.approved_on|date:"d M Y"|default:now|date:"d M Y" }}
+                </div>
+
+                <table class="items-table" width="100%">
+                    <colgroup>
+                        <col width="55%">
+                        <col width="15%">
+                        <col width="15%">
+                        <col width="15%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th><div class="tl">DESCRIPTION</div></th>
+                            <th><div class="tr">PREVIOUS AMOUNT (R)</div></th>
+                            <th><div class="tr">CURRENT AMOUNT (R)</div></th>
+                            <th><div class="tr">TOTAL AMOUNT (R)</div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 1. Addendums -->
+                        {% if addendum_items_flat %}
+                            <tr class="bill-header-row">
+                                <td colspan="4"><div class="tl" style="padding-left:4px;">ADDENDUM LINE ITEMS</div></td>
+                            </tr>
+                            {% for line_item in addendum_items_flat %}
+                                <tr class="item-row">
+                                    <td><div class="tl" style="padding-left:12px;">{{ line_item.description }}</div></td>
+                                    <td><div class="tr">R {{ line_item.previous_claimed|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">R {{ line_item.current_claim|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">R {{ line_item.total_claimed|floatformat:2|space_intcomma }}</div></td>
+                                </tr>
+                            {% endfor %}
+                            <tr class="bill-total-row">
+                                <td><div class="tr" style="padding-right:8px; font-weight:bold;">Subtotal Addendum Items</div></td>
+                                <td><div class="tr">R {{ payment_certificate.addendum_progressive_previous|floatformat:2|space_intcomma }}</div></td>
+                                <td><div class="tr">R {{ payment_certificate.addendum_current_claim_total|floatformat:2|space_intcomma }}</div></td>
+                                <td><div class="tr">R {{ payment_certificate.addendum_progressive_to_date|floatformat:2|space_intcomma }}</div></td>
+                            </tr>
+                        {% endif %}
+
+                        <!-- 2. Special Items -->
+                        {% if special_items %}
+                            <tr class="bill-header-row">
+                                <td colspan="4"><div class="tl" style="padding-left:4px;">SPECIAL LINE ITEMS</div></td>
+                            </tr>
+                            {% for line_item in special_items %}
+                                <tr class="item-row">
+                                    <td><div class="tl" style="padding-left:12px;">{{ line_item.description }}</div></td>
+                                    <td><div class="tr">R {{ line_item.previous_claimed|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">R {{ line_item.current_claim|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">R {{ line_item.total_claimed|floatformat:2|space_intcomma }}</div></td>
+                                </tr>
+                            {% endfor %}
+                            <tr class="bill-total-row">
+                                <td><div class="tr" style="padding-right:8px; font-weight:bold;">Subtotal Special Items</div></td>
+                                <td><div class="tr">R {{ payment_certificate.special_items_progressive_previous|floatformat:2|space_intcomma }}</div></td>
+                                <td><div class="tr">R {{ payment_certificate.special_items_current_claim_total|floatformat:2|space_intcomma }}</div></td>
+                                <td><div class="tr">R {{ payment_certificate.special_items_progressive_to_date|floatformat:2|space_intcomma }}</div></td>
+                            </tr>
+                        {% endif %}
+
+                        <!-- 3. Ledger Totals -->
+                        {% with ledger_items=payment_certificate.get_ledger_summary_items %}
+                            {% if ledger_items %}
+                                <tr class="bill-header-row">
+                                    <td colspan="4"><div class="tl" style="padding-left:4px;">LEDGER TOTALS</div></td>
+                                </tr>
+                                {% for item in ledger_items %}
+                                    <tr class="item-row">
+                                        <td><div class="tl" style="padding-left:12px;">{{ item.description }}</div></td>
+                                        <td><div class="tr">R {{ item.previous_amount|floatformat:2|space_intcomma }}</div></td>
+                                        <td><div class="tr">R {{ item.current_amount|floatformat:2|space_intcomma }}</div></td>
+                                        <td><div class="tr">R {{ item.total_amount|floatformat:2|space_intcomma }}</div></td>
+                                    </tr>
+                                {% endfor %}
+                                <tr class="bill-total-row">
+                                    <td><div class="tr" style="padding-right:8px; font-weight:bold;">Subtotal Ledger Items</div></td>
+                                    <td><div class="tr">R {{ payment_certificate.ledger_progressive_previous|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">R {{ payment_certificate.ledger_current_net_total|floatformat:2|space_intcomma }}</div></td>
+                                    <td><div class="tr">R {{ payment_certificate.ledger_progressive_to_date|floatformat:2|space_intcomma }}</div></td>
+                                </tr>
+                            {% endif %}
+                        {% endwith %}
+
+                        <!-- Grand Total row -->
+                        <tr class="section-total-row" style="background:#1e3a5f; color:#fff; font-weight:bold;">
+                            <td><div class="tr" style="padding-right:8px; font-weight:bold; font-size:8pt;">TOTAL CONTRACTUAL SPECIAL ITEMS</div></td>
+                            <td><div class="tr" style="font-size:8pt;">R {{ payment_certificate.contractual_special_items_progressive_previous|floatformat:2|space_intcomma }}</div></td>
+                            <td><div class="tr" style="font-size:8pt;">R {{ payment_certificate.contractual_special_items_current_claim_total|floatformat:2|space_intcomma }}</div></td>
+                            <td><div class="tr" style="font-size:8pt;">R {{ payment_certificate.contractual_special_items_progressive_to_date|floatformat:2|space_intcomma }}</div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
 
         <!-- Running Footer -->
         <div id="running-footer">
