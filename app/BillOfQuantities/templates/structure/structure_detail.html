@@ -3,21 +3,21 @@
     {{ structure.name }} - {{ block.super }}
 {% endblock title %}
 {% block content %}
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="px-4 py-8 mx-auto max-w-4xl sm:px-6 lg:px-8">
         <!-- Structure Card -->
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-hidden bg-white rounded-lg shadow-md">
             <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                <div class="flex items-center justify-between">
+            <div class="px-6 py-5 bg-gray-50 border-b border-gray-200">
+                <div class="flex justify-between items-center">
                     <h1 class="text-2xl font-bold text-gray-900">{{ structure.name }}</h1>
                     <div class="flex space-x-3">
                         <a href="{% url 'bill_of_quantities:structure-update' project.pk structure.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline name="pencil" size="20" %}
                             Edit
                         </a>
                         <a href="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             {% heroicon_outline name="trash" size="20" %}
                             Delete
                         </a>
@@ -46,7 +46,7 @@
                             {% if structure.description %}
                                 {{ structure.description }}
                             {% else %}
-                                <span class="text-gray-400 italic">No description provided</span>
+                                <span class="italic text-gray-400">No description provided</span>
                             {% endif %}
                         </dd>
                     </div>
@@ -67,8 +67,8 @@
             <!-- Footer -->
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
                 <div class="flex justify-between items-center">
-                    <a href="{% url 'project:project-management' structure.project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    <a href="{% url 'bill_of_quantities:structure-list' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
                         {% heroicon_outline name="chevron-left" size="20" %}
                         Back to Sections
                     </a>

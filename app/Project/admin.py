@@ -25,6 +25,7 @@ from .models import (
     ProductionResource,
     Project,
     ProjectCategory,
+    ProjectCompanyUserRole,
     ProjectDiscipline,
     ProjectDocument,
     ProjectRole,
@@ -174,15 +175,16 @@ class DrawingAdmin(SoftDeleteAdmin):
         "discipline",
         "category",
         "sub_category",
+        "group",
     ]
     search_fields = ["drawing_number", "name", "project__name", "notes"]
     readonly_fields = ["created_at", "updated_at"]
     autocomplete_fields = [
         "project",
         "discipline",
-        "parent",
         "category",
         "sub_category",
+        "group",
     ]
 
 
@@ -418,3 +420,11 @@ class ProductionResourceAdmin(SoftDeleteAdmin):
     list_filter = ["resource_type", "production_plan__project", "production_plan"]
     search_fields = ["name", "production_plan__activity"]
     readonly_fields = ["created_at", "updated_at", "name", "rate", "total_cost"]
+
+
+@admin.register(ProjectCompanyUserRole)
+class ProjectCompanyUserRoleAdmin(SoftDeleteAdmin):
+    list_display = ["project", "company", "user", "role", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at", "project", "company", "role"]
+    search_fields = ["project__name", "company__name", "user__email", "role"]
+    readonly_fields = ["created_at", "updated_at"]

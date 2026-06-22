@@ -979,6 +979,11 @@ class SpecialItemTransactionCreateView(SubscriptionAndRoleRequiredMixin, CreateV
                 ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                     "-created_at"
                 )
+                active_cert = self.project.active_payment_certificate
+                if active_cert:
+                    if not self.instance.pk:
+                        self.fields["payment_certificate"].initial = active_cert
+                    self.fields["payment_certificate"].disabled = True
 
         class Meta:
             model = SpecialItemTransaction
@@ -1048,6 +1053,11 @@ class SpecialItemTransactionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateV
                 ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                     "-created_at"
                 )
+                active_cert = self.project.active_payment_certificate
+                if active_cert:
+                    if not self.instance.pk:
+                        self.fields["payment_certificate"].initial = active_cert
+                    self.fields["payment_certificate"].disabled = True
 
         class Meta:
             model = SpecialItemTransaction

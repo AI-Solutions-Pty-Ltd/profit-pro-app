@@ -7,6 +7,7 @@ from app.core.Utilities.models import BaseModel
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    Group,
     SubCategory,
 )
 
@@ -49,7 +50,16 @@ class ProjectDocument(BaseModel):
         """Generate upload path for document files."""
         import os
 
+        from django.utils import timezone
+
         base_filename = os.path.basename(filename)
+        if self.category == "BILL_OF_QUANTITIES":
+            ext = os.path.splitext(base_filename)[1]
+            date_str = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+            safe_project_name = "".join(
+                c for c in self.project.name if c.isalnum() or c in (" ", "-", "_")
+            ).strip()
+            base_filename = f"{safe_project_name} -project-setup -{date_str}{ext}"
         return f"project_documents/{self.project.pk}/{self.category}/{base_filename}"
 
     project = models.ForeignKey(
@@ -172,16 +182,6 @@ class Drawing(BaseModel):
         help_text="Professional discipline this drawing belongs to",
     )
 
-    # Hierarchy/Nesting
-    parent = models.ForeignKey(
-        "self",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="children",
-        help_text="Parent drawing for nested hierarchy",
-    )
-
     # Link to WBS Levels
     category = models.ForeignKey(
         Category,
@@ -198,6 +198,14 @@ class Drawing(BaseModel):
         blank=True,
         related_name="drawings",
         help_text="Project sub-category (Level 2)",
+    )
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="drawings",
+        help_text="Project group (Level 3)",
     )
 
     file = models.FileField(
@@ -221,16 +229,6 @@ class Drawing(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.drawing_number}: {self.name} (Rev {self.revision_number})"
-
-    @property
-    def level(self) -> int:
-        """Calculate the depth level in the drawing hierarchy."""
-        level = 0
-        curr = self.parent
-        while curr:
-            level += 1
-            curr = curr.parent
-        return level
 
     @property
     def filename(self) -> str:

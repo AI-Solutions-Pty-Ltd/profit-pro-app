@@ -23,11 +23,13 @@ from app.Project.models import (
     PlannedValue,
     Project,
     ProjectCategory,
+    ProjectCompanyUserRole,
     ProjectDocument,
     ProjectRole,
     Risk,
     Role,
     Signatories,
+    StakeholderRole,
 )
 from app.Project.models.entity_definitions import (
     LabourEntity,
@@ -230,6 +232,18 @@ class ProjectRoleFactory(DjangoModelFactory):
     role = Role.ADMIN
 
 
+class ProjectCompanyUserRoleFactory(DjangoModelFactory):
+    """Factory for ProjectCompanyUserRole model."""
+
+    class Meta:
+        model = ProjectCompanyUserRole
+
+    project = SubFactory(ProjectFactory)
+    company = SubFactory("app.Project.tests.factories.ClientFactory")
+    user = SubFactory(AccountFactory)
+    role = StakeholderRole.CAPTURER
+
+
 class PlannedValueFactory(DjangoModelFactory):
     """Factory for PlannedValue model."""
 
@@ -404,6 +418,15 @@ class DisciplineFactory(DjangoModelFactory):
     name = Sequence(lambda n: f"Discipline {n}")
 
 
+class ProjectDisciplineFactory(DjangoModelFactory):
+    """Factory for ProjectDiscipline model."""
+
+    class Meta:
+        model = "Project.ProjectDiscipline"
+
+    name = Sequence(lambda n: f"Project Discipline {n}")
+
+
 class LabourEntityFactory(DjangoModelFactory):
     """Factory for LabourEntity model."""
 
@@ -475,6 +498,7 @@ class DrawingFactory(DjangoModelFactory):
     discipline = SubFactory(DisciplineFactory)
     category = SubFactory(CategoryFactory)
     sub_category = SubFactory(SubCategoryFactory)
+    group = None
     file = factory.django.FileField(filename="test_drawing.pdf")
     notes = Faker("text")
 

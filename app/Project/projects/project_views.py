@@ -609,6 +609,74 @@ class ProjectReportConfigView(ProjectMixin, DetailView):
         )
 
 
+class ProjectCoverConfigView(ProjectMixin, DetailView):
+    """Display and manage project cover page layout, headers, and titles."""
+
+    model = Project
+    template_name = "project/cover_config.html"
+    context_object_name = "project"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.object.name,
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.object.pk}
+                ),
+            ),
+            BreadcrumbItem(
+                title="Edit Project",
+                url=reverse("project:project-setup", kwargs={"pk": self.object.pk}),
+            ),
+            BreadcrumbItem(title="Cover Page Customization", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        import json
+
+        context["cover_page_config_json"] = json.dumps(
+            self.object.get_cover_page_config()
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        project = self.object
+        action = request.POST.get("action")
+
+        if action == "save_cover_config":
+            cover_config_str = request.POST.get("cover_config")
+
+            import json
+
+            try:
+                if cover_config_str:
+                    project.cover_page_config = json.loads(cover_config_str)
+                else:
+                    project.cover_page_config = {}
+            except ValueError:
+                messages.error(request, "Invalid cover page configuration format.")
+                return HttpResponseRedirect(
+                    reverse("project:project-cover-config", kwargs={"pk": project.pk})
+                )
+
+            project.save()
+            messages.success(
+                request,
+                "Cover page report, headers and titles configuration saved successfully!",
+            )
+
+        return HttpResponseRedirect(
+            reverse("project:project-cover-config", kwargs={"pk": project.pk})
+        )
+
+
 class ProjectManagementView(ProjectMixin, DetailView):
     """Display project management page with all buttons (no graphs)."""
 

@@ -112,6 +112,10 @@ def get_valuation_summary_data(payment_certificate, abridged=False):
 
     structures_data: dict[Any, dict[str, Any]] = {}
     for item in line_items:
+        # Exclude addendum and special items from the main BOQ summary
+        if item.addendum or item.special_item:
+            continue
+
         if not item.is_work:
             continue
         struct_id = item.structure_id
@@ -243,6 +247,20 @@ def compile_pdf_for_certificate(
     all_columns = project.get_column_config()
     active_columns = [col for col in all_columns if col.get("enabled", True)]
 
+    cover_config = project.get_cover_page_config()
+    flat_fields = {}
+    for sec_id, sec_data in cover_config.get("sections", {}).items():
+        flat_fields[sec_id] = {}
+        for field in sec_data.get("fields", []):
+            flat_fields[sec_id][field["id"]] = {
+                "label": field["label"],
+                "enabled": field["enabled"],
+            }
+
+    from app.BillOfQuantities.views.payment_certificate_views import (
+        get_resolved_cover_page_sections,
+    )
+
     context = {
         "payment_certificate": payment_certificate,
         "project": project,
@@ -250,28 +268,29 @@ def compile_pdf_for_certificate(
         "vat_rate": settings.VAT_RATE,
         "is_abridged": is_abridged,
         "columns": active_columns,
+        "cover_page_config": cover_config,
+        "cover_fields": flat_fields,
+        "ordered_sections": get_resolved_cover_page_sections(payment_certificate),
     }
 
     # Gather data based on abridged flag
     if is_abridged:
         all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
-        line_items = all_line_items.filter(addendum=False, special_item=False)
-        special_items = all_line_items.filter(addendum=False, special_item=True)
-        addendum_items = all_line_items.filter(addendum=True)
-        context.update(
-            {
-                "grouped_line_items": group_line_items_by_hierarchy(line_items),
-                "addendum_items": group_line_items_by_hierarchy(addendum_items),
-                "special_items": special_items,
-            }
-        )
     else:
-        line_items = LineItem.construct_payment_certificate(payment_certificate)
-        context.update(
-            {
-                "grouped_line_items": group_line_items_by_hierarchy(line_items),
-            }
-        )
+        all_line_items = LineItem.construct_payment_certificate(payment_certificate)
+
+    line_items = all_line_items.filter(addendum=False, special_item=False)
+    special_items = all_line_items.filter(addendum=False, special_item=True)
+    addendum_items = all_line_items.filter(addendum=True, special_item=False)
+
+    context.update(
+        {
+            "grouped_line_items": group_line_items_by_hierarchy(line_items),
+            "addendum_items": group_line_items_by_hierarchy(addendum_items),
+            "addendum_items_flat": addendum_items,
+            "special_items": special_items,
+        }
+    )
 
     # Add summary data if summary is requested
     if include_summary:

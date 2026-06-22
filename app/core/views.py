@@ -250,3 +250,85 @@ def favicon_view(request):
     if os.path.exists(favicon_path):
         return FileResponse(open(favicon_path, "rb"), content_type="image/x-icon")
     return HttpResponse(status=204)
+
+
+def serve_media(request, path):
+    """
+    Secure media serving view.
+    Only allows authenticated users to access sensitive folders,
+    and validates project access for project-specific files.
+    """
+    from django.conf import settings
+    from django.contrib.auth.views import redirect_to_login
+    from django.http import Http404
+    from django.views.static import serve
+
+    sensitive_prefixes = (
+        "project_documents/",
+        "project_drawings/",
+        "payment_certificates/",
+        "contract_correspondences/",
+        "entity_management/",
+    )
+
+    if any(path.startswith(prefix) for prefix in sensitive_prefixes):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+
+        # Check project membership where applicable
+        parts = path.split("/")
+        if len(parts) >= 2 and parts[0] in (
+            "project_documents",
+            "project_drawings",
+            "contract_correspondences",
+        ):
+            try:
+                project_id = int(parts[1])
+                from app.Project.models import Project, Role
+
+                project = Project.objects.filter(pk=project_id, deleted=False).first()
+                if project:
+                    roles = list(dict(Role.choices).keys())
+                    if not request.user.has_project_role(project, roles):
+                        raise Http404("You do not have permission to access this file.")
+                else:
+                    raise Http404("Project not found.")
+            except ValueError:
+                pass
+
+    response = serve(request, path, document_root=settings.MEDIA_ROOT)
+
+    # Intercept downloads of BOQ documents to force correct download filename format
+    parts = path.split("/")
+    if (
+        len(parts) >= 3
+        and parts[0] == "project_documents"
+        and parts[2] == "BILL_OF_QUANTITIES"
+    ):
+        try:
+            project_id = int(parts[1])
+            from app.Project.models import Project, ProjectDocument
+
+            project = Project.objects.filter(pk=project_id, deleted=False).first()
+            if project:
+                import os
+
+                from django.utils import timezone
+
+                # Try to find the document to use its creation timestamp, fallback to current time
+                doc = ProjectDocument.objects.filter(project=project, file=path).first()
+                if doc:
+                    date_str = doc.created_at.strftime("%Y-%m-%d_%H-%M-%S")
+                else:
+                    date_str = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+                ext = os.path.splitext(parts[-1])[1]
+                safe_project_name = "".join(
+                    c for c in project.name if c.isalnum() or c in (" ", "-", "_")
+                ).strip()
+                filename = f"{safe_project_name} -project-setup -{date_str}{ext}"
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        except Exception:
+            pass
+
+    return response

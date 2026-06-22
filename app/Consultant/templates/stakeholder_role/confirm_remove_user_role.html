@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block content %}
+    <div class="px-4 py-8 mx-auto max-w-4xl sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <div class="mb-6 bg-white rounded-lg shadow-sm">
+            <div class="px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Remove User Stakeholder Role</h1>
+                        <p class="mt-1 text-sm text-gray-600">Confirm removal of stakeholder role assignment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Form -->
+        <div class="bg-white rounded-lg shadow">
+            <form method="post">
+                {% csrf_token %}
+                <div class="px-6 py-8 text-center">
+                    {% heroicon_outline "exclamation-triangle" class="mx-auto w-12 h-12 text-red-500" %}
+                    <h3 class="mt-4 text-lg font-medium text-gray-900">Are you sure?</h3>
+                    <p class="mt-2 text-sm text-gray-500">
+                        This will remove the stakeholder assignment and role of <strong>{{ object.user.first_name }} {{ object.user.last_name }}</strong> ({{ object.user.email }}) as <strong>{{ object.role }}</strong> for <strong>{{ company.name }}</strong> on project <strong>{{ project.name }}</strong>.
+                    </p>
+                </div>
+                <!-- Form Actions -->
+                <div class="px-6 py-4 bg-gray-50 rounded-b-lg border-t border-gray-200">
+                    <div class="flex justify-end space-x-3">
+                        <a href="{% url 'project:project-setup' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md border border-transparent shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Confirm Remove
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

@@ -3,7 +3,8 @@ from typing import cast
 from django import forms
 
 from app.Account.models import Account
-from app.Project.models import Company, Project
+from app.core.Utilities.widgets import SearchableSelectWidget
+from app.Project.models import Company, Project, ProjectDiscipline
 
 
 class CompanyFilterForm(forms.Form):
@@ -47,6 +48,19 @@ class CompanyForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
         label="Company Consultants",
     )
+    add_discipline = forms.ModelChoiceField(
+        queryset=ProjectDiscipline.objects.all().order_by("name"),
+        required=False,
+        label="Add Discipline",
+        widget=SearchableSelectWidget(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "id": "id_add_discipline_select",
+            },
+            create_url=False,
+        ),
+        help_text="Search and select disciplines to add to this company",
+    )
 
     class Meta:
         model = Company
@@ -64,6 +78,7 @@ class CompanyForm(forms.ModelForm):
             "bank_swift_code",
             "users",
             "consultants",
+            "disciplines",
         ]
         widgets = {
             "logo": forms.FileInput(
@@ -130,18 +145,25 @@ class CompanyForm(forms.ModelForm):
 
     def __init__(self, *args, contractor=False, client=False, **kwargs):
         super().__init__(*args, **kwargs)
-        users_field = cast(forms.ModelMultipleChoiceField, self.fields["users"])
-        consultants_field = cast(
-            forms.ModelMultipleChoiceField,
-            self.fields["consultants"],
-        )
+        if "tax_number" in self.fields:
+            self.fields["tax_number"].required = False
 
-        users_field.queryset = Account.objects.exclude(
-            first_name="", last_name=""
-        ).order_by("first_name", "email")
-        consultants_field.queryset = Account.objects.exclude(
-            first_name="", last_name=""
-        ).order_by("first_name", "email")
+        if self.instance and self.instance.pk:
+            self.fields.pop("users", None)
+        else:
+            users_field = cast(forms.ModelMultipleChoiceField, self.fields["users"])
+            users_field.queryset = Account.objects.exclude(
+                first_name="", last_name=""
+            ).order_by("first_name", "email")
+
+        if "consultants" in self.fields:
+            consultants_field = cast(
+                forms.ModelMultipleChoiceField,
+                self.fields["consultants"],
+            )
+            consultants_field.queryset = Account.objects.exclude(
+                first_name="", last_name=""
+            ).order_by("first_name", "email")
 
         # Apply masking to initial values when editing an existing instance
         if self.instance and self.instance.pk:
@@ -167,9 +189,13 @@ class CompanyForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             company_type = self.instance.type
 
-        if contractor or company_type == Company.Type.CONTRACTOR:
-            # Contractors only maintain company users in this form.
+        is_contractor = contractor or company_type == Company.Type.CONTRACTOR
+        is_client = client or company_type == Company.Type.CLIENT
+
+        if is_contractor or is_client:
             self.fields.pop("consultants", None)
+            self.fields.pop("disciplines", None)
+            self.fields.pop("add_discipline", None)
 
     def clean(self):
         cleaned_data = super().clean()
