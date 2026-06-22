@@ -634,6 +634,33 @@ class PlantSpecificationForm(forms.ModelForm):
                 "unit": "spec-units",
             },
         )
+        # A plant spec must be linked to an existing labour spec by shared name,
+        # so the name is chosen from the project's active labour specs rather
+        # than typed freely. Names already used by a plant spec are excluded
+        # (one plant spec per labour spec, enforced by unique_together).
+        labour_names = list(
+            ProjectLabourSpecification.objects.filter(project=project, is_active=True)
+            .order_by("name")
+            .values_list("name", flat=True)
+            if project
+            else []
+        )
+        used_names = set(
+            ProjectPlantSpecification.objects.filter(project=project).values_list(
+                "name", flat=True
+            )
+            if project
+            else []
+        )
+        available = [n for n in labour_names if n not in used_names]
+        self.has_labour_specs = bool(labour_names)
+        self.available_labour_names = available
+        self.fields["name"] = forms.ChoiceField(
+            choices=[("", "— Select a labour spec —")] + [(n, n) for n in available],
+            required=True,
+            widget=forms.Select(attrs={"class": TAILWIND_SELECT}),
+            label="Specification Name",
+        )
 
 
 class SystemPlantSpecificationForm(forms.ModelForm):
@@ -680,6 +707,24 @@ class SystemPlantSpecificationForm(forms.ModelForm):
                 "section": "spec-sections",
                 "unit": "spec-units",
             },
+        )
+        # A plant spec must be linked to an existing labour spec by shared name.
+        labour_names = list(
+            SystemLabourSpecification.objects.filter(is_active=True)
+            .order_by("name")
+            .values_list("name", flat=True)
+        )
+        used_names = set(
+            SystemPlantSpecification.objects.values_list("name", flat=True)
+        )
+        available = [n for n in labour_names if n not in used_names]
+        self.has_labour_specs = bool(labour_names)
+        self.available_labour_names = available
+        self.fields["name"] = forms.ChoiceField(
+            choices=[("", "— Select a labour spec —")] + [(n, n) for n in available],
+            required=True,
+            widget=forms.Select(attrs={"class": TAILWIND_SELECT}),
+            label="Specification Name",
         )
 
 
@@ -1165,6 +1210,32 @@ class ContractorPlantSpecificationForm(forms.ModelForm):
                 "section": "spec-sections",
                 "unit": "spec-units",
             },
+        )
+        # A plant spec must be linked to an existing labour spec by shared name.
+        labour_names = list(
+            ContractorLabourSpecification.objects.filter(
+                company=company, is_active=True
+            )
+            .order_by("name")
+            .values_list("name", flat=True)
+            if company is not None
+            else []
+        )
+        used_names = set(
+            ContractorPlantSpecification.objects.filter(company=company).values_list(
+                "name", flat=True
+            )
+            if company is not None
+            else []
+        )
+        available = [n for n in labour_names if n not in used_names]
+        self.has_labour_specs = bool(labour_names)
+        self.available_labour_names = available
+        self.fields["name"] = forms.ChoiceField(
+            choices=[("", "— Select a labour spec —")] + [(n, n) for n in available],
+            required=True,
+            widget=forms.Select(attrs={"class": TAILWIND_SELECT}),
+            label="Specification Name",
         )
 
 
