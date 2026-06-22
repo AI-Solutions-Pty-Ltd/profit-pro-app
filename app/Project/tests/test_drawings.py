@@ -67,6 +67,7 @@ class TestDrawingForm:
     def test_drawing_form_wbs_choices_and_save(self):
         """Test DrawingForm populates hierarchical choices and saves correctly with parent resolution."""
         from django.core.files.uploadedfile import SimpleUploadedFile
+
         from app.Project.documents.document_forms import DrawingForm
 
         project = ProjectFactory()
@@ -124,6 +125,7 @@ class TestDrawingForm:
     def test_drawing_form_explicit_category_save(self):
         """Test that selecting category explicitly works when wbs_level is empty."""
         from django.core.files.uploadedfile import SimpleUploadedFile
+
         from app.Project.documents.document_forms import DrawingForm
 
         project = ProjectFactory()

@@ -201,8 +201,6 @@ class DrawingForm(forms.ModelForm):
         from app.Project.projects.projects_models import (
             Category,
             Discipline,
-            Group,
-            SubCategory,
         )
 
         project = kwargs.pop("project", None)
@@ -223,7 +221,9 @@ class DrawingForm(forms.ModelForm):
 
             # Build hierarchical options for WBS Levels
             wbs_choices = [("", "---------")]
-            categories = Category.objects.filter(project=project, deleted=False).order_by("name")
+            categories = Category.objects.filter(
+                project=project, deleted=False
+            ).order_by("name")
             for cat in categories:
                 wbs_choices.append((f"category_{cat.pk}", f"L1: {cat.name}"))
                 subcategories = cat.subcategories.filter(deleted=False).order_by("name")
@@ -239,7 +239,9 @@ class DrawingForm(forms.ModelForm):
                 if self.instance.group_id:
                     self.initial["wbs_level"] = f"group_{self.instance.group_id}"
                 elif self.instance.sub_category_id:
-                    self.initial["wbs_level"] = f"subcategory_{self.instance.sub_category_id}"
+                    self.initial["wbs_level"] = (
+                        f"subcategory_{self.instance.sub_category_id}"
+                    )
                 elif self.instance.category_id:
                     self.initial["wbs_level"] = f"category_{self.instance.category_id}"
 
@@ -251,7 +253,7 @@ class DrawingForm(forms.ModelForm):
 
         instance = super().save(commit=False)
         wbs_level = self.cleaned_data.get("wbs_level")
-        
+
         # Reset and resolve from WBS level selection
         instance.category = self.cleaned_data.get("category")
         instance.sub_category = None
