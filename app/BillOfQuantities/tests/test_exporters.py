@@ -987,3 +987,58 @@ class TestCoverPageExporterNegation:
             assert found_row_val is not None
             # Should be negated
             assert found_row_val == Decimal("-900000.00")
+
+
+@pytest.mark.django_db
+class TestCoverPageExporterLedgerFields:
+    """Test that the cover page Excel exporter correctly resolves and outputs custom ledger fields."""
+
+    def test_cover_page_export_custom_ledger_fields(self):
+        """Test that exported Excel cover page contains the custom ledger fields and values."""
+        from decimal import Decimal
+        from app.BillOfQuantities.tests.factories import (
+            AdvancePaymentFactory,
+            RetentionFactory,
+            PaymentCertificateFactory,
+        )
+        from app.Project.tests.factories import ProjectFactory
+        from app.BillOfQuantities.exporters.cover_page_exporter import export_cover_page_to_xlsx
+
+        user = AccountFactory.create()
+        project = ProjectFactory.create(users=user)
+
+        # Create transactions for current and previous certificate
+        prev_cert = PaymentCertificateFactory.create(
+            project=project, certificate_number=1, status="APPROVED"
+        )
+        cert = PaymentCertificateFactory.create(project=project, certificate_number=2)
+
+        # Advance Payment (Current: 1000, Prev: 2000)
+        AdvancePaymentFactory.create(
+            project=project,
+            payment_certificate=cert,
+            amount=Decimal("1000.00"),
+            transaction_type="DEBIT"
+        )
+        AdvancePaymentFactory.create(
+            project=project,
+            payment_certificate=prev_cert,
+            amount=Decimal("2000.00"),
+            transaction_type="DEBIT"
+        )
+
+        wb = export_cover_page_to_xlsx(cert)
+        ws = wb["Cover Page"]
+
+        # Check sheet cells for values
+        found_ap_row = None
+        for r in range(1, 45):
+            val = ws.cell(row=r, column=1).value
+            if val and "advance" in str(val).lower():
+                found_ap_row = r
+                break
+
+        assert found_ap_row is not None
+        # Raw value at column 7 should be 3000.00
+        assert ws.cell(row=found_ap_row, column=7).value == Decimal("3000.00")
+
