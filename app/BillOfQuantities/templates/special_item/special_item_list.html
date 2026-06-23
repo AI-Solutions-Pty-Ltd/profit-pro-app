@@ -13,7 +13,7 @@
                     <h1 class="text-2xl font-bold text-gray-900">Special Items</h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
-                <a href="{% url 'bill_of_quantities:special-item-create' project.pk %}"
+                <a href="{% url 'bill_of_quantities:special-item-create' project.pk %}{% if request.GET.certificate %}?certificate={{ request.GET.certificate }}{% endif %}"
                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     {% heroicon_outline "plus" size="20" %}
                     Add Special Item
@@ -45,11 +45,11 @@
                                     <td class="px-6 py-4 text-sm text-gray-900">{{ item.description|truncatewords:10 }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex items-center justify-end gap-2">
-                                            <a href="{% url 'bill_of_quantities:special-item-update' project.pk item.pk %}"
+                                            <a href="{% url 'bill_of_quantities:special-item-update' project.pk item.pk %}{% if request.GET.certificate %}?certificate={{ request.GET.certificate }}{% endif %}"
                                                class="text-indigo-600 hover:text-indigo-900">
                                                 {% heroicon_outline "pencil" class="w-5 h-5" %}
                                             </a>
-                                            <a href="{% url 'bill_of_quantities:special-item-delete' project.pk item.pk %}"
+                                            <a href="{% url 'bill_of_quantities:special-item-delete' project.pk item.pk %}{% if request.GET.certificate %}?certificate={{ request.GET.certificate }}{% endif %}"
                                                class="text-red-600 hover:text-red-900">
                                                 {% heroicon_outline "trash" class="w-5 h-5" %}
                                             </a>
@@ -66,7 +66,7 @@
                     <h3 class="mt-2 text-sm font-medium text-gray-900">No special items</h3>
                     <p class="mt-1 text-sm text-gray-500">Get started by creating a new special item.</p>
                     <div class="mt-6">
-                        <a href="{% url 'bill_of_quantities:special-item-create' project.pk %}"
+                        <a href="{% url 'bill_of_quantities:special-item-create' project.pk %}{% if request.GET.certificate %}?certificate={{ request.GET.certificate }}{% endif %}"
                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" size="20" %}
                             Add Special Item
@@ -79,10 +79,14 @@
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-b-lg">
         <div class="flex justify-between items-center">
-            <a href="{% url 'project:project-management' project.pk %}"
+            <a href="{% if cancel_url %}{{ cancel_url }}{% else %}{% url 'project:project-management' project.pk %}{% endif %}"
                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                 {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-                Back to Project Management
+                {% if cancel_url %}
+                    Back to Certificate Edit
+                {% else %}
+                    Back to Project Management
+                {% endif %}
             </a>
         </div>
     </div>

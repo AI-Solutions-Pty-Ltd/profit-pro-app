@@ -181,6 +181,14 @@ class Drawing(BaseModel):
         related_name="drawings",
         help_text="Professional discipline this drawing belongs to",
     )
+    drawing_type = models.ForeignKey(
+        "Project.DrawingType",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="drawings",
+        help_text="Type of the drawing",
+    )
 
     # Link to WBS Levels
     category = models.ForeignKey(

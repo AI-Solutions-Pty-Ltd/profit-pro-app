@@ -462,6 +462,26 @@ class Project(BaseModel):
                             "enabled": True,
                         },
                         {
+                            "id": "advance_payment",
+                            "label": "Advance payment",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "retention",
+                            "label": "Retention",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "material_on_site",
+                            "label": "Material on Site",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "other_specify",
+                            "label": "Other - Specify",
+                            "enabled": True,
+                        },
+                        {
                             "id": "progressive_to_date",
                             "label": "Sub Total",
                             "enabled": True,
@@ -1223,6 +1243,84 @@ class Discipline(BaseModel):
         verbose_name = "Level 4"
         verbose_name_plural = "Level 4"
         ordering = ["name"]
+        unique_together = [["project", "name"]]
 
     def __str__(self) -> str:
         return self.name
+
+
+class DrawingType(BaseModel):
+    """Drawing type for classifying project drawings (e.g., Tender, Construction)."""
+
+    name = models.CharField(
+        max_length=100,
+        help_text="Drawing type name (e.g., Tender, Construction, Information, Shop)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the drawing type",
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="drawing_types",
+    )
+
+    class Meta:
+        verbose_name = "Drawing Type"
+        verbose_name_plural = "Drawing Types"
+        ordering = ["name"]
+        unique_together = [["project", "name"]]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+# ============================================================================
+# Signals
+# ============================================================================
+
+from django.db.models.signals import post_save  # noqa: E402
+from django.dispatch import receiver  # noqa: E402
+
+_DEFAULT_DRAWING_TYPES = ["Tender", "Information", "Construction", "Shop"]
+
+_DEFAULT_DISCIPLINES = [
+    "Project management",
+    "Quantity Surveying",
+    "Structural",
+    "Electrical",
+    "Mechanical",
+    "Civil",
+    "Piping",
+    "Control & Instrumentation",
+    "Geotech",
+    "Town Planning",
+    "Health and Safety",
+    "Land Surveying",
+    "Architectural",
+]
+
+
+@receiver(post_save, sender=Project)
+def create_default_drawing_types(sender, instance, created, **kwargs):
+    """Create default drawing types when a new project is created."""
+    if created:
+        for type_name in _DEFAULT_DRAWING_TYPES:
+            DrawingType.objects.get_or_create(
+                project=instance,
+                name=type_name,
+                defaults={"description": f"{type_name} drawing type"},
+            )
+
+
+@receiver(post_save, sender=Project)
+def create_default_disciplines(sender, instance, created, **kwargs):
+    """Create default disciplines when a new project is created."""
+    if created:
+        for name in _DEFAULT_DISCIPLINES:
+            Discipline.objects.get_or_create(
+                project=instance,
+                name=name,
+                defaults={"description": f"{name} discipline"},
+            )
