@@ -554,6 +554,7 @@ class DesignCategory(BaseModel):
         max_length=30,
         choices=DesignStage.choices,
         default=DesignStage.DESIGN_CRITERIA,
+        verbose_name="Document",
         help_text="Current design stage",
     )
     required_quantity = models.PositiveBigIntegerField(default=1)
@@ -633,6 +634,7 @@ class DesignSubCategory(BaseModel):
         max_length=30,
         choices=DesignStage.choices,
         default=DesignStage.DESIGN_CRITERIA,
+        verbose_name="Document",
         help_text="Current design stage",
     )
     required_quantity = models.PositiveBigIntegerField(default=1)
@@ -712,6 +714,7 @@ class DesignGroup(BaseModel):
         max_length=30,
         choices=DesignStage.choices,
         default=DesignStage.DESIGN_CRITERIA,
+        verbose_name="Document",
         help_text="Current design stage",
     )
     required_quantity = models.PositiveBigIntegerField(default=1)
@@ -785,6 +788,7 @@ class DesignDiscipline(BaseModel):
         max_length=30,
         choices=DesignStage.choices,
         default=DesignStage.DESIGN_CRITERIA,
+        verbose_name="Document",
         help_text="Current design stage",
     )
     discipline = models.ForeignKey(

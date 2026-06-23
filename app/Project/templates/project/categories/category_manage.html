@@ -13,22 +13,22 @@
     {% include "project/groups/group_edit.html" with project=project form=group_form %}
     {% include "project/groups/group_delete.html" with project=project %}
     <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Project Categories</h1>
-                    <p class="text-sm text-gray-600 mt-1">Manage project categories and Work Breakdown Structure hierarchy</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Project WBS Levels</h1>
+                    <p class="mt-1 text-sm text-gray-600">Manage project Work Breakdown Structure hierarchy</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex gap-3 items-center">
                     <button type="button"
                             onclick="openCreateCategoryModal()"
-                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "plus" size="16" %}
-                        <span class="ml-2">Add Category</span>
+                        <span class="ml-2">Add WBS Level</span>
                     </button>
                     <a href="{% url 'project:project-setup' project.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "arrow-left" size="16" %}
                         <span class="ml-1">Back</span>
                     </a>
@@ -37,30 +37,40 @@
         </div>
     </div>
     <!-- Tabs -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="border-b border-gray-200">
             <nav class="flex -mb-px" aria-label="Tabs">
                 <a href="{% url 'project:project-category-list' project.pk %}"
-                   class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                   class="px-6 py-4 text-sm font-medium text-indigo-600 whitespace-nowrap border-b-2 border-indigo-500">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Categories
+                    WBS Levels
                 </a>
                 <a href="{% url 'project:project-discipline-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                   class="px-1 py-4 text-sm font-medium text-gray-500 whitespace-nowrap border-b-2 border-transparent transition-colors hover:text-gray-700 hover:border-gray-300">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Disciplines
+                </a>
+                <a href="{% url 'project:project-drawing-type-list' project.pk %}"
+                   class="px-6 py-4 text-sm font-medium text-gray-500 whitespace-nowrap">
+                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
+                    Drawing Types
+                </a>
+                <a href="{% url 'project:project-milestone-setup' project.pk %}"
+                   class="px-1 py-4 text-sm font-medium text-gray-500 whitespace-nowrap border-b-2 border-transparent transition-colors hover:text-gray-700 hover:border-gray-300">
+                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
+                    Construction Milestones
                 </a>
             </nav>
         </div>
     </div>
     <!-- Categories List -->
-    <div class="bg-white shadow-sm rounded-lg">
+    <div class="bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900">All Categories</h2>
-                    <p class="text-sm text-gray-500 mt-1">
-                        {{ categories.count }} categor{{ categories.count|pluralize:"y,ies" }} available
+                    <h2 class="text-lg font-semibold text-gray-900">All WBS levels</h2>
+                    <p class="mt-1 text-sm text-gray-500">
+                        {{ categories.count }} WBS level{{ categories.count|pluralize:",s" }} available
                     </p>
                 </div>
             </div>
@@ -70,20 +80,20 @@
                 <div class="space-y-4">
                     {% for category in categories %}
                         <!-- Category Level 1 Card -->
-                        <div class="border-l-4 border-indigo-500 rounded-lg shadow-sm bg-indigo-50/10 overflow-hidden mb-4"
+                        <div class="overflow-hidden mb-4 rounded-lg border-l-4 border-indigo-500 shadow-sm bg-indigo-50/10"
                              id="category-row-{{ category.pk }}">
-                            <div class="px-6 py-4 bg-gradient-to-r from-indigo-50/50 to-white border-b border-indigo-100 flex justify-between items-center">
+                            <div class="flex justify-between items-center px-6 py-4 bg-gradient-to-r to-white border-b border-indigo-100 from-indigo-50/50">
                                 <div class="flex items-center space-x-3">
-                                    <div class="p-2 bg-indigo-100 text-indigo-700 rounded-lg">{% heroicon_outline "rectangle-stack" size="18" %}</div>
+                                    <div class="p-2 text-indigo-700 bg-indigo-100 rounded-lg">{% heroicon_outline "rectangle-stack" size="18" %}</div>
                                     <div>
                                         <h3 class="text-base font-bold text-indigo-900">L1: {{ category.name }}</h3>
                                         {% if category.description %}
-                                            <p class="text-xs text-indigo-700 mt-0.5">{{ category.description }}</p>
+                                            <p class="mt-0.5 text-xs text-indigo-700">{{ category.description }}</p>
                                         {% endif %}
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mr-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 mr-2 text-xs font-medium text-indigo-800 bg-indigo-100 rounded-full">
                                         {{ category.subcategories.count }} subcategor{{ category.subcategories.count|pluralize:"y,ies" }}
                                     </span>
                                     <!-- Action Buttons -->
@@ -111,23 +121,23 @@
                             </div>
                             <!-- Collapsible Content for L2 Subcategories -->
                             <div id="category-{{ category.pk }}"
-                                 class="hidden px-6 py-4 bg-gray-50/30 border-b border-indigo-50 space-y-3">
+                                 class="hidden px-6 py-4 space-y-3 border-b border-indigo-50 bg-gray-50/30">
                                 {% for subcategory in category.subcategories.all %}
                                     <!-- Subcategory Level 2 Card -->
-                                    <div class="ml-6 border-l-4 border-green-500 rounded-lg shadow-sm bg-white overflow-hidden"
+                                    <div class="overflow-hidden ml-6 bg-white rounded-lg border-l-4 border-green-500 shadow-sm"
                                          id="subcategory-row-{{ subcategory.pk }}">
-                                        <div class="px-5 py-3 bg-gradient-to-r from-green-50/50 to-white border-b border-green-100 flex justify-between items-center">
+                                        <div class="flex justify-between items-center px-5 py-3 bg-gradient-to-r to-white border-b border-green-100 from-green-50/50">
                                             <div class="flex items-center space-x-3">
-                                                <div class="p-1.5 bg-green-100 text-green-700 rounded-lg">{% heroicon_outline "tag" size="16" %}</div>
+                                                <div class="p-1.5 text-green-700 bg-green-100 rounded-lg">{% heroicon_outline "tag" size="16" %}</div>
                                                 <div>
                                                     <h4 class="text-sm font-bold text-green-900">L2: {{ subcategory.name }}</h4>
                                                     {% if subcategory.description %}
-                                                        <p class="text-xs text-green-700 mt-0.5">{{ subcategory.description }}</p>
+                                                        <p class="mt-0.5 text-xs text-green-700">{{ subcategory.description }}</p>
                                                     {% endif %}
                                                 </div>
                                             </div>
                                             <div class="flex items-center space-x-2">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                                <span class="inline-flex items-center px-2 py-0.5 mr-2 text-xs font-medium text-green-800 bg-green-100 rounded-full">
                                                     {{ subcategory.groups.count }} group{{ subcategory.groups.count|pluralize }}
                                                 </span>
                                                 <!-- Action Buttons -->
@@ -161,18 +171,18 @@
                                         </div>
                                         <!-- Collapsible Content for L3 Groups -->
                                         <div id="subcategory-{{ subcategory.pk }}"
-                                             class="hidden px-5 py-3 bg-gray-50/50 space-y-2">
+                                             class="hidden px-5 py-3 space-y-2 bg-gray-50/50">
                                             {% for group in subcategory.groups.all %}
                                                 <!-- Group Level 3 Card -->
-                                                <div class="ml-6 border-l-4 border-purple-500 rounded-lg shadow-sm bg-white overflow-hidden"
+                                                <div class="overflow-hidden ml-6 bg-white rounded-lg border-l-4 border-purple-500 shadow-sm"
                                                      id="group-row-{{ group.pk }}">
-                                                    <div class="px-4 py-2.5 bg-gradient-to-r from-purple-50/50 to-white flex justify-between items-center">
+                                                    <div class="flex justify-between items-center px-4 py-2.5 bg-gradient-to-r to-white from-purple-50/50">
                                                         <div class="flex items-center space-x-3">
-                                                            <div class="p-1 bg-purple-100 text-purple-700 rounded">{% heroicon_outline "folder" size="14" %}</div>
+                                                            <div class="p-1 text-purple-700 bg-purple-100 rounded">{% heroicon_outline "folder" size="14" %}</div>
                                                             <div>
                                                                 <h5 class="text-xs font-bold text-purple-900">L3: {{ group.name }}</h5>
                                                                 {% if group.description %}
-                                                                    <p class="text-xs text-purple-700 mt-0.5">{{ group.description }}</p>
+                                                                    <p class="mt-0.5 text-xs text-purple-700">{{ group.description }}</p>
                                                                 {% endif %}
                                                             </div>
                                                         </div>
@@ -194,15 +204,15 @@
                                                     </div>
                                                 </div>
                                             {% empty %}
-                                                <div class="ml-6 py-3 text-center text-xs text-gray-500">
-                                                    No groups yet. Click the <span class="text-green-600 font-semibold">+</span> button to add one.
+                                                <div class="py-3 ml-6 text-xs text-center text-gray-500">
+                                                    No groups yet. Click the <span class="font-semibold text-green-600">+</span> button to add one.
                                                 </div>
                                             {% endfor %}
                                         </div>
                                     </div>
                                 {% empty %}
-                                    <div class="ml-6 py-4 text-center text-sm text-gray-500">
-                                        No subcategories yet. Click the <span class="text-indigo-600 font-semibold">+</span> button to add one.
+                                    <div class="py-4 ml-6 text-sm text-center text-gray-500">
+                                        No subcategories yet. Click the <span class="font-semibold text-indigo-600">+</span> button to add one.
                                     </div>
                                 {% endfor %}
                             </div>
@@ -212,11 +222,11 @@
             {% else %}
                 <div class="py-12 text-center">
                     <div class="flex flex-col items-center">
-                        {% heroicon_outline "tag" size="48" class="text-gray-300 mb-4" %}
-                        <p class="text-sm text-gray-500 font-medium">No categories yet</p>
+                        {% heroicon_outline "tag" size="48" class="mb-4 text-gray-300" %}
+                        <p class="text-sm font-medium text-gray-500">No categories yet</p>
                         <button type="button"
                                 onclick="openCreateCategoryModal()"
-                                class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                class="inline-flex items-center px-4 py-2 mt-4 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" size="16" %}
                             <span class="ml-2">Add Category</span>
                         </button>
