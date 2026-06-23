@@ -73,16 +73,21 @@ class MilestoneCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Creat
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        if next_url:
+            return next_url
         return reverse(
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
         context.update(
             {
                 "project": self.get_project(),
                 "action": "Add",
+                "back_url": next_url or reverse("project:time-forecast", kwargs={"project_pk": self.get_project().pk}),
             }
         )
         return context
@@ -129,16 +134,21 @@ class MilestoneUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        if next_url:
+            return next_url
         return reverse(
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
         context.update(
             {
                 "project": self.get_project(),
                 "action": "Edit",
+                "back_url": next_url or reverse("project:time-forecast", kwargs={"project_pk": self.get_project().pk}),
             }
         )
         return context
@@ -180,13 +190,20 @@ class MilestoneDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Delet
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        if next_url:
+            return next_url
         return reverse(
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        context.update({
+            "project": self.get_project(),
+            "back_url": next_url or reverse("project:time-forecast", kwargs={"project_pk": self.get_project().pk}),
+        })
         return context
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
