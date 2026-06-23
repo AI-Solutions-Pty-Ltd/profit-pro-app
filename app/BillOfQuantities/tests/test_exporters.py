@@ -789,9 +789,15 @@ class TestExporters:
         structure = StructureFactory.create(project=project)
 
         # Create bills with numbers: Bill 10, Bill 2, Bill 1
-        bill_10 = BillFactory.create(structure=structure, name="Bill B", bill_number="Bill 10")
-        bill_2 = BillFactory.create(structure=structure, name="Bill A", bill_number="Bill 2")
-        bill_1 = BillFactory.create(structure=structure, name="Bill C", bill_number="Bill 1")
+        bill_10 = BillFactory.create(
+            structure=structure, name="Bill B", bill_number="Bill 10"
+        )
+        bill_2 = BillFactory.create(
+            structure=structure, name="Bill A", bill_number="Bill 2"
+        )
+        bill_1 = BillFactory.create(
+            structure=structure, name="Bill C", bill_number="Bill 1"
+        )
 
         pkg_10 = PackageFactory.create(bill=bill_10)
         pkg_2 = PackageFactory.create(bill=bill_2)
@@ -815,6 +821,84 @@ class TestExporters:
         assert bills[1]["bill_number"] == "Bill 2"
         assert bills[2]["bill_number"] == "Bill 10"
 
+    def test_bill_natural_sorting_by_name(self):
+        """Test that get_valuation_summary_data groups and sorts bills naturally by name when bill_number is empty."""
+        project = ProjectFactory.create()
+        cert = PaymentCertificateFactory.create(project=project)
+        structure = StructureFactory.create(project=project)
+
+        # Create bills with no bill_number but names like "Bill No. 10: ...", "Bill No. 2: ...", "Bill No. 1: ..."
+        bill_10 = BillFactory.create(
+            structure=structure,
+            name="Bill No. 10: Structural Steelwork",
+            bill_number="",
+        )
+        bill_2 = BillFactory.create(
+            structure=structure,
+            name="Bill No. 2: Concrete (Structural)",
+            bill_number="",
+        )
+        bill_1 = BillFactory.create(
+            structure=structure, name="Bill No. 1: Earthworks", bill_number=""
+        )
+
+        pkg_10 = PackageFactory.create(bill=bill_10)
+        pkg_2 = PackageFactory.create(bill=bill_2)
+        pkg_1 = PackageFactory.create(bill=bill_1)
+
+        for pkg in [pkg_10, pkg_2, pkg_1]:
+            LineItemFactory.create(
+                project=project,
+                structure=structure,
+                bill=pkg.bill,
+                package=pkg,
+                is_work=True,
+                total_price=Decimal("100.00"),
+            )
+
+        data = get_valuation_summary_data(cert)
+        bills = data["grouped_sections"][0]["bills"]
+
+        # Natural sorting order by name: Bill No. 1, Bill No. 2, Bill No. 10
+        assert bills[0]["name"] == "Bill No. 1: Earthworks"
+        assert bills[1]["name"] == "Bill No. 2: Concrete (Structural)"
+        assert bills[2]["name"] == "Bill No. 10: Structural Steelwork"
+
+    def test_structure_natural_sorting_by_name(self):
+        """Test that get_valuation_summary_data groups and sorts structures naturally by name."""
+        project = ProjectFactory.create()
+        cert = PaymentCertificateFactory.create(project=project)
+
+        # Create structures with names: SECTION 10: ..., SECTION 2: ..., SECTION 1: ...
+        struct_10 = StructureFactory.create(
+            project=project, name="SECTION 10: Structural"
+        )
+        struct_2 = StructureFactory.create(
+            project=project, name="SECTION 2: Media Centre"
+        )
+        struct_1 = StructureFactory.create(
+            project=project, name="SECTION 1: Preliminaries"
+        )
+
+        for struct in [struct_10, struct_2, struct_1]:
+            bill = BillFactory.create(structure=struct)
+            pkg = PackageFactory.create(bill=bill)
+            LineItemFactory.create(
+                project=project,
+                structure=struct,
+                bill=bill,
+                package=pkg,
+                is_work=True,
+                total_price=Decimal("100.00"),
+            )
+
+        data = get_valuation_summary_data(cert)
+        sections = data["grouped_sections"]
+
+        # Natural sorting order by structure name: SECTION 1, SECTION 2, SECTION 10
+        assert sections[0]["name"] == "SECTION 1: Preliminaries"
+        assert sections[1]["name"] == "SECTION 2: Media Centre"
+        assert sections[2]["name"] == "SECTION 10: Structural"
 
 
 @pytest.mark.django_db
@@ -835,7 +919,9 @@ class TestDownloadViews:
         )
 
         # Test custom request with selected options
-        response = client.get(url, {"front": "on", "summary": "on", "detailed": "on", "force": "on"})
+        response = client.get(
+            url, {"front": "on", "summary": "on", "detailed": "on", "force": "on"}
+        )
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
         assert "Content-Disposition" in response
@@ -855,7 +941,9 @@ class TestDownloadViews:
         )
 
         # Test custom request with selected options
-        response = client.get(url, {"front": "on", "summary": "on", "detailed": "on", "force": "on"})
+        response = client.get(
+            url, {"front": "on", "summary": "on", "detailed": "on", "force": "on"}
+        )
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
         assert "Content-Disposition" in response

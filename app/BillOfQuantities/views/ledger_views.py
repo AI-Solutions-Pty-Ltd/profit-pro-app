@@ -632,6 +632,9 @@ class MaterialsOnSiteListView(SubscriptionAndRoleRequiredMixin, ListView):
         context["materials_on_site_form"] = MaterialsOnSiteCreateUpdateForm(
             project=project
         )
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -669,6 +672,12 @@ class MaterialsOnSiteCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
 
     def get_success_url(self):
         """Redirect to materials list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:materials-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -680,6 +689,9 @@ class MaterialsOnSiteCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context["project"] = self.get_project()
         context["is_create"] = True
         context["materials_on_site_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -722,6 +734,12 @@ class MaterialsOnSiteUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
 
     def get_success_url(self):
         """Redirect to materials list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:materials-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -733,6 +751,9 @@ class MaterialsOnSiteUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context["project"] = self.get_project()
         context["is_create"] = False
         context["materials_on_site_form"] = context["form"]
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 
@@ -770,6 +791,12 @@ class MaterialsOnSiteDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
 
     def get_success_url(self):
         """Redirect to materials list."""
+        cert_id, _ = get_cert_redirect_info(self)
+        if cert_id:
+            return reverse(
+                "bill_of_quantities:payment-certificate-edit",
+                kwargs={"project_pk": self.kwargs["project_pk"], "pk": cert_id},
+            )
         return reverse(
             "bill_of_quantities:materials-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
@@ -779,6 +806,9 @@ class MaterialsOnSiteDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        _, cancel_url = get_cert_redirect_info(self)
+        if cancel_url:
+            context["cancel_url"] = cancel_url
         return context
 
 

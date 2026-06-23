@@ -157,7 +157,11 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
             current_row += 1
 
         # Totals
-        ws.cell(row=current_row, column=2, value="Total Work Done to Date").font = font_bold
+        ws.cell(
+            row=current_row, column=2, value="TOTAL WORK DONE TO DATE"
+        ).font = font_bold
+        ws.cell(row=current_row, column=2).alignment = align_right
+
         ws.cell(row=current_row, column=3, value=total_budget).alignment = align_right
         ws.cell(
             row=current_row, column=4, value=total_cumulative
@@ -167,7 +171,7 @@ def export_summary_report_to_xlsx(payment_certificate, is_abridged=False, wb=Non
         for col in range(1, 7):
             cell = ws.cell(row=current_row, column=col)
             cell.font = font_bold
-            cell.fill = fill_footer
+            cell.fill = fill_section
         current_row += 2
 
         # Contractual Special Items Section

@@ -6,5 +6,6 @@
     Advance Payments - {{ project.name }}
 {% endblock title %}
 {% block content %}
+    {% include "ledger/partials/back_to_edit_cerficate.html" %}
     {% include "./components/advance_payment_list_component.html" %}
 {% endblock content %}

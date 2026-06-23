@@ -124,6 +124,17 @@ class TestProjectCoverConfig:
         assert contract_field["label"] == "Custom Contract Label"
         assert contract_field["enabled"] is True
 
+    def test_default_cover_config_has_custom_ledger_fields(self):
+        """Test default cover page config contains custom ledger fields."""
+        resolved = self.project.get_cover_page_config()
+        fields = resolved["sections"]["section_c"]["fields"]
+        field_ids = [f["id"] for f in fields]
+        assert "advance_payment" in field_ids
+        assert "retention" in field_ids
+        assert "material_on_site" in field_ids
+        assert "other_specify" in field_ids
+
+
 
 @pytest.mark.django_db
 class TestCompanyManagementSiteCards:

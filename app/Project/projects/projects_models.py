@@ -462,6 +462,26 @@ class Project(BaseModel):
                             "enabled": True,
                         },
                         {
+                            "id": "advance_payment",
+                            "label": "Advance payment",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "retention",
+                            "label": "Retention",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "material_on_site",
+                            "label": "Material on Site",
+                            "enabled": True,
+                        },
+                        {
+                            "id": "other_specify",
+                            "label": "Other - Specify",
+                            "enabled": True,
+                        },
+                        {
                             "id": "progressive_to_date",
                             "label": "Sub Total",
                             "enabled": True,

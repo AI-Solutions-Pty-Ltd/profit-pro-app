@@ -103,8 +103,8 @@ def group_line_items_by_hierarchy(line_items):
 
 def natural_key(text):
     if not text:
-        return [float('inf')]
-    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', text)]
+        return [float("inf")]
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r"(\d+)", text)]
 
 
 def get_valuation_summary_data(payment_certificate, abridged=False):
@@ -170,7 +170,9 @@ def get_valuation_summary_data(payment_certificate, abridged=False):
 
     # Convert to list structure sorted by name
     grouped_sections = []
-    sorted_structs = sorted(structures_data.values(), key=lambda s: s["name"])
+    sorted_structs = sorted(
+        structures_data.values(), key=lambda s: natural_key(s["name"])
+    )
 
     total_budget = Decimal("0.00")
     total_cumulative = Decimal("0.00")
@@ -180,7 +182,10 @@ def get_valuation_summary_data(payment_certificate, abridged=False):
     for s_data in sorted_structs:
         sorted_bills = sorted(
             s_data["bills"].values(),
-            key=lambda b: (natural_key(b.get("bill_number", "")), b["name"])
+            key=lambda b: (
+                natural_key(b.get("bill_number", "")),
+                natural_key(b["name"]),
+            ),
         )
         s_data["bills"] = sorted_bills
         grouped_sections.append(s_data)
