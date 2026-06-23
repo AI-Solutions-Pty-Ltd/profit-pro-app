@@ -64,7 +64,7 @@ class SpecialItemListView(SpecialItemMixin, ListView):
         if cert_id:
             context["cancel_url"] = reverse(
                 "bill_of_quantities:payment-certificate-edit",
-                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id},
             )
         return context
 
@@ -140,7 +140,7 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
         if cert_id:
             return reverse(
                 "bill_of_quantities:payment-certificate-edit",
-                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id},
             )
         return reverse(
             "bill_of_quantities:special-item-list",
@@ -155,7 +155,7 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
         if cert_id:
             context["cancel_url"] = reverse(
                 "bill_of_quantities:payment-certificate-edit",
-                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id},
             )
         return context
 
@@ -215,7 +215,7 @@ class SpecialItemUpdateView(SpecialItemMixin, UpdateView):
         if cert_id:
             return reverse(
                 "bill_of_quantities:payment-certificate-edit",
-                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id},
             )
         return reverse(
             "bill_of_quantities:special-item-list",
@@ -230,7 +230,7 @@ class SpecialItemUpdateView(SpecialItemMixin, UpdateView):
         if cert_id:
             context["cancel_url"] = reverse(
                 "bill_of_quantities:payment-certificate-edit",
-                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id},
             )
         return context
 
@@ -282,7 +282,7 @@ class SpecialItemDeleteView(SpecialItemMixin, DeleteView):
         if cert_id:
             return reverse(
                 "bill_of_quantities:payment-certificate-edit",
-                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id},
             )
         return reverse(
             "bill_of_quantities:special-item-list",
@@ -297,6 +297,6 @@ class SpecialItemDeleteView(SpecialItemMixin, DeleteView):
         if cert_id:
             context["cancel_url"] = reverse(
                 "bill_of_quantities:payment-certificate-edit",
-                kwargs={"project_pk": self.get_project().pk, "pk": cert_id}
+                kwargs={"project_pk": self.get_project().pk, "pk": cert_id},
             )
         return context

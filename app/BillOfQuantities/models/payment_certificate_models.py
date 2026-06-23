@@ -531,6 +531,7 @@ class PaymentCertificate(BaseModel):
         totals_by_type = self.get_special_item_totals_by_type()
         prev_totals_by_type = self.previous_special_item_totals_by_type
         from .ledger_models import SpecialItemTransaction
+
         special_item_choices = dict(SpecialItemTransaction.SpecialItemType.choices)
         for item_type, current in totals_by_type.items():
             prev = prev_totals_by_type.get(item_type, Decimal("0.00"))

@@ -130,13 +130,15 @@ def get_ledger_transactions_with_balance(model_class, project):
 
 def get_cert_redirect_info(view_instance):
     """Get certificate ID and cancel_url from request if present."""
-    cert_id = view_instance.request.GET.get("certificate") or view_instance.request.POST.get("certificate")
+    cert_id = view_instance.request.GET.get(
+        "certificate"
+    ) or view_instance.request.POST.get("certificate")
     if not cert_id:
         return None, None
     project_pk = view_instance.kwargs.get("project_pk")
     cancel_url = reverse(
         "bill_of_quantities:payment-certificate-edit",
-        kwargs={"project_pk": project_pk, "pk": cert_id}
+        kwargs={"project_pk": project_pk, "pk": cert_id},
     )
     return cert_id, cancel_url
 

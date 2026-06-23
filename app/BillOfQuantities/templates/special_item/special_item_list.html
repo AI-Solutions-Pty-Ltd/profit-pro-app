@@ -82,7 +82,11 @@
             <a href="{% if cancel_url %}{{ cancel_url }}{% else %}{% url 'project:project-management' project.pk %}{% endif %}"
                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                 {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-                {% if cancel_url %}Back to Certificate Edit{% else %}Back to Project Management{% endif %}
+                {% if cancel_url %}
+                    Back to Certificate Edit
+                {% else %}
+                    Back to Project Management
+                {% endif %}
             </a>
         </div>
     </div>

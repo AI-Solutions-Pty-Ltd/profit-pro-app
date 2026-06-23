@@ -181,7 +181,6 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     )
     total_certified = current_claim_total + vat_val_payment
 
-
     section_order = cover_page_config.get("section_order") or [
         "section_a",
         "section_b",

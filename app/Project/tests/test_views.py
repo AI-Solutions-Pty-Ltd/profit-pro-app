@@ -135,7 +135,6 @@ class TestProjectCoverConfig:
         assert "other_specify" in field_ids
 
 
-
 @pytest.mark.django_db
 class TestCompanyManagementSiteCards:
     """Test cases for CompanyManagementView site management cards."""
