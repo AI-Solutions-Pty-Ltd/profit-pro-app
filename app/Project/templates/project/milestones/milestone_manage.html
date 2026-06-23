@@ -10,7 +10,8 @@
                     <p class="text-sm text-gray-600 mt-1">Configure and sequence construction milestones for {{ project.name }}</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <form method="post" action="{% url 'project:project-milestone-load-defaults' project.pk %}">
+                    <form method="post"
+                          action="{% url 'project:project-milestone-load-defaults' project.pk %}">
                         {% csrf_token %}
                         <button type="submit"
                                 class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
@@ -32,7 +33,6 @@
             </div>
         </div>
     </div>
-
     <!-- Milestones List -->
     <div class="bg-white shadow-sm rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -60,21 +60,15 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ milestone.forecast_date|date:"d M Y"|default:"—" }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ milestone.status }}
-                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ milestone.status }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{% url 'project:milestone-update' project.pk milestone.pk %}?next={% url 'project:project-milestone-setup' project.pk %}"
                                        class="text-indigo-600 hover:text-indigo-900 transition-colors"
-                                       title="Edit milestone">
-                                        {% heroicon_outline "pencil" size="18" %}
-                                    </a>
+                                       title="Edit milestone">{% heroicon_outline "pencil" size="18" %}</a>
                                     <a href="{% url 'project:milestone-delete' project.pk milestone.pk %}?next={% url 'project:project-milestone-setup' project.pk %}"
                                        class="text-red-600 hover:text-red-900 transition-colors"
-                                       title="Delete milestone">
-                                        {% heroicon_outline "trash" size="18" %}
-                                    </a>
+                                       title="Delete milestone">{% heroicon_outline "trash" size="18" %}</a>
                                 </div>
                             </td>
                         </tr>

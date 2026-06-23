@@ -39,4 +39,3 @@ urlpatterns = [
         name="project-milestone-load-defaults",
     ),
 ]
-

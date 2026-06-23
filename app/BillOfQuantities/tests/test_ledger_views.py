@@ -79,8 +79,7 @@ class TestLedgerViewsCancelUrl:
 
         assert response.status_code == 200
         assert (
-            "cert_id" not in response.context
-            or response.context.get("cert_id") is None
+            "cert_id" not in response.context or response.context.get("cert_id") is None
         )
         assert (
             "cancel_url" not in response.context

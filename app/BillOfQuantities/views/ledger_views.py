@@ -133,11 +133,12 @@ def get_cert_redirect_info(view_instance):
     cert_id = view_instance.request.GET.get(
         "certificate"
     ) or view_instance.request.POST.get("certificate")
-    
+
     project_pk = view_instance.kwargs.get("project_pk")
-    
+
     if not cert_id and project_pk:
         from app.BillOfQuantities.models import PaymentCertificate
+
         active_cert = PaymentCertificate.objects.filter(
             project_id=project_pk, status=PaymentCertificate.Status.DRAFT
         ).first()
@@ -152,7 +153,6 @@ def get_cert_redirect_info(view_instance):
         kwargs={"project_pk": project_pk, "pk": cert_id},
     )
     return cert_id, cancel_url
-
 
 
 class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
