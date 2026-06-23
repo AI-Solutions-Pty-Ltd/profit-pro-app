@@ -1,0 +1,90 @@
+{% extends "base_full.html" %}
+{% load heroicons %}
+{% block content %}
+    <!-- Header -->
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Project Milestones</h1>
+                    <p class="mt-1 text-sm text-gray-600">Configure and sequence construction milestones for {{ project.name }}</p>
+                </div>
+                <div class="flex gap-3 items-center">
+                    <form method="post"
+                          action="{% url 'project:project-milestone-load-defaults' project.pk %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "arrow-down-tray" size="16" %}
+                            <span class="ml-2">Load Default Building Milestones</span>
+                        </button>
+                    </form>
+                    <a href="{% url 'project:milestone-create' project.pk %}?next={% url 'project:project-milestone-setup' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" size="16" %}
+                        <span class="ml-2">Add Milestone</span>
+                    </a>
+                    <a href="{% url 'project:project-setup' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                        <span class="ml-1">Back to Setup</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Milestones List -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Configured Milestones</h2>
+            <p class="mt-1 text-sm text-gray-500">{{ milestones.count }} milestone{{ milestones.count|pluralize }} setup</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Seq</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Name</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Planned Date</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Forecast Date</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for milestone in milestones %}
+                        <tr class="transition-colors hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ milestone.sequence }}</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{{ milestone.name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ milestone.planned_date|date:"d M Y" }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                                {{ milestone.forecast_date|date:"d M Y"|default:"—" }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ milestone.status }}</td>
+                            <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                                <div class="flex gap-2 justify-end items-center">
+                                    <a href="{% url 'project:milestone-update' project.pk milestone.pk %}?next={% url 'project:project-milestone-setup' project.pk %}"
+                                       class="text-indigo-600 transition-colors hover:text-indigo-900"
+                                       title="Edit milestone">{% heroicon_outline "pencil" size="18" %}</a>
+                                    <a href="{% url 'project:milestone-delete' project.pk milestone.pk %}?next={% url 'project:project-milestone-setup' project.pk %}"
+                                       class="text-red-600 transition-colors hover:text-red-900"
+                                       title="Delete milestone">{% heroicon_outline "trash" size="18" %}</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    {% heroicon_outline "clock" size="48" class="mb-4 text-gray-300" %}
+                                    <p class="text-sm font-medium text-gray-500">No milestones configured yet</p>
+                                    <p class="mt-1 text-xs text-gray-400">Click "Load Default Milestones" to pre-populate with standard construction milestones or "Add Milestone" to create custom ones.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock content %}

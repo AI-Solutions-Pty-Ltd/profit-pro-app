@@ -225,7 +225,7 @@ class DesignCategoryForm(forms.ModelForm):
         fields = ["category", "stage", "required_quantity"]
         widgets = {
             "category": forms.Select(attrs={"class": "form-select"}),
-            "stage": forms.Select(attrs={"class": "form-select"}),
+            "stage": forms.Select(attrs={"class": "form-select", "label": "Document"}),
             "required_quantity": forms.NumberInput(
                 attrs={"class": "form-input", "min": 1}
             ),
@@ -251,7 +251,7 @@ class DesignSubCategoryForm(forms.ModelForm):
         fields = ["sub_category", "stage", "required_quantity"]
         widgets = {
             "sub_category": forms.Select(attrs={"class": "form-select"}),
-            "stage": forms.Select(attrs={"class": "form-select"}),
+            "stage": forms.Select(attrs={"class": "form-select", "label": "Document"}),
             "required_quantity": forms.NumberInput(
                 attrs={"class": "form-input", "min": 1}
             ),
@@ -277,7 +277,7 @@ class DesignGroupForm(forms.ModelForm):
         fields = ["group", "stage", "required_quantity"]
         widgets = {
             "group": forms.Select(attrs={"class": "form-select"}),
-            "stage": forms.Select(attrs={"class": "form-select"}),
+            "stage": forms.Select(attrs={"class": "form-select", "label": "Document"}),
             "required_quantity": forms.NumberInput(
                 attrs={"class": "form-input", "min": 1}
             ),
@@ -303,7 +303,7 @@ class DesignDisciplineForm(forms.ModelForm):
         fields = ["discipline", "stage", "required_quantity"]
         widgets = {
             "discipline": forms.Select(attrs={"class": "form-select"}),
-            "stage": forms.Select(attrs={"class": "form-select"}),
+            "stage": forms.Select(attrs={"class": "form-select", "label": "Document"}),
             "required_quantity": forms.NumberInput(
                 attrs={"class": "form-input", "min": 1}
             ),
