@@ -28,4 +28,15 @@ urlpatterns = [
         milestone_views.MilestoneCompleteView.as_view(),
         name="milestone-complete",
     ),
+    path(
+        "<int:project_pk>/setup/",
+        milestone_views.MilestoneSetupView.as_view(),
+        name="project-milestone-setup",
+    ),
+    path(
+        "<int:project_pk>/setup/load-defaults/",
+        milestone_views.MilestoneLoadDefaultsView.as_view(),
+        name="project-milestone-load-defaults",
+    ),
 ]
+
