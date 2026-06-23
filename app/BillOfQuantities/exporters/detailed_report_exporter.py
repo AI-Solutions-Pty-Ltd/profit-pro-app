@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 from app.BillOfQuantities.models import LineItem
 
@@ -383,7 +384,7 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
 
         # Set Column Widths dynamically
         for col_idx, col_config in enumerate(active_columns, 1):
-            col_letter = openpyxl.utils.get_column_letter(col_idx)
+            col_letter = get_column_letter(col_idx)
             col_id = col_config["id"]
             if col_id in ("item_number",):
                 width = 10
