@@ -179,9 +179,8 @@ class TestProjectSetup:
         project.users.add(user)
         # Assign user a project role to pass permission checking
         from app.Project.models import ProjectRole, Role
-        ProjectRole.objects.get_or_create(
-            project=project, user=user, role=Role.ADMIN
-        )
+
+        ProjectRole.objects.get_or_create(project=project, user=user, role=Role.ADMIN)
 
         client.force_login(user)
         url = reverse("project:project-setup", kwargs={"pk": project.pk})
@@ -195,4 +194,3 @@ class TestProjectSetup:
             kwargs={"project_pk": project.pk},
         )
         assert expected_milestones_url in content
-
