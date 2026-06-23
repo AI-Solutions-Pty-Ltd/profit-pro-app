@@ -1,34 +1,28 @@
 {% include "ledger/modals/materials_form_modal.html" %}
 {% include "ledger/modals/materials_confirm_delete_modal.html" %}
-<div class="bg-white shadow-sm rounded-lg mb-6">
+<div class="mb-6 bg-white rounded-lg shadow-sm">
     <div class="px-6 py-4">
-        <div class="flex items-center justify-between">
+        <div class="flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                <p class="text-sm text-gray-600 mt-1">Materials on Site Ledger</p>
+                <p class="mt-1 text-sm text-gray-600">Materials on Site Ledger</p>
             </div>
             <div class="flex items-center space-x-3">
-                {% if not payment_certificate and cancel_url %}
-                    <a href="{{ cancel_url }}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-2 text-gray-500" %}
-                        Back to Edit Certificate
-                    </a>
-                {% endif %}
+              
                 <button onclick="openMaterialsFormModal()"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
-                    {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}New Transaction
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700">
+                    {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}New Transaction
                 </button>
             </div>
         </div>
     </div>
 </div>
-<div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 text-white mb-6">
-    <p class="text-sm font-medium text-green-100 uppercase tracking-wider">Current Balance</p>
+<div class="p-6 mb-6 text-white bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg">
+    <p class="text-sm font-medium tracking-wider text-green-100 uppercase">Current Balance</p>
     <p class="mt-2 text-3xl font-bold">R {{ current_balance|floatformat:2|intcomma }}</p>
     <p class="mt-1 text-sm text-green-200">Materials value on site</p>
 </div>
-<div class="bg-white shadow-sm rounded-lg overflow-hidden">
+<div class="overflow-hidden bg-white rounded-lg shadow-sm">
     <div class="px-6 py-4 border-b border-gray-200">
         <h2 class="text-lg font-medium text-gray-900">Transaction History</h2>
     </div>
@@ -37,41 +31,41 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Material</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Debit</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Credit</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Balance</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Date</th>
+                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Material</th>
+                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-xs font-medium text-right text-gray-500 uppercase">Debit</th>
+                        <th class="px-6 py-3 text-xs font-medium text-right text-gray-500 uppercase">Credit</th>
+                        <th class="px-6 py-3 text-xs font-medium text-right text-gray-500 uppercase">Balance</th>
+                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for txn in transactions %}
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ txn.date|date:"d M Y" }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ txn.date|date:"d M Y" }}</td>
                             <td class="px-6 py-4 text-sm text-gray-900">
                                 <div class="max-w-xs truncate">{{ txn.material_description }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ txn.get_material_status_display }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ txn.get_material_status_display }}</td>
+                            <td class="px-6 py-4 text-sm text-right whitespace-nowrap">
                                 {% if txn.transaction_type == 'DEBIT' %}
-                                    <span class="text-green-600 font-medium">R {{ txn.amount|floatformat:2|intcomma }}</span>
+                                    <span class="font-medium text-green-600">R {{ txn.amount|floatformat:2|intcomma }}</span>
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <td class="px-6 py-4 text-sm text-right whitespace-nowrap">
                                 {% if txn.transaction_type == 'CREDIT' %}
-                                    <span class="text-red-600 font-medium">R {{ txn.amount|floatformat:2|intcomma }}</span>
+                                    <span class="font-medium text-red-600">R {{ txn.amount|floatformat:2|intcomma }}</span>
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                            <td class="px-6 py-4 text-sm font-medium text-right text-gray-900 whitespace-nowrap">
                                 R {{ txn.running_balance|floatformat:2|intcomma }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td class="px-6 py-4 text-sm font-medium whitespace-nowrap">
                                 <div class="flex items-center space-x-2">
                                     <a href="{% url 'bill_of_quantities:materials-edit' project.pk txn.id %}{% if cert_id %}?certificate={{ cert_id }}{% elif payment_certificate %}?certificate={{ payment_certificate.id }}{% elif request.GET.certificate %}?certificate={{ request.GET.certificate }}{% endif %}"
                                        class="text-gray-600 hover:text-gray-900">{% heroicon_outline "pencil" class="w-5 h-5" %}</a>
@@ -93,10 +87,10 @@
     {% endif %}
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <div class="flex justify-between items-center">
-            <a href="{% url 'bill_of_quantities:retention-list' project.pk %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">{% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}Retention</a>
+            <a href="{{ cancel_url }}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">{% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %} Payment Certificates</a>
             <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">Escalation{% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}</a>
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">Escalation{% heroicon_outline "chevron-right" class="ml-1 w-4 h-4" %}</a>
         </div>
     </div>
 </div>
