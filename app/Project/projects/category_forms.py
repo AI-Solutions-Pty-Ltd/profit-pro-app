@@ -7,6 +7,7 @@ from django import forms
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    DrawingType,
     Group,
     SubCategory,
 )
@@ -154,5 +155,32 @@ class DisciplineForm(forms.ModelForm):
         }
         labels = {
             "name": "Discipline Name",
+            "description": "Description (Optional)",
+        }
+
+
+class DrawingTypeForm(forms.ModelForm):
+    """Form for creating and updating project drawing types."""
+
+    class Meta:
+        model = DrawingType
+        fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter drawing type (e.g., Tender, Construction)",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Optional description of this drawing type",
+                    "rows": 3,
+                }
+            ),
+        }
+        labels = {
+            "name": "Drawing Type Name",
             "description": "Description (Optional)",
         }

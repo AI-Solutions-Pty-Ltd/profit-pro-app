@@ -63,7 +63,13 @@
         document.getElementById('materials_delete_txn_description').textContent = description;
         document.getElementById('materials_delete_txn_amount').textContent = 'R ' + parseFloat(amount).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
-        document.getElementById('materials_delete_form').action = `/bill-of-quantities/project/${projectPk}/materials-on-site/${txnId}/delete/`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const certId = urlParams.get('certificate');
+        let actionUrl = `/bill-of-quantities/project/${projectPk}/materials-on-site/${txnId}/delete/`;
+        if (certId) {
+            actionUrl += `?certificate=${certId}`;
+        }
+        document.getElementById('materials_delete_form').action = actionUrl;
         
         document.getElementById('materials_confirm_delete_modal').classList.remove('hidden');
     }

@@ -1,5 +1,7 @@
 import glob
 import os
+import subprocess
+import sys
 
 from django.conf import settings
 
@@ -25,7 +27,10 @@ def find_all_migration_files():
 def clear_migration_table():
     apps = get_apps()
     for app in apps:
-        os.system(f"python manage.py migrate --fake {app} zero")
+        subprocess.run(
+            [sys.executable, "manage.py", "migrate", "--fake", app, "zero"],
+            check=True,
+        )
 
 
 def remove_local_migration_files():
@@ -35,11 +40,13 @@ def remove_local_migration_files():
 
 
 def make_migrations():
-    os.system("python manage.py makemigrations")
+    subprocess.run([sys.executable, "manage.py", "makemigrations"], check=True)
 
 
 def fake_initial():
-    os.system("python manage.py migrate --fake-initial")
+    subprocess.run(
+        [sys.executable, "manage.py", "migrate", "--fake-initial"], check=True
+    )
 
 
 def full_reset_migration_files_and_migration_table():

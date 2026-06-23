@@ -141,9 +141,40 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     work_progressive_to_date = payment_certificate.work_progressive_to_date or Decimal(
         "0.00"
     )
-    progressive_to_date = payment_certificate.progressive_to_date or Decimal("0.00")
-    progressive_previous = payment_certificate.progressive_previous or Decimal("0.00")
-    current_claim_total = payment_certificate.current_claim_total or Decimal("0.00")
+    ap_current = payment_certificate.get_advance_payment_total()
+    ap_prev = payment_certificate.previous_advance_payment_total
+    advance_payment = ap_current + ap_prev
+
+    ret_current = payment_certificate.get_retention_total()
+    ret_prev = payment_certificate.previous_retention_total
+    retention = ret_current + ret_prev
+
+    mat_current = payment_certificate.get_materials_on_site_total()
+    mat_prev = payment_certificate.previous_materials_on_site_total
+    material_on_site = mat_current + mat_prev
+
+    # Sum only those SpecialItemTransaction entries specifically categorized as type OTHER
+    totals_by_type = payment_certificate.get_special_item_totals_by_type()
+    prev_totals_by_type = payment_certificate.previous_special_item_totals_by_type
+    other_current = totals_by_type.get("OTHER", Decimal("0.00"))
+    other_prev = prev_totals_by_type.get("OTHER", Decimal("0.00"))
+    other_specify = other_current + other_prev
+
+    progressive_to_date = (
+        (payment_certificate.progressive_to_date or Decimal("0.00"))
+        + advance_payment
+        + retention
+        + material_on_site
+        + other_specify
+    )
+    progressive_previous = (
+        (payment_certificate.progressive_previous or Decimal("0.00"))
+        + ap_prev
+        + ret_prev
+        + mat_prev
+        + other_prev
+    )
+    current_claim_total = progressive_to_date - progressive_previous
 
     vat_val_payment = (
         current_claim_total * Decimal("0.15") if project.vat else Decimal("0.00")
@@ -334,6 +365,14 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
                                     "special_item",
                                 )
                             )
+                elif fid == "advance_payment":
+                    payment_rows.append((label, advance_payment, fid))
+                elif fid == "retention":
+                    payment_rows.append((label, retention, fid))
+                elif fid == "material_on_site":
+                    payment_rows.append((label, material_on_site, fid))
+                elif fid == "other_specify":
+                    payment_rows.append((label, other_specify, fid))
                 elif fid == "progressive_to_date":
                     payment_rows.append((label, progressive_to_date, fid))
                 elif fid == "progressive_previous":

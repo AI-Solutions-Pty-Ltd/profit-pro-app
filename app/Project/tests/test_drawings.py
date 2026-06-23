@@ -6,6 +6,7 @@ from app.Project.tests.factories import (
     CategoryFactory,
     DisciplineFactory,
     DrawingFactory,
+    DrawingTypeFactory,
     GroupFactory,
     ProjectFactory,
     SubCategoryFactory,
@@ -171,3 +172,123 @@ class TestDrawingForm:
         )
         form2 = DrawingForm(instance=drawing2, project=project)
         assert form2.initial["wbs_level"] == f"subcategory_{sub_category.pk}"
+
+
+@pytest.mark.django_db
+class TestDrawingTypeModel:
+    """Test cases for DrawingType model."""
+
+    def test_drawing_type_creation(self):
+        """Test creating a drawing type."""
+        dt = DrawingTypeFactory(name="Tender")
+        assert dt.id is not None
+        assert dt.name == "Tender"
+        assert str(dt) == "Tender"
+
+    def test_drawing_type_is_project_scoped(self):
+        """Test drawing types are scoped to a project."""
+        project = ProjectFactory()
+        dt = DrawingTypeFactory(project=project, name="Construction")
+        assert dt.project == project
+
+    def test_drawing_type_unique_per_project(self):
+        """Test drawing type names must be unique within a project."""
+        from django.db import IntegrityError, transaction
+
+        from app.Project.projects.projects_models import DrawingType
+
+        project = ProjectFactory()
+        # "Unique Type" is not in the defaults, so it will only exist once
+        DrawingType.objects.create(project=project, name="Unique Type")
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                DrawingType.objects.create(project=project, name="Unique Type")
+
+    def test_drawing_type_str(self):
+        """Test __str__ returns name."""
+        dt = DrawingTypeFactory(name="Shop")
+        assert str(dt) == "Shop"
+
+
+@pytest.mark.django_db
+class TestDrawingFormWithDrawingType:
+    """Test DrawingForm uses a select for drawing_type."""
+
+    def test_drawing_form_drawing_type_is_model_choice_field(self):
+        """Test that drawing_type field is a ModelChoiceField (select)."""
+        from django.forms import ModelChoiceField
+
+        from app.Project.documents.document_forms import DrawingForm
+
+        project = ProjectFactory()
+        form = DrawingForm(project=project)
+        assert isinstance(form.fields["drawing_type"], ModelChoiceField)
+
+    def test_drawing_form_drawing_type_filtered_by_project(self):
+        """Test that drawing_type choices are filtered by project."""
+        from app.Project.documents.document_forms import DrawingForm
+
+        project = ProjectFactory()
+        other_project = ProjectFactory()
+        dt_mine = DrawingTypeFactory(project=project, name="Tender")
+        dt_other = DrawingTypeFactory(project=other_project, name="Tender")
+        form = DrawingForm(project=project)
+        qs = form.fields["drawing_type"].queryset
+        assert dt_mine in qs
+        assert dt_other not in qs
+
+    def test_new_project_gets_default_drawing_types(self):
+        """Test that default drawing types are created when a project is created."""
+        from app.Project.projects.projects_models import DrawingType
+
+        project = ProjectFactory()
+        type_names = list(
+            DrawingType.objects.filter(project=project, deleted=False)
+            .values_list("name", flat=True)
+            .order_by("name")
+        )
+        assert "Construction" in type_names
+        assert "Information" in type_names
+        assert "Shop" in type_names
+        assert "Tender" in type_names
+
+    def test_new_project_gets_default_disciplines(self):
+        """Test that default disciplines are created when a project is created."""
+        from app.Project.projects.projects_models import Discipline
+
+        project = ProjectFactory()
+        discipline_names = list(
+            Discipline.objects.filter(project=project, deleted=False)
+            .values_list("name", flat=True)
+            .order_by("name")
+        )
+        defaults = [
+            "Project management",
+            "Quantity Surveying",
+            "Structural",
+            "Electrical",
+            "Mechanical",
+            "Civil",
+            "Piping",
+            "Control & Instrumentation",
+            "Geotech",
+            "Town Planning",
+            "Health and Safety",
+            "Land Surveying",
+            "Architectural",
+        ]
+        for name in defaults:
+            assert name in discipline_names
+
+    def test_discipline_uniqueness_per_project(self):
+        """Test discipline names must be unique within a project."""
+        from django.db import IntegrityError, transaction
+
+        from app.Project.projects.projects_models import Discipline
+
+        project = ProjectFactory()
+        # "Unique Disc" is not in default disciplines list
+        Discipline.objects.create(project=project, name="Unique Disc")
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                Discipline.objects.create(project=project, name="Unique Disc")
