@@ -57,7 +57,7 @@
     </div>
 </div>
 <script>
-    function openAdvancePaymentConfirmDeleteModal(projectPk, txnId, description, date, amount) {
+    function openAdvancePaymentConfirmDeleteModal(projectPk, txnId, description, date, amount, certId) {
         // Update modal content with transaction details
         document.getElementById('delete_txn_date').textContent = date;
         document.getElementById('delete_txn_description').textContent = description;
@@ -65,10 +65,10 @@
         
         // Update form action URL
         const urlParams = new URLSearchParams(window.location.search);
-        const certId = urlParams.get('certificate');
+        const resolvedCertId = certId || urlParams.get('certificate');
         let actionUrl = `/bill-of-quantities/project/${projectPk}/advance-payments/${txnId}/delete/`;
-        if (certId) {
-            actionUrl += `?certificate=${certId}`;
+        if (resolvedCertId) {
+            actionUrl += `?certificate=${resolvedCertId}`;
         }
         document.getElementById('advance_payment_delete_form').action = actionUrl;
         
