@@ -452,12 +452,12 @@ class TestCoverPageLedgerResolving:
     def test_ledger_fields_resolved(self):
         """Verify custom ledger values are correctly calculated in resolved sections."""
         from decimal import Decimal
+
         from app.BillOfQuantities.tests.factories import (
             AdvancePaymentFactory,
-            RetentionFactory,
-            MaterialsOnSiteFactory,
-            SpecialItemTransactionFactory,
             PaymentCertificateFactory,
+            RetentionFactory,
+            SpecialItemTransactionFactory,
         )
         from app.BillOfQuantities.views.payment_certificate_views import (
             get_resolved_cover_page_sections,
@@ -525,4 +525,3 @@ class TestCoverPageLedgerResolving:
         assert fields["advance_payment"]["raw_value"] == Decimal("6000.00")
         assert fields["retention"]["raw_value"] == Decimal("-1000.00")
         assert fields["other_specify"]["raw_value"] == Decimal("900.00")
-

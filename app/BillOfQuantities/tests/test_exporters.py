@@ -996,13 +996,15 @@ class TestCoverPageExporterLedgerFields:
     def test_cover_page_export_custom_ledger_fields(self):
         """Test that exported Excel cover page contains the custom ledger fields and values."""
         from decimal import Decimal
+
+        from app.BillOfQuantities.exporters.cover_page_exporter import (
+            export_cover_page_to_xlsx,
+        )
         from app.BillOfQuantities.tests.factories import (
             AdvancePaymentFactory,
-            RetentionFactory,
             PaymentCertificateFactory,
         )
         from app.Project.tests.factories import ProjectFactory
-        from app.BillOfQuantities.exporters.cover_page_exporter import export_cover_page_to_xlsx
 
         user = AccountFactory.create()
         project = ProjectFactory.create(users=user)
@@ -1018,13 +1020,13 @@ class TestCoverPageExporterLedgerFields:
             project=project,
             payment_certificate=cert,
             amount=Decimal("1000.00"),
-            transaction_type="DEBIT"
+            transaction_type="DEBIT",
         )
         AdvancePaymentFactory.create(
             project=project,
             payment_certificate=prev_cert,
             amount=Decimal("2000.00"),
-            transaction_type="DEBIT"
+            transaction_type="DEBIT",
         )
 
         wb = export_cover_page_to_xlsx(cert)
@@ -1041,4 +1043,3 @@ class TestCoverPageExporterLedgerFields:
         assert found_ap_row is not None
         # Raw value at column 7 should be 3000.00
         assert ws.cell(row=found_ap_row, column=7).value == Decimal("3000.00")
-
