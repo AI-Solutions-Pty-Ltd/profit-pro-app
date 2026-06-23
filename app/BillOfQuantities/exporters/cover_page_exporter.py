@@ -161,14 +161,14 @@ def export_cover_page_to_xlsx(payment_certificate, wb=None):
     other_specify = other_current + other_prev
 
     progressive_to_date = (
-        work_progressive_to_date
+        (payment_certificate.progressive_to_date or Decimal("0.00"))
         + advance_payment
         + retention
         + material_on_site
         + other_specify
     )
     progressive_previous = (
-        work_progressive_previous
+        (payment_certificate.progressive_previous or Decimal("0.00"))
         + ap_prev
         + ret_prev
         + mat_prev

@@ -1298,14 +1298,14 @@ def get_resolved_cover_page_sections(payment_certificate) -> list[dict]:
     other_specify = other_current + other_prev
 
     progressive_to_date = (
-        work_progressive_to_date
+        (payment_certificate.progressive_to_date or Decimal("0.00"))
         + advance_payment
         + retention
         + material_on_site
         + other_specify
     )
     progressive_previous = (
-        work_progressive_previous
+        (payment_certificate.progressive_previous or Decimal("0.00"))
         + ap_prev
         + ret_prev
         + mat_prev

@@ -4,4 +4,4 @@
 |---|------|--------|
 | 1 | Update Default Cover Configuration in Project Model | [x] |
 | 2 | Implement Custom Ledger Fields in View Resolver | [x] |
-| 3 | Implement Custom Ledger Fields in Excel Exporter | [/] |
+| 3 | Implement Custom Ledger Fields in Excel Exporter | [x] |
