@@ -1,9 +1,8 @@
-# Fix Form Action Whitespace — Task Tracker
+# Ty Typechecking and Deprecation Fixes — Task Tracker
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Fix form action whitespace in `advance_payment_form_component.html` | [x] |
-| 2 | Fix form action whitespace in `escalation_form_component.html` | [x] |
-| 3 | Fix form action whitespace in `materials_form_component.html` | [x] |
-| 4 | Fix form action whitespace in `retention_form_component.html` | [x] |
-| 5 | Verify all form templates with djlint check | [x] |
+| 1 | Update type checking configuration in `pyproject.toml` | [ ] |
+| 2 | Replace soft-deprecated `os.system` with `subprocess.run` in `app/utils/database.py` | [ ] |
+| 3 | Fix submodule import warning in `app/BillOfQuantities/exporters/detailed_report_exporter.py` | [ ] |
+| 4 | Run final verification checks and check for 0 diagnostics | [ ] |
