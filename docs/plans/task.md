@@ -1,8 +1,10 @@
-# Ty Typechecking and Deprecation Fixes — Task Tracker
+# Brainstorming Construction Milestones — Execution Tracker
 
-| # | Task | Status |
-|---|------|--------|
-| 1 | Update type checking configuration in `pyproject.toml` | [ ] |
-| 2 | Replace soft-deprecated `os.system` with `subprocess.run` in `app/utils/database.py` | [ ] |
-| 3 | Fix submodule import warning in `app/BillOfQuantities/exporters/detailed_report_exporter.py` | [ ] |
-| 4 | Run final verification checks and check for 0 diagnostics | [ ] |
+| Task | Status |
+| :--- | :--- |
+| Task 1: Explore project context | [x] |
+| Task 2: Ask clarifying questions | [x] |
+| Task 3: Propose 2-3 approaches | [x] |
+| Task 4: Present design | [x] |
+| Task 5: Write design doc | [x] |
+| Task 6: Transition to implementation | [x] |

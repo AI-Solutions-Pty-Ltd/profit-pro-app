@@ -55,7 +55,11 @@ class CategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        context["project"] = project
         context["category_form"] = CategoryForm()
+        context["subcategory_form"] = SubCategoryForm(project=project)
+        context["group_form"] = GroupForm(project=project)
         return context
 
 

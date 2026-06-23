@@ -129,13 +129,25 @@ def get_ledger_transactions_with_balance(model_class, project):
 
 
 def get_cert_redirect_info(view_instance):
-    """Get certificate ID and cancel_url from request if present."""
+    """Get certificate ID and cancel_url from request if present, or fallback to project's active draft certificate."""
     cert_id = view_instance.request.GET.get(
         "certificate"
     ) or view_instance.request.POST.get("certificate")
+
+    project_pk = view_instance.kwargs.get("project_pk")
+
+    if not cert_id and project_pk:
+        from app.BillOfQuantities.models import PaymentCertificate
+
+        active_cert = PaymentCertificate.objects.filter(
+            project_id=project_pk, status=PaymentCertificate.Status.DRAFT
+        ).first()
+        if active_cert:
+            cert_id = active_cert.pk
+
     if not cert_id:
         return None, None
-    project_pk = view_instance.kwargs.get("project_pk")
+
     cancel_url = reverse(
         "bill_of_quantities:payment-certificate-edit",
         kwargs={"project_pk": project_pk, "pk": cert_id},
@@ -187,9 +199,10 @@ class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
             project=project
         )
 
-        _, cancel_url = get_cert_redirect_info(self)
+        cert_id, cancel_url = get_cert_redirect_info(self)
         if cancel_url:
             context["cancel_url"] = cancel_url
+            context["cert_id"] = cert_id
 
         return context
 
@@ -415,9 +428,10 @@ class RetentionListView(SubscriptionAndRoleRequiredMixin, ListView):
         context["retention_limit"] = project.retention_limit_percentage
         context["retention_form"] = RetentionCreateUpdateCreateForm(project=project)
 
-        _, cancel_url = get_cert_redirect_info(self)
+        cert_id, cancel_url = get_cert_redirect_info(self)
         if cancel_url:
             context["cancel_url"] = cancel_url
+            context["cert_id"] = cert_id
 
         return context
 
@@ -634,9 +648,10 @@ class MaterialsOnSiteListView(SubscriptionAndRoleRequiredMixin, ListView):
         context["materials_on_site_form"] = MaterialsOnSiteCreateUpdateForm(
             project=project
         )
-        _, cancel_url = get_cert_redirect_info(self)
+        cert_id, cancel_url = get_cert_redirect_info(self)
         if cancel_url:
             context["cancel_url"] = cancel_url
+            context["cert_id"] = cert_id
         return context
 
 
@@ -858,9 +873,10 @@ class EscalationListView(SubscriptionAndRoleRequiredMixin, ListView):
 
         context["escalation_form"] = EscalationCreateUpdateForm(project=project)
 
-        _, cancel_url = get_cert_redirect_info(self)
+        cert_id, cancel_url = get_cert_redirect_info(self)
         if cancel_url:
             context["cancel_url"] = cancel_url
+            context["cert_id"] = cert_id
 
         return context
 

@@ -58,16 +58,16 @@
     </div>
 </div>
 <script>
-    function openMaterialsConfirmDeleteModal(projectPk, txnId, description, date, amount) {
+    function openMaterialsConfirmDeleteModal(projectPk, txnId, description, date, amount, certId) {
         document.getElementById('materials_delete_txn_date').textContent = date;
         document.getElementById('materials_delete_txn_description').textContent = description;
         document.getElementById('materials_delete_txn_amount').textContent = 'R ' + parseFloat(amount).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
         const urlParams = new URLSearchParams(window.location.search);
-        const certId = urlParams.get('certificate');
+        const resolvedCertId = certId || urlParams.get('certificate');
         let actionUrl = `/bill-of-quantities/project/${projectPk}/materials-on-site/${txnId}/delete/`;
-        if (certId) {
-            actionUrl += `?certificate=${certId}`;
+        if (resolvedCertId) {
+            actionUrl += `?certificate=${resolvedCertId}`;
         }
         document.getElementById('materials_delete_form').action = actionUrl;
         

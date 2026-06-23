@@ -7,10 +7,19 @@
                 <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
                 <p class="text-sm text-gray-600 mt-1">Escalation Ledger</p>
             </div>
-            <button onclick="openEscalationFormModal()"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
-                {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}New Transaction
-            </button>
+            <div class="flex items-center space-x-3">
+                {% if not payment_certificate and cancel_url %}
+                    <a href="{{ cancel_url }}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-2 text-gray-500" %}
+                        Back to Edit Certificate
+                    </a>
+                {% endif %}
+                <button onclick="openEscalationFormModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}New Transaction
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -64,9 +73,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex items-center space-x-2">
-                                    <a href="{% url 'bill_of_quantities:escalation-edit' project.pk txn.id %}"
+                                    <a href="{% url 'bill_of_quantities:escalation-edit' project.pk txn.id %}{% if cert_id %}?certificate={{ cert_id }}{% elif payment_certificate %}?certificate={{ payment_certificate.id }}{% elif request.GET.certificate %}?certificate={{ request.GET.certificate }}{% endif %}"
                                        class="text-gray-600 hover:text-gray-900">{% heroicon_outline "pencil" class="w-5 h-5" %}</a>
-                                    <button onclick="openEscalationConfirmDeleteModal({{ project.pk }}, {{ txn.id }}, '{{ txn.description|escapejs }}', '{{ txn.date|date:'d M Y' }}', {{ txn.amount }})"
+                                    <button onclick="openEscalationConfirmDeleteModal({{ project.pk }}, {{ txn.id }}, '{{ txn.description|escapejs }}', '{{ txn.date|date:'d M Y' }}', {{ txn.amount }}, {% if cert_id %}{{ cert_id }}{% elif payment_certificate %}{{ payment_certificate.id }}{% elif request.GET.certificate %}{{ request.GET.certificate }}{% else %}null{% endif %})"
                                             class="text-red-600 hover:text-red-900">
                                         {% heroicon_outline "trash" class="w-5 h-5" %}
                                     </button>
