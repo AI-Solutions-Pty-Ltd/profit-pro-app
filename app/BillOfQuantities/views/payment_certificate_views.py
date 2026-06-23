@@ -1278,13 +1278,45 @@ def get_resolved_cover_page_sections(payment_certificate) -> list[dict]:
     work_progressive_to_date = payment_certificate.work_progressive_to_date or Decimal(
         "0.00"
     )
-    progressive_to_date = payment_certificate.progressive_to_date or Decimal("0.00")
-    progressive_previous = payment_certificate.progressive_previous or Decimal("0.00")
-    current_claim_total = payment_certificate.current_claim_total or Decimal("0.00")
+    ap_current = payment_certificate.get_advance_payment_total()
+    ap_prev = payment_certificate.previous_advance_payment_total
+    advance_payment = ap_current + ap_prev
+
+    ret_current = payment_certificate.get_retention_total()
+    ret_prev = payment_certificate.previous_retention_total
+    retention = ret_current + ret_prev
+
+    mat_current = payment_certificate.get_materials_on_site_total()
+    mat_prev = payment_certificate.previous_materials_on_site_total
+    material_on_site = mat_current + mat_prev
+
+    # Sum only those SpecialItemTransaction entries specifically categorized as type OTHER
+    totals_by_type = payment_certificate.get_special_item_totals_by_type()
+    prev_totals_by_type = payment_certificate.previous_special_item_totals_by_type
+    other_current = totals_by_type.get("OTHER", Decimal("0.00"))
+    other_prev = prev_totals_by_type.get("OTHER", Decimal("0.00"))
+    other_specify = other_current + other_prev
+
+    progressive_to_date = (
+        work_progressive_to_date
+        + advance_payment
+        + retention
+        + material_on_site
+        + other_specify
+    )
+    progressive_previous = (
+        work_progressive_previous
+        + ap_prev
+        + ret_prev
+        + mat_prev
+        + other_prev
+    )
+    current_claim_total = progressive_to_date - progressive_previous
     vat_val_payment = (
         current_claim_total * Decimal("0.15") if project.vat else Decimal("0.00")
     )
     total_certified = current_claim_total + vat_val_payment
+
 
     resolved_sections = []
     section_order = cover_page_config.get("section_order") or [
@@ -1399,6 +1431,14 @@ def get_resolved_cover_page_sections(payment_certificate) -> list[dict]:
                                 }
                             )
                     field["special_items_list"] = special_items_list
+                elif fid == "advance_payment":
+                    raw_val = advance_payment
+                elif fid == "retention":
+                    raw_val = retention
+                elif fid == "material_on_site":
+                    raw_val = material_on_site
+                elif fid == "other_specify":
+                    raw_val = other_specify
                 elif fid == "progressive_to_date":
                     raw_val = progressive_to_date
                     style["is_bold"] = True

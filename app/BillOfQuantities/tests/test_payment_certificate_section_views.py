@@ -443,3 +443,86 @@ class TestCoverPageNegativeFormatting:
             assert response.status_code == 200
             html = response.content.decode("utf-8")
             assert "-R 900,000.00" in html
+
+
+class TestCoverPageLedgerResolving:
+    """Test resolving custom ledger fields for the cover page."""
+
+    @pytest.mark.django_db
+    def test_ledger_fields_resolved(self):
+        """Verify custom ledger values are correctly calculated in resolved sections."""
+        from decimal import Decimal
+        from app.BillOfQuantities.tests.factories import (
+            AdvancePaymentFactory,
+            RetentionFactory,
+            MaterialsOnSiteFactory,
+            SpecialItemTransactionFactory,
+            PaymentCertificateFactory,
+        )
+        from app.BillOfQuantities.views.payment_certificate_views import (
+            get_resolved_cover_page_sections,
+        )
+
+        user, project, cert = _make_user_with_cert()
+
+        # Change cert's certificate number to 2 first to free up certificate number 1
+        cert.certificate_number = 2
+        cert.save()
+
+        # Create transactions for current and previous certificate
+        prev_cert = PaymentCertificateFactory.create(
+            project=project, certificate_number=1, status="APPROVED"
+        )
+
+        # Advance Payment (Current: 1000.00 debit, Prev: 5000.00 debit)
+        AdvancePaymentFactory.create(
+            project=project,
+            payment_certificate=cert,
+            amount=Decimal("1000.00"),
+            transaction_type="DEBIT",
+        )
+        AdvancePaymentFactory.create(
+            project=project,
+            payment_certificate=prev_cert,
+            amount=Decimal("5000.00"),
+            transaction_type="DEBIT",
+        )
+
+        # Retention (Current: 200.00 credit, Prev: 800.00 credit)
+        RetentionFactory.create(
+            project=project,
+            payment_certificate=cert,
+            amount=Decimal("200.00"),
+            transaction_type="CREDIT",
+        )
+        RetentionFactory.create(
+            project=project,
+            payment_certificate=prev_cert,
+            amount=Decimal("800.00"),
+            transaction_type="CREDIT",
+        )
+
+        # Special Item Transaction (OTHER) (Current: 300.00 debit, Prev: 600.00 debit)
+        SpecialItemTransactionFactory.create(
+            project=project,
+            payment_certificate=cert,
+            amount=Decimal("300.00"),
+            transaction_type="DEBIT",
+            special_item_type="OTHER",
+        )
+        SpecialItemTransactionFactory.create(
+            project=project,
+            payment_certificate=prev_cert,
+            amount=Decimal("600.00"),
+            transaction_type="DEBIT",
+            special_item_type="OTHER",
+        )
+
+        sections = get_resolved_cover_page_sections(cert)
+        fields = {f["id"]: f for sec in sections for f in sec["fields"]}
+
+        # Check raw values
+        assert fields["advance_payment"]["raw_value"] == Decimal("6000.00")
+        assert fields["retention"]["raw_value"] == Decimal("-1000.00")
+        assert fields["other_specify"]["raw_value"] == Decimal("900.00")
+
