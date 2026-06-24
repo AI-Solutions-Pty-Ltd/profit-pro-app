@@ -1,44 +1,42 @@
-# Final Summary: Reorder Custom Labels and Sections
+# Summary of Construction Milestones Feature Implementation
 
-All steps in the implementation plan have been completed and verified successfully.
+We have successfully implemented the feature to capture and manage construction milestones, including loading 20 standard default milestones with a single click.
 
-## Review Pass
-- **Blockers**: None.
-- **Majors**: None.
-- **Minors**: None.
-- **Nits**: None.
+## Verification Summary
 
-## Verification Commands & Results
-The following tests were executed and passed successfully:
-1. Excel Custom Ordering Test: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -k test_cover_page_custom_ordering -v` -> **PASS**
-2. Full Exporters Test Suite: `.venv\Scripts\python.exe -m pytest app/BillOfQuantities/tests/test_exporters.py -v` -> **PASS** (14 tests passed)
-3. Project views tests: `.venv\Scripts\python.exe -m pytest app/Project/tests/test_views.py -v` -> **PASS** (5 tests passed)
-4. Ruff Lint check: `.venv\Scripts\python.exe -m ruff check app/BillOfQuantities/tests/test_exporters.py` -> **PASS**
-5. Ruff Formatting check: `.venv\Scripts\python.exe -m ruff format app/BillOfQuantities/tests/test_exporters.py` -> **PASS** (reformatted)
+All verification tests run successfully using pytest:
+- Command: `.venv\Scripts\python.exe -m pytest app/Project/tests/test_milestones.py -v`
+- Result: 5 PASSED
+  - `test_create_respects_next_param`: Verified that `next` query parameter overrides redirect on success.
+  - `test_update_respects_next_param`: Verified that `next` query parameter redirects back to setup on update success.
+  - `test_delete_respects_next_param`: Verified that `next` query parameter redirects back to setup on delete success.
+  - `test_setup_list_view`: Verified that `MilestoneSetupView` responds with status code 200 and loads page successfully.
+  - `test_load_default_milestones`: Verified that posting to `MilestoneLoadDefaultsView` creates 20 default milestones sequentially starting from project start date.
+
+Linter verification run successfully using ruff:
+- Command: `.venv\Scripts\python.exe -m ruff check app/Project/milestone_schedules/milestone_views.py app/Project/tests/test_milestones.py app/Project/tests/test_views.py`
+- Result: 0 errors remaining (all imports sorted and code reformatted to PEP 8 standard).
 
 ## Summary of Changes
 
-### 1. Configuration UI (`cover_config.html`)
-- Added Up/Down section reordering buttons on each DaisyUI `.collapse` card header.
-- Added an "Actions" (Order) column to each fields table with Up/Down chevron buttons.
-- Implemented JS swap actions:
-  - Updates the config state in memory.
-  - Rearranges the accordion DOM elements dynamically by appending them in the correct sequence.
-  - Rearranges the live preview canvas sections dynamically.
-  - Re-populates fields tables in the correct sorted order on field swaps.
-  - Re-populates the preview mockup canvas table rows.
-  - Serializes both `section_order` and sorted fields lists into JSON for database persistence.
-- Prevented event bubbling on section order buttons using `e.stopPropagation()` and `e.preventDefault()`, which blocks accordion toggle events.
+1. **View Layer (`app/Project/milestone_schedules/milestone_views.py`)**:
+   - Added support for `next` redirect query parameter inside `MilestoneCreateView`, `MilestoneUpdateView`, and `MilestoneDeleteView` to enable flexible redirect destinations on success.
+   - Added dynamic `back_url` in those views' context.
+   - Implemented `MilestoneSetupView` (inheriting ListView) to display the milestones setup list under the admin dashboard.
+   - Implemented `MilestoneLoadDefaultsView` (inheriting View) to bulk-load the 20 standard construction milestones (Earthworks, Foundations, etc.) with proper sequence numbers.
+2. **URL Routing (`app/Project/milestone_schedules/milestone_urls.py`)**:
+   - Registered paths `<int:project_pk>/setup/` (`project-milestone-setup`) and `<int:project_pk>/setup/load-defaults/` (`project-milestone-load-defaults`).
+3. **Template & UI Layer**:
+   - Created `app/Project/templates/project/milestones/milestone_manage.html` setup page with tables and actions for managing milestones, and buttons for adding milestones or loading defaults.
+   - Modified WBS setup grid in `app/Project/templates/project/project_setup.html` to add the **Setup Construction Milestones** card.
+   - Updated `milestone_form.html` and `milestone_confirm_delete.html` templates to respect dynamic `back_url` context variable.
+4. **Test Suite (`app/Project/tests/test_milestones.py`)**:
+   - Added comprehensive tests covering setup page rendering, milestone bulk loading, and redirects logic.
 
-### 2. Verification Tests
-- Added `test_cover_page_custom_ordering` in [test_exporters.py](file:///c:/Users/nebst/Projects/profit-pro-app/app/BillOfQuantities/tests/test_exporters.py) to assert custom section sequence (`section_c` -> `section_a` -> `section_b`) and custom field sequences render correctly in openpyxl Excel exports and compiled PDF documents.
+## Follow-up / Manual Verification Steps
 
-## Manual Validation Steps
-If verifying manually in the web application interface:
-1. Go to the project configuration page (e.g. `/project/<id>/edit/`).
-2. Click on the **Configure Cover Page** card.
-3. Click the Up/Down buttons next to the Section accordion headers (e.g. move Section C to the top). Verify the accordions swap places and the Live Preview canvas updates immediately.
-4. Expand a section (e.g. Section B) and click the Up/Down buttons next to fields (e.g. move VAT to the top). Verify the table rows swap places and the Live Preview canvas table updates immediately.
-5. Click **Save Configuration**.
-6. View the payment certificate cover page in the browser and verify the custom order is applied.
-7. Download PDF and Excel exports for the certificate cover page and verify they match the customized section and field ordering.
+1. Navigate to Project Setup page, locate the new **Setup Construction Milestones** card.
+2. Click the card to open the Project Milestones setup page.
+3. Click "Load Default Milestones" to populate the standard list of 20 construction milestones.
+4. Verify they are listed sequentially in the table and their Planned Dates match the Project's start date.
+5. Create or edit a milestone and verify that saving returns you back to the Project Milestones setup list.

@@ -58,12 +58,18 @@
     </div>
 </div>
 <script>
-    function openEscalationConfirmDeleteModal(projectPk, txnId, description, date, amount) {
+    function openEscalationConfirmDeleteModal(projectPk, txnId, description, date, amount, certId) {
         document.getElementById('escalation_delete_txn_date').textContent = date;
         document.getElementById('escalation_delete_txn_description').textContent = description;
         document.getElementById('escalation_delete_txn_amount').textContent = 'R ' + parseFloat(amount).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
-        document.getElementById('escalation_delete_form').action = `/bill-of-quantities/project/${projectPk}/escalation/${txnId}/delete/`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const resolvedCertId = certId || urlParams.get('certificate');
+        let actionUrl = `/bill-of-quantities/project/${projectPk}/escalation/${txnId}/delete/`;
+        if (resolvedCertId) {
+            actionUrl += `?certificate=${resolvedCertId}`;
+        }
+        document.getElementById('escalation_delete_form').action = actionUrl;
         
         document.getElementById('escalation_confirm_delete_modal').classList.remove('hidden');
     }

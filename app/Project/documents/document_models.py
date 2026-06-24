@@ -7,6 +7,7 @@ from app.core.Utilities.models import BaseModel
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    Group,
     SubCategory,
 )
 
@@ -180,15 +181,13 @@ class Drawing(BaseModel):
         related_name="drawings",
         help_text="Professional discipline this drawing belongs to",
     )
-
-    # Hierarchy/Nesting
-    parent = models.ForeignKey(
-        "self",
-        on_delete=models.CASCADE,
+    drawing_type = models.ForeignKey(
+        "Project.DrawingType",
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="children",
-        help_text="Parent drawing for nested hierarchy",
+        related_name="drawings",
+        help_text="Type of the drawing",
     )
 
     # Link to WBS Levels
@@ -207,6 +206,14 @@ class Drawing(BaseModel):
         blank=True,
         related_name="drawings",
         help_text="Project sub-category (Level 2)",
+    )
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="drawings",
+        help_text="Project group (Level 3)",
     )
 
     file = models.FileField(
@@ -230,16 +237,6 @@ class Drawing(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.drawing_number}: {self.name} (Rev {self.revision_number})"
-
-    @property
-    def level(self) -> int:
-        """Calculate the depth level in the drawing hierarchy."""
-        level = 0
-        curr = self.parent
-        while curr:
-            level += 1
-            curr = curr.parent
-        return level
 
     @property
     def filename(self) -> str:

@@ -1,0 +1,87 @@
+<!-- Create Drawing Type Modal -->
+<div id="createDrawingTypeModal"
+     class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Add New Drawing Type</h3>
+                    <button type="button"
+                            onclick="closeCreateDrawingTypeModal()"
+                            class="text-gray-400 hover:text-gray-500">
+                        {% heroicon_outline "x-mark" size="20" %}
+                    </button>
+                </div>
+            </div>
+            <form method="post" id="createDrawingTypeForm">
+                {% csrf_token %}
+                <div class="px-6 py-4 space-y-4">
+                    <div>{{ drawing_type_form.name|as_crispy_field }}</div>
+                    <div>{{ drawing_type_form.description|as_crispy_field }}</div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button"
+                            onclick="closeCreateDrawingTypeModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" size="16" class="inline mr-1" %}
+                        Create Drawing Type
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    const createDrawingTypeModal = document.getElementById('createDrawingTypeModal');
+    const createDrawingTypeForm = createDrawingTypeModal.querySelector('#createDrawingTypeForm');
+
+    function openCreateDrawingTypeModal() {
+        createDrawingTypeModal.classList.remove('hidden');
+        createDrawingTypeForm.querySelector('#id_name').focus();
+    }
+
+    function closeCreateDrawingTypeModal() {
+        createDrawingTypeModal.classList.add('hidden');
+        createDrawingTypeForm.reset();
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeCreateDrawingTypeModal();
+        }
+    });
+
+    createDrawingTypeModal.addEventListener('click', function(event) {
+        if (event.target === this) closeCreateDrawingTypeModal();
+    });
+
+    createDrawingTypeForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        try {
+            const response = await fetch("{% url 'project:project-drawing-type-create' project.pk %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Drawing type could not be created. Check the name is unique.');
+                console.error('Errors:', result);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while creating the drawing type');
+        }
+    });
+</script>

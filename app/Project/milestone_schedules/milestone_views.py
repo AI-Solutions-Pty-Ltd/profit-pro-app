@@ -3,10 +3,18 @@
 from typing import Any
 
 from django.contrib import messages
+from django.db import models
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
+from django.views import View
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
@@ -73,16 +81,25 @@ class MilestoneCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Creat
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        if next_url:
+            return next_url
         return reverse(
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
         context.update(
             {
                 "project": self.get_project(),
                 "action": "Add",
+                "back_url": next_url
+                or reverse(
+                    "project:time-forecast",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
             }
         )
         return context
@@ -129,16 +146,25 @@ class MilestoneUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        if next_url:
+            return next_url
         return reverse(
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
         context.update(
             {
                 "project": self.get_project(),
                 "action": "Edit",
+                "back_url": next_url
+                or reverse(
+                    "project:time-forecast",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
             }
         )
         return context
@@ -180,13 +206,26 @@ class MilestoneDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Delet
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        if next_url:
+            return next_url
         return reverse(
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        next_url = self.request.GET.get("next") or self.request.POST.get("next")
+        context.update(
+            {
+                "project": self.get_project(),
+                "back_url": next_url
+                or reverse(
+                    "project:time-forecast",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            }
+        )
         return context
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -233,5 +272,108 @@ class MilestoneCompleteView(
         return redirect(
             reverse(
                 "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
+            )
+        )
+
+
+class MilestoneSetupView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """View to list and manage project milestones in Setup."""
+
+    model = Milestone
+    template_name = "project/milestones/milestone_manage.html"
+    context_object_name = "milestones"
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(title="Milestones", url=None),
+        ]
+
+    def get_queryset(self):
+        """Return milestones sorted by sequence/date."""
+        return Milestone.objects.filter(project=self.get_project()).order_by(
+            "sequence", "planned_date"
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class MilestoneLoadDefaultsView(UserHasProjectRoleGenericMixin, View):
+    """Post view to bulk load default construction milestones."""
+
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project()
+        default_names = [
+            "Earthworks",
+            "Foundations",
+            "Surface Beds",
+            "External Envelope",
+            "Internal divisions",
+            "Doors and Windows",
+            "Roof Construction",
+            "Ceilings",
+            "Floor Finishes",
+            "Wall Finishes",
+            "Ceiling Finishes",
+            "Plastering",
+            "Plumbing 1st Fix",
+            "Plumbing 2nd Fix",
+            "Electrical - 1st Fix",
+            "Electrical - 2nd Fix",
+            "Electrical - 3rd Fix",
+            "Painting - Under Coat",
+            "Painting - 1st Coat",
+            "Painting - 2st Coat",
+        ]
+
+        existing_names = set(
+            Milestone.objects.filter(project=project, deleted=False).values_list(
+                "name", flat=True
+            )
+        )
+        from django.utils import timezone
+
+        planned_date = project.start_date or timezone.now().date()
+
+        max_seq = Milestone.objects.filter(project=project, deleted=False).aggregate(
+            max_seq=models.Max("sequence")
+        )["max_seq"]
+        current_seq = (max_seq + 1) if max_seq is not None else 0
+
+        created_count = 0
+        for name in default_names:
+            if name not in existing_names:
+                Milestone.objects.create(
+                    project=project,
+                    name=name,
+                    planned_date=planned_date,
+                    sequence=current_seq,
+                )
+                current_seq += 1
+                created_count += 1
+
+        if created_count > 0:
+            messages.success(
+                request,
+                f"Loaded {created_count} default construction milestones successfully.",
+            )
+        else:
+            messages.info(request, "All default milestones are already loaded.")
+
+        return redirect(
+            reverse(
+                "project:project-milestone-setup", kwargs={"project_pk": project.pk}
             )
         )

@@ -14,6 +14,7 @@ from app.Project.profitability.subcontractor.models import SubcontractorCostTrac
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    DrawingType,
     Group,
     Project,
     SubCategory,
@@ -92,6 +93,7 @@ __all__ = [
     "ProjectSubCategory",
     "ProjectDocument",
     "Drawing",
+    "DrawingType",
     "ProjectImpact",
     "ProjectRole",
     "Role",

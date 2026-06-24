@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 from app.BillOfQuantities.models import LineItem
 
@@ -229,6 +230,22 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
                         "current_claim": getattr(item, "current_claim", None),
                     }
 
+                    if not getattr(item, "is_work", True):
+                        val_map.update(
+                            {
+                                "unit_measurement": "",
+                                "budgeted_quantity": None,
+                                "unit_price": None,
+                                "total_price": None,
+                                "total_qty": None,
+                                "total_claimed": None,
+                                "previous_qty": None,
+                                "previous_claimed": None,
+                                "current_qty": None,
+                                "current_claim": None,
+                            }
+                        )
+
                     for col_idx, col_config in enumerate(active_columns, 1):
                         col_id = col_config["id"]
                         val = val_map.get(col_id)
@@ -367,7 +384,7 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
 
         # Set Column Widths dynamically
         for col_idx, col_config in enumerate(active_columns, 1):
-            col_letter = openpyxl.utils.get_column_letter(col_idx)
+            col_letter = get_column_letter(col_idx)
             col_id = col_config["id"]
             if col_id in ("item_number",):
                 width = 10
@@ -458,17 +475,24 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
             item_row_count = 0
             for item in addendum_line_items:
                 ws.row_dimensions[current_row].height = 20
+                is_work = getattr(item, "is_work", True)
                 ws.cell(
                     row=current_row, column=1, value=item.description
                 ).alignment = align_wrap
                 ws.cell(
-                    row=current_row, column=2, value=item.previous_claimed
+                    row=current_row,
+                    column=2,
+                    value=item.previous_claimed if is_work else None,
                 ).alignment = align_right
                 ws.cell(
-                    row=current_row, column=3, value=item.current_claim
+                    row=current_row,
+                    column=3,
+                    value=item.current_claim if is_work else None,
                 ).alignment = align_right
                 ws.cell(
-                    row=current_row, column=4, value=item.total_claimed
+                    row=current_row,
+                    column=4,
+                    value=item.total_claimed if is_work else None,
                 ).alignment = align_right
 
                 fill_to_use = (
@@ -524,17 +548,24 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
             item_row_count = 0
             for item in special_line_items:
                 ws.row_dimensions[current_row].height = 20
+                is_work = getattr(item, "is_work", True)
                 ws.cell(
                     row=current_row, column=1, value=item.description
                 ).alignment = align_wrap
                 ws.cell(
-                    row=current_row, column=2, value=item.previous_claimed
+                    row=current_row,
+                    column=2,
+                    value=item.previous_claimed if is_work else None,
                 ).alignment = align_right
                 ws.cell(
-                    row=current_row, column=3, value=item.current_claim
+                    row=current_row,
+                    column=3,
+                    value=item.current_claim if is_work else None,
                 ).alignment = align_right
                 ws.cell(
-                    row=current_row, column=4, value=item.total_claimed
+                    row=current_row,
+                    column=4,
+                    value=item.total_claimed if is_work else None,
                 ).alignment = align_right
 
                 fill_to_use = (
@@ -577,10 +608,10 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
         # 3. Ledger Totals
         ledger_items = payment_certificate.get_ledger_summary_items()
         if ledger_items:
-            ws.row_dimensions[current_row].height = 25
-            ws.cell(row=current_row, column=1, value="LEDGER TOTALS").font = Font(
-                bold=True, size=11
-            )
+            # ws.row_dimensions[current_row].height = 25
+            # ws.cell(row=current_row, column=1, value="LEDGER TOTALS").font = Font(
+            #     bold=True, size=11
+            # )
             ws.merge_cells(
                 start_row=current_row, start_column=1, end_row=current_row, end_column=4
             )
@@ -616,25 +647,26 @@ def export_detailed_report_to_xlsx(payment_certificate, is_abridged=False, wb=No
 
             # Subtotal
             ws.row_dimensions[current_row].height = 20
-            ws.cell(
-                row=current_row, column=1, value="Subtotal Ledger Items"
-            ).alignment = align_right
-            ws.cell(row=current_row, column=1).font = font_bold
-            ws.cell(
-                row=current_row,
-                column=2,
-                value=payment_certificate.ledger_progressive_previous,
-            ).alignment = align_right
-            ws.cell(
-                row=current_row,
-                column=3,
-                value=payment_certificate.ledger_current_net_total,
-            ).alignment = align_right
-            ws.cell(
-                row=current_row,
-                column=4,
-                value=payment_certificate.ledger_progressive_to_date,
-            ).alignment = align_right
+            # ws.cell(
+            #     row=current_row, column=1, value="Subtotal Ledger Items"
+            # ).alignment = align_right
+            # ws.cell(row=current_row, column=1).font = font_bold
+            # ws.cell(
+            #     row=current_row,
+            #     column=2,
+            #     value=payment_certificate.ledger_progressive_previous,
+            # ).alignment = align_right
+            # ws.cell(
+            #     row=current_row,
+            #     column=3,
+            #     value=payment_certificate.ledger_current_net_total,
+            # ).alignment = align_right
+            # ws.cell(
+            #     row=current_row,
+            #     column=4,
+            #     value=payment_certificate.ledger_progressive_to_date,
+            # ).alignment = align_right
+
             for col in range(1, 5):
                 cell = ws.cell(row=current_row, column=col)
                 cell.font = font_bold

@@ -124,6 +124,16 @@ class TestProjectCoverConfig:
         assert contract_field["label"] == "Custom Contract Label"
         assert contract_field["enabled"] is True
 
+    def test_default_cover_config_has_custom_ledger_fields(self):
+        """Test default cover page config contains custom ledger fields."""
+        resolved = self.project.get_cover_page_config()
+        fields = resolved["sections"]["section_c"]["fields"]
+        field_ids = [f["id"] for f in fields]
+        assert "advance_payment" in field_ids
+        assert "retention" in field_ids
+        assert "material_on_site" in field_ids
+        assert "other_specify" in field_ids
+
 
 @pytest.mark.django_db
 class TestCompanyManagementSiteCards:
@@ -156,3 +166,31 @@ class TestCompanyManagementSiteCards:
         )
         assert expected_ncr_url in response.content.decode("utf-8")
         assert "NCR Register" in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
+class TestProjectSetup:
+    """Test cases for ProjectSetupView."""
+
+    def test_setup_milestones_card_renders(self, client):
+        """Test that project setup view renders Setup Construction Milestones card."""
+        user = AccountFactory()
+        project = ProjectFactory()
+        project.users.add(user)
+        # Assign user a project role to pass permission checking
+        from app.Project.models import ProjectRole, Role
+
+        ProjectRole.objects.get_or_create(project=project, user=user, role=Role.ADMIN)
+
+        client.force_login(user)
+        url = reverse("project:project-setup", kwargs={"pk": project.pk})
+        response = client.get(url)
+
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "Setup Construction Milestones" in content
+        expected_milestones_url = reverse(
+            "project:project-milestone-setup",
+            kwargs={"project_pk": project.pk},
+        )
+        assert expected_milestones_url in content

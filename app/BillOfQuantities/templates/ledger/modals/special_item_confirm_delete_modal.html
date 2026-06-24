@@ -44,7 +44,7 @@ function openSpecialItemConfirmDeleteModal(projectPk, txnId, description, date, 
     document.getElementById('delete_special_item_amount').textContent = amount.toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
     const form = document.getElementById('delete_special_item_form');
-    form.action = `/projects/${projectPk}/special-items/${txnId}/delete/`;
+    form.action = `/bill-of-quantities/project/${projectPk}/special-items-ledger/${txnId}/delete/`;
     
     document.getElementById('special_item_confirm_delete_modal').classList.remove('hidden');
 }
