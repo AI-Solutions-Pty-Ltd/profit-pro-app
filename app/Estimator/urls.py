@@ -627,6 +627,22 @@ urlpatterns = [
         views.DownloadSystemTradeCodeTemplateView.as_view(),
         name="sys_download_trade_code_template",
     ),
+    # System Municipalities
+    path(
+        "system/municipalities/",
+        views.SystemMunicipalityListView.as_view(),
+        name="sys_municipalities",
+    ),
+    path(
+        "system/municipalities/upload/",
+        views.SystemMunicipalityUploadView.as_view(),
+        name="sys_municipality_upload",
+    ),
+    path(
+        "system/municipalities/download-template/",
+        views.DownloadSystemMunicipalityTemplateView.as_view(),
+        name="sys_download_municipality_template",
+    ),
     # System Materials
     path(
         "system/materials/",

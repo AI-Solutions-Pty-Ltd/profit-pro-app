@@ -19,6 +19,7 @@ from django.views.generic.base import ContextMixin
 
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
+from app.Account.models import Municipality
 
 from .calculations import (
     calculate_pct_of_total,
@@ -50,6 +51,7 @@ from .forms import (
     SystemLabourCrewForm,
     SystemLabourSpecificationForm,
     SystemMaterialForm,
+    SystemMunicipalityForm,
     SystemPlantCostForm,
     SystemPlantSpecificationForm,
     SystemPreliminaryCostForm,
@@ -5005,6 +5007,90 @@ class DownloadSystemTradeCodeTemplateView(SystemLibraryMixin, View):
         return _generate_template(
             ["Prefix", "Trade Name"],
             "system_trade_codes_template.xlsx",
+        )
+
+
+# ── System Municipalities ─────────────────────────────────────────────
+
+
+class SystemMunicipalityListView(SystemLibraryMixin, ListView):
+    model = Municipality
+    template_name = "estimator/system/municipality_list.html"
+    context_object_name = "municipalities"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = Municipality.objects.all()
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            qs = qs.filter(
+                models.Q(province__icontains=q)
+                | models.Q(municipality_name__icontains=q)
+                | models.Q(code__icontains=q)
+                | models.Q(district__icontains=q)
+            )
+        province = self.request.GET.get("province", "").strip()
+        if province:
+            qs = qs.filter(province=province)
+        return qs.order_by("province", "municipality_name")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemMunicipalityForm())
+        context["provinces"] = (
+            Municipality.objects.exclude(province="")
+            .values_list("province", flat=True)
+            .distinct()
+            .order_by("province")
+        )
+        context["f_q"] = self.request.GET.get("q", "")
+        context["f_province"] = self.request.GET.get("province", "")
+        context["query_params"] = _pagination_query_params(self.request)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request, Municipality.objects.all(), label="municipalities"
+        ):
+            return redirect(reverse("estimator:sys_municipalities"))
+        if _handle_bulk_action(request, Municipality.objects.all()):
+            return redirect(reverse("estimator:sys_municipalities"))
+        form = SystemMunicipalityForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Municipality added successfully.")
+            return redirect(reverse("estimator:sys_municipalities"))
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class SystemMunicipalityUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Municipalities"
+        context["upload_description"] = (
+            "Upload South African provinces and municipalities from an Excel template."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_municipality_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import MunicipalityImporter
+
+        return _handle_upload(
+            self.request, MunicipalityImporter, "estimator:sys_municipalities", "Municipalities"
+        )
+
+
+class DownloadSystemMunicipalityTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Province", "Municipality Name", "Code", "District"],
+            "system_municipalities_template.xlsx",
         )
 
 
