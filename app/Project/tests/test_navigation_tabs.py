@@ -32,7 +32,7 @@ class TestNavigationTabsView:
             ("project:project-milestone-setup", "Construction Milestones"),
         ]
 
-        for url_name, expected_text in pages:
+        for url_name, _ in pages:
             url = reverse(url_name, kwargs={"project_pk": self.project.pk})
             response = client.get(url)
             assert response.status_code == 200
