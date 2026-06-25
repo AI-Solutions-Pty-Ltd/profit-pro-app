@@ -11,11 +11,12 @@ from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.models import Project
 
 if TYPE_CHECKING:
-    from app.Account.models import Municipality
+    from app.Account.models import Municipality, Province
     from app.Project.models import (
         ProjectCategory,
         ProjectDiscipline,
     )
+
 
 
 class Portfolio(BaseModel):
@@ -43,6 +44,7 @@ class Portfolio(BaseModel):
     def get_active_projects(
         self: "Portfolio",
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> QuerySet[Project]:
@@ -50,15 +52,18 @@ class Portfolio(BaseModel):
 
         Args:
             category: Optional ProjectCategory to filter by.
+            province: Optional Province to filter by.
             area: Optional Municipality to filter by.
             discipline: Optional ProjectDiscipline to filter by.
 
         Returns:
-            QuerySet of active projects, optionally filtered by category, area, and discipline.
+            QuerySet of active projects, optionally filtered by category, province, area, and discipline.
         """
         projects = self.active_projects
         if category:
             projects = projects.filter(project_category=category)
+        if province:
+            projects = projects.filter(area__province=province)
         if area:
             projects = projects.filter(area=area)
         if discipline:
@@ -70,6 +75,7 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> list[Project]:
@@ -77,7 +83,7 @@ class Portfolio(BaseModel):
         if not date:
             date = datetime.now()
         urgent = []
-        for project in self.get_active_projects(category, area, discipline):
+        for project in self.get_active_projects(category, province, area, discipline):
             try:
                 cpi = project.get_cost_performance_index(date)
                 spi = project.get_schedule_performance_index(date)
@@ -97,6 +103,7 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> list[Project]:
@@ -107,10 +114,10 @@ class Portfolio(BaseModel):
         urgent_ids = [
             p.pk
             for p in self.get_projects_requiring_urgent_intervention(
-                date, category, area, discipline
+                date, category, province, area, discipline
             )
         ]
-        for project in self.get_active_projects(category, area, discipline):
+        for project in self.get_active_projects(category, province, area, discipline):
             if project.pk in urgent_ids:
                 continue
             try:
@@ -137,11 +144,12 @@ class Portfolio(BaseModel):
     def get_total_original_budget(
         self: "Portfolio",
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal:
         """Sum of original contract values with optional filters."""
-        projects = self.get_active_projects(category, area, discipline)
+        projects = self.get_active_projects(category, province, area, discipline)
 
         # Filter at the LineItem level to ensure we only sum original items
         from app.BillOfQuantities.models.structure_models import LineItem
@@ -162,11 +170,12 @@ class Portfolio(BaseModel):
     def get_total_approved_variations(
         self: "Portfolio",
         category: Optional["ProjectCategory"] = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal:
         """Sum of approved variations with optional filters."""
-        projects = self.get_active_projects(category, area, discipline)
+        projects = self.get_active_projects(category, province, area, discipline)
 
         # Filter at the LineItem level to ensure we only sum addendum items
         from app.BillOfQuantities.models.structure_models import LineItem
@@ -187,11 +196,12 @@ class Portfolio(BaseModel):
     def get_total_contract_value(
         self: "Portfolio",
         category: Optional["ProjectCategory"] = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal:
         """Total contract value with optional filters."""
-        projects = self.get_active_projects(category, area, discipline)
+        projects = self.get_active_projects(category, province, area, discipline)
 
         # Filter at the LineItem level to ensure we only sum non-special items
         from app.BillOfQuantities.models.structure_models import LineItem
@@ -211,12 +221,13 @@ class Portfolio(BaseModel):
     def get_total_forecast_value(
         self: "Portfolio",
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal:
         """Sum of latest forecast values with optional filters."""
         return sum_queryset(
-            self.get_active_projects(category, area, discipline), "forecasts"
+            self.get_active_projects(category, province, area, discipline), "forecasts"
         )
 
     @property
@@ -228,12 +239,13 @@ class Portfolio(BaseModel):
     def get_total_certified_value(
         self: "Portfolio",
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal:
         """Total certified amount with optional filters."""
         return sum_queryset(
-            self.get_active_projects(category, area, discipline),
+            self.get_active_projects(category, province, area, discipline),
             "payment_certificates__actual_transactions__total_price",
         )
 
@@ -251,6 +263,7 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
@@ -259,7 +272,7 @@ class Portfolio(BaseModel):
             date = datetime.now()
         total = Decimal("0.00")
         valid_count = 0
-        for project in self.get_active_projects(category, area, discipline):
+        for project in self.get_active_projects(category, province, area, discipline):
             try:
                 # Use latest approved forecast instead of EAC
                 latest_forecast = (
@@ -284,16 +297,17 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
         """Original Budget - Forecast Cost at Completion."""
         if not date:
             date = datetime.now()
-        eac = self.get_forecast_cost_at_completion(date, category, area, discipline)
+        eac = self.get_forecast_cost_at_completion(date, category, province, area, discipline)
         if not eac:
             return None
-        return self.get_total_original_budget(category, area, discipline) - eac
+        return self.get_total_original_budget(category, province, area, discipline) - eac
 
     @property
     def cost_variance_at_completion(self: "Portfolio") -> Decimal | None:
@@ -308,6 +322,7 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
@@ -316,7 +331,7 @@ class Portfolio(BaseModel):
             date = datetime.now()
         total = Decimal("0.00")
         valid_count = 0
-        for project in self.get_active_projects(category, area, discipline):
+        for project in self.get_active_projects(category, province, area, discipline):
             try:
                 ev = project.get_earned_value(date)
                 if ev:
@@ -335,6 +350,7 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
@@ -343,7 +359,7 @@ class Portfolio(BaseModel):
             date = datetime.now()
         total = Decimal("0.00")
         valid_count = 0
-        for project in self.get_active_projects(category, area, discipline):
+        for project in self.get_active_projects(category, province, area, discipline):
             try:
                 cv = project.get_cost_variance(date)
                 if cv:
@@ -362,6 +378,7 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
@@ -370,7 +387,7 @@ class Portfolio(BaseModel):
             date = datetime.now()
         total = Decimal("0.00")
         valid_count = 0
-        for project in self.get_active_projects(category, area, discipline):
+        for project in self.get_active_projects(category, province, area, discipline):
             try:
                 sv = project.get_schedule_variance(date)
                 if sv:
@@ -389,11 +406,12 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
         """Sum of EAC for all active projects."""
-        return self.get_forecast_cost_at_completion(date, category, area, discipline)
+        return self.get_forecast_cost_at_completion(date, category, province, area, discipline)
 
     @property
     def total_estimate_at_completion(self: "Portfolio") -> Decimal | None:
@@ -404,13 +422,14 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
         """Portfolio-level CPI (average of all active projects)."""
         if not date:
             date = datetime.now()
-        active_projects = self.get_active_projects(category, area, discipline)
+        active_projects = self.get_active_projects(category, province, area, discipline)
         if active_projects.count() == 0:
             return None
         cpi = Decimal(0)
@@ -437,13 +456,14 @@ class Portfolio(BaseModel):
         self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
+        province: "Province | None" = None,
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
         """Portfolio-level SPI (average of all active projects)."""
         if not date:
             date = datetime.now()
-        active_projects = self.get_active_projects(category, area, discipline)
+        active_projects = self.get_active_projects(category, province, area, discipline)
         if active_projects.count() == 0:
             return None
         spi = Decimal(0)
@@ -463,3 +483,4 @@ class Portfolio(BaseModel):
     @property
     def schedule_performance_index(self: "Portfolio") -> Decimal | None:
         return self.get_schedule_performance_index()
+

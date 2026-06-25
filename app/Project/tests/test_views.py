@@ -194,3 +194,90 @@ class TestProjectSetup:
             kwargs={"project_pk": project.pk},
         )
         assert expected_milestones_url in content
+
+
+@pytest.mark.django_db
+class TestProjectListViewFilters:
+    """Test cases for ProjectListView filtering and searching."""
+
+    def test_filter_by_search_name(self, client):
+        from django.urls import reverse
+
+        from app.Account.tests.factories import SuperuserFactory
+        from app.Project.tests.factories import ProjectFactory
+
+        admin = SuperuserFactory()
+        client.force_login(admin)
+
+        p1 = ProjectFactory(name="Alpha Project")
+        p2 = ProjectFactory(name="Beta Project")
+
+        url = reverse("project:project-list")
+        
+        # Search for "Alpha"
+        response = client.get(url, data={"search": "Alpha"})
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "Alpha Project" in content
+        assert "Beta Project" not in content
+
+    def test_filter_by_province(self, client):
+        from django.urls import reverse
+
+        from app.Account.tests.factories import (
+            MunicipalityFactory,
+            ProvinceFactory,
+            SuperuserFactory,
+        )
+        from app.Project.tests.factories import ProjectFactory
+
+        admin = SuperuserFactory()
+        client.force_login(admin)
+
+        prov1 = ProvinceFactory(name="Gauteng")
+        prov2 = ProvinceFactory(name="Western Cape")
+
+        mun1 = MunicipalityFactory(province=prov1)
+        mun2 = MunicipalityFactory(province=prov2)
+
+        p1 = ProjectFactory(name="Joburg Project", area=mun1)
+        p2 = ProjectFactory(name="Cape Town Project", area=mun2)
+
+        url = reverse("project:project-list")
+
+        # Filter by Gauteng
+        response = client.get(url, data={"province": prov1.pk})
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "Joburg Project" in content
+        assert "Cape Town Project" not in content
+
+    def test_filter_by_municipality(self, client):
+        from django.urls import reverse
+
+        from app.Account.tests.factories import (
+            MunicipalityFactory,
+            ProvinceFactory,
+            SuperuserFactory,
+        )
+        from app.Project.tests.factories import ProjectFactory
+
+        admin = SuperuserFactory()
+        client.force_login(admin)
+
+        prov = ProvinceFactory()
+        mun1 = MunicipalityFactory(province=prov, municipality_name="Mun One")
+        mun2 = MunicipalityFactory(province=prov, municipality_name="Mun Two")
+
+        p1 = ProjectFactory(name="Project One", area=mun1)
+        p2 = ProjectFactory(name="Project Two", area=mun2)
+
+        url = reverse("project:project-list")
+
+        # Filter by Mun One
+        response = client.get(url, data={"area": mun1.pk})
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "Project One" in content
+        assert "Project Two" not in content
+

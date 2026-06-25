@@ -1,5 +1,6 @@
 | Task | Status | Description |
 |---|---|---|
-| 1. Add Municipalities Test Case | [x] | Write test case for Load Defaults in Municipalities |
-| 2. Implement load_defaults View Action | [x] | Implement load_defaults POST action in SystemMunicipalityListView |
-| 3. Add Button to Municipality Template | [x] | Add the 'Load Defaults' button to the Municipalities list template |
+| 1. Add Filter Test Cases | [x] | Add test cases for ProjectListView filters in test_views.py |
+| 2. Update ProjectFilterForm | [x] | Add province field and update area field in ProjectFilterForm |
+| 3. Update Views | [x] | Update ProjectListView, portfolio_views.py, and report_views.py to support province filter |
+| 4. Update Template | [x] | Add Search input and Province/Municipality dropdowns in project_list.html |

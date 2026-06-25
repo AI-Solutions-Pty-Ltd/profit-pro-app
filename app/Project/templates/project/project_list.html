@@ -74,6 +74,21 @@
                     </div>
                     <!-- Classification Filters -->
                     <div class="flex items-center gap-2 pr-3 border-r border-gray-300">
+                        <!-- Search Name Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Search Name</span>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                    {% heroicon_outline "magnifying-glass" class="h-4 w-4 text-gray-400" %}
+                                </div>
+                                <input type="text"
+                                       name="search"
+                                       id="id_search"
+                                       value="{{ filter_form.search.value|default:'' }}"
+                                       class="block w-44 pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white placeholder-gray-400"
+                                       placeholder="Project name...">
+                            </div>
+                        </div>
                         <!-- Category Filter -->
                         <div class="relative">
                             <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Sector</span>
@@ -90,17 +105,33 @@
                             </select>
                             {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
                         </div>
-                        <!-- Area Filter -->
+                        <!-- Province Filter -->
                         <div class="relative">
-                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Area</span>
-                            <select name="area"
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Province</span>
+                            <select name="province"
                                     onchange="this.form.submit()"
                                     class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for province in filter_form.province.field.queryset %}
+                                    <option value="{{ province.pk }}"
+                                            {% if filter_form.province.value|stringformat:"s" == province.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ province.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
+                        <!-- Municipality Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Municipality</span>
+                            <select name="area"
+                                    onchange="this.form.submit()"
+                                    class="w-36 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                 <option value="">All</option>
                                 {% for area in filter_form.area.field.queryset %}
                                     <option value="{{ area.pk }}"
                                             {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}selected{% endif %}>
-                                        {{ area.province }} - {{ area.municipality_name }}
+                                        {{ area.municipality_name }}
                                     </option>
                                 {% endfor %}
                             </select>
@@ -198,7 +229,7 @@
                         {% heroicon_outline "funnel" class="w-4 h-4 mr-1.5" %}
                         Filter
                     </button>
-                    {% if filter_form.project_category.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
+                    {% if filter_form.search.value or filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
                         <button type="button"
                                 onclick="window.location.href='{% url 'project:project-list' %}'"
                                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200"

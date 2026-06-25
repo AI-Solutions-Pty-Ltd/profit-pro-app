@@ -105,6 +105,8 @@ class ProjectListView(
             projects__in=projects
         ).distinct()
         area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        from app.Account.models import Province
+        province_queryset = Province.objects.filter(municipalities__projects__in=projects).distinct().order_by("name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -118,6 +120,7 @@ class ProjectListView(
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
+            province_queryset=province_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
             stage_queryset=stage_queryset,
@@ -146,6 +149,7 @@ class ProjectListView(
         search = self.filter_form.cleaned_data.get("search")
         active_only = self.filter_form.cleaned_data.get("active_projects")
         category = self.filter_form.cleaned_data.get("project_category")
+        province = self.filter_form.cleaned_data.get("province")
         area = self.filter_form.cleaned_data.get("area")
         discipline = self.filter_form.cleaned_data.get("project_discipline")
         stage = self.filter_form.cleaned_data.get("project_stage")
@@ -155,6 +159,9 @@ class ProjectListView(
 
         if category:
             projects = projects.filter(project_category=category)
+
+        if province:
+            projects = projects.filter(area__province=province)
 
         if area:
             projects = projects.filter(area=area)
