@@ -3,10 +3,36 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+TABLE = "Account_municipality"
+
+
+def _col_exists(cursor, column_name):
+    """Return True if *column_name* exists on the Municipality table."""
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME   = %s
+          AND COLUMN_NAME  = %s
+        """,
+        [TABLE, column_name],
+    )
+    return cursor.fetchone()[0] > 0
+
 
 def _generate_province_code(province_cls, province_name):
-    """Generate a unique province code using initials, with numeric fallback."""
-    # Build initials from each word (e.g. "Northern Cape" -> "NC")
+    """Generate a unique province code using initials, with numeric fallback.
+
+    Examples:
+        "Northern Cape" -> "NC"
+        "North West"    -> "NW"
+        Falls back to "NC2", "NC3" … on collision.
+    """
     words = province_name.split()
     initials = "".join(w[0].upper() for w in words if w)
     candidate = initials or province_name[:3].upper()
@@ -14,7 +40,6 @@ def _generate_province_code(province_cls, province_name):
     if not province_cls.objects.filter(code=candidate).exists():
         return candidate
 
-    # Fall back: try initials + counter suffix
     counter = 2
     while True:
         suffixed = f"{candidate}{counter}"
@@ -23,20 +48,165 @@ def _generate_province_code(province_cls, province_name):
         counter += 1
 
 
+
+# ---------------------------------------------------------------------------
+# Step 2 — drop old unique_together (idempotent)
+# ---------------------------------------------------------------------------
+
+def _drop_unique_constraints(apps, schema_editor):
+    """Drop every UNIQUE constraint on Municipality.
+
+    Safe to call when constraints were already removed in a prior failed run.
+    """
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT CONSTRAINT_NAME
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA   = DATABASE()
+              AND TABLE_NAME     = %s
+              AND CONSTRAINT_TYPE = 'UNIQUE'
+            """,
+            [TABLE],
+        )
+        names = [row[0] for row in cursor.fetchall()]
+        for name in names:
+            cursor.execute(f"ALTER TABLE `{TABLE}` DROP INDEX `{name}`")
+
+
+# ---------------------------------------------------------------------------
+# Step 3 — rename province → old_province (idempotent)
+# ---------------------------------------------------------------------------
+
+def _rename_province_to_old_province(apps, schema_editor):
+    """Rename the old `province` CharField to `old_province`.
+
+    Uses RENAME COLUMN (MariaDB 10.5.2+ / MySQL 8.0.4+) so the full
+    column definition need not be repeated.  Skips if already done.
+    """
+    with schema_editor.connection.cursor() as cursor:
+        if _col_exists(cursor, "old_province"):
+            return  # already renamed in a prior run
+        if not _col_exists(cursor, "province"):
+            return  # neither column present — unexpected, but skip safely
+        cursor.execute(
+            f"ALTER TABLE `{TABLE}` RENAME COLUMN `province` TO `old_province`"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Step 4 — add nullable province FK (idempotent)
+# ---------------------------------------------------------------------------
+
+def _add_province_fk(apps, schema_editor):
+    """Add `province_id` FK column pointing at Account_province.
+
+    Skips if the column already exists from a prior partial run.
+    """
+    with schema_editor.connection.cursor() as cursor:
+        if _col_exists(cursor, "province_id"):
+            return  # already added
+        cursor.execute(
+            f"ALTER TABLE `{TABLE}` ADD COLUMN `province_id` bigint NULL"
+        )
+        cursor.execute(
+            f"""
+            ALTER TABLE `{TABLE}`
+            ADD CONSTRAINT `{TABLE}_province_id_fk`
+            FOREIGN KEY (`province_id`) REFERENCES `Account_province` (`id`)
+            """
+        )
+
+
+# ---------------------------------------------------------------------------
+# Step 5 — data migration (idempotent via get_or_create + always overwrite)
+# ---------------------------------------------------------------------------
+
 def migrate_provinces(apps, schema_editor):
+    """Populate Province rows and link each Municipality to its Province."""
     Province = apps.get_model("Account", "Province")
     Municipality = apps.get_model("Account", "Municipality")
 
     for mun in Municipality.objects.all():
-        if mun.old_province:
-            province_name = mun.old_province.strip()
-            province_obj, created = Province.objects.get_or_create(name=province_name)
-            if created:
-                province_obj.code = _generate_province_code(Province, province_name)
-                province_obj.save()
-            mun.province = province_obj
-            mun.save()
+        if not mun.old_province:
+            continue
+        province_name = mun.old_province.strip()
+        province_obj, created = Province.objects.get_or_create(name=province_name)
+        if created:
+            province_obj.code = _generate_province_code(Province, province_name)
+            province_obj.save()
+        mun.province = province_obj
+        mun.save()
 
+
+# ---------------------------------------------------------------------------
+# Step 6 — remove old_province column (idempotent)
+# ---------------------------------------------------------------------------
+
+def _remove_old_province_column(apps, schema_editor):
+    """Drop the `old_province` CharField if it still exists."""
+    with schema_editor.connection.cursor() as cursor:
+        if not _col_exists(cursor, "old_province"):
+            return  # already gone
+        cursor.execute(f"ALTER TABLE `{TABLE}` DROP COLUMN `old_province`")
+
+
+# ---------------------------------------------------------------------------
+# Step 7 — make province FK NOT NULL (idempotent)
+# ---------------------------------------------------------------------------
+
+def _make_province_fk_not_null(apps, schema_editor):
+    """Set province_id to NOT NULL once all rows have a province."""
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT IS_NULLABLE
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME   = %s
+              AND COLUMN_NAME  = 'province_id'
+            """,
+            [TABLE],
+        )
+        row = cursor.fetchone()
+        if row is None or row[0] == "NO":
+            return  # already NOT NULL or column absent
+        cursor.execute(
+            f"ALTER TABLE `{TABLE}` MODIFY COLUMN `province_id` bigint NOT NULL"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Step 8 — add new unique_together (idempotent)
+# ---------------------------------------------------------------------------
+
+def _add_new_unique_together(apps, schema_editor):
+    """Add UNIQUE(province_id, municipality_name, code) if not present."""
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA    = DATABASE()
+              AND TABLE_NAME      = %s
+              AND CONSTRAINT_TYPE = 'UNIQUE'
+            """,
+            [TABLE],
+        )
+        if cursor.fetchone()[0] > 0:
+            return  # constraint already exists
+        cursor.execute(
+            f"""
+            ALTER TABLE `{TABLE}`
+            ADD UNIQUE KEY `{TABLE}_province_mun_code_uniq`
+            (`province_id`, `municipality_name`, `code`)
+            """
+        )
+
+
+# ---------------------------------------------------------------------------
+# Migration class
+# ---------------------------------------------------------------------------
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -44,6 +214,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # 1. Model options — always idempotent
         migrations.AlterModelOptions(
             name="municipality",
             options={
@@ -52,48 +223,102 @@ class Migration(migrations.Migration):
                 "verbose_name_plural": "Municipalities",
             },
         ),
-        # 1. Drop unique_together constraint
-        migrations.AlterUniqueTogether(
-            name="municipality",
-            unique_together=set(),
+        # 2. Drop old unique_together
+        #    DB:    idempotent RunPython (skips if already gone)
+        #    State: AlterUniqueTogether so Django's state is correct
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    _drop_unique_constraints, migrations.RunPython.noop
+                ),
+            ],
+            state_operations=[
+                migrations.AlterUniqueTogether(
+                    name="municipality",
+                    unique_together=set(),
+                ),
+            ],
         ),
-        # 2. Rename province column to old_province
-        migrations.RenameField(
-            model_name="municipality",
-            old_name="province",
-            new_name="old_province",
+        # 3. Rename province → old_province
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    _rename_province_to_old_province, migrations.RunPython.noop
+                ),
+            ],
+            state_operations=[
+                migrations.RenameField(
+                    model_name="municipality",
+                    old_name="province",
+                    new_name="old_province",
+                ),
+            ],
         ),
-        # 3. Add nullable ForeignKey field province
-        migrations.AddField(
-            model_name="municipality",
-            name="province",
-            field=models.ForeignKey(
-                null=True,
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="municipalities",
-                to="Account.province",
-            ),
+        # 4. Add nullable province FK
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(_add_province_fk, migrations.RunPython.noop),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name="municipality",
+                    name="province",
+                    field=models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="municipalities",
+                        to="Account.province",
+                    ),
+                ),
+            ],
         ),
-        # 4. Migrate data
+        # 5. Data migration
         migrations.RunPython(migrate_provinces, reverse_code=migrations.RunPython.noop),
-        # 5. Remove old_province CharField
-        migrations.RemoveField(
-            model_name="municipality",
-            name="old_province",
+        # 6. Remove old_province CharField
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    _remove_old_province_column, migrations.RunPython.noop
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveField(
+                    model_name="municipality",
+                    name="old_province",
+                ),
+            ],
         ),
-        # 6. Make province ForeignKey non-nullable
-        migrations.AlterField(
-            model_name="municipality",
-            name="province",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="municipalities",
-                to="Account.province",
-            ),
+        # 7. Make province FK non-nullable
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    _make_province_fk_not_null, migrations.RunPython.noop
+                ),
+            ],
+            state_operations=[
+                migrations.AlterField(
+                    model_name="municipality",
+                    name="province",
+                    field=models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="municipalities",
+                        to="Account.province",
+                    ),
+                ),
+            ],
         ),
-        # 7. Re-create unique_together constraint referencing ForeignKey province
-        migrations.AlterUniqueTogether(
-            name="municipality",
-            unique_together={("province", "municipality_name", "code")},
+        # 8. Re-add unique_together on new FK province
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    _add_new_unique_together, migrations.RunPython.noop
+                ),
+            ],
+            state_operations=[
+                migrations.AlterUniqueTogether(
+                    name="municipality",
+                    unique_together={("province", "municipality_name", "code")},
+                ),
+            ],
         ),
     ]
