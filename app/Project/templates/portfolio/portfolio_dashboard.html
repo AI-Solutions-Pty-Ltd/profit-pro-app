@@ -88,11 +88,6 @@
                             <span>Advanced Filters</span>
                             {% heroicon_outline "chevron-down" id="toggleFiltersChevron" class="ml-2 w-4 h-4 text-gray-400 transition-transform duration-200 transform" %}
                         </button>
-                        <!-- Filter Button -->
-                        <button type="submit"
-                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Apply
-                        </button>
                         <!-- Clear Button -->
                         {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
                             <button type="button"
@@ -766,6 +761,23 @@
                 if (provinceSelect.value) {
                     updateMunicipalities();
                 }
+            }
+
+            // Auto-submit filter form on select change
+            const filterForm = document.getElementById('filterForm');
+            if (filterForm) {
+                const selects = filterForm.querySelectorAll('select');
+                selects.forEach(select => {
+                    select.addEventListener('change', function() {
+                        if (select.name === 'province') {
+                            // If province changed, clear selected municipality to avoid invalid values
+                            if (areaSelect) {
+                                areaSelect.value = '';
+                            }
+                        }
+                        filterForm.submit();
+                    });
+                });
             }
         });
     </script>

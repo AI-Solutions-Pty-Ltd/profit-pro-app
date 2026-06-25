@@ -4,21 +4,21 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
-def _generate_province_code(Province, province_name):
+def _generate_province_code(province_cls, province_name):
     """Generate a unique province code using initials, with numeric fallback."""
     # Build initials from each word (e.g. "Northern Cape" -> "NC")
     words = province_name.split()
     initials = "".join(w[0].upper() for w in words if w)
     candidate = initials or province_name[:3].upper()
 
-    if not Province.objects.filter(code=candidate).exists():
+    if not province_cls.objects.filter(code=candidate).exists():
         return candidate
 
     # Fall back: try initials + counter suffix
     counter = 2
     while True:
         suffixed = f"{candidate}{counter}"
-        if not Province.objects.filter(code=suffixed).exists():
+        if not province_cls.objects.filter(code=suffixed).exists():
             return suffixed
         counter += 1
 
