@@ -8,6 +8,15 @@
             <p class="mt-1 text-sm text-gray-500">Standard South African provinces list.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex gap-2">
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        name="load_defaults"
+                        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Load Defaults
+                </button>
+            </form>
             <a href="{% url 'estimator:sys_province_upload' %}"
                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
                 {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
