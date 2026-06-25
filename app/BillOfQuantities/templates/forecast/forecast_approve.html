@@ -11,14 +11,14 @@
     Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="overflow-hidden bg-white rounded-lg shadow-md">
         <div id="forecast-list-header"
-             class="px-6 py-5 border-b border-gray-200 bg-gray-50 mb-4 sticky top-0 z-10">
-            <div class="flex items-center justify-between gap-6">
+             class="sticky top-0 z-10 px-6 py-5 mb-4 bg-gray-50 border-b border-gray-200">
+            <div class="flex gap-6 justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" class="mr-1 w-4 h-4" %}
                         Dashboard
                     </a>
                     <div>
@@ -40,15 +40,15 @@
                     {% if forecast.status == 'DRAFT' %}
                         <button type="button"
                                 onclick="document.getElementById('approval-section').scrollIntoView({behavior: 'smooth'})"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                            {% heroicon_outline "arrow-down" class="w-4 h-4 mr-1" %}
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "arrow-down" class="mr-1 w-4 h-4" %}
                             Jump to Approval
                         </button>
                         <form method="post" class="inline">
                             {% csrf_token %}
                             <button type="submit"
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white bg-green-600 rounded-md border border-transparent hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                {% heroicon_outline "check" class="mr-1 w-4 h-4" %}
                                 Approve Now
                             </button>
                         </form>
@@ -57,23 +57,23 @@
             </div>
         </div>
         <div id="content" class="p-6">
-            <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div class="bg-gray-50 rounded-lg p-3">
+            <div class="grid grid-cols-1 gap-4 mb-6 text-sm md:grid-cols-3">
+                <div class="p-3 bg-gray-50 rounded-lg">
                     <p class="text-gray-500">Period</p>
                     <p class="font-semibold text-gray-900">{{ forecast.period|date:"F Y" }}</p>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-3">
+                <div class="p-3 bg-gray-50 rounded-lg">
                     <p class="text-gray-500">Captured by</p>
                     <p class="font-semibold text-gray-900">{{ forecast.captured_by.get_full_name|default:forecast.captured_by.email }}</p>
                 </div>
-                <div class="bg-gray-50 rounded-lg p-3">
+                <div class="p-3 bg-gray-50 rounded-lg">
                     <p class="text-gray-500">Created on</p>
                     <p class="font-semibold text-gray-900">{{ forecast.created_at|date:"d M Y H:i" }}</p>
                 </div>
             </div>
             <!-- Forecast Notes (if approved and has notes) -->
             {% if forecast.status == 'APPROVED' and forecast.notes %}
-                <div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <div class="p-4 mb-6 bg-indigo-50 rounded-lg border border-indigo-200">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">{% heroicon_outline 'chat-bubble-left-ellipsis' class="w-5 h-5 text-indigo-600" %}</div>
                         <div class="ml-3">
@@ -84,20 +84,20 @@
                 </div>
             {% endif %}
             <!-- Summary Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div class="grid grid-cols-2 gap-4 mb-8 md:grid-cols-3">
                 {% if prior_forecast %}
-                    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Prior Forecast</p>
+                    <div class="p-4 bg-white rounded-lg border-l-4 border-purple-500 shadow">
+                        <p class="text-xs font-medium tracking-wider text-gray-500 uppercase">Prior Forecast</p>
                         <p class="text-xs text-gray-400">{{ prior_forecast.period|date:"M Y" }}</p>
                         <p class="mt-1 text-xl font-bold text-purple-600">R {{ prior_forecast_total|default:0|floatformat:0|intcomma }}</p>
                     </div>
                 {% endif %}
-                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Total</p>
+                <div class="p-4 bg-white rounded-lg border-l-4 border-emerald-500 shadow">
+                    <p class="text-xs font-medium tracking-wider text-gray-500 uppercase">Forecast Total</p>
                     <p class="mt-1 text-xl font-bold text-emerald-600">R {{ total_forecast|default:0|floatformat:0|intcomma }}</p>
                 </div>
                 <div class="bg-white rounded-lg shadow p-4 border-l-4 border-{% if difference > 0 %}red{% elif difference < 0 %}green{% else %}gray{% endif %}-500">
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Variance from Budget</p>
+                    <p class="text-xs font-medium tracking-wider text-gray-500 uppercase">Variance from Contract</p>
                     <p class="mt-1 text-xl font-bold text-{% if difference > 0 %}red{% elif difference < 0 %}green{% else %}gray{% endif %}-600">
                         {% if difference > 0 %}+{% endif %}
                         R {{ difference|default:0|floatformat:0|intcomma }}
@@ -107,15 +107,15 @@
             <!-- L1/L2 Section Summary -->
             {% if structure_summary %}
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Section Summary (L1/L2)</h2>
+                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Section Summary (L1/L2)</h2>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section / Bill</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Section / Bill</th>
+                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Contract Amount</th>
+                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Forecast Amount</th>
+                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Variance</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -124,14 +124,14 @@
                                     <tr class="bg-indigo-50">
                                         <td class="px-6 py-3 text-sm font-semibold text-indigo-900">
                                             <div class="flex items-center">
-                                                {% heroicon_outline "building-office" class="w-4 h-4 text-indigo-600 mr-2" %}
+                                                {% heroicon_outline "building-office" class="mr-2 w-4 h-4 text-indigo-600" %}
                                                 {{ item.structure.name }}
                                             </div>
                                         </td>
-                                        <td class="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                                        <td class="px-6 py-3 text-sm font-medium text-right text-gray-900">
                                             R {{ item.budget_total|floatformat:0|intcomma }}
                                         </td>
-                                        <td class="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                                        <td class="px-6 py-3 text-sm font-medium text-right text-gray-900">
                                             R {{ item.forecast_total|floatformat:0|intcomma }}
                                         </td>
                                         <td class="px-6 py-3 text-sm font-medium text-right {% if item.variance > 0 %}text-red-600{% elif item.variance < 0 %}text-green-600{% else %}text-gray-600{% endif %}">
@@ -144,12 +144,12 @@
                                         <tr class="hover:bg-gray-50">
                                             <td class="px-6 py-2 pl-12 text-sm text-gray-700">
                                                 <div class="flex items-center">
-                                                    {% heroicon_outline "document-text" class="w-4 h-4 text-gray-400 mr-2" %}
+                                                    {% heroicon_outline "document-text" class="mr-2 w-4 h-4 text-gray-400" %}
                                                     {{ bill_item.bill.name }}
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-2 text-sm text-gray-700 text-right">R {{ bill_item.budget_total|floatformat:0|intcomma }}</td>
-                                            <td class="px-6 py-2 text-sm text-gray-700 text-right">R {{ bill_item.forecast_total|floatformat:0|intcomma }}</td>
+                                            <td class="px-6 py-2 text-sm text-right text-gray-700">R {{ bill_item.budget_total|floatformat:0|intcomma }}</td>
+                                            <td class="px-6 py-2 text-sm text-right text-gray-700">R {{ bill_item.forecast_total|floatformat:0|intcomma }}</td>
                                             <td class="px-6 py-2 text-sm text-right {% if bill_item.variance > 0 %}text-red-600{% elif bill_item.variance < 0 %}text-green-600{% else %}text-gray-500{% endif %}">
                                                 {% if bill_item.variance > 0 %}+{% endif %}
                                                 R {{ bill_item.variance|floatformat:0|intcomma }}
@@ -164,7 +164,7 @@
             {% endif %}
             <!-- Forecast Transactions Table -->
             <div class="mb-8">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Changed Line Items</h2>
                     <span class="text-sm text-gray-500">Showing {{ changed_count }} of {{ total_transactions }} items with changes</span>
                 </div>
@@ -172,10 +172,10 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Details</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budgeted Amount</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Amount</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Item Details</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Contract Amount</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Forecast Amount</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Variance</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -185,7 +185,7 @@
                                     <tr class="bg-indigo-50">
                                         <td colspan="4" class="px-6 py-3">
                                             <div class="flex items-center">
-                                                {% heroicon_outline "building-office" class="w-5 h-5 text-indigo-600 mr-2" %}
+                                                {% heroicon_outline "building-office" class="mr-2 w-5 h-5 text-indigo-600" %}
                                                 <span class="font-semibold text-indigo-900">{{ item.name }}</span>
                                             </div>
                                         </td>
@@ -195,7 +195,7 @@
                                     <tr class="bg-blue-50">
                                         <td colspan="4" class="px-6 py-2 pl-10">
                                             <div class="flex items-center">
-                                                {% heroicon_outline "document-text" class="w-4 h-4 text-blue-600 mr-2" %}
+                                                {% heroicon_outline "document-text" class="mr-2 w-4 h-4 text-blue-600" %}
                                                 <span class="font-medium text-blue-900">{{ item.name }}</span>
                                             </div>
                                         </td>
@@ -205,7 +205,7 @@
                                     <tr class="bg-gray-50">
                                         <td colspan="4" class="px-6 py-2 pl-14">
                                             <div class="flex items-center">
-                                                {% heroicon_outline "folder" class="w-4 h-4 text-gray-500 mr-2" %}
+                                                {% heroicon_outline "folder" class="mr-2 w-4 h-4 text-gray-500" %}
                                                 <span class="text-sm font-medium text-gray-700">{{ item.name }}</span>
                                             </div>
                                         </td>
@@ -213,31 +213,31 @@
                                 {% elif item.type == 'transaction' %}
                                     <!-- Transaction Row -->
                                     <tr>
-                                        <td class="px-6 py-4 text-sm text-gray-900 pl-16">
+                                        <td class="px-6 py-4 pl-16 text-sm text-gray-900">
                                             <div>
                                                 <div class="font-medium">{{ item.transaction.line_item.item_number }}</div>
                                                 <div class="text-gray-500">{{ item.transaction.line_item.description|truncatechars:80 }}</div>
                                                 {% if item.transaction.notes %}
-                                                    <div class="mt-2 p-2 bg-indigo-50 rounded text-xs text-indigo-700 border-l-2 border-indigo-400">
-                                                        {% heroicon_mini "chat-bubble-left-ellipsis" class="w-3 h-3 inline mr-1" %}
+                                                    <div class="p-2 mt-2 text-xs text-indigo-700 bg-indigo-50 rounded border-l-2 border-indigo-400">
+                                                        {% heroicon_mini "chat-bubble-left-ellipsis" class="inline mr-1 w-3 h-3" %}
                                                         {{ item.transaction.notes }}
                                                     </div>
                                                 {% endif %}
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                                             R {{ item.transaction.line_item.total_price|default:0|floatformat:2|intcomma }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                                             R {{ item.transaction.total_price|default:0|floatformat:2|intcomma }}
                                         </td>
                                         {% define item.transaction.line_item.total_price|sub:item.transaction.total_price|mul:1|default:0 as variance %}
                                         {% if variance < 0 %}
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-bold">
+                                            <td class="px-6 py-4 text-sm font-bold text-red-500 whitespace-nowrap">
                                                 R {{ variance|default:0|floatformat:2|intcomma }}
                                             </td>
                                         {% else %}
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-500 font-bold">
+                                            <td class="px-6 py-4 text-sm font-bold text-green-500 whitespace-nowrap">
                                                 R {{ variance|default:0|floatformat:2|intcomma }}
                                             </td>
                                         {% endif %}
@@ -259,11 +259,11 @@
                 </div>
             </div>
             <!-- Approval Section -->
-            <div id="approval-section" class="mt-8 pt-6 border-t border-gray-200">
+            <div id="approval-section" class="pt-6 mt-8 border-t border-gray-200">
                 {% if forecast.status == 'DRAFT' %}
                     <form method="post">
                         {% csrf_token %}
-                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                        <div class="p-4 mb-6 bg-amber-50 rounded-lg border border-amber-200">
                             <div class="flex">
                                 <div class="flex-shrink-0">{% heroicon_outline 'exclamation-triangle' class="w-6 h-6 text-amber-600" %}</div>
                                 <div class="ml-3">
@@ -279,32 +279,32 @@
                         </div>
                         <!-- Approval Notes -->
                         <div class="mb-6">
-                            <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
-                                {% heroicon_outline 'chat-bubble-left-ellipsis' class="w-4 h-4 inline mr-1" %}
+                            <label for="notes" class="block mb-2 text-sm font-medium text-gray-700">
+                                {% heroicon_outline 'chat-bubble-left-ellipsis' class="inline mr-1 w-4 h-4" %}
                                 Approval Notes (Optional)
                             </label>
                             <textarea name="notes"
                                       id="notes"
                                       rows="3"
                                       placeholder="Add any notes or comments about this forecast approval..."
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ forecast.notes }}</textarea>
+                                      class="px-3 py-2 w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ forecast.notes }}</textarea>
                             <p class="mt-1 text-xs text-gray-500">These notes will be saved with the approved forecast.</p>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex justify-between items-center">
                             <a href="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}"
-                               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                                {% heroicon_outline "pencil" class="w-4 h-4 mr-1" %}
+                               class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                {% heroicon_outline "pencil" class="mr-1 w-4 h-4" %}
                                 Back to Edit
                             </a>
                             <button type="submit"
-                                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-lg">
-                                {% heroicon_outline "check-circle" class="w-5 h-5 mr-2" %}
+                                    class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-green-600 rounded-md border border-transparent shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                {% heroicon_outline "check-circle" class="mr-2 w-5 h-5" %}
                                 Approve Forecast
                             </button>
                         </div>
                     </form>
                 {% else %}
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="p-4 bg-green-50 rounded-lg border border-green-200">
                         <div class="flex">
                             <div class="flex-shrink-0">{% heroicon_outline 'check-circle' class="w-6 h-6 text-green-600" %}</div>
                             <div class="ml-3">
@@ -319,25 +319,25 @@
                     </div>
                     <div class="mt-6">
                         <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                            {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "arrow-left" class="mr-1 w-4 h-4" %}
                             Back to Dashboard
                         </a>
                     </div>
                 {% endif %}
             </div>
             <!-- Footer -->
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
+            <div class="px-6 py-4 mt-6 bg-gray-50 border-t border-gray-200">
                 <div class="flex justify-between items-center">
                     <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                        {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                       class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
+                        {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
                         Back to Forecasts
                     </a>
                     <a href="{% url 'project:project-management' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                       class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
                         Project Management
-                        {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                        {% heroicon_outline "chevron-right" class="ml-1 w-4 h-4" %}
                     </a>
                 </div>
             </div>

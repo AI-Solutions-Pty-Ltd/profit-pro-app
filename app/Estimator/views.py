@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.base import ContextMixin
 
+from app.Account.models import Municipality, Province
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
 
@@ -50,10 +51,12 @@ from .forms import (
     SystemLabourCrewForm,
     SystemLabourSpecificationForm,
     SystemMaterialForm,
+    SystemMunicipalityForm,
     SystemPlantCostForm,
     SystemPlantSpecificationForm,
     SystemPreliminaryCostForm,
     SystemPreliminarySpecificationForm,
+    SystemProvinceForm,
     SystemSpecificationComponentFormSet,
     SystemSpecificationForm,
     SystemTradeCodeForm,
@@ -5005,6 +5008,1712 @@ class DownloadSystemTradeCodeTemplateView(SystemLibraryMixin, View):
         return _generate_template(
             ["Prefix", "Trade Name"],
             "system_trade_codes_template.xlsx",
+        )
+
+
+# ── System Municipalities ─────────────────────────────────────────────
+
+
+class SystemMunicipalityListView(SystemLibraryMixin, ListView):
+    model = Municipality
+    template_name = "estimator/system/municipality_list.html"
+    context_object_name = "municipalities"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = Municipality.objects.all()
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            qs = qs.filter(
+                models.Q(province__name__icontains=q)
+                | models.Q(municipality_name__icontains=q)
+                | models.Q(code__icontains=q)
+                | models.Q(district__icontains=q)
+            )
+        province = self.request.GET.get("province", "").strip()
+        if province:
+            qs = qs.filter(province_id=province)
+        return qs.order_by("province__name", "municipality_name")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemMunicipalityForm())
+        context["provinces"] = Province.objects.all().order_by("name")
+        context["f_q"] = self.request.GET.get("q", "")
+        context["f_province"] = self.request.GET.get("province", "")
+        context["query_params"] = _pagination_query_params(self.request)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if "load_defaults" in request.POST:
+            province_codes = {
+                "Western Cape": "WC",
+                "Northern Cape": "NC",
+                "Eastern Cape": "EC",
+                "Free State": "FS",
+                "Gauteng": "GP",
+                "Kwa-Zulu Natal": "KZN",
+                "Limpopo": "LP",
+                "Mpumalanga": "MP",
+                "North-West": "NW",
+            }
+            defaults = [
+                # Western Cape
+                {
+                    "province": "Western Cape",
+                    "municipality": "Breede Valley Local Municipality",
+                    "code": "WC025",
+                    "district": "Cape Winelands",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Drakenstein Local Municipality",
+                    "code": "WC023",
+                    "district": "Cape Winelands",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Langeberg Local Municipality",
+                    "code": "WC026",
+                    "district": "Cape Winelands",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Stellenbosch Local Municipality",
+                    "code": "WC024",
+                    "district": "Cape Winelands",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Witzenberg Local Municipality",
+                    "code": "WC022",
+                    "district": "Cape Winelands",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Beaufort West Local Municipality",
+                    "code": "WC053",
+                    "district": "Central Karoo",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Laingsburg Local Municipality",
+                    "code": "WC051",
+                    "district": "Central Karoo",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Prince Albert Local Municipality",
+                    "code": "WC052",
+                    "district": "Central Karoo",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Bitou Local Municipality",
+                    "code": "WC047",
+                    "district": "Garden Route",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "George Local Municipality",
+                    "code": "WC044",
+                    "district": "Garden Route",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Hessequa Local Municipality",
+                    "code": "WC042",
+                    "district": "Garden Route",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Kannaland Local Municipality",
+                    "code": "WC041",
+                    "district": "Garden Route",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Knysna Local Municipality",
+                    "code": "WC048",
+                    "district": "Garden Route",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Mossel Bay Local Municipality",
+                    "code": "WC043",
+                    "district": "Garden Route",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Oudtshoorn Local Municipality",
+                    "code": "WC045",
+                    "district": "Garden Route",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Cape Agulhas Local Municipality",
+                    "code": "WC033",
+                    "district": "Overberg",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Overstrand Local Municipality",
+                    "code": "WC032",
+                    "district": "Overberg",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Swellendam Local Municipality",
+                    "code": "WC034",
+                    "district": "Overberg",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Theewaterskloof Local Municipality",
+                    "code": "WC031",
+                    "district": "Overberg",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Bergrivier Local Municipality",
+                    "code": "WC013",
+                    "district": "West Coast",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Cederberg Local Municipality",
+                    "code": "WC012",
+                    "district": "West Coast",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Matzikama Local Municipality",
+                    "code": "WC011",
+                    "district": "West Coast",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Saldanha Bay Local Municipality",
+                    "code": "WC014",
+                    "district": "West Coast",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "Swartland Local Municipality",
+                    "code": "WC015",
+                    "district": "West Coast",
+                },
+                {
+                    "province": "Western Cape",
+                    "municipality": "City of Cape Town Metropolitan Municipality",
+                    "code": "CPT",
+                    "district": "Metropolitan",
+                },
+                # Northern Cape
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Dikgatlong Local Municipality",
+                    "code": "NC092",
+                    "district": "Frances Baard",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Magareng Local Municipality",
+                    "code": "NC093",
+                    "district": "Frances Baard",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Phokwane Local Municipality",
+                    "code": "NC094",
+                    "district": "Frances Baard",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Sol Plaatje Local Municipality",
+                    "code": "NC091",
+                    "district": "Frances Baard",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Ga-Segonyana Local Municipality",
+                    "code": "NC452",
+                    "district": "John Taolo Gaetsewe",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Gamagara Local Municipality",
+                    "code": "NC453",
+                    "district": "John Taolo Gaetsewe",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Joe Morolong Local Municipality",
+                    "code": "NC451",
+                    "district": "John Taolo Gaetsewe",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Hantam Local Municipality",
+                    "code": "NC065",
+                    "district": "Namakwa",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Kamiesberg Local Municipality",
+                    "code": "NC064",
+                    "district": "Namakwa",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Karoo Hoogland Local Municipality",
+                    "code": "NC066",
+                    "district": "Namakwa",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Khâi-Ma Local Municipality",
+                    "code": "NC067",
+                    "district": "Namakwa",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Nama Khoi Local Municipality",
+                    "code": "NC062",
+                    "district": "Namakwa",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Richtersveld Local Municipality",
+                    "code": "NC061",
+                    "district": "Namakwa",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Emthanjeni Local Municipality",
+                    "code": "NC073",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Kareeberg Local Municipality",
+                    "code": "NC074",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Renosterberg Local Municipality",
+                    "code": "NC075",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Siyancuma Local Municipality",
+                    "code": "NC078",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Siyathemba Local Municipality",
+                    "code": "NC077",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Thembelihle Local Municipality",
+                    "code": "NC076",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Ubuntu Local Municipality",
+                    "code": "NC071",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Umsobomvu Local Municipality",
+                    "code": "NC072",
+                    "district": "Pixley ka Seme",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "!Kheis Local Municipality",
+                    "code": "NC084",
+                    "district": "ZF Mgcawu",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Dawid Kruiper Local Municipality",
+                    "code": "NC087",
+                    "district": "ZF Mgcawu",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Kai !Garib Local Municipality",
+                    "code": "NC082",
+                    "district": "ZF Mgcawu",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Kgatelopele Local Municipality",
+                    "code": "NC086",
+                    "district": "ZF Mgcawu",
+                },
+                {
+                    "province": "Northern Cape",
+                    "municipality": "Tsantsabane Local Municipality",
+                    "code": "NC085",
+                    "district": "ZF Mgcawu",
+                },
+                # Eastern Cape
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Matatiele Local Municipality",
+                    "code": "EC441",
+                    "district": "Alfred Nzo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Ntabankulu Local Municipality",
+                    "code": "EC444",
+                    "district": "Alfred Nzo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Umzimvubu Local Municipality",
+                    "code": "EC442",
+                    "district": "Alfred Nzo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Winnie Madikizela-Mandela Local Municipality",
+                    "code": "EC443",
+                    "district": "Alfred Nzo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Amahlathi Local Municipality",
+                    "code": "EC124",
+                    "district": "Amathole",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Great Kei Local Municipality",
+                    "code": "EC123",
+                    "district": "Amathole",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Mbhashe Local Municipality",
+                    "code": "EC121",
+                    "district": "Amathole",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Mnquma Local Municipality",
+                    "code": "EC122",
+                    "district": "Amathole",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Ngqushwa Local Municipality",
+                    "code": "EC126",
+                    "district": "Amathole",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Raymond Mhlaba Local Municipality",
+                    "code": "EC129",
+                    "district": "Amathole",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Dr AB Xuma Local Municipality",
+                    "code": "EC137",
+                    "district": "Chris Hani",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Emalahleni Local Municipality",
+                    "code": "EC136",
+                    "district": "Chris Hani",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Enoch Mgijima Local Municipality",
+                    "code": "EC139",
+                    "district": "Chris Hani",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Intsika Yethu Local Municipality",
+                    "code": "EC135",
+                    "district": "Chris Hani",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Inxuba Yethemba Local Municipality",
+                    "code": "EC131",
+                    "district": "Chris Hani",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Sakhisizwe Local Municipality",
+                    "code": "EC138",
+                    "district": "Chris Hani",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Elundini Local Municipality",
+                    "code": "EC141",
+                    "district": "Joe Gqabi",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Senqu Local Municipality",
+                    "code": "EC142",
+                    "district": "Joe Gqabi",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Walter Sisulu Local Municipality",
+                    "code": "EC145",
+                    "district": "Joe Gqabi",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Ingquza Hill Local Municipality",
+                    "code": "EC153",
+                    "district": "OR Tambo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "King Sabata Dalindyebo Local Municipality",
+                    "code": "EC157",
+                    "district": "OR Tambo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Kumkani Mhlontlo Local Municipality",
+                    "code": "EC156",
+                    "district": "OR Tambo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Nyandeni Local Municipality",
+                    "code": "EC155",
+                    "district": "OR Tambo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Port St Johns Local Municipality",
+                    "code": "EC154",
+                    "district": "OR Tambo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Blue Crane Route Local Municipality",
+                    "code": "EC102",
+                    "district": "Sarah Baartman",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Dr Beyers Naudé Local Municipality",
+                    "code": "EC101",
+                    "district": "Sarah Baartman",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Kou-Kamma Local Municipality",
+                    "code": "EC109",
+                    "district": "Sarah Baartman",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Kouga Local Municipality",
+                    "code": "EC108",
+                    "district": "Sarah Baartman",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Makana Local Municipality",
+                    "code": "EC104",
+                    "district": "Sarah Baartman",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Ndlambe Local Municipality",
+                    "code": "EC105",
+                    "district": "Sarah Baartman",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Sundays River Valley Local Municipality",
+                    "code": "EC106",
+                    "district": "Sarah Baartman",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Alfred Nzo District Municipality",
+                    "code": "DC44",
+                    "district": "Alfred Nzo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Amathole District Municipality",
+                    "code": "DC12",
+                    "district": "Amathole",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Buffalo City Metropolitan Municipality",
+                    "code": "BUF",
+                    "district": "Metropolitan",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Chris Hani District Municipality",
+                    "code": "DC13",
+                    "district": "Chris Hani",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Joe Gqabi District Municipality",
+                    "code": "DC14",
+                    "district": "Joe Gqabi",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Nelson Mandela Bay Metropolitan Municipality",
+                    "code": "NMA",
+                    "district": "Metropolitan",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "OR Tambo District Municipality",
+                    "code": "DC15",
+                    "district": "OR Tambo",
+                },
+                {
+                    "province": "Eastern Cape",
+                    "municipality": "Sarah Baartman District Municipality",
+                    "code": "DC10",
+                    "district": "Sarah Baartman",
+                },
+                # Free State
+                {
+                    "province": "Free State",
+                    "municipality": "Fezile Dabi District Municipality",
+                    "code": "DC20",
+                    "district": "Fezile Dabi",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Lejweleputswa District Municipality",
+                    "code": "DC18",
+                    "district": "Lejweleputswa",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Mangaung Metropolitan Municipality",
+                    "code": "MAN",
+                    "district": "Metropolitan",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Thabo Mofutsanyana District Municipality",
+                    "code": "DC19",
+                    "district": "Thabo Mofutsanyana",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Xhariep District Municipality",
+                    "code": "DC16",
+                    "district": "Xhariep",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Mafube Local Municipality",
+                    "code": "FS205",
+                    "district": "Fezile Dabi",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Metsimaholo Local Municipality",
+                    "code": "FS204",
+                    "district": "Fezile Dabi",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Moqhaka Local Municipality",
+                    "code": "FS201",
+                    "district": "Fezile Dabi",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Ngwathe Local Municipality",
+                    "code": "FS203",
+                    "district": "Fezile Dabi",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Masilonyana Local Municipality",
+                    "code": "FS181",
+                    "district": "Lejweleputswa",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Matjhabeng Local Municipality",
+                    "code": "FS184",
+                    "district": "Lejweleputswa",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Nala Local Municipality",
+                    "code": "FS185",
+                    "district": "Lejweleputswa",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Tokologo Local Municipality",
+                    "code": "FS182",
+                    "district": "Lejweleputswa",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Tswelopele Local Municipality",
+                    "code": "FS183",
+                    "district": "Lejweleputswa",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Dihlabeng Local Municipality",
+                    "code": "FS192",
+                    "district": "Thabo Mofutsanyana",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Maluti-a-Phofung Local Municipality",
+                    "code": "FS194",
+                    "district": "Thabo Mofutsanyana",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Mantsopa Local Municipality",
+                    "code": "FS196",
+                    "district": "Thabo Mofutsanyana",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Nketoana Local Municipality",
+                    "code": "FS193",
+                    "district": "Thabo Mofutsanyana",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Phumelela Local Municipality",
+                    "code": "FS195",
+                    "district": "Thabo Mofutsanyana",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Setsoto Local Municipality",
+                    "code": "FS191",
+                    "district": "Thabo Mofutsanyana",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Kopanong Local Municipality",
+                    "code": "FS162",
+                    "district": "Xhariep",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Letsemeng Local Municipality",
+                    "code": "FS161",
+                    "district": "Xhariep",
+                },
+                {
+                    "province": "Free State",
+                    "municipality": "Mohokare Local Municipality",
+                    "code": "FS163",
+                    "district": "Xhariep",
+                },
+                # Gauteng
+                {
+                    "province": "Gauteng",
+                    "municipality": "Emfuleni Local Municipality",
+                    "code": "GT421",
+                    "district": "Sedibeng",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "Midvaal Local Municipality",
+                    "code": "GT422",
+                    "district": "Sedibeng",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "Lesedi Local Municipality",
+                    "code": "GT423",
+                    "district": "Sedibeng",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "Mogale City Local Municipality",
+                    "code": "GT481",
+                    "district": "West Rand",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "Merafong City Local Municipality",
+                    "code": "GT484",
+                    "district": "West Rand",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "Rand West City Local Municipality",
+                    "code": "GT485",
+                    "district": "West Rand",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "City of Ekurhuleni Metropolitan Municipality",
+                    "code": "EKU",
+                    "district": "Metropolitan",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "City of Johannesburg Metropolitan Municipality",
+                    "code": "JHB",
+                    "district": "Metropolitan",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "City of Tshwane Metropolitan Municipality",
+                    "code": "TSH",
+                    "district": "Metropolitan",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "Sedibeng District Municipality",
+                    "code": "DC42",
+                    "district": "Sedibeng",
+                },
+                {
+                    "province": "Gauteng",
+                    "municipality": "West Rand District Municipality",
+                    "code": "DC48",
+                    "district": "West Rand",
+                },
+                # Kwa-Zulu Natal
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Amajuba District Municipality",
+                    "code": "DC25",
+                    "district": "Amajuba",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "eThekwini Metropolitan Municipality",
+                    "code": "ETH",
+                    "district": "Metropolitan",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Harry Gwala District Municipality",
+                    "code": "DC43",
+                    "district": "Harry Gwala",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "iLembe District Municipality",
+                    "code": "DC29",
+                    "district": "iLembe",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "King Cetshwayo District Municipality",
+                    "code": "DC28",
+                    "district": "King Cetshwayo",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Ugu District Municipality",
+                    "code": "DC21",
+                    "district": "Ugu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMgungundlovu District Municipality",
+                    "code": "DC22",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMkhanyakude District Municipality",
+                    "code": "DC27",
+                    "district": "Umkhanyakude",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMzinyathi District Municipality",
+                    "code": "DC24",
+                    "district": "Umzinyathi",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uThukela District Municipality",
+                    "code": "DC23",
+                    "district": "Uthukela",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Zululand District Municipality",
+                    "code": "DC26",
+                    "district": "Zululand",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Dannhauser Local Municipality",
+                    "code": "KZN254",
+                    "district": "Amajuba",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "eMadlangeni Local Municipality",
+                    "code": "KZN253",
+                    "district": "Amajuba",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Newcastle Local Municipality",
+                    "code": "KZN252",
+                    "district": "Amajuba",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Dr Nkosazana Dlamini Zuma Local Municipality",
+                    "code": "KZN436",
+                    "district": "Harry Gwala",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Greater Kokstad Local Municipality",
+                    "code": "KZN433",
+                    "district": "Harry Gwala",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Johannes Phumani Phungula Local Municipality",
+                    "code": "KZN434",
+                    "district": "Harry Gwala",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Umzimkhulu Local Municipality",
+                    "code": "KZN435",
+                    "district": "Harry Gwala",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "KwaDukuza Local Municipality",
+                    "code": "KZN292",
+                    "district": "iLembe",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Mandeni Local Municipality",
+                    "code": "KZN291",
+                    "district": "iLembe",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Maphumulo Local Municipality",
+                    "code": "KZN294",
+                    "district": "iLembe",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Ndwedwe Local Municipality",
+                    "code": "KZN293",
+                    "district": "iLembe",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Mthonjaneni Local Municipality",
+                    "code": "KZN285",
+                    "district": "King Cetshwayo",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Nkandla Local Municipality",
+                    "code": "KZN286",
+                    "district": "King Cetshwayo",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMfolozi Local Municipality",
+                    "code": "KZN281",
+                    "district": "King Cetshwayo",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMhlathuze Local Municipality",
+                    "code": "KZN282",
+                    "district": "King Cetshwayo",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMlalazi Local Municipality",
+                    "code": "KZN284",
+                    "district": "King Cetshwayo",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Ray Nkonyeni Local Municipality",
+                    "code": "KZN216",
+                    "district": "Ugu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMdoni Local Municipality",
+                    "code": "KZN212",
+                    "district": "Ugu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMuziwabantu Local Municipality",
+                    "code": "KZN214",
+                    "district": "Ugu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Umzumbe Local Municipality",
+                    "code": "KZN213",
+                    "district": "Ugu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Impendle Local Municipality",
+                    "code": "KZN224",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Mkhambathini Local Municipality",
+                    "code": "KZN226",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Mpofana Local Municipality",
+                    "code": "KZN223",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Msunduzi Local Municipality",
+                    "code": "KZN225",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Richmond Local Municipality",
+                    "code": "KZN227",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMngeni Local Municipality",
+                    "code": "KZN222",
+                    "district": "uMgngundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Richmond Local Municipality",
+                    "code": "KZN227",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMngeni Local Municipality",
+                    "code": "KZN222",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMshwathi Local Municipality",
+                    "code": "KZN221",
+                    "district": "uMgungundlovu",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Big Five Hlabisa Local Municipality",
+                    "code": "KZN276",
+                    "district": "Umkhanyakude",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Jozini Local Municipality",
+                    "code": "KZN272",
+                    "district": "Umkhanyakude",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Mtubatuba Local Municipality",
+                    "code": "KZN275",
+                    "district": "Umkhanyakude",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uMhlabuyalingana Local Municipality",
+                    "code": "KZN271",
+                    "district": "Umkhanyakude",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Endumeni Local Municipality",
+                    "code": "KZN241",
+                    "district": "Umzinyathi",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Msinga Local Municipality",
+                    "code": "KZN244",
+                    "district": "Umzinyathi",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Nqutu Local Municipality",
+                    "code": "KZN242",
+                    "district": "Umzinyathi",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Umvoti Local Municipality",
+                    "code": "KZN245",
+                    "district": "Umzinyathi",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Alfred Duma Local Municipality",
+                    "code": "KZN238",
+                    "district": "Uthukela",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Inkosi Langalibalele Local Municipality",
+                    "code": "KZN237",
+                    "district": "Uthukela",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Okhahlamba Local Municipality",
+                    "code": "KZN235",
+                    "district": "Uthukela",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Abaqulusi Local Municipality",
+                    "code": "KZN263",
+                    "district": "Zululand",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "eDumbe Local Municipality",
+                    "code": "KZN261",
+                    "district": "Zululand",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Nongoma Local Municipality",
+                    "code": "KZN265",
+                    "district": "Zululand",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "Ulundi Local Municipality",
+                    "code": "KZN266",
+                    "district": "Zululand",
+                },
+                {
+                    "province": "Kwa-Zulu Natal",
+                    "municipality": "uPhongolo Local Municipality",
+                    "code": "KZN262",
+                    "district": "Zululand",
+                },
+                # Limpopo
+                {
+                    "province": "Limpopo",
+                    "municipality": "Capricorn District Municipality",
+                    "code": "DC35",
+                    "district": "Capricorn",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Mopani District Municipality",
+                    "code": "DC33",
+                    "district": "Mopani",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Sekhukhune District Municipality",
+                    "code": "DC47",
+                    "district": "Sekhukhune",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Vhembe District Municipality",
+                    "code": "DC34",
+                    "district": "Vhembe",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Waterberg District Municipality",
+                    "code": "DC36",
+                    "district": "Waterberg",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Blouberg Local Municipality",
+                    "code": "LIM351",
+                    "district": "Capricorn",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Lepelle-Nkumpi Local Municipality",
+                    "code": "LIM355",
+                    "district": "Capricorn",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Molemole Local Municipality",
+                    "code": "LIM353",
+                    "district": "Capricorn",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Polokwane Local Municipality",
+                    "code": "LIM354",
+                    "district": "Capricorn",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Ba-Phalaborwa Local Municipality",
+                    "code": "LIM334",
+                    "district": "Mopani",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Greater Giyani Local Municipality",
+                    "code": "LIM331",
+                    "district": "Mopani",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Greater Letaba Local Municipality",
+                    "code": "LIM332",
+                    "district": "Mopani",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Greater Tzaneen Local Municipality",
+                    "code": "LIM333",
+                    "district": "Mopani",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Maruleng Local Municipality",
+                    "code": "LIM335",
+                    "district": "Mopani",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Elias Motsoaledi Local Municipality",
+                    "code": "LIM472",
+                    "district": "Sekhukhune",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Ephraim Mogale Local Municipality",
+                    "code": "LIM471",
+                    "district": "Sekhukhune",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Fetakgomo Tubatse Local Municipality",
+                    "code": "LIM476",
+                    "district": "Sekhukhune",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Makhuduthamaga Local Municipality",
+                    "code": "LIM473",
+                    "district": "Sekhukhune",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Collins Chabane Local Municipality",
+                    "code": "LIM345",
+                    "district": "Vhembe",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Makhado Local Municipality",
+                    "code": "LIM344",
+                    "district": "Vhembe",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Musina Local Municipality",
+                    "code": "LIM341",
+                    "district": "Vhembe",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Thulamela Local Municipality",
+                    "code": "LIM343",
+                    "district": "Vhembe",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Bela-Bela Local Municipality",
+                    "code": "LIM366",
+                    "district": "Waterberg",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Lephalale Local Municipality",
+                    "code": "LIM362",
+                    "district": "Waterberg",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Modimolle–Mookgophong Local Municipality",
+                    "code": "LIM368",
+                    "district": "Waterberg",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Mogalakwena Local Municipality",
+                    "code": "LIM367",
+                    "district": "Waterberg",
+                },
+                {
+                    "province": "Limpopo",
+                    "municipality": "Thabazimbi Local Municipality",
+                    "code": "LIM361",
+                    "district": "Waterberg",
+                },
+                # Mpumalanga
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Ehlanzeni District Municipality",
+                    "code": "DC32",
+                    "district": "Ehlanzeni",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Gert Sibande District Municipality",
+                    "code": "DC30",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Nkangala District Municipality",
+                    "code": "DC31",
+                    "district": "Nkangala",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Bushbuckridge Local Municipality",
+                    "code": "MP325",
+                    "district": "Ehlanzeni",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Mbombela Local Municipality",
+                    "code": "MP326",
+                    "district": "Ehlanzeni",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Nkomazi Local Municipality",
+                    "code": "MP324",
+                    "district": "Ehlanzeni",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Thaba Chweu Local Municipality",
+                    "code": "MP321",
+                    "district": "Ehlanzeni",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Albert Luthuli Local Municipality",
+                    "code": "MP301",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Dipaleseng Local Municipality",
+                    "code": "MP306",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Govan Mbeki Local Municipality",
+                    "code": "MP307",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Lekwa Local Municipality",
+                    "code": "MP305",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Mkhondo Local Municipality",
+                    "code": "MP303",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Msukaligwa Local Municipality",
+                    "code": "MP302",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Pixley ka Seme Local Municipality",
+                    "code": "MP304",
+                    "district": "Gert Sibande",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Dr JS Moroka Local Municipality",
+                    "code": "MP316",
+                    "district": "Nkangala",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Emakhazeni Local Municipality",
+                    "code": "MP314",
+                    "district": "Nkangala",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Emalahleni Local Municipality",
+                    "code": "MP312",
+                    "district": "Nkangala",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Steve Tshwete Local Municipality",
+                    "code": "MP313",
+                    "district": "Nkangala",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Thembisile Hani Local Municipality",
+                    "code": "MP315",
+                    "district": "Nkangala",
+                },
+                {
+                    "province": "Mpumalanga",
+                    "municipality": "Victor Khanye Local Municipality",
+                    "code": "MP311",
+                    "district": "Nkangala",
+                },
+                # North-West
+                {
+                    "province": "North-West",
+                    "municipality": "Bojanala Platinum District Municipality",
+                    "code": "DC37",
+                    "district": "Bojanala Platinum",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Dr Kenneth Kaunda District Municipality",
+                    "code": "DC40",
+                    "district": "Dr Kenneth Kaunda",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Dr Ruth Segomotsi Mompati District Municipality",
+                    "code": "DC39",
+                    "district": "Dr Ruth Segomotsi Mompati",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Ngaka Modiri Molema District Municipality",
+                    "code": "DC38",
+                    "district": "Ngaka Modiri Molema",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Kgetlengrivier Local Municipality",
+                    "code": "NW374",
+                    "district": "Bojanala Platinum",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Madibeng Local Municipality",
+                    "code": "NW372",
+                    "district": "Bojanala Platinum",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Moretele Local Municipality",
+                    "code": "NW371",
+                    "district": "Bojanala Platinum",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Moses Kotane Local Municipality",
+                    "code": "NW375",
+                    "district": "Bojanala Platinum",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Rustenburg Local Municipality",
+                    "code": "NW373",
+                    "district": "Bojanala Platinum",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "City of Matlosana Local Municipality",
+                    "code": "NW403",
+                    "district": "Dr Kenneth Kaunda",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "JB Marks Local Municipality",
+                    "code": "NW405",
+                    "district": "Dr Kenneth Kaunda",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Maquassi Hills Local Municipality",
+                    "code": "NW404",
+                    "district": "Dr Kenneth Kaunda",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Greater Taung Local Municipality",
+                    "code": "NW394",
+                    "district": "Dr Ruth Segomotsi Mompati",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Kagisano-Molopo Local Municipality",
+                    "code": "NW397",
+                    "district": "Dr Ruth Segomotsi Mompati",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Lekwa-Teemane Local Municipality",
+                    "code": "NW396",
+                    "district": "Dr Ruth Segomotsi Mompati",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Mamusa Local Municipality",
+                    "code": "NW393",
+                    "district": "Dr Ruth Segomotsi Mompati",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Naledi Local Municipality",
+                    "code": "NW392",
+                    "district": "Dr Ruth Segomotsi Mompati",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Ditsobotla Local Municipality",
+                    "code": "NW384",
+                    "district": "Ngaka Modiri Molema",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Mahikeng Local Municipality",
+                    "code": "NW383",
+                    "district": "Ngaka Modiri Molema",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Ramotshere Moiloa Local Municipality",
+                    "code": "NW385",
+                    "district": "Ngaka Modiri Molema",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Ratlou Local Municipality",
+                    "code": "NW381",
+                    "district": "Ngaka Modiri Molema",
+                },
+                {
+                    "province": "North-West",
+                    "municipality": "Tswaing Local Municipality",
+                    "code": "NW382",
+                    "district": "Ngaka Modiri Molema",
+                },
+            ]
+            created_count = 0
+            for item in defaults:
+                prov_name = item["province"]
+                prov_code = province_codes.get(prov_name, "")
+                prov, _ = Province.objects.get_or_create(
+                    name=prov_name, defaults={"code": prov_code}
+                )
+                _, created = Municipality.objects.get_or_create(
+                    province=prov,
+                    municipality_name=item["municipality"],
+                    code=item["code"],
+                    defaults={"district": item["district"]},
+                )
+                if created:
+                    created_count += 1
+            messages.success(request, f"Loaded {created_count} default municipalities.")
+            return redirect(reverse("estimator:sys_municipalities"))
+
+        if _handle_clear_action(
+            request, Municipality.objects.all(), label="municipalities"
+        ):
+            return redirect(reverse("estimator:sys_municipalities"))
+        if _handle_bulk_action(request, Municipality.objects.all()):
+            return redirect(reverse("estimator:sys_municipalities"))
+        form = SystemMunicipalityForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Municipality added successfully.")
+            return redirect(reverse("estimator:sys_municipalities"))
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class SystemMunicipalityUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Municipalities"
+        context["upload_description"] = (
+            "Upload South African provinces and municipalities from an Excel template."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_municipality_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import MunicipalityImporter
+
+        return _handle_upload(
+            self.request,
+            MunicipalityImporter,
+            "estimator:sys_municipalities",
+            "Municipalities",
+        )
+
+
+class DownloadSystemMunicipalityTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Province", "Municipality Name", "Code", "District"],
+            "system_municipalities_template.xlsx",
+        )
+
+
+# ── System Provinces ──────────────────────────────────────────────────
+
+
+class SystemProvinceListView(SystemLibraryMixin, ListView):
+    model = Province
+    template_name = "estimator/system/province_list.html"
+    context_object_name = "provinces"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = Province.objects.all()
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            qs = qs.filter(models.Q(name__icontains=q) | models.Q(code__icontains=q))
+        return qs.order_by("name")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemProvinceForm())
+        context["f_q"] = self.request.GET.get("q", "")
+        context["query_params"] = _pagination_query_params(self.request)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if "load_defaults" in request.POST:
+            defaults = [
+                {"name": "Western Cape", "code": "WC"},
+                {"name": "Northern Cape", "code": "NC"},
+                {"name": "Eastern Cape", "code": "EC"},
+                {"name": "Free State", "code": "FS"},
+                {"name": "Gauteng", "code": "GP"},
+                {"name": "Kwa-Zulu Natal", "code": "KZN"},
+                {"name": "Limpopo", "code": "LP"},
+                {"name": "Mpumalanga", "code": "MP"},
+                {"name": "North-West", "code": "NW"},
+            ]
+            created_count = 0
+            for item in defaults:
+                _, created = Province.objects.get_or_create(
+                    name=item["name"], defaults={"code": item["code"]}
+                )
+                if created:
+                    created_count += 1
+            messages.success(request, f"Loaded {created_count} default provinces.")
+            return redirect(reverse("estimator:sys_provinces"))
+
+        if _handle_clear_action(request, Province.objects.all(), label="provinces"):
+            return redirect(reverse("estimator:sys_provinces"))
+        if _handle_bulk_action(request, Province.objects.all()):
+            return redirect(reverse("estimator:sys_provinces"))
+        form = SystemProvinceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Province added successfully.")
+            return redirect(reverse("estimator:sys_provinces"))
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class SystemProvinceUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Provinces"
+        context["upload_description"] = (
+            "Upload South African provinces from an Excel template."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_province_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import ProvinceImporter
+
+        return _handle_upload(
+            self.request, ProvinceImporter, "estimator:sys_provinces", "Provinces"
+        )
+
+
+class DownloadSystemProvinceTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Province Name", "Code"],
+            "system_provinces_template.xlsx",
         )
 
 

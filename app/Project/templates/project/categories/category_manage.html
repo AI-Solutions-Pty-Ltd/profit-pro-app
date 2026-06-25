@@ -37,32 +37,7 @@
         </div>
     </div>
     <!-- Tabs -->
-    <div class="mb-6 bg-white rounded-lg shadow-sm">
-        <div class="border-b border-gray-200">
-            <nav class="flex -mb-px" aria-label="Tabs">
-                <a href="{% url 'project:project-category-list' project.pk %}"
-                   class="px-6 py-4 text-sm font-medium text-indigo-600 whitespace-nowrap border-b-2 border-indigo-500">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    WBS Levels
-                </a>
-                <a href="{% url 'project:project-discipline-list' project.pk %}"
-                   class="px-1 py-4 text-sm font-medium text-gray-500 whitespace-nowrap border-b-2 border-transparent transition-colors hover:text-gray-700 hover:border-gray-300">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Disciplines
-                </a>
-                <a href="{% url 'project:project-drawing-type-list' project.pk %}"
-                   class="px-6 py-4 text-sm font-medium text-gray-500 whitespace-nowrap">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Drawing Types
-                </a>
-                <a href="{% url 'project:project-milestone-setup' project.pk %}"
-                   class="px-1 py-4 text-sm font-medium text-gray-500 whitespace-nowrap border-b-2 border-transparent transition-colors hover:text-gray-700 hover:border-gray-300">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Construction Milestones
-                </a>
-            </nav>
-        </div>
-    </div>
+    {% include "project/includes/setup_nav.html" with project=project active_tab="wbs" %}
     <!-- Categories List -->
     <div class="bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
