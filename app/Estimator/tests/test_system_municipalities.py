@@ -41,3 +41,51 @@ def test_municipality_importer(tmp_path):
     assert mun.municipality_name == "George Local Municipality"
     assert mun.district == "Garden Route"
 
+
+@pytest.mark.django_db
+def test_system_municipalities_views(client):
+    from django.urls import reverse
+    from app.Account.tests.factories import SuperuserFactory, UserFactory
+    from app.Account.models import Municipality
+
+    url = reverse("estimator:sys_municipalities")
+
+    # Guest/Regular user redirected or denied
+    user = UserFactory()
+    client.force_login(user)
+    response = client.get(url)
+    assert response.status_code in (403, 302)
+
+    # Staff user allowed
+    admin = SuperuserFactory()
+    client.force_login(admin)
+    response = client.get(url)
+    assert response.status_code == 200
+
+    # Add a municipality
+    post_data = {
+        "province": "Western Cape",
+        "municipality_name": "George Local Municipality",
+        "code": "WC044",
+        "district": "Garden Route",
+    }
+    response = client.post(url, data=post_data)
+    assert response.status_code == 302  # Redirect on success
+    assert Municipality.objects.filter(code="WC044").exists()
+
+
+@pytest.mark.django_db
+def test_tab_in_base_system(client):
+    from django.urls import reverse
+    from app.Account.tests.factories import SuperuserFactory
+
+    admin = SuperuserFactory()
+    client.force_login(admin)
+    url = reverse("estimator:sys_trade_codes")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert b"/estimator/system/municipalities/" in response.content
+    assert b"Municipalities" in response.content
+
+
+
