@@ -341,3 +341,16 @@ class TestAccountSubscription:
         )
         # It shouldn't have an expiry set automatically by the signal
         assert account.subscription_expires_at is None
+
+
+class TestMunicipalityModel:
+    """Test cases for Municipality model and factory."""
+
+    def test_municipality_factory(self):
+        """Test creating a municipality using MunicipalityFactory."""
+        from app.Account.tests.factories import MunicipalityFactory
+        municipality = MunicipalityFactory(province="Western Cape", municipality_name="George")
+        assert municipality.id is not None
+        assert municipality.province == "Western Cape"
+        assert municipality.municipality_name == "George"
+

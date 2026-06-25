@@ -6,7 +6,7 @@ from factory.declarations import LazyAttribute, Sequence
 from factory.django import DjangoModelFactory
 from factory.faker import Faker
 
-from app.Account.models import Account, Suburb, Town
+from app.Account.models import Account, Suburb, Town, Municipality
 from app.Account.subscription_config import Subscription
 
 User = get_user_model()
@@ -128,3 +128,17 @@ class ClientAccountFactory(AccountFactory):
     """Factory for tenant accounts."""
 
     type = Account.Type.CLIENT
+
+
+class MunicipalityFactory(DjangoModelFactory):
+    """Factory for Municipality model."""
+
+    class Meta:
+        model = Municipality
+        django_get_or_create = ("province", "municipality_name", "code")
+
+    province = Sequence(lambda n: f"Province {n}")
+    municipality_name = Sequence(lambda n: f"Municipality {n}")
+    code = Sequence(lambda n: f"MUN{n:03d}")
+    district = Sequence(lambda n: f"District {n}")
+
