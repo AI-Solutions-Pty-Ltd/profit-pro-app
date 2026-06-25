@@ -1,6 +1,7 @@
 {% extends "base_full.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
+{% load template_extras %}
 {% block title %}
     Edit Forecast - {{ project.name }}
 {% endblock title %}
@@ -215,7 +216,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.unit_measurement }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.budgeted_quantity }}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.budgeted_quantity|qty }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     R {{ transaction.line_item.total_price|default:0|floatformat:2|intcomma }}
                                                 </td>

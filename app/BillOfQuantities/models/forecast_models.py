@@ -96,7 +96,7 @@ class ForecastTransaction(BaseModel):
         null=True,
     )
 
-    quantity: Decimal = models.DecimalField(max_digits=10, decimal_places=2)  # type: ignore
+    quantity: Decimal = models.DecimalField(max_digits=20, decimal_places=10)  # type: ignore
     unit_price: Decimal = models.DecimalField(  # type: ignore
         max_digits=10, decimal_places=2, blank=True
     )

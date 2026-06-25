@@ -3,6 +3,7 @@
 {% load crispy_forms_tags %}
 {% load heroicons %}
 {% load humanize %}
+{% load template_extras %}
 {% block title %}
     Edit Payment Certificate - {{ payment_certificate.certificate_number }}
 {% endblock title %}
@@ -391,7 +392,7 @@
                                         {{ line_item.unit_price|default:""|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
-                                        {{ line_item.budgeted_quantity|default:""|intcomma }}
+                                        {{ line_item.budgeted_quantity|qty }}
                                     </td>
                                     <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                                         {% if line_item.is_work %}

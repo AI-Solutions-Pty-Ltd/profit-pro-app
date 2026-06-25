@@ -1,4 +1,5 @@
 {% extends "base_full.html" %}
+{% load template_extras %}
 {% block title %}
     Final Account - {{ project.name }}
 {% endblock title %}
@@ -106,7 +107,7 @@
                             <td class="px-3 py-2 text-gray-900">{{ line.description|default:"-"|truncatewords:15 }}</td>
                             <td class="px-3 py-2 whitespace-nowrap text-center text-gray-600">{{ line.unit_measurement|default:"-" }}</td>
                             <td class="px-3 py-2 whitespace-nowrap text-right text-gray-900">
-                                {{ line.budgeted_quantity|floatformat:2|intcomma }}
+                                {{ line.budgeted_quantity|qty }}
                             </td>
                             <td class="px-3 py-2 whitespace-nowrap text-right text-gray-900">R {{ line.unit_price|floatformat:2|intcomma }}</td>
                             <td class="px-3 py-2 whitespace-nowrap text-right text-gray-900 font-medium">

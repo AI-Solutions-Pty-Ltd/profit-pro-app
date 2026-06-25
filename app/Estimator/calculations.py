@@ -30,17 +30,22 @@ from decimal import Decimal
 
 
 def format_num(value, with_commas=False):
-    """Format a number for display: round to ≤2dp and strip trailing zeros.
+    """Format a number for display: truncate to ≤2dp and strip trailing zeros.
 
+    Truncates (floor) rather than rounds so values are never inflated:
     1 → '1', 1.5 → '1.5', 1.23 → '1.23', 1.234567 → '1.23', 1.0000 → '1'.
     Used by both template filters and JSON API responses so UI display and
     AJAX-updated cells stay consistent.
     """
+    import math
+
     if value is None or value == "":
         return ""
     try:
+        # Truncate (floor) to 2dp without rounding up.
+        truncated = math.floor(float(value) * 100) / 100
         fmt = ",.2f" if with_commas else ".2f"
-        s = f"{round(float(value), 2):{fmt}}"
+        s = f"{truncated:{fmt}}"
     except (ValueError, TypeError):
         return ""
     if "." in s:

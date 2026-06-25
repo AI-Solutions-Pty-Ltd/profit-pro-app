@@ -3,6 +3,7 @@
     {{ project.name }} - {{ block.super }}
 {% endblock title %}
 {% load humanize %}
+{% load template_extras %}
 {% block content %}
     <!-- Project Card -->
     <div class="overflow-hidden mb-4 bg-white rounded-lg shadow-sm">
@@ -209,7 +210,7 @@
                                     <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">{{ line_item.unit_measurement|default:"" }}</td>
                                     <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                                         {% if line_item.budgeted_quantity %}
-                                            {{ line_item.budgeted_quantity|floatformat:2|intcomma }}
+                                            {{ line_item.budgeted_quantity|qty }}
                                         {% else %}
                                         {% endif %}
                                     </td>
@@ -289,7 +290,7 @@
             <div class="flex justify-between items-center px-6 py-4 bg-purple-50 border-b border-purple-200">
                 <h2 class="flex gap-2 items-center text-lg font-semibold text-gray-900">
                     {% heroicon_outline "document-plus" size="20" class="text-purple-600" %}
-                    Addendum Items fff
+                    Addendum Items 
                 </h2>
                 <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-purple-600 bg-white rounded-md border border-purple-600 shadow-sm transition-colors hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
@@ -319,7 +320,7 @@
                                 <td class="px-3 py-2 text-sm text-gray-900">{{ item.description|default:"" }}</td>
                                 <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">{{ item.unit_measurement|default:"" }}</td>
                                 <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
-                                    {% if item.budgeted_quantity %}{{ item.budgeted_quantity|floatformat:2|intcomma }}{% endif %}
+                                    {% if item.budgeted_quantity %}{{ item.budgeted_quantity|qty }}{% endif %}
                                 </td>
                                 <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                                     {% if item.unit_price %}R {{ item.unit_price|floatformat:2|intcomma }}{% endif %}
