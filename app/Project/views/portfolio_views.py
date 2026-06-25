@@ -219,6 +219,9 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             # Legacy support for active_only toggle
             projects = projects.filter(status=Project.Status.ACTIVE)
 
+        # Update the projects field queryset in the filter form to only show filtered projects
+        self.filter_form.fields["projects"].queryset = projects.order_by("name")
+
         return projects
 
     def get_context_data(self: "PortfolioDashboardView", **kwargs):
