@@ -1,6 +1,6 @@
 from django import forms
 
-from app.Account.models import Municipality
+from app.Account.models import Municipality, Province
 
 
 class MunicipalityFilterForm(forms.Form):
@@ -28,9 +28,8 @@ class MunicipalityFilterForm(forms.Form):
             province_field = self.fields["province"]
             if hasattr(province_field, "choices"):
                 province_field.choices = [("", "All Provinces")] + list(  # type: ignore
-                    Municipality.objects.order_by("province")
-                    .values_list("province", "province")
-                    .distinct()
+                    Province.objects.order_by("name")
+                    .values_list("id", "name")
                 )
 
             district_field = self.fields["district"]

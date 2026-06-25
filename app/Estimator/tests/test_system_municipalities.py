@@ -1,9 +1,14 @@
 import pytest
+
 from app.Estimator.forms import SystemMunicipalityForm
 
+
+@pytest.mark.django_db
 def test_system_municipality_form_validation():
+    from app.Account.tests.factories import ProvinceFactory
+    province = ProvinceFactory(name="Gauteng")
     form_data = {
-        "province": "Gauteng",
+        "province": province.id,
         "municipality_name": "City of Johannesburg",
         "code": "COJ",
         "district": "Johannesburg",
@@ -15,7 +20,9 @@ def test_system_municipality_form_validation():
 @pytest.mark.django_db
 def test_municipality_importer(tmp_path):
     import os
+
     import openpyxl
+
     from app.Account.models import Municipality
     from app.Estimator.importers import MunicipalityImporter
 
@@ -37,7 +44,7 @@ def test_municipality_importer(tmp_path):
 
     # Verify DB record
     mun = Municipality.objects.get(code="WC044")
-    assert mun.province == "Western Cape"
+    assert mun.province.name == "Western Cape"
     assert mun.municipality_name == "George Local Municipality"
     assert mun.district == "Garden Route"
 
@@ -45,8 +52,13 @@ def test_municipality_importer(tmp_path):
 @pytest.mark.django_db
 def test_system_municipalities_views(client):
     from django.urls import reverse
-    from app.Account.tests.factories import SuperuserFactory, UserFactory
+
     from app.Account.models import Municipality
+    from app.Account.tests.factories import (
+        ProvinceFactory,
+        SuperuserFactory,
+        UserFactory,
+    )
 
     url = reverse("estimator:sys_municipalities")
 
@@ -63,8 +75,9 @@ def test_system_municipalities_views(client):
     assert response.status_code == 200
 
     # Add a municipality
+    prov = ProvinceFactory(name="Western Cape")
     post_data = {
-        "province": "Western Cape",
+        "province": prov.id,
         "municipality_name": "George Local Municipality",
         "code": "WC044",
         "district": "Garden Route",
@@ -77,6 +90,7 @@ def test_system_municipalities_views(client):
 @pytest.mark.django_db
 def test_tab_in_base_system(client):
     from django.urls import reverse
+
     from app.Account.tests.factories import SuperuserFactory
 
     admin = SuperuserFactory()
@@ -86,6 +100,43 @@ def test_tab_in_base_system(client):
     assert response.status_code == 200
     assert b"/estimator/system/municipalities/" in response.content
     assert b"Municipalities" in response.content
+    assert b"/estimator/system/provinces/" in response.content
+    assert b"Provinces" in response.content
+
+
+@pytest.mark.django_db
+def test_system_province_views(client):
+    from django.urls import reverse
+
+    from app.Account.models import Province
+    from app.Account.tests.factories import (
+        SuperuserFactory,
+        UserFactory,
+    )
+
+    url = reverse("estimator:sys_provinces")
+
+    # Guest/Regular user redirected or denied
+    user = UserFactory()
+    client.force_login(user)
+    response = client.get(url)
+    assert response.status_code in (403, 302)
+
+    # Staff user allowed
+    admin = SuperuserFactory()
+    client.force_login(admin)
+    response = client.get(url)
+    assert response.status_code == 200
+
+    # Add a province
+    post_data = {
+        "name": "Gauteng",
+        "code": "GP",
+    }
+    response = client.post(url, data=post_data)
+    assert response.status_code == 302  # Redirect on success
+    assert Province.objects.filter(code="GP").exists()
+
 
 
 

@@ -17,9 +17,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.base import ContextMixin
 
+from app.Account.models import Municipality, Province
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
-from app.Account.models import Municipality
 
 from .calculations import (
     calculate_pct_of_total,
@@ -56,6 +56,7 @@ from .forms import (
     SystemPlantSpecificationForm,
     SystemPreliminaryCostForm,
     SystemPreliminarySpecificationForm,
+    SystemProvinceForm,
     SystemSpecificationComponentFormSet,
     SystemSpecificationForm,
     SystemTradeCodeForm,
@@ -5024,25 +5025,20 @@ class SystemMunicipalityListView(SystemLibraryMixin, ListView):
         q = self.request.GET.get("q", "").strip()
         if q:
             qs = qs.filter(
-                models.Q(province__icontains=q)
+                models.Q(province__name__icontains=q)
                 | models.Q(municipality_name__icontains=q)
                 | models.Q(code__icontains=q)
                 | models.Q(district__icontains=q)
             )
         province = self.request.GET.get("province", "").strip()
         if province:
-            qs = qs.filter(province=province)
-        return qs.order_by("province", "municipality_name")
+            qs = qs.filter(province_id=province)
+        return qs.order_by("province__name", "municipality_name")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemMunicipalityForm())
-        context["provinces"] = (
-            Municipality.objects.exclude(province="")
-            .values_list("province", flat=True)
-            .distinct()
-            .order_by("province")
-        )
+        context["provinces"] = Province.objects.all().order_by("name")
         context["f_q"] = self.request.GET.get("q", "")
         context["f_province"] = self.request.GET.get("province", "")
         context["query_params"] = _pagination_query_params(self.request)
@@ -5091,6 +5087,78 @@ class DownloadSystemMunicipalityTemplateView(SystemLibraryMixin, View):
         return _generate_template(
             ["Province", "Municipality Name", "Code", "District"],
             "system_municipalities_template.xlsx",
+        )
+
+
+# ── System Provinces ──────────────────────────────────────────────────
+
+
+class SystemProvinceListView(SystemLibraryMixin, ListView):
+    model = Province
+    template_name = "estimator/system/province_list.html"
+    context_object_name = "provinces"
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = Province.objects.all()
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            qs = qs.filter(
+                models.Q(name__icontains=q)
+                | models.Q(code__icontains=q)
+            )
+        return qs.order_by("name")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemProvinceForm())
+        context["f_q"] = self.request.GET.get("q", "")
+        context["query_params"] = _pagination_query_params(self.request)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if _handle_clear_action(
+            request, Province.objects.all(), label="provinces"
+        ):
+            return redirect(reverse("estimator:sys_provinces"))
+        if _handle_bulk_action(request, Province.objects.all()):
+            return redirect(reverse("estimator:sys_provinces"))
+        form = SystemProvinceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Province added successfully.")
+            return redirect(reverse("estimator:sys_provinces"))
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class SystemProvinceUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Provinces"
+        context["upload_description"] = (
+            "Upload South African provinces from an Excel template."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_province_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import ProvinceImporter
+
+        return _handle_upload(
+            self.request, ProvinceImporter, "estimator:sys_provinces", "Provinces"
+        )
+
+
+class DownloadSystemProvinceTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Province Name", "Code"],
+            "system_provinces_template.xlsx",
         )
 
 

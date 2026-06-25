@@ -17,8 +17,21 @@ from app.Account.subscription_config import Subscription, SubscriptionConfig
 from app.core.Utilities.models import BaseModel
 
 
+class Province(BaseModel):
+    name = models.CharField(max_length=255, unique=True)
+    code = models.CharField(max_length=10, unique=True, blank=True, default="")
+
+    class Meta:
+        verbose_name = "Province"
+        verbose_name_plural = "Provinces"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Municipality(BaseModel):
-    province = models.CharField(max_length=255)
+    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name="municipalities")
     municipality_name = models.CharField(max_length=255)
     code = models.CharField(max_length=10)
     district = models.CharField(max_length=255, blank=True, default="")
@@ -26,7 +39,7 @@ class Municipality(BaseModel):
     class Meta:
         verbose_name = "Municipality"
         verbose_name_plural = "Municipalities"
-        ordering = ["province", "municipality_name"]
+        ordering = ["province__name", "municipality_name"]
         unique_together = ["province", "municipality_name", "code"]
 
     def __str__(self):

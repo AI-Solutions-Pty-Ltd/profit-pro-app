@@ -643,6 +643,22 @@ urlpatterns = [
         views.DownloadSystemMunicipalityTemplateView.as_view(),
         name="sys_download_municipality_template",
     ),
+    # System Provinces
+    path(
+        "system/provinces/",
+        views.SystemProvinceListView.as_view(),
+        name="sys_provinces",
+    ),
+    path(
+        "system/provinces/upload/",
+        views.SystemProvinceUploadView.as_view(),
+        name="sys_province_upload",
+    ),
+    path(
+        "system/provinces/download-template/",
+        views.DownloadSystemProvinceTemplateView.as_view(),
+        name="sys_download_province_template",
+    ),
     # System Materials
     path(
         "system/materials/",
