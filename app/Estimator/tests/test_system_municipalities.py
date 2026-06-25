@@ -154,3 +154,36 @@ def test_load_default_provinces(client):
     assert response.status_code == 302
     assert Province.objects.count() == 9
     assert Province.objects.filter(name="Kwa-Zulu Natal").exists()
+
+
+@pytest.mark.django_db
+def test_load_default_municipalities(client):
+    from django.urls import reverse
+
+    from app.Account.models import Municipality, Province
+    from app.Account.tests.factories import SuperuserFactory
+
+    url = reverse("estimator:sys_municipalities")
+    admin = SuperuserFactory()
+    client.force_login(admin)
+
+    # Post load_defaults action
+    response = client.post(url, data={"load_defaults": ""})
+    assert response.status_code == 302
+    
+    # Check that a sample of municipalities and provinces were created
+    assert Municipality.objects.filter(code="WC025").exists()
+    assert Municipality.objects.filter(code="NC092").exists()
+    assert Municipality.objects.filter(code="EC441").exists()
+    assert Municipality.objects.filter(code="FS205").exists()
+    assert Municipality.objects.filter(code="GT421").exists()
+    assert Municipality.objects.filter(code="KZN254").exists()
+    assert Municipality.objects.filter(code="LIM351").exists()
+    assert Municipality.objects.filter(code="MP325").exists()
+    assert Municipality.objects.filter(code="NW374").exists()
+
+    # Verify matching provinces exist and are correctly linked
+    breede = Municipality.objects.get(code="WC025")
+    assert breede.province.name == "Western Cape"
+    assert breede.province.code == "WC"
+
