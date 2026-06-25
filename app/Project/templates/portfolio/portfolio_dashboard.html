@@ -79,17 +79,17 @@
                 <!-- Top Row: Actions -->
                 <div class="flex flex-wrap gap-3 items-center">
                     <!-- Toggle Filters Button -->
-                       <!-- Clear Button -->
-                            {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
-                                <button type="button"
-                                        onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
-                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg border border-gray-300 transition-colors hover:bg-gray-200"
-                                        title="Clear all filters"
-                                        aria-label="Clear filters">
-                                    {% heroicon_outline "x-mark" size="16" class="mr-1 text-gray-500" %}
-                                    Clear
-                                </button>
-                            {% endif %}
+                    <!-- Clear Button -->
+                    {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
+                        <button type="button"
+                                onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg border border-gray-300 transition-colors hover:bg-gray-200"
+                                title="Clear all filters"
+                                aria-label="Clear filters">
+                            {% heroicon_outline "x-mark" size="16" class="mr-1 text-gray-500" %}
+                            Clear
+                        </button>
+                    {% endif %}
                     <button type="button"
                             id="toggleFiltersBtn"
                             class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -98,240 +98,238 @@
                         {% heroicon_outline "chevron-down" id="toggleFiltersChevron" class="ml-2 w-4 h-4 text-gray-400 transition-transform duration-200 transform" %}
                     </button>
                 </div>
-              
             </div>
-              <!-- Action Buttons -->
-                <form id="filterForm" method="get" class="pt-4 space-y-4">
-                    <!-- Collapsible Advanced Filters Drawer -->
-                    <div id="advancedFiltersDrawer"
-                         class="hidden p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200">
-                        <!-- Top Row: Actions -->
-                        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-                            <h3 class="flex gap-2 items-center text-sm font-bold text-gray-900">
-                                {% heroicon_outline "adjustments-horizontal" size="18" class="text-indigo-500" %}
-                                Filter Parameters
-                            </h3>
-                          
+            <!-- Action Buttons -->
+            <form id="filterForm" method="get" class="pt-4 space-y-4">
+                <!-- Collapsible Advanced Filters Drawer -->
+                <div id="advancedFiltersDrawer"
+                     class="hidden p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200">
+                    <!-- Top Row: Actions -->
+                    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                        <h3 class="flex gap-2 items-center text-sm font-bold text-gray-900">
+                            {% heroicon_outline "adjustments-horizontal" size="18" class="text-indigo-500" %}
+                            Filter Parameters
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        <!-- Category Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Sector</label>
+                            <div class="relative">
+                                <select name="project_category"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Sectors</option>
+                                    {% for category in filter_form.project_category.field.queryset %}
+                                        <option value="{{ category.pk }}"
+                                                {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
+                            </div>
                         </div>
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                            <!-- Category Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Sector</label>
-                                <div class="relative">
-                                    <select name="project_category"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Sectors</option>
-                                        {% for category in filter_form.project_category.field.queryset %}
-                                            <option value="{{ category.pk }}"
-                                                    {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ category.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
+                        <!-- Province Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Province</label>
+                            <div class="relative">
+                                <select name="province"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Provinces</option>
+                                    {% for province in filter_form.province.field.queryset %}
+                                        <option value="{{ province.pk }}"
+                                                {% if filter_form.province.value|stringformat:"s" == province.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ province.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
                             </div>
-                            <!-- Province Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Province</label>
-                                <div class="relative">
-                                    <select name="province"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Provinces</option>
-                                        {% for province in filter_form.province.field.queryset %}
-                                            <option value="{{ province.pk }}"
-                                                    {% if filter_form.province.value|stringformat:"s" == province.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ province.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
+                        </div>
+                        <!-- Municipality Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Municipality</label>
+                            <div class="relative">
+                                <select name="area"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Municipalities</option>
+                                    {% for area in filter_form.area.field.queryset %}
+                                        <option value="{{ area.pk }}"
+                                                data-province="{{ area.province_id }}"
+                                                {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ area.municipality_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
                             </div>
-                            <!-- Municipality Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Municipality</label>
-                                <div class="relative">
-                                    <select name="area"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Municipalities</option>
-                                        {% for area in filter_form.area.field.queryset %}
-                                            <option value="{{ area.pk }}"
-                                                    data-province="{{ area.province_id }}"
-                                                    {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ area.municipality_name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
+                        </div>
+                        <!-- Discipline Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Discipline</label>
+                            <div class="relative">
+                                <select name="project_discipline"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Disciplines</option>
+                                    {% for discipline in filter_form.project_discipline.field.queryset %}
+                                        <option value="{{ discipline.pk }}"
+                                                {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ discipline.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
                             </div>
-                            <!-- Discipline Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Discipline</label>
-                                <div class="relative">
-                                    <select name="project_discipline"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Disciplines</option>
-                                        {% for discipline in filter_form.project_discipline.field.queryset %}
-                                            <option value="{{ discipline.pk }}"
-                                                    {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ discipline.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
+                        </div>
+                        <!-- Project Stage Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Stage</label>
+                            <div class="relative">
+                                <select name="project_stage"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Stages</option>
+                                    {% for stage in filter_form.project_stage.field.queryset %}
+                                        <option value="{{ stage.pk }}"
+                                                {% if filter_form.project_stage.value|stringformat:"s" == stage.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ stage.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
                             </div>
-                            <!-- Project Stage Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Stage</label>
-                                <div class="relative">
-                                    <select name="project_stage"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Stages</option>
-                                        {% for stage in filter_form.project_stage.field.queryset %}
-                                            <option value="{{ stage.pk }}"
-                                                    {% if filter_form.project_stage.value|stringformat:"s" == stage.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ stage.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
+                        </div>
+                        <!-- Client Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Client</label>
+                            <div class="relative">
+                                <select name="client"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Clients</option>
+                                    {% for client in filter_form.client.field.queryset %}
+                                        <option value="{{ client.pk }}"
+                                                {% if filter_form.client.value|stringformat:"s" == client.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ client.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
                             </div>
-                            <!-- Client Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Client</label>
-                                <div class="relative">
-                                    <select name="client"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Clients</option>
-                                        {% for client in filter_form.client.field.queryset %}
-                                            <option value="{{ client.pk }}"
-                                                    {% if filter_form.client.value|stringformat:"s" == client.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ client.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
+                        </div>
+                        <!-- Contractor Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Contractor</label>
+                            <div class="relative">
+                                <select name="contractor"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Contractors</option>
+                                    {% for contractor in filter_form.contractor.field.queryset %}
+                                        <option value="{{ contractor.pk }}"
+                                                {% if filter_form.contractor.value|stringformat:"s" == contractor.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ contractor.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
                             </div>
-                            <!-- Contractor Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Contractor</label>
-                                <div class="relative">
-                                    <select name="contractor"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Contractors</option>
-                                        {% for contractor in filter_form.contractor.field.queryset %}
-                                            <option value="{{ contractor.pk }}"
-                                                    {% if filter_form.contractor.value|stringformat:"s" == contractor.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ contractor.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
-                            </div>
-                            <!-- Consultant Filter -->
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Consultant</label>
-                                <div class="relative">
-                                    <select name="consultant"
-                                            class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Consultants</option>
-                                        {% for consultant in filter_form.consultant.field.queryset %}
-                                            <option value="{{ consultant.pk }}"
-                                                    {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}selected{% endif %}>
-                                                {{ consultant.get_full_name|default:consultant.email }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
-                                </div>
+                        </div>
+                        <!-- Consultant Filter -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Consultant</label>
+                            <div class="relative">
+                                <select name="consultant"
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">All Consultants</option>
+                                    {% for consultant in filter_form.consultant.field.queryset %}
+                                        <option value="{{ consultant.pk }}"
+                                                {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ consultant.get_full_name|default:consultant.email }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% heroicon_outline "chevron-down" size="14" class="absolute right-2.5 top-3 text-gray-400 pointer-events-none" %}
                             </div>
                         </div>
                     </div>
-                    <!-- Active Filters Chips -->
-                    {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
-                        <div class="flex flex-wrap gap-2 items-center pt-2 border-t border-gray-100">
-                            <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Active Filters:</span>
-                            {% if filter_form.project_category.value %}
-                                {% for category in filter_form.project_category.field.queryset %}
-                                    {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Sector: {{ category.name }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if filter_form.province.value %}
-                                {% for province in filter_form.province.field.queryset %}
-                                    {% if filter_form.province.value|stringformat:"s" == province.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Province: {{ province.name }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if filter_form.area.value %}
-                                {% for area in filter_form.area.field.queryset %}
-                                    {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Municipality: {{ area.municipality_name }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if filter_form.project_discipline.value %}
-                                {% for discipline in filter_form.project_discipline.field.queryset %}
-                                    {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Discipline: {{ discipline.name }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if filter_form.project_stage.value %}
-                                {% for stage in filter_form.project_stage.field.queryset %}
-                                    {% if filter_form.project_stage.value|stringformat:"s" == stage.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Stage: {{ stage.name }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if filter_form.client.value %}
-                                {% for client in filter_form.client.field.queryset %}
-                                    {% if filter_form.client.value|stringformat:"s" == client.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Client: {{ client.name }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if filter_form.contractor.value %}
-                                {% for contractor in filter_form.contractor.field.queryset %}
-                                    {% if filter_form.contractor.value|stringformat:"s" == contractor.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Contractor: {{ contractor.name }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            {% if filter_form.consultant.value %}
-                                {% for consultant in filter_form.consultant.field.queryset %}
-                                    {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
-                                            Consultant: {{ consultant.get_full_name|default:consultant.email }}
-                                        </span>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </form>
+                </div>
+                <!-- Active Filters Chips -->
+                {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
+                    <div class="flex flex-wrap gap-2 items-center pt-2 border-t border-gray-100">
+                        <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Active Filters:</span>
+                        {% if filter_form.project_category.value %}
+                            {% for category in filter_form.project_category.field.queryset %}
+                                {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Sector: {{ category.name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if filter_form.province.value %}
+                            {% for province in filter_form.province.field.queryset %}
+                                {% if filter_form.province.value|stringformat:"s" == province.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Province: {{ province.name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if filter_form.area.value %}
+                            {% for area in filter_form.area.field.queryset %}
+                                {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Municipality: {{ area.municipality_name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if filter_form.project_discipline.value %}
+                            {% for discipline in filter_form.project_discipline.field.queryset %}
+                                {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Discipline: {{ discipline.name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if filter_form.project_stage.value %}
+                            {% for stage in filter_form.project_stage.field.queryset %}
+                                {% if filter_form.project_stage.value|stringformat:"s" == stage.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Stage: {{ stage.name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if filter_form.client.value %}
+                            {% for client in filter_form.client.field.queryset %}
+                                {% if filter_form.client.value|stringformat:"s" == client.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Client: {{ client.name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if filter_form.contractor.value %}
+                            {% for contractor in filter_form.contractor.field.queryset %}
+                                {% if filter_form.contractor.value|stringformat:"s" == contractor.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Contractor: {{ contractor.name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if filter_form.consultant.value %}
+                            {% for consultant in filter_form.consultant.field.queryset %}
+                                {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                        Consultant: {{ consultant.get_full_name|default:consultant.email }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </form>
         </div>
     </header>
     <!-- ==========================================
