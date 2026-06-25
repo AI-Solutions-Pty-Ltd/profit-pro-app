@@ -16,7 +16,7 @@
                     <h1 class="text-2xl font-bold tracking-tight text-gray-900">Portfolio Dashboard</h1>
                     <p class="mt-1 text-sm text-gray-600">Financial overview as of {{ current_date|date:"F d, Y" }}</p>
                 </div>
-                   <!-- Action Buttons -->
+                <!-- Action Buttons -->
                 <div class="flex items-center space-x-3">
                     <a href="{% url 'project:project-create' %}"
                        class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md transition-colors hover:bg-indigo-700">
@@ -33,7 +33,7 @@
         </div>
         <!-- Filter Form -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
-                 <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center">
                 <!-- Project Jump -->
                 <form method="get"
                       class="flex gap-2 items-center px-4 py-3 bg-indigo-600 rounded-lg">
@@ -76,37 +76,43 @@
                            name="consultant"
                            value="{{ filter_form.consultant.value|default:'' }}">
                 </form>
-                <!-- Action Buttons -->
-                <form id="filterForm" method="get" class="space-y-4">
-                    <!-- Top Row: Actions -->
-                    <div class="flex flex-wrap gap-3 items-center">
-                        <!-- Toggle Filters Button -->
-                        <button type="button"
-                                id="toggleFiltersBtn"
-                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            {% heroicon_outline "funnel" class="mr-2 w-4 h-4 text-gray-500" %}
-                            <span>Advanced Filters</span>
-                            {% heroicon_outline "chevron-down" id="toggleFiltersChevron" class="ml-2 w-4 h-4 text-gray-400 transition-transform duration-200 transform" %}
-                        </button>
-                        <!-- Clear Button -->
-                        {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
-                            <button type="button"
-                                    onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
-                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg border border-gray-300 transition-colors hover:bg-gray-200"
-                                    title="Clear all filters"
-                                    aria-label="Clear filters">
-                                {% heroicon_outline "x-mark" size="16" class="mr-1 text-gray-500" %}
-                                Clear
-                            </button>
-                        {% endif %}
-                    </div>
+                <!-- Top Row: Actions -->
+                <div class="flex flex-wrap gap-3 items-center">
+                    <!-- Toggle Filters Button -->
+                       <!-- Clear Button -->
+                            {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
+                                <button type="button"
+                                        onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg border border-gray-300 transition-colors hover:bg-gray-200"
+                                        title="Clear all filters"
+                                        aria-label="Clear filters">
+                                    {% heroicon_outline "x-mark" size="16" class="mr-1 text-gray-500" %}
+                                    Clear
+                                </button>
+                            {% endif %}
+                    <button type="button"
+                            id="toggleFiltersBtn"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        {% heroicon_outline "funnel" class="mr-2 w-4 h-4 text-gray-500" %}
+                        <span>Advanced Filters</span>
+                        {% heroicon_outline "chevron-down" id="toggleFiltersChevron" class="ml-2 w-4 h-4 text-gray-400 transition-transform duration-200 transform" %}
+                    </button>
+                </div>
+              
+            </div>
+              <!-- Action Buttons -->
+                <form id="filterForm" method="get" class="pt-4 space-y-4">
                     <!-- Collapsible Advanced Filters Drawer -->
                     <div id="advancedFiltersDrawer"
-                        class="hidden p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200">
-                        <h3 class="flex gap-2 items-center mb-4 text-sm font-bold text-gray-900">
-                            {% heroicon_outline "adjustments-horizontal" size="18" class="text-indigo-500" %}
-                            Filter Parameters
-                        </h3>
+                         class="hidden p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200">
+                        <!-- Top Row: Actions -->
+                        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                            <h3 class="flex gap-2 items-center text-sm font-bold text-gray-900">
+                                {% heroicon_outline "adjustments-horizontal" size="18" class="text-indigo-500" %}
+                                Filter Parameters
+                            </h3>
+                          
+                        </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                             <!-- Category Filter -->
                             <div>
@@ -326,10 +332,7 @@
                         </div>
                     {% endif %}
                 </form>
-            </div>
-         
         </div>
-      
     </header>
     <!-- ==========================================
              Group 1 - Project Stats
