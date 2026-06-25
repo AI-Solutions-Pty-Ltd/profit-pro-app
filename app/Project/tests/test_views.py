@@ -213,7 +213,7 @@ class TestProjectListViewFilters:
         p2 = ProjectFactory(name="Beta Project")
 
         url = reverse("project:project-list")
-        
+
         # Search for "Alpha"
         response = client.get(url, data={"search": "Alpha"})
         assert response.status_code == 200
@@ -295,14 +295,15 @@ class TestProjectListViewFilters:
 
         # Create a province and municipality that are not linked to any projects
         unlinked_province = ProvinceFactory(name="Unlinked Province")
-        unlinked_municipality = MunicipalityFactory(province=unlinked_province, municipality_name="Unlinked Mun")
+        unlinked_municipality = MunicipalityFactory(
+            province=unlinked_province, municipality_name="Unlinked Mun"
+        )
 
         url = reverse("project:project-list")
         response = client.get(url)
         assert response.status_code == 200
         content = response.content.decode("utf-8")
-        
+
         # Verify they are present in the page options (registers)
         assert "Unlinked Province" in content
         assert "Unlinked Mun" in content
-

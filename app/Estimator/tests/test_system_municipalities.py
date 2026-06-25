@@ -6,6 +6,7 @@ from app.Estimator.forms import SystemMunicipalityForm
 @pytest.mark.django_db
 def test_system_municipality_form_validation():
     from app.Account.tests.factories import ProvinceFactory
+
     province = ProvinceFactory(name="Gauteng")
     form_data = {
         "province": province.id,
@@ -160,7 +161,7 @@ def test_load_default_provinces(client):
 def test_load_default_municipalities(client):
     from django.urls import reverse
 
-    from app.Account.models import Municipality, Province
+    from app.Account.models import Municipality
     from app.Account.tests.factories import SuperuserFactory
 
     url = reverse("estimator:sys_municipalities")
@@ -170,7 +171,7 @@ def test_load_default_municipalities(client):
     # Post load_defaults action
     response = client.post(url, data={"load_defaults": ""})
     assert response.status_code == 302
-    
+
     # Check that a sample of municipalities and provinces were created
     assert Municipality.objects.filter(code="WC025").exists()
     assert Municipality.objects.filter(code="NC092").exists()
@@ -186,4 +187,3 @@ def test_load_default_municipalities(client):
     breede = Municipality.objects.get(code="WC025")
     assert breede.province.name == "Western Cape"
     assert breede.province.code == "WC"
-

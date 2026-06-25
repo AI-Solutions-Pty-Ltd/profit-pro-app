@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     )
 
 
-
 class Portfolio(BaseModel):
     """Portfolio model for grouping and aggregating project metrics."""
 
@@ -304,10 +303,14 @@ class Portfolio(BaseModel):
         """Original Budget - Forecast Cost at Completion."""
         if not date:
             date = datetime.now()
-        eac = self.get_forecast_cost_at_completion(date, category, province, area, discipline)
+        eac = self.get_forecast_cost_at_completion(
+            date, category, province, area, discipline
+        )
         if not eac:
             return None
-        return self.get_total_original_budget(category, province, area, discipline) - eac
+        return (
+            self.get_total_original_budget(category, province, area, discipline) - eac
+        )
 
     @property
     def cost_variance_at_completion(self: "Portfolio") -> Decimal | None:
@@ -411,7 +414,9 @@ class Portfolio(BaseModel):
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
         """Sum of EAC for all active projects."""
-        return self.get_forecast_cost_at_completion(date, category, province, area, discipline)
+        return self.get_forecast_cost_at_completion(
+            date, category, province, area, discipline
+        )
 
     @property
     def total_estimate_at_completion(self: "Portfolio") -> Decimal | None:
@@ -483,4 +488,3 @@ class Portfolio(BaseModel):
     @property
     def schedule_performance_index(self: "Portfolio") -> Decimal | None:
         return self.get_schedule_performance_index()
-
