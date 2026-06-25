@@ -944,3 +944,68 @@ class DrawingTypeDeleteView(UserHasProjectRoleGenericMixin, APIView):
         dt.soft_delete()
         messages.success(request, f"Drawing type '{name}' deleted.")
         return Response({"success": True}, status=200)
+
+
+DEFAULT_DRAWING_TYPES = [
+    {"name": "Construction", "description": "Construction drawing type"},
+    {"name": "Information", "description": "Information drawing type"},
+    {"name": "Shop", "description": "Shop drawing type"},
+    {"name": "Tender", "description": "Tender drawing type"},
+]
+
+
+class DrawingTypeLoadDefaultsView(UserHasProjectRoleGenericMixin, APIView):
+    """Load the standard set of default drawing types for a project.
+
+    Skips any drawing type whose name already exists (case-insensitive) so the
+    operation is idempotent and safe to run multiple times.
+    """
+
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, *args, **kwargs):
+        """Create missing default drawing types and return a summary."""
+        project = self.get_project()
+
+        existing_names = set(
+            project.drawing_types.filter(deleted=False)
+            .values_list("name", flat=True)
+        )
+        existing_lower = {n.lower() for n in existing_names}
+
+        created_names = []
+        skipped_names = []
+
+        for item in DEFAULT_DRAWING_TYPES:
+            name = item["name"]
+            desc = item["description"]
+            if name.lower() in existing_lower:
+                skipped_names.append(name)
+            else:
+                DrawingType.objects.create(
+                    project=project, name=name, description=desc
+                )
+                created_names.append(name)
+
+        if created_names:
+            created_str = ", ".join(created_names)
+            messages.success(
+                request,
+                f"Added {len(created_names)} drawing type(s): {created_str}.",
+            )
+        else:
+            messages.info(
+                request,
+                "All default drawing types already exist — nothing was added.",
+            )
+
+        return Response(
+            {
+                "success": True,
+                "created": created_names,
+                "skipped": skipped_names,
+            },
+            status=200,
+        )
+
