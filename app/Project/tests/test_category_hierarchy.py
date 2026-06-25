@@ -82,3 +82,33 @@ class TestCategoryHierarchyView:
         # Verify collapsible containers exist
         assert f'id="category-{category.pk}"' in content
         assert f'id="subcategory-{subcategory.pk}"' in content
+
+    def test_category_hierarchy_rendering_with_disciplines(self, client):
+        """Test that Category, SubCategory, and Group render assigned disciplines in CategoryListView."""
+        client.force_login(self.user)
+
+        from app.Project.tests.factories import DisciplineFactory
+        discipline1 = DisciplineFactory(project=self.project, name="Civil Discipline")
+        discipline2 = DisciplineFactory(project=self.project, name="Mechanical Discipline")
+
+        category = CategoryFactory(project=self.project, name="L1 Category Test")
+        category.disciplines.add(discipline1)
+
+        subcategory = SubCategoryFactory(
+            category=category, project=self.project, name="L2 SubCategory Test"
+        )
+        subcategory.disciplines.add(discipline2)
+
+        group = GroupFactory(
+            sub_category=subcategory, project=self.project, name="L3 Group Test"
+        )
+        group.disciplines.add(discipline1)
+
+        response = client.get(self.url)
+        assert response.status_code == 200
+
+        content = response.content.decode("utf-8")
+
+        # Verify disciplines are rendered
+        assert "Civil Discipline" in content
+        assert "Mechanical Discipline" in content

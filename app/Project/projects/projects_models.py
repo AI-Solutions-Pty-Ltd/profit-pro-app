@@ -1028,11 +1028,11 @@ class Category(BaseModel):
 
     name = models.CharField(
         max_length=100,
-        help_text="Category name (e.g., Construction, Engineering)",
+        help_text="WBS Level name (e.g., Construction, Engineering)",
     )
     description = models.TextField(
         blank=True,
-        help_text="Optional description of the category",
+        help_text="Optional description ",
     )
     project = models.ForeignKey(
         Project,
@@ -1063,6 +1063,12 @@ class Category(BaseModel):
         blank=True,
         null=True,
         help_text="Preliminaries cost",
+    )
+    disciplines = models.ManyToManyField(
+        "Discipline",
+        blank=True,
+        related_name="categories",
+        help_text="Disciplines assigned to this WBS Level 1"
     )
 
     if TYPE_CHECKING:
@@ -1122,6 +1128,12 @@ class SubCategory(BaseModel):
         null=True,
         help_text="Preliminaries cost",
     )
+    disciplines = models.ManyToManyField(
+        "Discipline",
+        blank=True,
+        related_name="subcategories",
+        help_text="Disciplines assigned to this WBS Level 2"
+    )
 
     if TYPE_CHECKING:
         groups: QuerySet["Group"]
@@ -1179,6 +1191,12 @@ class Group(BaseModel):
         blank=True,
         null=True,
         help_text="Preliminaries cost",
+    )
+    disciplines = models.ManyToManyField(
+        "Discipline",
+        blank=True,
+        related_name="groups",
+        help_text="Disciplines assigned to this WBS Level 3"
     )
 
     if TYPE_CHECKING:

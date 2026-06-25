@@ -34,9 +34,12 @@ from app.Project.models import (
 )
 from app.Project.projects.category_forms import (
     CategoryForm,
+    CategoryScopeDateForm,
     DisciplineForm,
     GroupForm,
+    GroupScopeDateForm,
     SubCategoryForm,
+    SubCategoryScopeDateForm,
 )
 
 # =============================================================================
@@ -133,6 +136,9 @@ class ScopePlanningView(PlanningMixin, TemplateView):
                 "subcategory_form": SubCategoryForm(project=project),
                 "group_form": GroupForm(project=project),
                 "discipline_form": DisciplineForm(),
+                "scope_category_date_form": CategoryScopeDateForm(),
+                "scope_subcategory_date_form": SubCategoryScopeDateForm(),
+                "scope_group_date_form": GroupScopeDateForm(),
             }
         )
         return context
@@ -317,3 +323,5 @@ class DisciplineFileDeleteView(ScopeFileDeleteMixin):
         obj.delete()
         messages.success(request, "File deleted successfully.")
         return JsonResponse({"success": True})
+
+

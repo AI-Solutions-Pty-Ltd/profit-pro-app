@@ -44,18 +44,22 @@
     const editSubCategoryModal = document.getElementById("editSubCategoryModal");
     const editSubCategoryForm = editSubCategoryModal.querySelector('#editForm')
 
-    function openEditSubCategoryModal(id, name, description, categoryId) {
+    function openEditSubCategoryModal(id, name, description, categoryId, startDate, endDate) {
         editSubCategoryModal.dataset.id = id;
         editSubCategoryModal.dataset.categoryId = categoryId;
         const nameInput = editSubCategoryForm.querySelector('#id_name');
         const descriptionInput = editSubCategoryForm.querySelector('#id_description');
         const categoryInput = editSubCategoryForm.querySelector('#id_category');
-        
+        const startDateInput = editSubCategoryForm.querySelector('#id_start_date');
+        const endDateInput = editSubCategoryForm.querySelector('#id_end_date');
+
         // Set values
         nameInput.value = name;
         descriptionInput.value = description;
-        categoryInput.value = categoryId
-        
+        categoryInput.value = categoryId;
+        if (startDateInput) startDateInput.value = startDate || '';
+        if (endDateInput) endDateInput.value = endDate || '';
+
         // Show modal
         editSubCategoryModal.classList.remove('hidden');
         nameInput.focus();

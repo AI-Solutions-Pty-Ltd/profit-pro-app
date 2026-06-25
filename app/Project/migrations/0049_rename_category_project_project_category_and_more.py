@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
                 (
                     "name",
                     models.CharField(
-                        help_text="Category name (e.g., Construction, Engineering)",
+                        help_text="WBS Level name (e.g., Construction, Engineering)",
                         max_length=100,
                         unique=True,
                     ),
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
                 (
                     "description",
                     models.TextField(
-                        blank=True, help_text="Optional description of the category"
+                        blank=True, help_text="Optional description"
                     ),
                 ),
                 (

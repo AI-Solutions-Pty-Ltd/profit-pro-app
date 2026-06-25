@@ -1,0 +1,126 @@
+{% load heroicons %}
+<!-- Scope Planning: Assign Category Disciplines Modal -->
+<div id="scopeCategoryDisciplineModal"
+     class="hidden fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm transition-opacity">
+    <div class="flex justify-center items-center p-4 min-h-screen">
+        <div class="w-full max-w-md bg-white rounded-xl shadow-2xl">
+            <!-- Header -->
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center gap-2">
+                    {% heroicon_outline "squares-2x2" size="20" class="text-indigo-500" %}
+                    <h3 class="text-base font-semibold text-gray-900">Assign Disciplines — WBS Level 1</h3>
+                </div>
+                <button type="button" onclick="closeScopeCategoryDisciplineModal()"
+                        class="p-1 text-gray-400 rounded hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                    {% heroicon_outline "x-mark" size="18" %}
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4">
+                <!-- Read-only name -->
+                <div>
+                    <label class="block mb-1 text-xs font-medium tracking-wide text-gray-500 uppercase">Category</label>
+                    <div id="scope_category_disc_name_display"
+                         class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 select-none">
+                    </div>
+                </div>
+                <!-- Disciplines list -->
+                <div>
+                    <label class="block mb-1.5 text-xs font-medium tracking-wide text-gray-500 uppercase">Select Disciplines</label>
+                    <div class="max-h-60 overflow-y-auto pr-1 space-y-2" id="scope_category_disc_list">
+                        {% for discipline in project.disciplines.all %}
+                            <label class="flex items-center gap-3 px-3 py-2 bg-gray-50 hover:bg-gray-100/70 border border-gray-200 rounded-lg cursor-pointer transition-colors">
+                                <input type="checkbox" name="scope_category_disciplines" value="{{ discipline.pk }}"
+                                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-sm font-medium text-gray-700 truncate">{{ discipline.name }}</div>
+                                    {% if discipline.description %}
+                                        <div class="text-xs text-gray-500 truncate">{{ discipline.description }}</div>
+                                    {% endif %}
+                                </div>
+                            </label>
+                        {% empty %}
+                            <div class="text-center py-6 px-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                <p class="text-sm text-gray-500 font-medium">No disciplines registered for this project.</p>
+                                <p class="text-xs text-gray-400 mt-1">Please add disciplines in the section below first.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
+                <button type="button" onclick="closeScopeCategoryDisciplineModal()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" id="scopeCategoryDisciplineSaveBtn"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                        {% if not project.disciplines.exists %}disabled{% endif %}>
+                    {% heroicon_outline "check" size="16" %}
+                    Save Selection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const scopeCategoryDisciplineModal = document.getElementById('scopeCategoryDisciplineModal');
+    let _scopeCategoryDiscId = null;
+
+    function openScopeCategoryDisciplineModal(id, name, selectedIds) {
+        _scopeCategoryDiscId = id;
+        document.getElementById('scope_category_disc_name_display').textContent = name;
+        
+        // Reset and check assigned disciplines
+        const checkboxes = document.getElementsByName('scope_category_disciplines');
+        checkboxes.forEach(cb => {
+            cb.checked = selectedIds.includes(parseInt(cb.value));
+        });
+
+        scopeCategoryDisciplineModal.classList.remove('hidden');
+    }
+
+    function closeScopeCategoryDisciplineModal() {
+        scopeCategoryDisciplineModal.classList.add('hidden');
+        _scopeCategoryDiscId = null;
+    }
+
+    document.getElementById('scopeCategoryDisciplineSaveBtn').addEventListener('click', async () => {
+        if (!_scopeCategoryDiscId) return;
+        
+        const checkboxes = document.getElementsByName('scope_category_disciplines');
+        const checkedIds = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) checkedIds.push(parseInt(cb.value));
+        });
+
+        try {
+            const response = await fetch(
+                `/project/{{ project.pk }}/categories/${_scopeCategoryDiscId}/update-disciplines/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ disciplines: checkedIds }),
+                }
+            );
+            const result = await response.json();
+            if (result.success) {
+                closeScopeCategoryDisciplineModal();
+                window.location.reload();
+            } else {
+                alert('Could not save disciplines. Please try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred while saving disciplines.');
+        }
+    });
+
+    scopeCategoryDisciplineModal.addEventListener('click', e => {
+        if (e.target === scopeCategoryDisciplineModal) closeScopeCategoryDisciplineModal();
+    });
+</script>

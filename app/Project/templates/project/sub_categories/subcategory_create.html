@@ -20,6 +20,7 @@
                         {{ form.category }}
                         <div>{{ form.name|as_crispy_field }}</div>
                         <div>{{ form.description|as_crispy_field }}</div>
+
                     </div>
                 </div>
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
@@ -45,6 +46,9 @@
 
     function openCreateSubCategoryModal(categoryId) {
         createSubCategoryModal.classList.remove('hidden');
+        createSubCategoryForm.querySelector('#id_name').value = '';
+        createSubCategoryForm.querySelector('#id_description').value = '';
+
         createSubCategoryForm.querySelector('#id_name').focus();
         createSubCategoryForm.querySelector('#id_category').value = categoryId;
     }

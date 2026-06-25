@@ -24,6 +24,7 @@ urlpatterns = [
         ScopePlanningView.as_view(),
         name="scope-planning",
     ),
+
     path(
         "<int:project_pk>/overview/budget-planning/",
         BudgetPlanningView.as_view(),

@@ -18,7 +18,7 @@ class CategoryForm(forms.ModelForm):
 
     class Meta:
         model = Category
-        fields = ["name", "description"]
+        fields = ["name", "description", "start_date", "end_date"]
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -33,10 +33,24 @@ class CategoryForm(forms.ModelForm):
                     "rows": 3,
                 }
             ),
+            "start_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+            "end_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
         }
         labels = {
-            "name": "Category Name",
+            "name": "Name",
             "description": "Description (Optional)",
+            "start_date": "Start Date",
+            "end_date": "End Date",
         }
 
 
@@ -56,7 +70,7 @@ class SubCategoryForm(forms.ModelForm):
 
     class Meta:
         model = SubCategory
-        fields = ["category", "name", "description"]
+        fields = ["category", "name", "description", "start_date", "end_date"]
         widgets = {
             "category": forms.Select(
                 attrs={
@@ -76,11 +90,25 @@ class SubCategoryForm(forms.ModelForm):
                     "rows": 3,
                 }
             ),
+            "start_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+            "end_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
         }
         labels = {
             "category": "Category",
             "name": "Subcategory Name",
             "description": "Description (Optional)",
+            "start_date": "Start Date",
+            "end_date": "End Date",
         }
 
 
@@ -104,6 +132,8 @@ class GroupForm(forms.ModelForm):
             "name",
             "description",
             "sub_category",
+            "start_date",
+            "end_date",
         ]
         widgets = {
             "sub_category": forms.Select(
@@ -124,11 +154,25 @@ class GroupForm(forms.ModelForm):
                     "rows": 3,
                 }
             ),
+            "start_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+            "end_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
         }
         labels = {
             "sub_category": "Sub Category",
             "name": "Group Name",
             "description": "Description (Optional)",
+            "start_date": "Start Date",
+            "end_date": "End Date",
         }
 
 
@@ -184,3 +228,82 @@ class DrawingTypeForm(forms.ModelForm):
             "name": "Drawing Type Name",
             "description": "Description (Optional)",
         }
+
+
+class CategoryScopeDateForm(forms.ModelForm):
+    """Scope-planning-only form: edit start/end dates for a category."""
+
+    class Meta:
+        model = Category
+        fields = ["start_date", "end_date"]
+        widgets = {
+            "start_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+            "end_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+        }
+        labels = {
+            "start_date": "Start Date",
+            "end_date": "End Date",
+        }
+
+
+class SubCategoryScopeDateForm(forms.ModelForm):
+    """Scope-planning-only form: edit start/end dates for a subcategory."""
+
+    class Meta:
+        model = SubCategory
+        fields = ["start_date", "end_date"]
+        widgets = {
+            "start_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+            "end_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+        }
+        labels = {
+            "start_date": "Start Date",
+            "end_date": "End Date",
+        }
+
+
+class GroupScopeDateForm(forms.ModelForm):
+    """Scope-planning-only form: edit start/end dates for a group."""
+
+    class Meta:
+        model = Group
+        fields = ["start_date", "end_date"]
+        widgets = {
+            "start_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+            "end_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+        }
+        labels = {
+            "start_date": "Start Date",
+            "end_date": "End Date",
+        }
+

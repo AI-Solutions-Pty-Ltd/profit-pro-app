@@ -31,6 +31,11 @@ urlpatterns = [
         name="project-category-update-dates",
     ),
     path(
+        "<int:project_pk>/categories/<int:pk>/update-disciplines/",
+        category_views.CategoryDisciplinesUpdateView.as_view(),
+        name="project-category-update-disciplines",
+    ),
+    path(
         "<int:project_pk>/categories/<int:pk>/update-budget/",
         category_views.CategoryBudgetUpdateView.as_view(),
         name="project-category-update-budget",
@@ -61,6 +66,11 @@ urlpatterns = [
         name="project-subcategory-update-dates",
     ),
     path(
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/update-disciplines/",
+        category_views.SubCategoryDisciplinesUpdateView.as_view(),
+        name="project-subcategory-update-disciplines",
+    ),
+    path(
         "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/update-budget/",
         category_views.SubCategoryBudgetUpdateView.as_view(),
         name="project-subcategory-update-budget",
@@ -89,6 +99,11 @@ urlpatterns = [
         "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update-dates/",
         category_views.GroupDateUpdateView.as_view(),
         name="project-group-update-dates",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update-disciplines/",
+        category_views.GroupDisciplinesUpdateView.as_view(),
+        name="project-group-update-disciplines",
     ),
     path(
         "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update-budget/",
