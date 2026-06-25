@@ -359,9 +359,7 @@ class SystemMunicipalityForm(forms.ModelForm):
         model = Municipality
         fields = ["province", "municipality_name", "code", "district"]
         widgets = {
-            "province": forms.Select(
-                attrs={"class": TAILWIND_SELECT}
-            ),
+            "province": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "municipality_name": forms.TextInput(
                 attrs={
                     "class": TAILWIND_INPUT,

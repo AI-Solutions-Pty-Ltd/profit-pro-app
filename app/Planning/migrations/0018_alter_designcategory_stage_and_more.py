@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("planning", "0017_workpackage_close_out_completed_and_more"),
     ]

@@ -180,7 +180,9 @@ class LineItem(BaseModel):
     is_work = models.BooleanField(default=False)
     unit_measurement = models.CharField(max_length=10, blank=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
-    budgeted_quantity = models.DecimalField(max_digits=20, decimal_places=10, blank=True)
+    budgeted_quantity = models.DecimalField(
+        max_digits=20, decimal_places=10, blank=True
+    )
     total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
 
     # for addendum / variations line items

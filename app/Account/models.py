@@ -31,7 +31,9 @@ class Province(BaseModel):
 
 
 class Municipality(BaseModel):
-    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name="municipalities")
+    province = models.ForeignKey(
+        Province, on_delete=models.CASCADE, related_name="municipalities"
+    )
     municipality_name = models.CharField(max_length=255)
     code = models.CharField(max_length=10)
     district = models.CharField(max_length=255, blank=True, default="")

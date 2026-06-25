@@ -4,7 +4,11 @@ import pytest
 from django.urls import reverse
 
 from app.Project.models import DrawingType, ProjectRole, Role
-from app.Project.tests.factories import AccountFactory, DrawingTypeFactory, ProjectFactory
+from app.Project.tests.factories import (
+    AccountFactory,
+    DrawingTypeFactory,
+    ProjectFactory,
+)
 
 
 @pytest.mark.django_db
@@ -12,8 +16,8 @@ class TestDrawingTypeLoadDefaultsView:
     """Test cases for DrawingTypeLoadDefaultsView."""
 
     def setup_method(self):
-        from django.db.models.signals import post_save
         import factory
+        from django.db.models.signals import post_save
 
         with factory.django.mute_signals(post_save):
             self.project = ProjectFactory()
@@ -36,7 +40,9 @@ class TestDrawingTypeLoadDefaultsView:
         client.force_login(self.user)
 
         # Ensure no drawing types exist initially
-        assert DrawingType.objects.filter(project=self.project, deleted=False).count() == 0
+        assert (
+            DrawingType.objects.filter(project=self.project, deleted=False).count() == 0
+        )
 
         response = client.post(self.url)
         assert response.status_code == 200
@@ -49,13 +55,16 @@ class TestDrawingTypeLoadDefaultsView:
         # Verify created names
         expected_names = {"Construction", "Information", "Shop", "Tender"}
         actual_names = set(
-            DrawingType.objects.filter(project=self.project, deleted=False)
-            .values_list("name", flat=True)
+            DrawingType.objects.filter(project=self.project, deleted=False).values_list(
+                "name", flat=True
+            )
         )
         assert actual_names == expected_names
 
         # Verify descriptions are also populated
-        construction_dt = DrawingType.objects.get(project=self.project, name="Construction")
+        construction_dt = DrawingType.objects.get(
+            project=self.project, name="Construction"
+        )
         assert construction_dt.description == "Construction drawing type"
 
     def test_load_defaults_idempotent(self, client):
@@ -63,10 +72,18 @@ class TestDrawingTypeLoadDefaultsView:
         client.force_login(self.user)
 
         # Pre-create "Construction" and "Shop"
-        DrawingTypeFactory(project=self.project, name="Construction", description="Existing construction")
-        DrawingTypeFactory(project=self.project, name="Shop", description="Existing shop")
+        DrawingTypeFactory(
+            project=self.project,
+            name="Construction",
+            description="Existing construction",
+        )
+        DrawingTypeFactory(
+            project=self.project, name="Shop", description="Existing shop"
+        )
 
-        assert DrawingType.objects.filter(project=self.project, deleted=False).count() == 2
+        assert (
+            DrawingType.objects.filter(project=self.project, deleted=False).count() == 2
+        )
 
         response = client.post(self.url)
         assert response.status_code == 200
@@ -77,14 +94,20 @@ class TestDrawingTypeLoadDefaultsView:
         assert set(data["skipped"]) == {"Construction", "Shop"}
 
         # Total drawing types should be 4
-        assert DrawingType.objects.filter(project=self.project, deleted=False).count() == 4
+        assert (
+            DrawingType.objects.filter(project=self.project, deleted=False).count() == 4
+        )
 
         # Descriptions of pre-existing ones should not change
-        construction_dt = DrawingType.objects.get(project=self.project, name="Construction")
+        construction_dt = DrawingType.objects.get(
+            project=self.project, name="Construction"
+        )
         assert construction_dt.description == "Existing construction"
 
         # Descriptions of new ones should be populated
-        information_dt = DrawingType.objects.get(project=self.project, name="Information")
+        information_dt = DrawingType.objects.get(
+            project=self.project, name="Information"
+        )
         assert information_dt.description == "Information drawing type"
 
     def test_load_defaults_case_insensitive(self, client):
@@ -92,7 +115,9 @@ class TestDrawingTypeLoadDefaultsView:
         client.force_login(self.user)
 
         # Pre-create "tender" in lowercase
-        DrawingTypeFactory(project=self.project, name="tender", description="lowercase tender")
+        DrawingTypeFactory(
+            project=self.project, name="tender", description="lowercase tender"
+        )
 
         response = client.post(self.url)
         assert response.status_code == 200

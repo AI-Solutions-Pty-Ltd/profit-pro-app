@@ -12,15 +12,13 @@ def migrate_provinces(apps, schema_editor):
         if mun.old_province:
             province_name = mun.old_province.strip()
             province_obj, _ = Province.objects.get_or_create(
-                name=province_name,
-                defaults={"code": province_name[:3].upper()}
+                name=province_name, defaults={"code": province_name[:3].upper()}
             )
             mun.province = province_obj
             mun.save()
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Account", "0016_province"),
     ]

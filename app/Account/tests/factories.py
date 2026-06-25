@@ -152,4 +152,3 @@ class MunicipalityFactory(DjangoModelFactory):
     municipality_name = Sequence(lambda n: f"Municipality {n}")
     code = Sequence(lambda n: f"MUN{n:03d}")
     district = Sequence(lambda n: f"District {n}")
-

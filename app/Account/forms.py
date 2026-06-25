@@ -28,8 +28,7 @@ class MunicipalityFilterForm(forms.Form):
             province_field = self.fields["province"]
             if hasattr(province_field, "choices"):
                 province_field.choices = [("", "All Provinces")] + list(  # type: ignore
-                    Province.objects.order_by("name")
-                    .values_list("id", "name")
+                    Province.objects.order_by("name").values_list("id", "name")
                 )
 
             district_field = self.fields["district"]

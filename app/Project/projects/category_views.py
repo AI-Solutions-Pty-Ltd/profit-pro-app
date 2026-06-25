@@ -631,8 +631,7 @@ class DisciplineLoadDefaultsView(UserHasProjectRoleGenericMixin, APIView):
         project = self.get_project()
 
         existing_names = set(
-            project.disciplines.filter(deleted=False)
-            .values_list("name", flat=True)
+            project.disciplines.filter(deleted=False).values_list("name", flat=True)
         )
         existing_lower = {n.lower() for n in existing_names}
 
@@ -969,8 +968,7 @@ class DrawingTypeLoadDefaultsView(UserHasProjectRoleGenericMixin, APIView):
         project = self.get_project()
 
         existing_names = set(
-            project.drawing_types.filter(deleted=False)
-            .values_list("name", flat=True)
+            project.drawing_types.filter(deleted=False).values_list("name", flat=True)
         )
         existing_lower = {n.lower() for n in existing_names}
 
@@ -983,9 +981,7 @@ class DrawingTypeLoadDefaultsView(UserHasProjectRoleGenericMixin, APIView):
             if name.lower() in existing_lower:
                 skipped_names.append(name)
             else:
-                DrawingType.objects.create(
-                    project=project, name=name, description=desc
-                )
+                DrawingType.objects.create(project=project, name=name, description=desc)
                 created_names.append(name)
 
         if created_names:
@@ -1008,4 +1004,3 @@ class DrawingTypeLoadDefaultsView(UserHasProjectRoleGenericMixin, APIView):
             },
             status=200,
         )
-

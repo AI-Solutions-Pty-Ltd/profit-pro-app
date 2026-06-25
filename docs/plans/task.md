@@ -1,6 +1,7 @@
 | Task | Status | Description |
 |---|---|---|
-| 1. Implement top bar & drawer template changes | [x] | Structure search, action buttons, and advanced filters drawer grid in project_list.html |
-| 2. Add client-side interactive JavaScript | [x] | Implement drawer toggle, initial state, and dynamic municipality filtering |
-| 3. Add active filter chips tags | [x] | Render badges for active filters below the search bar |
-| 4. Verify template edits & run tests | [x] | Test the page loading, form submission, and existing test suite |
+| Task 1: Add default list & DrawingTypeLoadDefaultsView to category_views.py | [x] | Add DEFAULT_DRAWING_TYPES and DrawingTypeLoadDefaultsView to category_views.py |
+| Task 2: Register URL in category_urls.py | [x] | Register project-drawing-type-load-defaults route in category_urls.py |
+| Task 3: Add button & AJAX script to drawing_type_manage.html | [x] | Add Load Defaults button in header and AJAX post logic in drawing_type_manage.html |
+| Task 4: Create unit tests in test_drawing_type_defaults.py | [x] | Write test cases for drawing type default loading in test_drawing_type_defaults.py |
+| Task 5: Run tests and verify | [x] | Run all pytest suites and verify with ruff linting |

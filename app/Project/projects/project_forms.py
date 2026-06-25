@@ -296,7 +296,9 @@ class ProjectFilterForm(forms.Form):
             if area_queryset is not None:
                 area_queryset = area_queryset.filter(province_id=selected_province_id)
             else:
-                area_queryset = Municipality.objects.filter(province_id=selected_province_id)
+                area_queryset = Municipality.objects.filter(
+                    province_id=selected_province_id
+                )
 
         super().__init__(*args, **kwargs)
 
@@ -347,6 +349,4 @@ class ProjectFilterForm(forms.Form):
             self.fields["project_stage"].queryset = stage_queryset  # type: ignore
 
         area_field = cast(forms.ModelChoiceField, self.fields["area"])
-        cast(Any, area_field).label_from_instance = lambda obj: (
-            obj.municipality_name
-        )
+        cast(Any, area_field).label_from_instance = lambda obj: obj.municipality_name

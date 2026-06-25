@@ -280,7 +280,7 @@ class MunicipalityImporter:
 
             province_obj, _ = Province.objects.get_or_create(
                 name=province,
-                defaults={"code": province[:3].upper() if province else ""}
+                defaults={"code": province[:3].upper() if province else ""},
             )
 
             obj, is_new = Municipality.objects.update_or_create(

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("BillOfQuantities", "0026_bill_bill_number"),
     ]
