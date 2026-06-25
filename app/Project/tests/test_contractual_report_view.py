@@ -1,9 +1,10 @@
 """Tests for the project-level Contractual Report view."""
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.tests.factories import (
@@ -36,10 +37,10 @@ class TestContractualReportView(TestCase):
     def test_renders_and_includes_overview_counts(self):
         """Create sample records and confirm they show in context + HTML."""
         # Default reporting window is 1 month ending today.
-        today = date.today()
+        today = timezone.now().date()
 
         # Risks - ensure at least one open risk falls within the window
-        Risk.objects.create(
+        r1 = Risk.objects.create(
             project=self.project,
             description="Risk description for test",
             raised_by=self.user,
@@ -50,6 +51,8 @@ class TestContractualReportView(TestCase):
             status=RiskStatus.OPEN,
             category=Risk.RiskCategory.OTHER,
         )
+        r1.date = today
+        r1.save(update_fields=["date"])
 
         # Variations
         v1 = ContractVariationFactory.create(project=self.project)
@@ -58,7 +61,7 @@ class TestContractualReportView(TestCase):
         v1.save(update_fields=["date_identified", "status"])
 
         # Early warnings (no factory in repo, create directly)
-        EarlyWarning.objects.create(
+        ew1 = EarlyWarning.objects.create(
             project=self.project,
             to_user=self.user,
             subject="EW test",
@@ -66,6 +69,8 @@ class TestContractualReportView(TestCase):
             respond_by_date=today + timedelta(days=7),
             status=EarlyWarningStatus.OPEN,
         )
+        ew1.date = today
+        ew1.save(update_fields=["date"])
 
         # Documents in drawings/specifications categories
         ProjectDocumentFactory.create(
