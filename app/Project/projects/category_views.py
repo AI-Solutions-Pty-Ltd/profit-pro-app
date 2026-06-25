@@ -599,6 +599,75 @@ class DisciplineDeleteView(
         return Response({"success": True}, status=200)
 
 
+DEFAULT_DISCIPLINES = [
+    "Project Management",
+    "Quantity Surveying",
+    "Structural",
+    "Electrical",
+    "Mechanical",
+    "Civil",
+    "Piping",
+    "Control & Instrumentation",
+    "Geotech",
+    "Town Planning",
+    "Health and Safety",
+    "Land Surveying",
+    "Architectural",
+]
+
+
+class DisciplineLoadDefaultsView(UserHasProjectRoleGenericMixin, APIView):
+    """Load the standard set of default disciplines for a project.
+
+    Skips any discipline whose name already exists (case-insensitive) so the
+    operation is idempotent and safe to run multiple times.
+    """
+
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, *args, **kwargs):
+        """Create missing default disciplines and return a summary."""
+        project = self.get_project()
+
+        existing_names = set(
+            project.disciplines.filter(deleted=False)
+            .values_list("name", flat=True)
+        )
+        existing_lower = {n.lower() for n in existing_names}
+
+        created_names = []
+        skipped_names = []
+
+        for name in DEFAULT_DISCIPLINES:
+            if name.lower() in existing_lower:
+                skipped_names.append(name)
+            else:
+                Discipline.objects.create(project=project, name=name)
+                created_names.append(name)
+
+        if created_names:
+            created_str = ", ".join(created_names)
+            messages.success(
+                request,
+                f"Added {len(created_names)} discipline(s): {created_str}.",
+            )
+        else:
+            messages.info(
+                request,
+                "All default disciplines already exist — nothing was added.",
+            )
+
+        return Response(
+            {
+                "success": True,
+                "created": created_names,
+                "skipped": skipped_names,
+            },
+            status=200,
+        )
+
+
 class CategoryDateUpdateView(UserHasProjectRoleGenericMixin, APIView):
     """Update category start and end dates."""
 
