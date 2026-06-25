@@ -123,7 +123,10 @@ class PortfolioReportMixin:
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        from app.Account.models import Province
+
+        province_queryset = Province.objects.all().order_by("name")
+        area_queryset = Municipality.objects.all().order_by("municipality_name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -135,6 +138,7 @@ class PortfolioReportMixin:
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
+            province_queryset=province_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -149,6 +153,9 @@ class PortfolioReportMixin:
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
+            province = self.filter_form.cleaned_data.get("province")
+            if province:
+                projects = projects.filter(area__province=province)
             area = self.filter_form.cleaned_data.get("area")
             if area:
                 projects = projects.filter(area=area)
@@ -472,7 +479,10 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        from app.Account.models import Province
+
+        province_queryset = Province.objects.all().order_by("name")
+        area_queryset = Municipality.objects.all().order_by("municipality_name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -484,6 +494,7 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
+            province_queryset=province_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -514,6 +525,9 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
+            province = self.filter_form.cleaned_data.get("province")
+            if province:
+                projects = projects.filter(area__province=province)
             area = self.filter_form.cleaned_data.get("area")
             if area:
                 projects = projects.filter(area=area)
@@ -674,7 +688,10 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        from app.Account.models import Province
+
+        province_queryset = Province.objects.all().order_by("name")
+        area_queryset = Municipality.objects.all().order_by("municipality_name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -686,6 +703,7 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
+            province_queryset=province_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -716,6 +734,9 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
+            province = self.filter_form.cleaned_data.get("province")
+            if province:
+                projects = projects.filter(area__province=province)
             area = self.filter_form.cleaned_data.get("area")
             if area:
                 projects = projects.filter(area=area)
@@ -878,7 +899,10 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        from app.Account.models import Province
+
+        province_queryset = Province.objects.all().order_by("name")
+        area_queryset = Municipality.objects.all().order_by("municipality_name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -890,6 +914,7 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
+            province_queryset=province_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )

@@ -2,11 +2,11 @@
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from factory.declarations import LazyAttribute, Sequence
+from factory.declarations import LazyAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 from factory.faker import Faker
 
-from app.Account.models import Account, Suburb, Town
+from app.Account.models import Account, Municipality, Province, Suburb, Town
 from app.Account.subscription_config import Subscription
 
 User = get_user_model()
@@ -128,3 +128,27 @@ class ClientAccountFactory(AccountFactory):
     """Factory for tenant accounts."""
 
     type = Account.Type.CLIENT
+
+
+class ProvinceFactory(DjangoModelFactory):
+    """Factory for Province model."""
+
+    class Meta:
+        model = Province
+        django_get_or_create = ("name", "code")
+
+    name = Sequence(lambda n: f"Province {n}")
+    code = Sequence(lambda n: f"PRV{n:03d}")
+
+
+class MunicipalityFactory(DjangoModelFactory):
+    """Factory for Municipality model."""
+
+    class Meta:
+        model = Municipality
+        django_get_or_create = ("province", "municipality_name", "code")
+
+    province = SubFactory(ProvinceFactory)
+    municipality_name = Sequence(lambda n: f"Municipality {n}")
+    code = Sequence(lambda n: f"MUN{n:03d}")
+    district = Sequence(lambda n: f"District {n}")

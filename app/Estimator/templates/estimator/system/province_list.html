@@ -1,0 +1,156 @@
+{% extends "estimator/system/base_system.html" %}
+{% load heroicons %}
+{% block title %}Provinces - System Library{% endblock %}
+{% block sub_content %}
+    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Provinces</h1>
+            <p class="mt-1 text-sm text-gray-500">Standard South African provinces list.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex gap-2">
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        name="load_defaults"
+                        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Load Defaults
+                </button>
+            </form>
+            <a href="{% url 'estimator:sys_province_upload' %}"
+               class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Upload
+            </a>
+            <a href="{% url 'estimator:sys_download_province_template' %}"
+               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
+            <button type="button"
+                    onclick="document.getElementById('province-form').classList.toggle('hidden')"
+                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
+                Add Province
+            </button>
+            {% include "estimator/_clear_all_modal.html" with clear_sheet_label="Provinces" %}
+        </div>
+    </div>
+    <!-- Add Province Form -->
+    <div id="province-form"
+         class="{% if not form.errors %}hidden{% endif %} mb-6">
+        <div class="overflow-hidden bg-white shadow-sm rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">New Province</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                        <div class="rounded-md bg-red-50 p-4 mb-4">
+                            <div class="text-sm text-red-700">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}<p>{{ field }}: {{ error }}</p>{% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                        <div>
+                            <label for="id_name" class="block text-sm font-medium text-gray-700">Province Name</label>
+                            <div class="mt-1">{{ form.name }}</div>
+                        </div>
+                        <div>
+                            <label for="id_code" class="block text-sm font-medium text-gray-700">Code</label>
+                            <div class="mt-1">{{ form.code }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end gap-x-3">
+                        <button type="button"
+                                onclick="document.getElementById('province-form').classList.add('hidden')"
+                                class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            Save Province
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Search & Filters -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <form method="get" id="filter-form" class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[220px]">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Search</label>
+                <input type="text"
+                       id="cost-search"
+                       name="q"
+                       value="{{ f_q }}"
+                       placeholder="Province name, code…"
+                       autocomplete="off"
+                       class="block w-full rounded-md border-0 py-1.5 px-2 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+            </div>
+            {% if f_q %}
+                <a href="{% url 'estimator:sys_provinces' %}"
+                   class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
+                    {% heroicon_outline "x-mark" class="w-3.5 h-3.5 mr-1" %}
+                    Clear
+                </a>
+            {% endif %}
+        </form>
+    </div>
+    <!-- Table -->
+    <form method="post" id="bulk-form">
+        {% csrf_token %}
+        {% include "estimator/_bulk_toolbar.html" %}
+        <div class="overflow-hidden bg-white shadow-sm rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="w-8 py-3.5 pl-4 pr-2 sm:pl-6">
+                                <input type="checkbox"
+                                       id="select-all"
+                                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Province Name
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Code
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        {% for prov in provinces %}
+                            <tr class="bulk-row hover:bg-gray-50"
+                                data-search="{{ prov.name|lower }} {{ prov.code|lower }}">
+                                <td class="py-3 pl-4 pr-2 sm:pl-6">
+                                    <input type="checkbox"
+                                           name="ids"
+                                           value="{{ prov.id }}"
+                                           class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-900 font-medium">{{ prov.name }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                    <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                        {{ prov.code }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">No provinces found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+    {% include "estimator/_bulk_script.html" %}
+    {% include "estimator/_pagination.html" %}
+{% endblock %}
