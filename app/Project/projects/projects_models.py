@@ -1040,8 +1040,8 @@ class Category(BaseModel):
         blank=True,
         related_name="categories",
     )
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     supply_only = models.DecimalField(
         max_digits=15,
@@ -1104,8 +1104,8 @@ class SubCategory(BaseModel):
         blank=True,
         related_name="subcategories",
     )
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     supply_only = models.DecimalField(
         max_digits=15,
@@ -1168,8 +1168,8 @@ class Group(BaseModel):
         blank=True,
         related_name="groups",
     )
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     supply_only = models.DecimalField(
         max_digits=15,

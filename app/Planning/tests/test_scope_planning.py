@@ -79,6 +79,31 @@ class TestScopePlanningViewContext:
         assert isinstance(response.context["scope_subcategory_date_form"], SubCategoryScopeDateForm)
         assert isinstance(response.context["scope_group_date_form"], GroupScopeDateForm)
 
+    def test_scope_planning_renders_disciplines(self, client):
+        """Test that Category, SubCategory, and Group render assigned disciplines in scope_planning.html."""
+        client.force_login(self.user)
+
+        discipline1 = DisciplineFactory(project=self.project, name="Civil Discipline")
+        discipline2 = DisciplineFactory(project=self.project, name="Electrical Discipline")
+
+        category = CategoryFactory(project=self.project, name="L1 Category A")
+        category.disciplines.add(discipline1)
+
+        subcategory = SubCategoryFactory(category=category, project=self.project, name="L2 SubCategory B")
+        subcategory.disciplines.add(discipline2)
+
+        group = GroupFactory(sub_category=subcategory, project=self.project, name="L3 Group C")
+        group.disciplines.add(discipline1)
+
+        response = client.get(self.url)
+        assert response.status_code == 200
+
+        content = response.content.decode("utf-8")
+
+        # Verify disciplines are displayed under category, subcategory, and group
+        assert "Civil Discipline" in content
+        assert "Electrical Discipline" in content
+
 
 @pytest.mark.django_db
 class TestScopeDateUpdateAPI:
