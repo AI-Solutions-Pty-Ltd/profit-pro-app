@@ -5117,6 +5117,29 @@ class SystemProvinceListView(SystemLibraryMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        if "load_defaults" in request.POST:
+            defaults = [
+                {"name": "Western Cape", "code": "WC"},
+                {"name": "Northern Cape", "code": "NC"},
+                {"name": "Eastern Cape", "code": "EC"},
+                {"name": "Free State", "code": "FS"},
+                {"name": "Gauteng", "code": "GP"},
+                {"name": "Kwa-Zulu Natal", "code": "KZN"},
+                {"name": "Limpopo", "code": "LP"},
+                {"name": "Mpumalanga", "code": "MP"},
+                {"name": "North-West", "code": "NW"},
+            ]
+            created_count = 0
+            for item in defaults:
+                _, created = Province.objects.get_or_create(
+                    name=item["name"],
+                    defaults={"code": item["code"]}
+                )
+                if created:
+                    created_count += 1
+            messages.success(request, f"Loaded {created_count} default provinces.")
+            return redirect(reverse("estimator:sys_provinces"))
+
         if _handle_clear_action(
             request, Province.objects.all(), label="provinces"
         ):

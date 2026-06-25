@@ -138,5 +138,19 @@ def test_system_province_views(client):
     assert Province.objects.filter(code="GP").exists()
 
 
+@pytest.mark.django_db
+def test_load_default_provinces(client):
+    from django.urls import reverse
 
+    from app.Account.models import Province
+    from app.Account.tests.factories import SuperuserFactory
 
+    url = reverse("estimator:sys_provinces")
+    admin = SuperuserFactory()
+    client.force_login(admin)
+
+    # Post load_defaults action
+    response = client.post(url, data={"load_defaults": ""})
+    assert response.status_code == 302
+    assert Province.objects.count() == 9
+    assert Province.objects.filter(name="Kwa-Zulu Natal").exists()
