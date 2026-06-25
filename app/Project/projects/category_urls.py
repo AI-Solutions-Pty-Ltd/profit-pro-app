@@ -140,4 +140,9 @@ urlpatterns = [
         category_views.DrawingTypeDeleteView.as_view(),
         name="project-drawing-type-delete",
     ),
+    path(
+        "<int:project_pk>/drawing-types/load-defaults/",
+        category_views.DrawingTypeLoadDefaultsView.as_view(),
+        name="project-drawing-type-load-defaults",
+    ),
 ]
