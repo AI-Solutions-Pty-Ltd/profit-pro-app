@@ -48,10 +48,10 @@ def _generate_province_code(province_cls, province_name):
         counter += 1
 
 
-
 # ---------------------------------------------------------------------------
 # Step 2 — drop old unique_together (idempotent)
 # ---------------------------------------------------------------------------
+
 
 def _drop_unique_constraints(apps, schema_editor):
     """Drop every UNIQUE constraint on Municipality.
@@ -78,6 +78,7 @@ def _drop_unique_constraints(apps, schema_editor):
 # Step 3 — rename province → old_province (idempotent)
 # ---------------------------------------------------------------------------
 
+
 def _rename_province_to_old_province(apps, schema_editor):
     """Rename the old `province` CharField to `old_province`.
 
@@ -98,6 +99,7 @@ def _rename_province_to_old_province(apps, schema_editor):
 # Step 4 — add nullable province FK (idempotent)
 # ---------------------------------------------------------------------------
 
+
 def _add_province_fk(apps, schema_editor):
     """Add `province_id` FK column pointing at Account_province.
 
@@ -106,9 +108,7 @@ def _add_province_fk(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
         if _col_exists(cursor, "province_id"):
             return  # already added
-        cursor.execute(
-            f"ALTER TABLE `{TABLE}` ADD COLUMN `province_id` bigint NULL"
-        )
+        cursor.execute(f"ALTER TABLE `{TABLE}` ADD COLUMN `province_id` bigint NULL")
         cursor.execute(
             f"""
             ALTER TABLE `{TABLE}`
@@ -121,6 +121,7 @@ def _add_province_fk(apps, schema_editor):
 # ---------------------------------------------------------------------------
 # Step 5 — data migration (idempotent via get_or_create + always overwrite)
 # ---------------------------------------------------------------------------
+
 
 def migrate_provinces(apps, schema_editor):
     """Populate Province rows and link each Municipality to its Province."""
@@ -143,6 +144,7 @@ def migrate_provinces(apps, schema_editor):
 # Step 6 — remove old_province column (idempotent)
 # ---------------------------------------------------------------------------
 
+
 def _remove_old_province_column(apps, schema_editor):
     """Drop the `old_province` CharField if it still exists."""
     with schema_editor.connection.cursor() as cursor:
@@ -154,6 +156,7 @@ def _remove_old_province_column(apps, schema_editor):
 # ---------------------------------------------------------------------------
 # Step 7 — make province FK NOT NULL (idempotent)
 # ---------------------------------------------------------------------------
+
 
 def _make_province_fk_not_null(apps, schema_editor):
     """Set province_id to NOT NULL once all rows have a province."""
@@ -179,6 +182,7 @@ def _make_province_fk_not_null(apps, schema_editor):
 # ---------------------------------------------------------------------------
 # Step 8 — add new unique_together (idempotent)
 # ---------------------------------------------------------------------------
+
 
 def _add_new_unique_together(apps, schema_editor):
     """Add UNIQUE(province_id, municipality_name, code) if not present."""
@@ -207,6 +211,7 @@ def _add_new_unique_together(apps, schema_editor):
 # ---------------------------------------------------------------------------
 # Migration class
 # ---------------------------------------------------------------------------
+
 
 class Migration(migrations.Migration):
     dependencies = [
