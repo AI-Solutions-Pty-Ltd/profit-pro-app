@@ -281,3 +281,28 @@ class TestProjectListViewFilters:
         assert "Project One" in content
         assert "Project Two" not in content
 
+    def test_filter_dropdowns_show_all_provinces_and_municipalities(self, client):
+        from django.urls import reverse
+
+        from app.Account.tests.factories import (
+            MunicipalityFactory,
+            ProvinceFactory,
+            SuperuserFactory,
+        )
+
+        admin = SuperuserFactory()
+        client.force_login(admin)
+
+        # Create a province and municipality that are not linked to any projects
+        unlinked_province = ProvinceFactory(name="Unlinked Province")
+        unlinked_municipality = MunicipalityFactory(province=unlinked_province, municipality_name="Unlinked Mun")
+
+        url = reverse("project:project-list")
+        response = client.get(url)
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        
+        # Verify they are present in the page options (registers)
+        assert "Unlinked Province" in content
+        assert "Unlinked Mun" in content
+

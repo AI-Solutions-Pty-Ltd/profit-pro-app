@@ -104,9 +104,9 @@ class ProjectListView(
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
-        from app.Account.models import Province
-        province_queryset = Province.objects.filter(municipalities__projects__in=projects).distinct().order_by("name")
+        from app.Account.models import Province, Municipality
+        province_queryset = Province.objects.all().order_by("name")
+        area_queryset = Municipality.objects.all().order_by("municipality_name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()

@@ -84,8 +84,8 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
-        province_queryset = Province.objects.filter(municipalities__projects__in=projects).distinct().order_by("name")
+        area_queryset = Municipality.objects.all().order_by("municipality_name")
+        province_queryset = Province.objects.all().order_by("name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -146,8 +146,8 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
-        province_queryset = Province.objects.filter(municipalities__projects__in=projects).distinct().order_by("name")
+        area_queryset = Municipality.objects.all().order_by("municipality_name")
+        province_queryset = Province.objects.all().order_by("name")
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -249,12 +249,8 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             category_queryset = ProjectCategory.objects.filter(
                 projects__in=projects
             ).distinct()
-            area_queryset = Municipality.objects.filter(
-                projects__in=projects
-            ).distinct()
-            province_queryset = Province.objects.filter(
-                municipalities__projects__in=projects
-            ).distinct().order_by("name")
+            area_queryset = Municipality.objects.all().order_by("municipality_name")
+            province_queryset = Province.objects.all().order_by("name")
             discipline_queryset = ProjectDiscipline.objects.filter(
                 projects__in=projects
             ).distinct()

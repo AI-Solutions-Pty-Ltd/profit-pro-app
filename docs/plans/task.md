@@ -1,6 +1,6 @@
 | Task | Status | Description |
 |---|---|---|
-| 1. Add Filter Test Cases | [x] | Add test cases for ProjectListView filters in test_views.py |
-| 2. Update ProjectFilterForm | [x] | Add province field and update area field in ProjectFilterForm |
-| 3. Update Views | [x] | Update ProjectListView, portfolio_views.py, and report_views.py to support province filter |
-| 4. Update Template | [x] | Add Search input and Province/Municipality dropdowns in project_list.html |
+| 1. Implement top bar & drawer template changes | [x] | Structure search, action buttons, and advanced filters drawer grid in project_list.html |
+| 2. Add client-side interactive JavaScript | [x] | Implement drawer toggle, initial state, and dynamic municipality filtering |
+| 3. Add active filter chips tags | [x] | Render badges for active filters below the search bar |
+| 4. Verify template edits & run tests | [x] | Test the page loading, form submission, and existing test suite |
