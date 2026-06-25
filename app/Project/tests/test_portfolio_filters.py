@@ -114,3 +114,29 @@ class TestPortfolioDashboardFilters:
         assert p1 in projects
         assert p2 not in projects
         assert p3 not in projects
+
+    def test_go_to_project_and_filters_work_together(self, client):
+        """Test that Go to Project dropdown options are filtered by active filters."""
+        client.force_login(self.admin)
+
+        prov1 = ProvinceFactory(name="Gauteng")
+        prov2 = ProvinceFactory(name="Limpopo")
+
+        mun1 = MunicipalityFactory(province=prov1)
+        mun2 = MunicipalityFactory(province=prov2)
+
+        p1 = ProjectFactory(name="GP Project", area=mun1)
+        p2 = ProjectFactory(name="LP Project", area=mun2)
+
+        # Filter by GP province
+        response = client.get(self.url, data={"province": prov1.pk})
+        assert response.status_code == 200
+
+        # Retrieve the queryset of the 'projects' select field in the form
+        projects_dropdown_qs = list(
+            response.context["filter_form"].fields["projects"].queryset
+        )
+
+        # It should only show projects in Gauteng (p1) and not Limpopo (p2)
+        assert p1 in projects_dropdown_qs
+        assert p2 not in projects_dropdown_qs
