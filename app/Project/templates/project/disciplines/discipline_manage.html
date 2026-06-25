@@ -37,24 +37,10 @@
             </div>
         </div>
     </div>
+
     <!-- Tabs -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="border-b border-gray-200">
-            <nav class="flex -mb-px" aria-label="Tabs">
-                <a href="{% url 'project:project-category-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Categories
-                </a>
-                <a href="{% url 'project:project-discipline-list' project.pk %}"
-                   class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}
-                    Disciplines
-                </a>
-            </nav>
-        </div>
-    </div>
-    <!-- Disciplines List -->
+    {% include "project/includes/setup_nav.html" with project=project active_tab="disciplines" %}
+
     <div class="bg-white shadow-sm rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
