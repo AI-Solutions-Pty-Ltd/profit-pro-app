@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load heroicons %}
 {% load humanize %}
+{% load template_extras %}
 {% block title %}
     Addendum Items - {{ project.name }} - {{ block.super }}
 {% endblock title %}
@@ -81,7 +82,7 @@
                                     </td>
                                     <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
                                         {% if item.is_work %}
-                                            {{ item.budgeted_quantity|floatformat:2 }} {{ item.unit_measurement }}
+                                            {{ item.budgeted_quantity|qty }} {{ item.unit_measurement }}
                                         {% else %}
                                             -
                                         {% endif %}

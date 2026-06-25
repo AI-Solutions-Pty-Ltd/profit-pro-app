@@ -209,8 +209,8 @@ class TestProjectListViewFilters:
         admin = SuperuserFactory()
         client.force_login(admin)
 
-        p1 = ProjectFactory(name="Alpha Project")
-        p2 = ProjectFactory(name="Beta Project")
+        _p1 = ProjectFactory(name="Alpha Project")
+        _p2 = ProjectFactory(name="Beta Project")
 
         url = reverse("project:project-list")
 
@@ -240,8 +240,8 @@ class TestProjectListViewFilters:
         mun1 = MunicipalityFactory(province=prov1)
         mun2 = MunicipalityFactory(province=prov2)
 
-        p1 = ProjectFactory(name="Joburg Project", area=mun1)
-        p2 = ProjectFactory(name="Cape Town Project", area=mun2)
+        _p1 = ProjectFactory(name="Joburg Project", area=mun1)
+        _p2 = ProjectFactory(name="Cape Town Project", area=mun2)
 
         url = reverse("project:project-list")
 
@@ -269,8 +269,8 @@ class TestProjectListViewFilters:
         mun1 = MunicipalityFactory(province=prov, municipality_name="Mun One")
         mun2 = MunicipalityFactory(province=prov, municipality_name="Mun Two")
 
-        p1 = ProjectFactory(name="Project One", area=mun1)
-        p2 = ProjectFactory(name="Project Two", area=mun2)
+        _p1 = ProjectFactory(name="Project One", area=mun1)
+        _p2 = ProjectFactory(name="Project Two", area=mun2)
 
         url = reverse("project:project-list")
 
@@ -295,7 +295,7 @@ class TestProjectListViewFilters:
 
         # Create a province and municipality that are not linked to any projects
         unlinked_province = ProvinceFactory(name="Unlinked Province")
-        unlinked_municipality = MunicipalityFactory(
+        _unlinked_municipality = MunicipalityFactory(
             province=unlinked_province, municipality_name="Unlinked Mun"
         )
 

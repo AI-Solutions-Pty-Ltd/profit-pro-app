@@ -107,9 +107,9 @@
                         {% endif %}
                     </div>
                 </div>
-
                 <!-- Collapsible Advanced Filters Drawer -->
-                <div id="advancedFiltersDrawer" class="hidden border border-gray-200 rounded-xl bg-white p-5 shadow-sm transition-all duration-200">
+                <div id="advancedFiltersDrawer"
+                     class="hidden border border-gray-200 rounded-xl bg-white p-5 shadow-sm transition-all duration-200">
                     <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
                         {% heroicon_outline "adjustments-horizontal" size="18" class="text-indigo-500" %}
                         Filter Parameters
@@ -157,7 +157,8 @@
                                         class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                     <option value="">All Municipalities</option>
                                     {% for area in filter_form.area.field.queryset %}
-                                        <option value="{{ area.pk }}" data-province="{{ area.province_id }}"
+                                        <option value="{{ area.pk }}"
+                                                data-province="{{ area.province_id }}"
                                                 {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}selected{% endif %}>
                                             {{ area.municipality_name }}
                                         </option>
@@ -253,7 +254,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Active Filters Chips -->
                 {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
                     <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-100">

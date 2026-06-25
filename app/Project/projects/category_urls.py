@@ -116,6 +116,11 @@ urlpatterns = [
         name="project-discipline-delete",
     ),
     path(
+        "<int:project_pk>/disciplines/load-defaults/",
+        category_views.DisciplineLoadDefaultsView.as_view(),
+        name="project-discipline-load-defaults",
+    ),
+    path(
         "<int:project_pk>/drawing-types/",
         category_views.DrawingTypeListView.as_view(),
         name="project-drawing-type-list",
@@ -134,5 +139,10 @@ urlpatterns = [
         "<int:project_pk>/drawing-types/<int:pk>/delete/",
         category_views.DrawingTypeDeleteView.as_view(),
         name="project-drawing-type-delete",
+    ),
+    path(
+        "<int:project_pk>/drawing-types/load-defaults/",
+        category_views.DrawingTypeLoadDefaultsView.as_view(),
+        name="project-drawing-type-load-defaults",
     ),
 ]

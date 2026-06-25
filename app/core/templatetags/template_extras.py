@@ -2,6 +2,7 @@ from django import template
 from django.db.models import QuerySet
 
 from app.Account.models import Account
+from app.Estimator.calculations import format_num
 from app.Project.models import ProjectRole, Role
 
 register = template.Library()
@@ -194,3 +195,16 @@ def space_intcomma(value):
             return f"{val:,.2f}".replace(",", " ")
         except (ValueError, TypeError):
             return value
+
+
+@register.filter(name="qty")
+def qty_filter(value):
+    """Format a quantity truncated to ≤2dp, trailing zeros stripped, with commas.
+
+    Truncates (floor) rather than rounds so values are never inflated.
+    Examples: 1234.5678 → '1,234.56', 100.10 → '100.1', 50.0 → '50'.
+    Returns '-' for None values.
+    """
+    if value is None:
+        return "-"
+    return format_num(value, with_commas=True) or "-"
