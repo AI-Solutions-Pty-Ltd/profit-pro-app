@@ -78,7 +78,7 @@
                                         {{ category.milestones.count }} milestone{{ category.milestones.count|pluralize }}
                                     </span>
                                     <button type="button"
-                                            onclick="openEditCategoryModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.description|escapejs }}' )"
+                                            onclick="openScopeCategoryDateModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.start_date|date:"Y-m-d" }}', '{{ category.end_date|date:"Y-m-d" }}')"
                                             class="p-2 text-indigo-600 rounded-lg transition-colors hover:bg-indigo-50"
                                             title="Edit category">{% heroicon_outline "pencil" size="18" %}</button>
                                     <button type="button"
@@ -200,7 +200,7 @@
                                                     {{ subcategory.milestones|length }} milestone{{ subcategory.milestones|length|pluralize }}
                                                 </span>
                                                 <button type="button"
-                                                        onclick="openEditSubCategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', '{{ subcategory.description|escapejs }}',{{ category.pk }})"
+                                                        onclick="openScopeSubCategoryDateModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', {{ category.pk }}, '{{ subcategory.start_date|date:"Y-m-d" }}', '{{ subcategory.end_date|date:"Y-m-d" }}')"
                                                         class="p-1.5 text-indigo-600 rounded-lg transition-colors hover:bg-indigo-50"
                                                         title="Edit subcategory">
                                                     {% heroicon_outline "pencil" size="16" %}
@@ -307,7 +307,7 @@
                                                                 {{ group.milestones|length }} milestone{{ group.milestones|length|pluralize }}
                                                             </span>
                                                             <button type="button"
-                                                                    onclick="openEditGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', {{ subcategory.pk }})"
+                                                                    onclick="openScopeGroupDateModal({{ group.pk }}, '{{ group.name|escapejs }}', {{ subcategory.pk }}, '{{ group.start_date|date:"Y-m-d" }}', '{{ group.end_date|date:"Y-m-d" }}')"
                                                                     class="p-1.5 text-indigo-600 rounded-lg transition-colors hover:bg-indigo-50"
                                                                     title="Edit group">
                                                                 {% heroicon_outline "pencil" size="16" %}
