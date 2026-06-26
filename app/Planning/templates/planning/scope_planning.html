@@ -7,13 +7,13 @@
 {% endblock title %}
 {% block content %}
     {% include "project/categories/category_create.html" with project=project form=category_form %}
-    {% include "project/categories/category_edit.html" with project=project form=category_form %}
+    {% include "project/categories/category_scope_date_edit.html" with project=project %}
     {% include "project/categories/category_delete.html" with project=project %}
     {% include "project/sub_categories/subcategory_create.html" with project=project form=subcategory_form %}
-    {% include "project/sub_categories/subcategory_edit.html" with project=project form=subcategory_form %}
+    {% include "project/sub_categories/subcategory_scope_date_edit.html" with project=project %}
     {% include "project/sub_categories/subcategory_delete.html" with project=project %}
     {% include "project/groups/group_create.html" with project=project form=group_form %}
-    {% include "project/groups/group_edit.html" with project=project form=group_form %}
+    {% include "project/groups/group_scope_date_edit.html" with project=project %}
     {% include "project/groups/group_delete.html" with project=project %}
     {% include "project/disciplines/discipline_create.html" with project=project form=discipline_form %}
     {% include "project/disciplines/discipline_edit.html" with project=project form=discipline_form %}
