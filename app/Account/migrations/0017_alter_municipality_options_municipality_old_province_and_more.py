@@ -12,6 +12,10 @@ TABLE = "Account_municipality"
 
 def _col_exists(cursor, column_name):
     """Return True if *column_name* exists on the Municipality table."""
+    if cursor.db.vendor == 'sqlite':
+        cursor.execute(f"PRAGMA table_info({TABLE})")
+        columns = [row[1] for row in cursor.fetchall()]
+        return column_name in columns
     cursor.execute(
         """
         SELECT COUNT(*)
@@ -58,6 +62,10 @@ def _drop_unique_constraints(apps, schema_editor):
 
     Safe to call when constraints were already removed in a prior failed run.
     """
+    if schema_editor.connection.vendor == 'sqlite':
+        with schema_editor.connection.cursor() as cursor:
+            cursor.execute("DROP INDEX IF EXISTS Account_municipality_province_municipality_name_code_03583a4a_uniq")
+        return
     with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
@@ -80,19 +88,16 @@ def _drop_unique_constraints(apps, schema_editor):
 
 
 def _rename_province_to_old_province(apps, schema_editor):
-    """Rename the old `province` CharField to `old_province`.
-
-    Uses RENAME COLUMN (MariaDB 10.5.2+ / MySQL 8.0.4+) so the full
-    column definition need not be repeated.  Skips if already done.
-    """
+    """Rename the old `province` CharField to `old_province`."""
     with schema_editor.connection.cursor() as cursor:
         if _col_exists(cursor, "old_province"):
             return  # already renamed in a prior run
         if not _col_exists(cursor, "province"):
-            return  # neither column present — unexpected, but skip safely
-        cursor.execute(
-            f"ALTER TABLE `{TABLE}` RENAME COLUMN `province` TO `old_province`"
-        )
+            return  # neither column present
+        if schema_editor.connection.vendor == 'sqlite':
+            cursor.execute(f"ALTER TABLE {TABLE} RENAME COLUMN province TO old_province")
+        else:
+            cursor.execute(f"ALTER TABLE `{TABLE}` RENAME COLUMN `province` TO `old_province`")
 
 
 # ---------------------------------------------------------------------------
@@ -101,21 +106,21 @@ def _rename_province_to_old_province(apps, schema_editor):
 
 
 def _add_province_fk(apps, schema_editor):
-    """Add `province_id` FK column pointing at Account_province.
-
-    Skips if the column already exists from a prior partial run.
-    """
+    """Add `province_id` FK column pointing at Account_province."""
     with schema_editor.connection.cursor() as cursor:
         if _col_exists(cursor, "province_id"):
             return  # already added
-        cursor.execute(f"ALTER TABLE `{TABLE}` ADD COLUMN `province_id` bigint NULL")
-        cursor.execute(
-            f"""
-            ALTER TABLE `{TABLE}`
-            ADD CONSTRAINT `{TABLE}_province_id_fk`
-            FOREIGN KEY (`province_id`) REFERENCES `Account_province` (`id`)
-            """
-        )
+        if schema_editor.connection.vendor == 'sqlite':
+            cursor.execute(f"ALTER TABLE {TABLE} ADD COLUMN province_id bigint NULL")
+        else:
+            cursor.execute(f"ALTER TABLE `{TABLE}` ADD COLUMN `province_id` bigint NULL")
+            cursor.execute(
+                f"""
+                ALTER TABLE `{TABLE}`
+                ADD CONSTRAINT `{TABLE}_province_id_fk`
+                FOREIGN KEY (`province_id`) REFERENCES `Account_province` (`id`)
+                """
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +155,10 @@ def _remove_old_province_column(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
         if not _col_exists(cursor, "old_province"):
             return  # already gone
-        cursor.execute(f"ALTER TABLE `{TABLE}` DROP COLUMN `old_province`")
+        if schema_editor.connection.vendor == 'sqlite':
+            cursor.execute(f"ALTER TABLE {TABLE} DROP COLUMN old_province")
+        else:
+            cursor.execute(f"ALTER TABLE `{TABLE}` DROP COLUMN `old_province`")
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +168,8 @@ def _remove_old_province_column(apps, schema_editor):
 
 def _make_province_fk_not_null(apps, schema_editor):
     """Set province_id to NOT NULL once all rows have a province."""
+    if schema_editor.connection.vendor == 'sqlite':
+        return
     with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
@@ -186,6 +196,8 @@ def _make_province_fk_not_null(apps, schema_editor):
 
 def _add_new_unique_together(apps, schema_editor):
     """Add UNIQUE(province_id, municipality_name, code) if not present."""
+    if schema_editor.connection.vendor == 'sqlite':
+        return
     with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
