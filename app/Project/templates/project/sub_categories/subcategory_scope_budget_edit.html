@@ -1,0 +1,127 @@
+{% load heroicons %}
+<!-- Cost Planning: Edit SubCategory Budget Modal -->
+<div id="scopeSubCategoryBudgetModal"
+     class="hidden fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm transition-opacity">
+    <div class="flex justify-center items-center p-4 min-h-screen">
+        <div class="w-full max-w-sm bg-white rounded-xl shadow-2xl">
+            <!-- Header -->
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center gap-2">
+                    {% heroicon_outline "banknotes" size="20" class="text-green-500" %}
+                    <h3 class="text-base font-semibold text-gray-900">Edit Budget — WBS Level 2</h3>
+                </div>
+                <button type="button" onclick="closeScopeSubCategoryBudgetModal()"
+                        class="p-1 text-gray-400 rounded hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                    {% heroicon_outline "x-mark" size="18" %}
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4">
+                <!-- Read-only name -->
+                <div>
+                    <label class="block mb-1 text-xs font-medium tracking-wide text-gray-500 uppercase">Sub Category</label>
+                    <div id="scope_subcategory_budget_name_display"
+                         class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 select-none">
+                    </div>
+                </div>
+                <!-- Budget Fields -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="scope_subcategory_budget_val" class="block mb-1 text-sm font-medium text-gray-700">Budget (R)</label>
+                        <input type="number" step="0.01" min="0" id="scope_subcategory_budget_val"
+                               class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors">
+                    </div>
+                    <div>
+                        <label for="scope_subcategory_supply_only" class="block mb-1 text-sm font-medium text-gray-700">Supply Only (R)</label>
+                        <input type="number" step="0.01" min="0" id="scope_subcategory_supply_only"
+                               class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors">
+                    </div>
+                    <div>
+                        <label for="scope_subcategory_install_only" class="block mb-1 text-sm font-medium text-gray-700">Install Only (R)</label>
+                        <input type="number" step="0.01" min="0" id="scope_subcategory_install_only"
+                               class="block w-full px-3 py-2 text-sm rounded-lg border border-green-500 focus:ring-1 focus:ring-green-500 transition-colors">
+                    </div>
+                    <div>
+                        <label for="scope_subcategory_preliminaries" class="block mb-1 text-sm font-medium text-gray-700">Preliminaries (R)</label>
+                        <input type="number" step="0.01" min="0" id="scope_subcategory_preliminaries"
+                               class="block w-full px-3 py-2 text-sm rounded-lg border border-green-500 focus:ring-1 focus:ring-green-500 transition-colors">
+                    </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
+                <button type="button" onclick="closeScopeSubCategoryBudgetModal()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" id="scopeSubCategoryBudgetSaveBtn"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                    {% heroicon_outline "check" size="16" %}
+                    Save Budget
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const scopeSubCategoryBudgetModal = document.getElementById('scopeSubCategoryBudgetModal');
+    let _scopeSubCategoryBudgetId    = null;
+    let _scopeSubCategoryBudgetCatId = null;
+
+    function openScopeSubCategoryBudgetModal(id, name, categoryId, budget, supplyOnly, installOnly, preliminaries) {
+        _scopeSubCategoryBudgetId    = id;
+        _scopeSubCategoryBudgetCatId = categoryId;
+        document.getElementById('scope_subcategory_budget_name_display').textContent = name;
+        document.getElementById('scope_subcategory_budget_val').value = budget || '';
+        document.getElementById('scope_subcategory_supply_only').value = supplyOnly || '';
+        document.getElementById('scope_subcategory_install_only').value = installOnly || '';
+        document.getElementById('scope_subcategory_preliminaries').value = preliminaries || '';
+        scopeSubCategoryBudgetModal.classList.remove('hidden');
+        document.getElementById('scope_subcategory_budget_val').focus();
+    }
+
+    function closeScopeSubCategoryBudgetModal() {
+        scopeSubCategoryBudgetModal.classList.add('hidden');
+        _scopeSubCategoryBudgetId = _scopeSubCategoryBudgetCatId = null;
+    }
+
+    document.getElementById('scopeSubCategoryBudgetSaveBtn').addEventListener('click', async () => {
+        if (!_scopeSubCategoryBudgetId) return;
+        const budget = document.getElementById('scope_subcategory_budget_val').value || null;
+        const supplyOnly = document.getElementById('scope_subcategory_supply_only').value || null;
+        const installOnly = document.getElementById('scope_subcategory_install_only').value || null;
+        const preliminaries = document.getElementById('scope_subcategory_preliminaries').value || null;
+        try {
+            const response = await fetch(
+                `/project/{{ project.pk }}/categories/${_scopeSubCategoryBudgetCatId}/subcategories/${_scopeSubCategoryBudgetId}/update-budget/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({
+                        budget: budget,
+                        supply_only: supplyOnly,
+                        install_only: installOnly,
+                        preliminaries: preliminaries
+                    }),
+                }
+            );
+            const result = await response.json();
+            if (result.success) {
+                closeScopeSubCategoryBudgetModal();
+                window.location.reload();
+            } else {
+                alert('Could not save budget. Please try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred while saving budget.');
+        }
+    });
+
+    scopeSubCategoryBudgetModal.addEventListener('click', e => {
+        if (e.target === scopeSubCategoryBudgetModal) closeScopeSubCategoryBudgetModal();
+    });
+</script>
