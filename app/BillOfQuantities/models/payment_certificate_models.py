@@ -783,7 +783,7 @@ class ActualTransaction(BaseModel):
         null=True,
     )
 
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.DecimalField(max_digits=20, decimal_places=10)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
 

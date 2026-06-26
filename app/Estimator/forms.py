@@ -3,6 +3,8 @@ from typing import cast
 from django import forms
 from django.forms import ModelChoiceField, inlineformset_factory
 
+from app.Account.models import Municipality, Province
+
 from .models import (
     ContractorLabourCrew,
     ContractorLabourSpecification,
@@ -334,6 +336,41 @@ class SystemTradeCodeForm(forms.ModelForm):
                     "class": TAILWIND_INPUT,
                     "placeholder": "e.g. Concrete, Formwork & Reinforcement",
                 }
+            ),
+        }
+
+
+class SystemProvinceForm(forms.ModelForm):
+    class Meta:
+        model = Province
+        fields = ["name", "code"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Gauteng"}
+            ),
+            "code": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. GP"}
+            ),
+        }
+
+
+class SystemMunicipalityForm(forms.ModelForm):
+    class Meta:
+        model = Municipality
+        fields = ["province", "municipality_name", "code", "district"]
+        widgets = {
+            "province": forms.Select(attrs={"class": TAILWIND_SELECT}),
+            "municipality_name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. George Local Municipality",
+                }
+            ),
+            "code": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. WC044"}
+            ),
+            "district": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Garden Route"}
             ),
         }
 

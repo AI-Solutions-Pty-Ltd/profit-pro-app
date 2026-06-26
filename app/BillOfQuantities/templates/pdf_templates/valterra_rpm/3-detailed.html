@@ -1,6 +1,7 @@
 {% load l10n %}
 {% load mathfilters %}
 {% load humanize %}
+{% load template_extras %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -189,7 +190,7 @@
                                                 {% elif col.id == 'unit_measurement' %}
                                                     <td><div class="tc">{{ line_item.unit_measurement|default:"-" }}</div></td>
                                                 {% elif col.id == 'budgeted_quantity' %}
-                                                    <td><div class="tr">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
+                                                    <td><div class="tr">{% if line_item.budgeted_quantity %}{{ line_item.budgeted_quantity|qty|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'unit_price' %}
                                                     <td><div class="tr">{% if line_item.unit_price %}{{ line_item.unit_price|floatformat:2|space_intcomma }}{% else %}-{% endif %}</div></td>
                                                 {% elif col.id == 'total_price' %}

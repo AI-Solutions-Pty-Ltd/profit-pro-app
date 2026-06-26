@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load heroicons %}
 {% load humanize %}
+{% load template_extras %}
 {% block title %}
     Delete Addendum Item - {{ project.name }} - {{ block.super }}
 {% endblock title %}
@@ -50,7 +51,7 @@
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Quantity</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
-                                    {{ addendum_item.budgeted_quantity|floatformat:2 }} {{ addendum_item.unit_measurement }}
+                                    {{ addendum_item.budgeted_quantity|qty }} {{ addendum_item.unit_measurement }}
                                 </dd>
                             </div>
                             <div>

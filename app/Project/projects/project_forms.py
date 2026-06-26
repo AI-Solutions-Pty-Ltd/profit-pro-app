@@ -5,7 +5,7 @@ from typing import Any, cast
 from django import forms
 from django.db.models import QuerySet
 
-from app.Account.models import Account, Municipality
+from app.Account.models import Account, Municipality, Province
 from app.Project.models import (
     Company,
     Project,
@@ -168,11 +168,22 @@ class ProjectFilterForm(forms.Form):
             }
         ),
     )
+    province = forms.ModelChoiceField(
+        queryset=Province.objects.all(),
+        required=False,
+        label="Provinces",
+        empty_label="All Provinces",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
+    )
     area = forms.ModelChoiceField(
         queryset=Municipality.objects.all(),
         required=False,
-        label="Areas",
-        empty_label="All Areas",
+        label="Municipalities",
+        empty_label="All Municipalities",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",
@@ -268,6 +279,7 @@ class ProjectFilterForm(forms.Form):
         client_queryset: QuerySet[Company] | None = None,
         contractor_queryset: QuerySet[Company] | None = None,
         category_queryset: QuerySet[ProjectCategory] | None = None,
+        province_queryset: QuerySet[Province] | None = None,
         area_queryset: QuerySet[Municipality] | None = None,
         discipline_queryset: QuerySet[ProjectDiscipline] | None = None,
         stage_queryset: QuerySet[ProjectStage] | None = None,
@@ -277,9 +289,25 @@ class ProjectFilterForm(forms.Form):
         if user and getattr(user, "has_demo_permission", False):
             Company.ensure_demo_companies(user=user)
 
+        # Filter area queryset by selected province if specified in args[0]
+        form_data = args[0] if args else {}
+        selected_province_id = form_data.get("province") if form_data else None
+        if selected_province_id:
+            if area_queryset is not None:
+                area_queryset = area_queryset.filter(province_id=selected_province_id)
+            else:
+                area_queryset = Municipality.objects.filter(
+                    province_id=selected_province_id
+                )
+
         super().__init__(*args, **kwargs)
 
         # Set custom querysets if provided
+        if province_queryset is not None:
+            self.fields["province"].queryset = province_queryset  # type: ignore
+        else:
+            self.fields["province"].queryset = Province.objects.all().order_by("name")  # type: ignore
+
         if projects_queryset is not None:
             self.fields["projects"].queryset = projects_queryset  # type: ignore
         if consultant_queryset is not None:
@@ -321,6 +349,4 @@ class ProjectFilterForm(forms.Form):
             self.fields["project_stage"].queryset = stage_queryset  # type: ignore
 
         area_field = cast(forms.ModelChoiceField, self.fields["area"])
-        cast(Any, area_field).label_from_instance = lambda obj: (
-            f"{obj.province} - {obj.municipality_name}"
-        )
+        cast(Any, area_field).label_from_instance = lambda obj: obj.municipality_name
