@@ -7,4 +7,4 @@
 | Brainstorming Step 5: Write design doc | [x] | Save to docs/plans/2026-06-26-restore-date-modals-design.md |
 | Brainstorming Step 6: Transition to implementation | [x] | Invoke writing-plans skill to create implementation plan |
 | Task 1: Update Modal Includes in scope_planning.html | [x] | Replace regular edit modal includes with scope date edit modal templates |
-| Task 2: Update WBS Level Card Pencil Buttons in scope_planning.html | [/] | Wire up L1, L2, and L3 pencil buttons to call the corresponding date modals |
+| Task 2: Update WBS Level Card Pencil Buttons in scope_planning.html | [x] | Wire up L1, L2, and L3 pencil buttons to call the corresponding date modals |
