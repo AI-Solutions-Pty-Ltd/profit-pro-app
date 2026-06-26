@@ -159,9 +159,7 @@ def import_boq_from_excel(project, excel_file):
                 amount_val = 0.0
             else:
                 try:
-                    qty_val = (
-                        round(float(budgeted_quantity), 2) if budgeted_quantity else 0.0
-                    )
+                    qty_val = float(budgeted_quantity) if budgeted_quantity else 0.0
                 except (ValueError, TypeError):
                     errors.append(
                         f"Row {display_row}: Invalid Contract Quantity '{budgeted_quantity}'."

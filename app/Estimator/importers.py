@@ -19,6 +19,8 @@ from decimal import Decimal, InvalidOperation
 
 import openpyxl
 
+from app.Account.models import Municipality, Province
+
 from .models import (
     ContractorItemLibraryEntry,
     ContractorLabourCrew,
@@ -228,6 +230,110 @@ class TradeCodeImporter:
                     prefix=prefix,
                     defaults={"trade_name": trade_name},
                 )
+            if is_new:
+                created += 1
+            else:
+                updated += 1
+        return {"created": created, "updated": updated, "skipped": skipped}
+
+
+# ── Municipalities ────────────────────────────────────────────────
+
+
+class MunicipalityImporter:
+    """Import Municipalities from Excel.
+
+    Expected columns: Province | Municipality Name | Code | District
+    """
+
+    SHEET_KEYWORDS = [
+        "municipality",
+        "municipalities",
+        "province",
+        "provinces",
+    ]
+
+    def __init__(self, path, project=None, company=None):
+        self.path = path
+        self.project = project
+        self.company = company
+
+    def run(self):
+        wb = openpyxl.load_workbook(self.path, data_only=True)
+        ws = _find_sheet(wb, self.SHEET_KEYWORDS)
+        created = updated = skipped = 0
+
+        # Find header row
+        header_row_idx = _find_header_row(ws, ["province", "municipality", "code"])
+
+        for row in ws.iter_rows(min_row=header_row_idx + 1, values_only=True):
+            if not row or not any(row):
+                continue
+            province = _safe_str(row[0]) if len(row) > 0 else ""
+            municipality_name = _safe_str(row[1]) if len(row) > 1 else ""
+            code = _safe_str(row[2]) if len(row) > 2 else ""
+            district = _safe_str(row[3]) if len(row) > 3 else ""
+
+            if not province or not municipality_name or not code:
+                skipped += 1
+                continue
+
+            province_obj, _ = Province.objects.get_or_create(
+                name=province,
+                defaults={"code": province[:3].upper() if province else ""},
+            )
+
+            obj, is_new = Municipality.objects.update_or_create(
+                province=province_obj,
+                municipality_name=municipality_name,
+                code=code,
+                defaults={"district": district},
+            )
+            if is_new:
+                created += 1
+            else:
+                updated += 1
+        return {"created": created, "updated": updated, "skipped": skipped}
+
+
+class ProvinceImporter:
+    """Import Provinces from Excel.
+
+    Expected columns: Province Name | Code
+    """
+
+    SHEET_KEYWORDS = [
+        "province",
+        "provinces",
+    ]
+
+    def __init__(self, path, project=None, company=None):
+        self.path = path
+        self.project = project
+        self.company = company
+
+    def run(self):
+        wb = openpyxl.load_workbook(self.path, data_only=True)
+        ws = _find_sheet(wb, self.SHEET_KEYWORDS)
+        created = updated = skipped = 0
+
+        # Find header row
+        header_row_idx = _find_header_row(ws, ["province", "code"])
+
+        for row in ws.iter_rows(min_row=header_row_idx + 1, values_only=True):
+            if not row or not any(row):
+                continue
+            name = _safe_str(row[0]) if len(row) > 0 else ""
+            code = _safe_str(row[1]) if len(row) > 1 else ""
+
+            if not name:
+                skipped += 1
+                continue
+
+            obj, is_new = Province.objects.update_or_create(
+                name=name,
+                defaults={"code": code},
+            )
             if is_new:
                 created += 1
             else:

@@ -1,5 +1,6 @@
 {% load l10n %}
 {% load humanize %}
+{% load template_extras %}
 <table class="items" repeat="1">
     <thead class="text-bold">
         <tr>
@@ -52,7 +53,7 @@
                                     {% elif col.id == 'unit_measurement' %}
                                         <td class="text-center">{{ line_item.unit_measurement|default:"-" }}</td>
                                     {% elif col.id == 'budgeted_quantity' %}
-                                        <th class="text-right text-normal-weight">{{ line_item.budgeted_quantity|default:0|floatformat:2|space_intcomma }}</th>
+                                        <th class="text-right text-normal-weight">{{ line_item.budgeted_quantity|default:0|qty|space_intcomma }}</th>
                                     {% elif col.id == 'unit_price' %}
                                         <th class="text-right text-normal-weight">R{{ line_item.unit_price|default:0|floatformat:2|space_intcomma }}</th>
                                     {% elif col.id == 'total_price' %}
