@@ -64,7 +64,7 @@
                                         {% if category.disciplines.exists %}
                                             <div class="flex flex-wrap gap-1.5 mt-1.5">
                                                 {% for discipline in category.disciplines.all %}
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">
+                                                    <span class="inline-flex gap-1 items-center px-2.5 py-0.5 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200 shadow-sm">
                                                         {% heroicon_outline "squares-2x2" size="10" class="text-indigo-400" %}
                                                         {{ discipline.name }}
                                                     </span>
@@ -143,34 +143,7 @@
                                     </div>
                                 </div>
                             {% endif %}
-                            <!-- Add Subcategory Button -->
-                            <div class="px-8 py-3 bg-gray-50/50">
-                                <button type="button"
-                                        onclick="openCreateSubCategoryModal({{ category.pk }})"
-                                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add WBS Level 2</span>
-                                </button>
-                                <button type="button"
-                                        onclick="openCreateSubCategoryModal({{ category.pk }})"
-                                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Drawings</span>
-                                </button>
-                                {% comment %} <button type="button" onclick="openCreateSubCategoryModal({{ category.pk }})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg border border-blue-200 shadow-sm transition-all duration-200 hover:bg-blue-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Costs</span>
-                                </button>
-                               
-                                   <button type="button" onclick="openCreateSubCategoryModal({{ category.pk }})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Documents</span>
-                                </button>
-                                 <button type="button" onclick="openCreateSubCategoryModal({{ category.pk }})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Design Critirias</span>
-                                </button> {% endcomment %}
-                            </div>
+                        
                             <!-- Subcategories -->
                             {% for subcategory in category.subcategories.all %}
                                 <div class="ml-6 border-l-4 border-green-500 transition-colors hover:border-green-600">
@@ -186,7 +159,7 @@
                                                     {% if subcategory.disciplines.exists %}
                                                         <div class="flex flex-wrap gap-1.5 mt-1.5">
                                                             {% for discipline in subcategory.disciplines.all %}
-                                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200 shadow-sm">
+                                                                <span class="inline-flex gap-1 items-center px-2.5 py-0.5 text-xs font-semibold text-green-700 bg-green-50 rounded-full border border-green-200 shadow-sm">
                                                                     {% heroicon_outline "squares-2x2" size="10" class="text-green-400" %}
                                                                     {{ discipline.name }}
                                                                 </span>
@@ -269,15 +242,7 @@
                                                 </div>
                                             </div>
                                         {% endif %}
-                                        <!-- Add Group Button -->
-                                        <div class="px-6 py-3 ml-6 bg-gray-50/50">
-                                            <button type="button"
-                                                    onclick="openCreateGroupModal({{ subcategory.pk }})"
-                                                    class="inline-flex items-center px-4 py-2 text-sm font-semibold text-purple-700 bg-purple-50 rounded-lg border border-purple-200 shadow-sm transition-all duration-200 hover:bg-purple-100 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                                                {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                                <span>Add WBS Level 3</span>
-                                            </button>
-                                        </div>
+                                       
                                         <!-- Groups -->
                                         {% for group in subcategory.groups.all %}
                                             <div class="ml-12 border-l-4 border-purple-500 transition-colors hover:border-purple-600">
@@ -293,7 +258,7 @@
                                                                 {% if group.disciplines.exists %}
                                                                     <div class="flex flex-wrap gap-1.5 mt-1.5">
                                                                         {% for discipline in group.disciplines.all %}
-                                                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
+                                                                            <span class="inline-flex gap-1 items-center px-2.5 py-0.5 text-xs font-semibold text-purple-700 bg-purple-50 rounded-full border border-purple-200 shadow-sm">
                                                                                 {% heroicon_outline "squares-2x2" size="10" class="text-purple-400" %}
                                                                                 {{ discipline.name }}
                                                                             </span>
