@@ -15,17 +15,10 @@ class MilestoneForm(forms.ModelForm):
         fields = [
             "name",
             "project_category",
-            "project_category_start_date",
-            "project_category_end_date",
-            "area",
-            "project_sub_category_start_date",
-            "project_sub_category_end_date",
+            "project_sub_category",
             "project_group",
-            "project_group_start_date",
-            "project_group_end_date",
+            "area",
             "project_discipline",
-            "project_discipline_start_date",
-            "project_discipline_end_date",
             "planned_date",
             "forecast_date",
             "reason_for_change",
@@ -98,6 +91,16 @@ class MilestoneForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
+            "project_sub_category": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "project_group": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
             "area": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
@@ -108,84 +111,14 @@ class MilestoneForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "project_group": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "project_category_start_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "project_category_end_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "project_sub_category_start_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "project_sub_category_end_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "project_group_start_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "project_group_end_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "project_discipline_start_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "project_discipline_end_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
         }
         labels = {
             "name": "Milestone Name",
             "project_category": "WBS Level 1",
-            "project_category_start_date": "L1 Start Date",
-            "project_category_end_date": "L1 End Date",
+            "project_sub_category": "WBS Level 2",
+            "project_group": "WBS Level 3",
             "area": "Area",
-            "project_sub_category_start_date": "Area Start Date",
-            "project_sub_category_end_date": "Area End Date",
-            "project_group": "WBS Level 3 - Group",
-            "project_group_start_date": "L3 Start Date",
-            "project_group_end_date": "L3 End Date",
             "project_discipline": "Discipline",
-            "project_discipline_start_date": "Discipline Start Date",
-            "project_discipline_end_date": "Discipline End Date",
-            "start_date": "Start Date",
-            "end_date": "End Date",
             "planned_date": "Planned Date (Baseline)",
             "forecast_date": "Forecast Date",
             "reason_for_change": "Reason for Change",
@@ -195,19 +128,10 @@ class MilestoneForm(forms.ModelForm):
         }
         help_texts = {
             "project_category": "Select the WBS Level 1 classification",
-            "project_category_start_date": "Start date for WBS Level 1",
-            "project_category_end_date": "End date for WBS Level 1",
+            "project_sub_category": "Select the WBS Level 2 classification",
+            "project_group": "Select the WBS Level 3 classification",
             "area": "Select the Area classification",
-            "project_sub_category_start_date": "Start date for Area",
-            "project_sub_category_end_date": "End date for Area",
-            "project_group": "Select the WBS Level 3 Group classification",
-            "project_group_start_date": "Start date for WBS Level 3 Group",
-            "project_group_end_date": "End date for WBS Level 3 Group",
             "project_discipline": "Select the discipline classification",
-            "project_discipline_start_date": "Start date for discipline",
-            "project_discipline_end_date": "End date for discipline",
-            "start_date": "Planned start date for this milestone",
-            "end_date": "Planned end date for this milestone",
             "planned_date": "Original planned completion date",
             "forecast_date": "Current forecast completion date (leave blank if same as planned)",
             "reason_for_change": "Explain why the forecast date differs from the planned date",
@@ -246,18 +170,33 @@ class MilestoneForm(forms.ModelForm):
             Category,
             Discipline,
             Group,
+            SubCategory,
         )
 
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
 
         if project:
-            # Filter categories, areas, and disciplines by project
+            # Filter categories, subcategories, groups, areas, and disciplines by project
 
             # Filter for project-specific categories
             category_field = self.fields["project_category"]
             if hasattr(category_field, "queryset"):
                 category_field.queryset = Category.objects.filter(  # type: ignore
+                    project_id=project.pk, deleted=False
+                ).order_by("name")
+
+            # Filter for project-specific subcategories
+            subcategory_field = self.fields["project_sub_category"]
+            if hasattr(subcategory_field, "queryset"):
+                subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore
+                    project_id=project.pk, deleted=False
+                ).order_by("name")
+
+            # Filter for project-specific groups
+            group_field = self.fields["project_group"]
+            if hasattr(group_field, "queryset"):
+                group_field.queryset = Group.objects.filter(  # type: ignore
                     project_id=project.pk, deleted=False
                 ).order_by("name")
 
@@ -268,13 +207,6 @@ class MilestoneForm(forms.ModelForm):
                     projects=project
                 ).order_by("municipality_name")
 
-            # Filter for project-specific groups
-            group_field = self.fields["project_group"]
-            if hasattr(group_field, "queryset"):
-                group_field.queryset = Group.objects.filter(  # type: ignore
-                    project_id=project.pk, deleted=False
-                ).order_by("name")
-
             # Filter for project-specific disciplines
             discipline_field = self.fields["project_discipline"]
             if hasattr(discipline_field, "queryset"):
@@ -284,6 +216,7 @@ class MilestoneForm(forms.ModelForm):
 
             # Make fields optional
             self.fields["project_category"].required = False
-            self.fields["area"].required = False
+            self.fields["project_sub_category"].required = False
             self.fields["project_group"].required = False
+            self.fields["area"].required = False
             self.fields["project_discipline"].required = False
