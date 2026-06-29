@@ -1342,3 +1342,29 @@ def create_default_disciplines(sender, instance, created, **kwargs):
                 name=name,
                 defaults={"description": f"{name} discipline"},
             )
+
+
+class ProjectGroup(BaseModel):
+    """Model to group multiple projects (e.g., favorites/custom groups)."""
+
+    user = models.ForeignKey(
+        "Account.Account",
+        on_delete=models.CASCADE,
+        related_name="project_groups",
+        help_text="User who owns this project group",
+    )
+    name = models.CharField(max_length=255)
+    projects = models.ManyToManyField(
+        "Project.Project",
+        related_name="project_groups",
+        help_text="Projects in this group",
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.user.email})"
+
+    class Meta:
+        verbose_name = "Project Group"
+        verbose_name_plural = "Project Groups"
+        ordering = ["name"]
+
