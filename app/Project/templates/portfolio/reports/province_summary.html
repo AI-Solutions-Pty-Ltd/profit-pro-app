@@ -24,6 +24,29 @@
             </div>
         </div>
 
+        <!-- Province Selector -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <label for="province-select" class="text-sm font-semibold text-gray-700">Select Province to View Reports:</label>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="province-select" class="block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                        <option value="">-- Select a Province --</option>
+                        {% for p in all_provinces %}
+                            <option value="{{ p.pk }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="view-cover-page-btn" disabled class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-semibold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                        {% heroicon_outline "document" size="14" class="mr-1 text-indigo-600" %}
+                        Cover Page
+                    </button>
+                    <button id="view-valuation-summary-btn" disabled class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-semibold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                        {% heroicon_outline "table-cells" size="14" class="mr-1 text-indigo-600" %}
+                        Valuation Summary
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Report Table -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -81,4 +104,41 @@
             </table>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('province-select');
+            const coverBtn = document.getElementById('view-cover-page-btn');
+            const valuationBtn = document.getElementById('view-valuation-summary-btn');
+            
+            // Base URLs with placeholder (99999)
+            const coverBaseUrl = "{% url 'project:portfolio-province-cover-page' 99999 %}";
+            const valuationBaseUrl = "{% url 'project:portfolio-province-valuation-summary' 99999 %}";
+            
+            select.addEventListener('change', function() {
+                const pk = this.value;
+                if (pk) {
+                    coverBtn.disabled = false;
+                    valuationBtn.disabled = false;
+                } else {
+                    coverBtn.disabled = true;
+                    valuationBtn.disabled = true;
+                }
+            });
+            
+            coverBtn.addEventListener('click', function() {
+                const pk = select.value;
+                if (pk) {
+                    window.location.href = coverBaseUrl.replace('99999', pk);
+                }
+            });
+            
+            valuationBtn.addEventListener('click', function() {
+                const pk = select.value;
+                if (pk) {
+                    window.location.href = valuationBaseUrl.replace('99999', pk);
+                }
+            });
+        });
+    </script>
 {% endblock content %}

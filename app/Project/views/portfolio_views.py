@@ -1448,6 +1448,7 @@ class PortfolioProvinceSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, T
             })
             
         context["province_data"] = province_data
+        context["all_provinces"] = Province.objects.all().order_by("name")
         context["tab"] = "province_summary"
         return context
 
