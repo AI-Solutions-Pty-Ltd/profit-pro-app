@@ -676,23 +676,38 @@
 
             // Create Group modal logic
             const createGroupModal = document.getElementById('createGroupModal');
+            const modalBox = document.getElementById('createGroupModalBox');
             const batchCreateGroupBtn = document.getElementById('batchCreateGroupBtn');
             const confirmCreateGroupBtn = document.getElementById('confirmCreateGroupBtn');
             const groupNameInput = document.getElementById('groupNameInput');
             const modalErrorMessage = document.getElementById('modalErrorMessage');
 
             window.closeModal = function() {
-                if (createGroupModal) createGroupModal.classList.add('hidden');
-                if (groupNameInput) groupNameInput.value = '';
-                if (modalErrorMessage) {
-                    modalErrorMessage.classList.add('hidden');
-                    modalErrorMessage.textContent = '';
+                if (modalBox) {
+                    modalBox.classList.add('scale-95', 'opacity-0');
+                    modalBox.classList.remove('scale-100', 'opacity-100');
                 }
+                setTimeout(() => {
+                    if (createGroupModal) createGroupModal.classList.add('hidden');
+                    if (groupNameInput) groupNameInput.value = '';
+                    if (modalErrorMessage) {
+                        modalErrorMessage.classList.add('hidden');
+                        modalErrorMessage.textContent = '';
+                    }
+                }, 150);
             };
 
             if (batchCreateGroupBtn) {
                 batchCreateGroupBtn.addEventListener('click', function() {
-                    if (createGroupModal) createGroupModal.classList.remove('hidden');
+                    if (createGroupModal) {
+                        createGroupModal.classList.remove('hidden');
+                        setTimeout(() => {
+                            if (modalBox) {
+                                modalBox.classList.remove('scale-95', 'opacity-0');
+                                modalBox.classList.add('scale-100', 'opacity-100');
+                            }
+                        }, 50);
+                    }
                 });
             }
 
@@ -748,54 +763,54 @@
     </script>
 
     <!-- Floating Batch Action Bar -->
-    <div id="batchActionBar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl border border-gray-800 flex items-center justify-between gap-6 translate-y-20 opacity-0 pointer-events-none transition-all duration-300">
-        <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Batch Actions:</span>
-            <span id="selectedCount" class="text-sm font-bold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">0</span>
-            <span class="text-sm text-gray-300">projects selected</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <button id="batchCreateGroupBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors">
-                {% heroicon_outline "plus" size="14" class="mr-1.5 text-white" %}
-                Create Group
-            </button>
-            <button id="batchCoverBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors">
-                {% heroicon_outline "document" size="14" class="mr-1.5 text-white" %}
-                View Cover Page
-            </button>
-            <button id="batchValuationBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors">
-                {% heroicon_outline "table-cells" size="14" class="mr-1.5 text-white" %}
-                View Valuation Summary
-            </button>
+    <div id="batchActionBar" class="fixed bottom-24 left-0 right-0 mx-auto w-max max-w-[calc(100vw-2rem)] z-[100] pointer-events-none transition-all duration-300 transform translate-y-20 opacity-0">
+        <div class="bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl border border-gray-800 flex items-center justify-between gap-6 pointer-events-auto">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Batch Actions:</span>
+                <span id="selectedCount" class="text-sm font-bold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">0</span>
+                <span class="text-sm text-gray-300 whitespace-nowrap">projects selected</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="batchCreateGroupBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors whitespace-nowrap flex-shrink-0">
+                    {% heroicon_outline "plus" size="14" class="mr-1.5 text-white" %}
+                    Create Group
+                </button>
+                <button id="batchCoverBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors whitespace-nowrap flex-shrink-0">
+                    {% heroicon_outline "document" size="14" class="mr-1.5 text-white" %}
+                    View Cover Page
+                </button>
+                <button id="batchValuationBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors whitespace-nowrap flex-shrink-0">
+                    {% heroicon_outline "table-cells" size="14" class="mr-1.5 text-white" %}
+                    View Valuation Summary
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Create Group Modal -->
-    <div id="createGroupModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
-            <!-- This element is to trick the browser into centering the modal contents. -->
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                <div>
-                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
+    <div id="createGroupModal" class="fixed inset-0 z-[150] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        
+        <!-- Modal Wrapper for centering -->
+        <div class="fixed inset-0 z-[160] overflow-y-auto flex items-center justify-center p-4">
+            <!-- Modal Box -->
+            <div class="bg-white rounded-xl shadow-2xl border border-gray-100 max-w-md w-full p-6 transform transition-all scale-95 opacity-0 duration-300" id="createGroupModalBox" onclick="event.stopPropagation()">
+                <div class="flex flex-col items-center text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 mb-4">
                         {% heroicon_outline "folder-plus" size="24" class="text-indigo-600" %}
                     </div>
-                    <div class="mt-3 text-center sm:mt-5">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Create Project Group</h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500 mb-4">Enter a name for this custom group of selected projects.</p>
-                            <input type="text" id="groupNameInput" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="e.g. My Favorites">
-                            <p id="modalErrorMessage" class="text-sm text-red-600 mt-2 hidden"></p>
-                        </div>
-                    </div>
+                    <h3 class="text-lg font-bold text-gray-950 mb-2" id="modal-title">Create Project Group</h3>
+                    <p class="text-sm text-gray-500 mb-4">Enter a name for this custom group of selected projects.</p>
+                    <input type="text" id="groupNameInput" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="e.g. My Favorites">
+                    <p id="modalErrorMessage" class="text-sm text-red-600 mt-2 hidden"></p>
                 </div>
-                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                    <button type="button" id="confirmCreateGroupBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
-                        Create Group
-                    </button>
-                    <button type="button" onclick="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
+                    </button>
+                    <button type="button" id="confirmCreateGroupBtn" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create Group
                     </button>
                 </div>
             </div>
