@@ -12,11 +12,56 @@
                     <h1 class="text-2xl font-bold text-gray-900">Project Management</h1>
                     <p class="text-sm text-gray-600 mt-1">Manage projects and categories in your portfolio</p>
                 </div>
-                <a href="{% url 'project:portfolio-dashboard' %}"
-                   class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    {% heroicon_outline "arrow-left" size="16" %}
-                    <span class="ml-1">Back to Dashboard</span>
-                </a>
+                <div class="flex items-center gap-3">
+                    <!-- Project Groups Dropdown -->
+                    {% if project_groups %}
+                        <div class="relative inline-block text-left" id="groupsDropdownContainer">
+                            <button type="button"
+                                    id="groupsDropdownBtn"
+                                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                {% heroicon_outline "folder" size="16" class="text-gray-500 mr-1.5" %}
+                                <span>Project Groups</span>
+                                {% heroicon_outline "chevron-down" size="14" class="ml-1 text-gray-400" %}
+                            </button>
+                            <div id="groupsDropdownMenu"
+                                 class="origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none hidden z-50">
+                                <div class="py-1 max-h-64 overflow-y-auto">
+                                    {% for group in project_groups %}
+                                        <div class="px-4 py-2 hover:bg-gray-50 flex items-center justify-between group">
+                                            <div class="flex-grow">
+                                                <div class="text-sm font-semibold text-gray-900 truncate" title="{{ group.name }}">
+                                                    {{ group.name }}
+                                                </div>
+                                                <div class="flex gap-2 mt-1">
+                                                    <a href="{% url 'project:portfolio-group-cover-page' group.pk %}"
+                                                       class="text-xs text-indigo-600 hover:text-indigo-900 hover:underline font-medium">
+                                                        Cover Page
+                                                    </a>
+                                                    <span class="text-gray-300 text-xs">|</span>
+                                                    <a href="{% url 'project:portfolio-group-valuation-summary' group.pk %}"
+                                                       class="text-xs text-indigo-600 hover:text-indigo-900 hover:underline font-medium">
+                                                        Valuation
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <button type="button"
+                                                    onclick="deleteGroup({{ group.pk }}, '{{ group.name|escapejs }}')"
+                                                    class="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 ml-2"
+                                                    title="Delete Group">
+                                                {% heroicon_outline "trash" size="14" %}
+                                            </button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <a href="{% url 'project:portfolio-dashboard' %}"
+                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                        <span class="ml-1">Back to Dashboard</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -597,6 +642,108 @@
                     }
                 });
             }
+
+            // Groups Dropdown Toggle logic
+            const dropdownBtn = document.getElementById('groupsDropdownBtn');
+            const dropdownMenu = document.getElementById('groupsDropdownMenu');
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', function() {
+                    dropdownMenu.classList.add('hidden');
+                });
+            }
+
+            // Delete Group logic
+            window.deleteGroup = function(groupId, groupName) {
+                if (confirm(`Are you sure you want to delete the group "${groupName}"?`)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/project/portfolio/reports/group/${groupId}/delete/`;
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrfmiddlewaretoken';
+                    csrfInput.value = '{{ csrf_token }}';
+                    form.appendChild(csrfInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            };
+
+            // Create Group modal logic
+            const createGroupModal = document.getElementById('createGroupModal');
+            const batchCreateGroupBtn = document.getElementById('batchCreateGroupBtn');
+            const confirmCreateGroupBtn = document.getElementById('confirmCreateGroupBtn');
+            const groupNameInput = document.getElementById('groupNameInput');
+            const modalErrorMessage = document.getElementById('modalErrorMessage');
+
+            window.closeModal = function() {
+                if (createGroupModal) createGroupModal.classList.add('hidden');
+                if (groupNameInput) groupNameInput.value = '';
+                if (modalErrorMessage) {
+                    modalErrorMessage.classList.add('hidden');
+                    modalErrorMessage.textContent = '';
+                }
+            };
+
+            if (batchCreateGroupBtn) {
+                batchCreateGroupBtn.addEventListener('click', function() {
+                    if (createGroupModal) createGroupModal.classList.remove('hidden');
+                });
+            }
+
+            if (confirmCreateGroupBtn) {
+                confirmCreateGroupBtn.addEventListener('click', function() {
+                    const name = groupNameInput.value.trim();
+                    if (!name) {
+                        modalErrorMessage.textContent = 'Please enter a group name.';
+                        modalErrorMessage.classList.remove('hidden');
+                        return;
+                    }
+                    const ids = Array.from(document.querySelectorAll('.project-checkbox:checked')).map(cb => cb.value).join(',');
+                    if (!ids) {
+                        modalErrorMessage.textContent = 'No projects selected.';
+                        modalErrorMessage.classList.remove('hidden');
+                        return;
+                    }
+
+                    confirmCreateGroupBtn.disabled = true;
+                    confirmCreateGroupBtn.textContent = 'Creating...';
+
+                    fetch('/project/portfolio/reports/group/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            project_ids: ids
+                        })
+                    })
+                    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                    .then(res => {
+                        if (res.status === 200 || res.status === 201) {
+                            window.location.reload();
+                        } else {
+                            modalErrorMessage.textContent = res.body.error || 'Failed to create group.';
+                            modalErrorMessage.classList.remove('hidden');
+                            confirmCreateGroupBtn.disabled = false;
+                            confirmCreateGroupBtn.textContent = 'Create Group';
+                        }
+                    })
+                    .catch(err => {
+                        modalErrorMessage.textContent = 'An unexpected error occurred.';
+                        modalErrorMessage.classList.remove('hidden');
+                        confirmCreateGroupBtn.disabled = false;
+                        confirmCreateGroupBtn.textContent = 'Create Group';
+                    });
+                });
+            }
         });
     </script>
 
@@ -608,6 +755,10 @@
             <span class="text-sm text-gray-300">projects selected</span>
         </div>
         <div class="flex items-center gap-2">
+            <button id="batchCreateGroupBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors">
+                {% heroicon_outline "plus" size="14" class="mr-1.5 text-white" %}
+                Create Group
+            </button>
             <button id="batchCoverBtn" class="inline-flex items-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition-colors">
                 {% heroicon_outline "document" size="14" class="mr-1.5 text-white" %}
                 View Cover Page
@@ -616,6 +767,38 @@
                 {% heroicon_outline "table-cells" size="14" class="mr-1.5 text-white" %}
                 View Valuation Summary
             </button>
+        </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div id="createGroupModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+            <!-- This element is to trick the browser into centering the modal contents. -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div>
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
+                        {% heroicon_outline "folder-plus" size="24" class="text-indigo-600" %}
+                    </div>
+                    <div class="mt-3 text-center sm:mt-5">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Create Project Group</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 mb-4">Enter a name for this custom group of selected projects.</p>
+                            <input type="text" id="groupNameInput" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="e.g. My Favorites">
+                            <p id="modalErrorMessage" class="text-sm text-red-600 mt-2 hidden"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="button" id="confirmCreateGroupBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
+                        Create Group
+                    </button>
+                    <button type="button" onclick="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock content %}

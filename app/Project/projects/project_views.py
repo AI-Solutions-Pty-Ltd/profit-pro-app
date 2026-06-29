@@ -202,13 +202,9 @@ class ProjectListView(
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
         context["filter_form"] = self.filter_form
-        
-        user = cast(Account, self.request.user)
-        if user.is_superuser or user.is_staff:
-            context["all_projects"] = Project.objects.all().order_by("-created_at")
-        else:
-            context["all_projects"] = user.get_projects.order_by("-created_at")
-            
+        user = self.request.user
+        if user.is_authenticated:
+            context["project_groups"] = user.project_groups.filter(deleted=False)
         return context
 
     def get(self: "ProjectListView", request, *args, **kwargs):
@@ -1137,50 +1133,3 @@ class ProjectReportLayoutPreviewView(ProjectMixin, DetailView):
         layout_style = self.request.GET.get("layout_style", "STANDARD")
         context["layout_style"] = layout_style
         return context
-from django.views import View
-from django.shortcuts import get_object_or_404, redirect
-
-class ProjectCoverPageRedirectView(LoginRequiredMixin, View):
-    """Finds the latest approved certificate for a project and redirects to its cover page."""
-    def get(self, request, pk):
-        project = get_object_or_404(Project, pk=pk)
-        user = request.user
-        if not (user.is_superuser or user.is_staff or project.users.filter(pk=user.pk).exists()):
-            messages.error(request, "You do not have permission to access this project.")
-            return redirect("project:project-list")
-
-        cert = project.payment_certificates.filter(
-            status="APPROVED"
-        ).order_by("-certificate_number").first()
-        
-        if not cert:
-            cert = project.payment_certificates.order_by("-certificate_number").first()
-            
-        if not cert:
-            messages.error(request, "No payment certificates found for this project.")
-            return redirect("project:project-list")
-            
-        return redirect("bill_of_quantities:payment-certificate-cover-page", project_pk=project.pk, pk=cert.pk)
-
-
-class ProjectValuationSummaryRedirectView(LoginRequiredMixin, View):
-    """Finds the latest approved certificate for a project and redirects to its valuation summary."""
-    def get(self, request, pk):
-        project = get_object_or_404(Project, pk=pk)
-        user = request.user
-        if not (user.is_superuser or user.is_staff or project.users.filter(pk=user.pk).exists()):
-            messages.error(request, "You do not have permission to access this project.")
-            return redirect("project:project-list")
-
-        cert = project.payment_certificates.filter(
-            status="APPROVED"
-        ).order_by("-certificate_number").first()
-        
-        if not cert:
-            cert = project.payment_certificates.order_by("-certificate_number").first()
-            
-        if not cert:
-            messages.error(request, "No payment certificates found for this project.")
-            return redirect("project:project-list")
-            
-        return redirect("bill_of_quantities:payment-certificate-valuation-summary", project_pk=project.pk, pk=cert.pk)
