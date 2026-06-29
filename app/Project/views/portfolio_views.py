@@ -1437,7 +1437,7 @@ class PortfolioProvinceSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, T
                 
                 if latest_approved_cert:
                     certs_count += 1
-                    total_certified_val += latest_approved_cert.get_actual_cost() or Decimal("0.00")
+                    total_certified_val += latest_approved_cert.progressive_to_date or Decimal("0.00")
             
             province_data.append({
                 "province": province,
