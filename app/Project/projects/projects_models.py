@@ -1068,7 +1068,7 @@ class Category(BaseModel):
         "Discipline",
         blank=True,
         related_name="categories",
-        help_text="Disciplines assigned to this WBS Level 1"
+        help_text="Disciplines assigned to this WBS Level 1",
     )
 
     if TYPE_CHECKING:
@@ -1132,7 +1132,7 @@ class SubCategory(BaseModel):
         "Discipline",
         blank=True,
         related_name="subcategories",
-        help_text="Disciplines assigned to this WBS Level 2"
+        help_text="Disciplines assigned to this WBS Level 2",
     )
 
     if TYPE_CHECKING:
@@ -1196,7 +1196,7 @@ class Group(BaseModel):
         "Discipline",
         blank=True,
         related_name="groups",
-        help_text="Disciplines assigned to this WBS Level 3"
+        help_text="Disciplines assigned to this WBS Level 3",
     )
 
     if TYPE_CHECKING:

@@ -326,5 +326,3 @@ class DisciplineFileDeleteView(ScopeFileDeleteMixin):
         obj.delete()
         messages.success(request, "File deleted successfully.")
         return JsonResponse({"success": True})
-
-

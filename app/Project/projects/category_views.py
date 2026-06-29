@@ -49,15 +49,17 @@ class CategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView
 
     def get_queryset(self):
         """Return categories ordered by name."""
-        return Category.objects.filter(
-            project=self.get_project(), deleted=False
-        ).prefetch_related(
-            "disciplines",
-            "subcategories",
-            "subcategories__disciplines",
-            "subcategories__groups",
-            "subcategories__groups__disciplines",
-        ).order_by("name")
+        return (
+            Category.objects.filter(project=self.get_project(), deleted=False)
+            .prefetch_related(
+                "disciplines",
+                "subcategories",
+                "subcategories__disciplines",
+                "subcategories__groups",
+                "subcategories__groups__disciplines",
+            )
+            .order_by("name")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -810,12 +812,15 @@ class SubCategoryDisciplinesUpdateView(UserHasProjectRoleGenericMixin, APIView):
         discipline_ids = request.data.get("disciplines") or []
         subcategory.disciplines.set(discipline_ids)
         messages.success(
-            request, f"Subcategory '{subcategory.name}' disciplines updated successfully."
+            request,
+            f"Subcategory '{subcategory.name}' disciplines updated successfully.",
         )
         return Response(
             {
                 "success": True,
-                "disciplines": list(subcategory.disciplines.values_list("id", flat=True)),
+                "disciplines": list(
+                    subcategory.disciplines.values_list("id", flat=True)
+                ),
             },
             status=200,
         )
@@ -835,7 +840,9 @@ class GroupDisciplinesUpdateView(UserHasProjectRoleGenericMixin, APIView):
         )
         discipline_ids = request.data.get("disciplines") or []
         group.disciplines.set(discipline_ids)
-        messages.success(request, f"Group '{group.name}' disciplines updated successfully.")
+        messages.success(
+            request, f"Group '{group.name}' disciplines updated successfully."
+        )
         return Response(
             {
                 "success": True,

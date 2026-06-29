@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0102_alter_category_end_date_alter_category_start_date_and_more"),
     ]

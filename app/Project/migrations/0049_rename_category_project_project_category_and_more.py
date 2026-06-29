@@ -63,9 +63,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "description",
-                    models.TextField(
-                        blank=True, help_text="Optional description"
-                    ),
+                    models.TextField(blank=True, help_text="Optional description"),
                 ),
                 (
                     "projects",

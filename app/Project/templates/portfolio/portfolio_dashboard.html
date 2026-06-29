@@ -417,13 +417,20 @@
             </h5>
         </div>
         <div class="p-4">
-            <div class="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-6">
+                   <!-- Original Budget -->
+                <a href="{% url 'project:portfolio-financial-report' %}"
+                   class="p-2 text-center bg-indigo-50 rounded-lg border border-indigo-100 transition-all duration-200 cursor-pointer hover:bg-indigo-100 hover:shadow-md">
+                    <p class="text-xs font-medium tracking-wider text-indigo-600 uppercase">budget Amount</p>
+                    <p class="mt-1 text-lg font-bold text-indigo-700">R {{ original_budget|floatformat:0|intcomma }}</p>
+                </a>
                 <!-- Original Budget -->
                 <a href="{% url 'project:portfolio-financial-report' %}"
                    class="p-2 text-center bg-green-50 rounded-lg border border-green-100 transition-all duration-200 cursor-pointer hover:bg-green-100 hover:shadow-md">
                     <p class="text-xs font-medium tracking-wider text-green-600 uppercase">Original Contract Amount</p>
                     <p class="mt-1 text-lg font-bold text-green-700">R {{ original_budget|floatformat:0|intcomma }}</p>
                 </a>
+               
                 <!-- Approved Variations -->
                 <a href="{% url 'project:portfolio-financial-report' %}"
                    class="p-2 text-center bg-cyan-50 rounded-lg border border-cyan-100 transition-all duration-200 cursor-pointer hover:bg-cyan-100 hover:shadow-md">

@@ -88,8 +88,11 @@ class TestCategoryHierarchyView:
         client.force_login(self.user)
 
         from app.Project.tests.factories import DisciplineFactory
+
         discipline1 = DisciplineFactory(project=self.project, name="Civil Discipline")
-        discipline2 = DisciplineFactory(project=self.project, name="Mechanical Discipline")
+        discipline2 = DisciplineFactory(
+            project=self.project, name="Mechanical Discipline"
+        )
 
         category = CategoryFactory(project=self.project, name="L1 Category Test")
         category.disciplines.add(discipline1)
@@ -120,31 +123,34 @@ class TestCategoryFormsValidation:
 
     def test_category_form_optional_dates(self):
         from app.Project.projects.category_forms import CategoryForm
+
         data = {"name": "New Category", "description": "Optional desc"}
         form = CategoryForm(data=data)
         assert form.is_valid(), form.errors
 
     def test_subcategory_form_optional_dates(self):
         from app.Project.projects.category_forms import SubCategoryForm
+
         project = ProjectFactory()
         category = CategoryFactory(project=project)
         data = {
             "category": category.pk,
             "name": "New SubCategory",
-            "description": "Optional desc"
+            "description": "Optional desc",
         }
         form = SubCategoryForm(data=data, project=project)
         assert form.is_valid(), form.errors
 
     def test_group_form_optional_dates(self):
         from app.Project.projects.category_forms import GroupForm
+
         project = ProjectFactory()
         category = CategoryFactory(project=project)
         subcategory = SubCategoryFactory(category=category, project=project)
         data = {
             "sub_category": subcategory.pk,
             "name": "New Group",
-            "description": "Optional desc"
+            "description": "Optional desc",
         }
         form = GroupForm(data=data, project=project)
         assert form.is_valid(), form.errors

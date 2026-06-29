@@ -306,4 +306,3 @@ class GroupScopeDateForm(forms.ModelForm):
             "start_date": "Start Date",
             "end_date": "End Date",
         }
-

@@ -94,7 +94,11 @@
         </div>
     </div>
     <!-- Summary Stats Row -->
-    <div class="grid grid-cols-2 gap-4 mb-6 md:grid-cols-3 lg:grid-cols-5">
+    <div class="grid grid-cols-2 gap-4 mb-6 md:grid-cols-3 lg:grid-cols-6">
+         <div class="p-4 bg-white rounded-lg border-l-4 border-gray-400 shadow">
+            <p class="text-xs font-medium tracking-wider text-gray-500 uppercase"> budget Amount</p>
+            <p class="mt-1 text-xl font-bold text-gray-900">R {{ original_budget|floatformat:0|intcomma }}</p>
+        </div>
         <div class="p-4 bg-white rounded-lg border-l-4 border-gray-400 shadow">
             <p class="text-xs font-medium tracking-wider text-gray-500 uppercase">Original Contract Amount</p>
             <p class="mt-1 text-xl font-bold text-gray-900">R {{ original_budget|floatformat:0|intcomma }}</p>

@@ -22,6 +22,7 @@ from app.Project.models import (
     FinalAccountCompliance,
     Milestone,
     PlannedValue,
+    Portfolio,
     Project,
     ProjectCategory,
     ProjectCompanyUserRole,
@@ -530,3 +531,10 @@ class SignatoriesFactory(DjangoModelFactory):
         ["Project Manager", "Quantity Surveyor", "Senior Manager PMU"]
     )
     sequence_number = factory.Sequence(lambda n: n)
+
+
+class PortfolioFactory(DjangoModelFactory):
+    """Factory for Portfolio model."""
+
+    class Meta:
+        model = Portfolio

@@ -176,7 +176,9 @@ class ProjectDocumentForm(forms.ModelForm):
                         f"subcategory_{self.instance.sub_category_id}"
                     )
                 elif self.instance.project_category_id:
-                    self.initial["wbs_level"] = f"category_{self.instance.project_category_id}"
+                    self.initial["wbs_level"] = (
+                        f"category_{self.instance.project_category_id}"
+                    )
 
             # Make fields optional
             self.fields["project_category"].required = False

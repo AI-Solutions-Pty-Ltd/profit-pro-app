@@ -1,12 +1,12 @@
 import pytest
-from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
 
-from app.Project.models import ProjectRole, Role, ProjectDocument
+from app.Project.models import ProjectDocument, ProjectRole, Role
 from app.Project.tests.factories import (
     AccountFactory,
-    ProjectFactory,
     ProjectDocumentFactory,
+    ProjectFactory,
 )
 
 
@@ -40,20 +40,22 @@ class TestDocumentViews:
     def test_document_create_submission(self, client):
         """Test uploading a new document."""
         client.force_login(self.user)
-        uploaded_file = SimpleUploadedFile("spec.pdf", b"file_content", content_type="application/pdf")
-        
+        uploaded_file = SimpleUploadedFile(
+            "spec.pdf", b"file_content", content_type="application/pdf"
+        )
+
         post_data = {
             "title": "Project Specification File",
             "file": uploaded_file,
             "notes": "Important specification notes",
             "category": self.category,
         }
-        
+
         response = client.post(self.create_url, data=post_data)
         if response.status_code != 302:
-            print("Form errors:", response.context['form'].errors)
+            print("Form errors:", response.context["form"].errors)
         assert response.status_code == 302
-        
+
         # Verify document was created
         doc = ProjectDocument.objects.get(title="Project Specification File")
         assert doc.project == self.project
@@ -63,12 +65,18 @@ class TestDocumentViews:
     def test_document_edit_view_renders(self, client):
         """Test that the document edit form renders correctly."""
         client.force_login(self.user)
-        doc = ProjectDocumentFactory(project=self.project, category=self.category, title="Original Title")
+        doc = ProjectDocumentFactory(
+            project=self.project, category=self.category, title="Original Title"
+        )
         edit_url = reverse(
             "project:document-edit",
-            kwargs={"project_pk": self.project.pk, "category": self.category, "pk": doc.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "category": self.category,
+                "pk": doc.pk,
+            },
         )
-        
+
         response = client.get(edit_url)
         assert response.status_code == 200
         content = response.content.decode("utf-8")
@@ -78,23 +86,29 @@ class TestDocumentViews:
     def test_document_edit_submission(self, client):
         """Test editing an existing document."""
         client.force_login(self.user)
-        doc = ProjectDocumentFactory(project=self.project, category=self.category, title="Original Title")
+        doc = ProjectDocumentFactory(
+            project=self.project, category=self.category, title="Original Title"
+        )
         edit_url = reverse(
             "project:document-edit",
-            kwargs={"project_pk": self.project.pk, "category": self.category, "pk": doc.pk},
+            kwargs={
+                "project_pk": self.project.pk,
+                "category": self.category,
+                "pk": doc.pk,
+            },
         )
-        
+
         post_data = {
             "title": "Updated Title",
             "notes": "Updated notes",
             "category": self.category,
         }
-        
+
         response = client.post(edit_url, data=post_data)
         if response.status_code != 302:
-            print("Form errors:", response.context['form'].errors)
+            print("Form errors:", response.context["form"].errors)
         assert response.status_code == 302
-        
+
         # Verify document was updated
         doc.refresh_from_db()
         assert doc.title == "Updated Title"
@@ -104,17 +118,23 @@ class TestDocumentViews:
         """Test document creation with WBS level and revision number."""
         from app.Project.tests.factories import (
             CategoryFactory,
-            SubCategoryFactory,
             GroupFactory,
+            SubCategoryFactory,
         )
-        
+
         client.force_login(self.user)
         category_l1 = CategoryFactory(project=self.project, name="Sector L1")
-        subcategory_l2 = SubCategoryFactory(category=category_l1, project=self.project, name="Sub L2")
-        group_l3 = GroupFactory(sub_category=subcategory_l2, project=self.project, name="Grp L3")
-        
+        subcategory_l2 = SubCategoryFactory(
+            category=category_l1, project=self.project, name="Sub L2"
+        )
+        group_l3 = GroupFactory(
+            sub_category=subcategory_l2, project=self.project, name="Grp L3"
+        )
+
         # Test L3 group resolution
-        uploaded_file = SimpleUploadedFile("spec.pdf", b"file_content", content_type="application/pdf")
+        uploaded_file = SimpleUploadedFile(
+            "spec.pdf", b"file_content", content_type="application/pdf"
+        )
         post_data = {
             "title": "Specs with WBS",
             "file": uploaded_file,
@@ -123,12 +143,12 @@ class TestDocumentViews:
             "wbs_level": f"group_{group_l3.pk}",
             "category": self.category,
         }
-        
+
         response = client.post(self.create_url, data=post_data)
         if response.status_code != 302:
-            print("Form errors:", response.context['form'].errors)
+            print("Form errors:", response.context["form"].errors)
         assert response.status_code == 302
-        
+
         # Verify fields on the document record
         doc = ProjectDocument.objects.get(title="Specs with WBS")
         assert doc.document_number == "SPEC-001"
