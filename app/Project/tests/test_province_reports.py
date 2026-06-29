@@ -77,6 +77,9 @@ class TestProvinceReports:
         assert data[0]["certs_count"] == 1
         assert data[0]["total_contract_value"] == Decimal("120000.00")
         assert data[0]["total_certified_value"] == Decimal("50000.00")
+        
+        all_provinces = list(response.context["all_provinces"])
+        assert self.province in all_provinces
 
     def test_province_cover_page_view(self, client, monkeypatch):
         """Test the aggregated cover page HTML view for a province."""
