@@ -1381,3 +1381,448 @@ class RiskReportView(PortfolioReportMixin):
         }
 
         return context
+
+
+from django.views.generic import DetailView
+from django.views import View
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from django.urls import reverse
+
+from app.Account.models import Province
+
+
+class PortfolioProvinceSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateView):
+    """View to list all provinces with active projects and aggregated metrics."""
+    template_name = "portfolio/reports/province_summary.html"
+    required_tiers = [Subscription.FREE_TIER]
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            {"title": "Portfolio", "url": "/"},
+            {"title": "Reports", "url": None},
+            {"title": "Province Summary", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        user: Account = self.request.user  # type: ignore
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
+            )
+        else:
+            projects = user.get_projects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
+            )
+
+        provinces = Province.objects.filter(municipalities__projects__in=projects).distinct()
+        
+        province_data = []
+        for province in provinces:
+            p_projects = projects.filter(area__province=province)
+            p_count = p_projects.count()
+            
+            # Count projects with approved certificates
+            certs_count = 0
+            total_contract_val = Decimal("0.00")
+            total_certified_val = Decimal("0.00")
+            
+            for project in p_projects:
+                total_contract_val += project.total_contract_value or Decimal("0.00")
+                latest_approved_cert = project.payment_certificates.filter(
+                    status="APPROVED"
+                ).order_by("-certificate_number").first()
+                
+                if latest_approved_cert:
+                    certs_count += 1
+                    total_certified_val += latest_approved_cert.get_actual_cost() or Decimal("0.00")
+            
+            province_data.append({
+                "province": province,
+                "project_count": p_count,
+                "certs_count": certs_count,
+                "total_contract_value": total_contract_val,
+                "total_certified_value": total_certified_val,
+            })
+            
+        context["province_data"] = province_data
+        context["tab"] = "province_summary"
+        return context
+
+
+class ProvinceCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, DetailView):
+    """Render the aggregated cover page for a province in-browser."""
+    model = Province
+    template_name = "portfolio/reports/province_cover_page.html"
+    context_object_name = "province"
+    pk_url_kwarg = "province_pk"
+    required_tiers = [Subscription.FREE_TIER]
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        province = self.get_object()
+        return [
+            {"title": "Portfolio", "url": "/"},
+            {"title": "Reports", "url": None},
+            {"title": "Province Summary", "url": reverse("project:portfolio-province-summary")},
+            {"title": f"{province.name} Cover Page", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        province = self.get_object()
+        user: Account = self.request.user  # type: ignore
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+        else:
+            projects = user.get_projects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+
+        # Generate aggregated sections and fields
+        orig_val = Decimal("0.00")
+        amends_val = Decimal("0.00")
+        sub_total_contract = Decimal("0.00")
+        vat_val_contract = Decimal("0.00")
+        total_contract = Decimal("0.00")
+
+        work_progressive_previous = Decimal("0.00")
+        contract_current_claim_total = Decimal("0.00")
+        addendum_current_claim_total = Decimal("0.00")
+        work_progressive_to_date = Decimal("0.00")
+        advance_payment = Decimal("0.00")
+        retention = Decimal("0.00")
+        material_on_site = Decimal("0.00")
+        other_specify = Decimal("0.00")
+
+        cert_count = 0
+        for project in projects:
+            orig_val += project.original_contract_value or Decimal("0.00")
+            amends_val += project.addendum_contract_value or Decimal("0.00")
+            if project.vat:
+                sub = (project.original_contract_value or Decimal("0.00")) + (project.addendum_contract_value or Decimal("0.00"))
+                vat_val_contract += sub * Decimal("0.15")
+
+            cert = project.payment_certificates.filter(
+                status="APPROVED"
+            ).order_by("-certificate_number").first()
+            if cert:
+                cert_count += 1
+                work_progressive_previous += cert.work_progressive_previous or Decimal("0.00")
+                contract_current_claim_total += cert.contract_current_claim_total or Decimal("0.00")
+                addendum_current_claim_total += cert.addendum_current_claim_total or Decimal("0.00")
+                work_progressive_to_date += cert.work_progressive_to_date or Decimal("0.00")
+                advance_payment += cert.get_advance_payment_total() + cert.previous_advance_payment_total
+                retention += cert.get_retention_total() + cert.previous_retention_total
+                material_on_site += cert.get_materials_on_site_total() + cert.previous_materials_on_site_total
+                
+                totals_by_type = cert.get_special_item_totals_by_type()
+                prev_totals_by_type = cert.previous_special_item_totals_by_type
+                other_current = totals_by_type.get("OTHER", Decimal("0.00"))
+                other_prev = prev_totals_by_type.get("OTHER", Decimal("0.00"))
+                other_specify += other_current + other_prev
+
+        sub_total_contract = orig_val + amends_val
+        total_contract = sub_total_contract + vat_val_contract
+
+        progressive_to_date = (
+            work_progressive_to_date
+            + advance_payment
+            + retention
+            + material_on_site
+            + other_specify
+        )
+        progressive_previous = Decimal("0.00")
+        for project in projects:
+            cert = project.payment_certificates.filter(status="APPROVED").order_by("-certificate_number").first()
+            if cert:
+                ap_prev = cert.previous_advance_payment_total
+                ret_prev = cert.previous_retention_total
+                mat_prev = cert.previous_materials_on_site_total
+                prev_totals_by_type = cert.previous_special_item_totals_by_type
+                other_prev = prev_totals_by_type.get("OTHER", Decimal("0.00"))
+                progressive_previous += (
+                    (cert.progressive_previous or Decimal("0.00"))
+                    + ap_prev
+                    + ret_prev
+                    + mat_prev
+                    + other_prev
+                )
+
+        current_claim_total = progressive_to_date - progressive_previous
+        
+        vat_val_payment = Decimal("0.00")
+        for project in projects:
+            cert = project.payment_certificates.filter(status="APPROVED").order_by("-certificate_number").first()
+            if cert and project.vat:
+                p_prog_to_date = (cert.work_progressive_to_date or Decimal("0.00")) + \
+                                 (cert.get_advance_payment_total() + cert.previous_advance_payment_total) + \
+                                 (cert.get_retention_total() + cert.previous_retention_total) + \
+                                 (cert.get_materials_on_site_total() + cert.previous_materials_on_site_total)
+                p_prev = (cert.work_progressive_previous or Decimal("0.00")) + \
+                         cert.previous_advance_payment_total + cert.previous_retention_total + cert.previous_materials_on_site_total
+                p_current = p_prog_to_date - p_prev
+                vat_val_payment += p_current * Decimal("0.15")
+
+        total_certified = current_claim_total + vat_val_payment
+
+        # Construct Sections A, B, C for rendering
+        sections = [
+            {
+                "id": "section_a",
+                "title": "Province Details",
+                "fields": [
+                    {"label": "Province Name", "formatted_value": province.name},
+                    {"label": "Total Active Projects", "formatted_value": str(len(projects))},
+                    {"label": "Projects with Approved Certificates", "formatted_value": f"{cert_count} of {len(projects)}"},
+                ]
+            },
+            {
+                "id": "section_b",
+                "title": "Contract Value",
+                "fields": [
+                    {"label": "Original Contract Value", "formatted_value": f"R {orig_val:,.2f}"},
+                    {"label": "Approved Variations", "formatted_value": f"R {amends_val:,.2f}"},
+                    {"label": "Sub-Total Contract Value", "formatted_value": f"R {sub_total_contract:,.2f}", "style": {"is_bold": True}},
+                    {"label": "VAT (15%)", "formatted_value": f"R {vat_val_contract:,.2f}"},
+                    {"label": "Total Contract Value", "formatted_value": f"R {total_contract:,.2f}", "style": {"is_bold": True, "is_highlighted_navy": True}},
+                ]
+            },
+            {
+                "id": "section_c",
+                "title": "Progressive Valuations",
+                "fields": [
+                    {"label": "Work Progressive Previous", "formatted_value": f"R {work_progressive_previous:,.2f}"},
+                    {"label": "Contract Current Claim", "formatted_value": f"R {contract_current_claim_total:,.2f}"},
+                    {"label": "Addendum Current Claim", "formatted_value": f"R {addendum_current_claim_total:,.2f}"},
+                    {"label": "Work Progressive to Date", "formatted_value": f"R {work_progressive_to_date:,.2f}", "style": {"is_bold": True}},
+                    {"label": "Less: Advance Payment", "formatted_value": f"-R {advance_payment:,.2f}" if advance_payment > 0 else "R 0.00"},
+                    {"label": "Less: Retention", "formatted_value": f"-R {retention:,.2f}" if retention > 0 else "R 0.00"},
+                    {"label": "Materials on Site", "formatted_value": f"R {material_on_site:,.2f}"},
+                    {"label": "Other Specify", "formatted_value": f"R {other_specify:,.2f}"},
+                    {"label": "Progressive to Date", "formatted_value": f"R {progressive_to_date:,.2f}", "style": {"is_bold": True}},
+                    {"label": "Progressive Previous", "formatted_value": f"R {progressive_previous:,.2f}"},
+                    {"label": "Current Claim Total", "formatted_value": f"R {current_claim_total:,.2f}", "style": {"is_bold": True}},
+                    {"label": "VAT (15%)", "formatted_value": f"R {vat_val_payment:,.2f}"},
+                    {"label": "Total Certified (Gross Payment)", "formatted_value": f"R {total_certified:,.2f}", "style": {"is_bold": True, "is_highlighted_orange": True}},
+                ]
+            }
+        ]
+        context["ordered_sections"] = sections
+        context["cover_page_config"] = {"title": "PROVINCE COVER PAGE"}
+        return context
+
+
+class ProvinceValuationSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, DetailView):
+    """Render the aggregated valuation summary for a province in-browser."""
+    model = Province
+    template_name = "portfolio/reports/province_valuation_summary.html"
+    context_object_name = "province"
+    pk_url_kwarg = "province_pk"
+    required_tiers = [Subscription.FREE_TIER]
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        province = self.get_object()
+        return [
+            {"title": "Portfolio", "url": "/"},
+            {"title": "Reports", "url": None},
+            {"title": "Province Summary", "url": reverse("project:portfolio-province-summary")},
+            {"title": f"{province.name} Valuation Summary", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        province = self.get_object()
+        user: Account = self.request.user  # type: ignore
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+        else:
+            projects = user.get_projects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+
+        projects_data = []
+        t_budget = Decimal("0.00")
+        t_variations = Decimal("0.00")
+        t_revised = Decimal("0.00")
+        t_previous = Decimal("0.00")
+        t_progressive = Decimal("0.00")
+        t_net = Decimal("0.00")
+        t_forecast = Decimal("0.00")
+        t_variance = Decimal("0.00")
+
+        for project in projects:
+            contract_val = project.original_contract_value or Decimal("0.00")
+            variations = project.addendum_contract_value or Decimal("0.00")
+            revised = contract_val + variations
+            
+            # Find latest approved payment certificate
+            cert = project.payment_certificates.filter(
+                status="APPROVED"
+            ).order_by("-certificate_number").first()
+            
+            certified_amount = Decimal("0.00")
+            certified_previous = Decimal("0.00")
+            net_claimed = Decimal("0.00")
+            
+            if cert:
+                certified_amount = cert.work_progressive_to_date or Decimal("0.00")
+                certified_previous = cert.work_progressive_previous or Decimal("0.00")
+                net_claimed = certified_amount - certified_previous
+
+            # Forecast
+            latest_forecast = project.forecasts.order_by("-period").first()
+            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
+            
+            projects_data.append({
+                "project": project,
+                "contract_value": contract_val,
+                "variations": variations,
+                "revised_contract_value": revised,
+                "certified_previous": certified_previous,
+                "certified_amount": certified_amount,
+                "net_claimed": net_claimed,
+                "forecast_amount": forecast_val,
+                "variance": variance,
+            })
+            
+            t_budget += contract_val
+            t_variations += variations
+            t_revised += revised
+            t_previous += certified_previous
+            t_progressive += certified_amount
+            t_net += net_claimed
+            t_forecast += forecast_val
+            t_variance += variance
+
+        context["projects_data"] = projects_data
+        context["total_budget"] = t_budget
+        context["total_variations"] = t_variations
+        context["total_revised"] = t_revised
+        context["total_previous"] = t_previous
+        context["total_cumulative"] = t_progressive
+        context["total_current"] = t_net
+        context["total_forecast"] = t_forecast
+        context["total_variance"] = t_variance
+        return context
+
+
+class ProvinceCoverPageDownloadXLSXView(SubscriptionRequiredMixin, View):
+    """Download cover page aggregated by province as XLSX."""
+    required_tiers = [Subscription.FREE_TIER]
+
+    def get(self, request, province_pk=None):
+        province = get_object_or_404(Province, pk=province_pk)
+        user: Account = self.request.user  # type: ignore
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+        else:
+            projects = user.get_projects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+
+        from app.BillOfQuantities.exporters.province_cover_page_exporter import export_province_cover_page_to_xlsx
+
+        try:
+            wb = export_province_cover_page_to_xlsx(province, projects)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"province_{province.name.lower().replace(' ', '_')}_cover_page.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect("project:portfolio-province-summary")
+
+
+class ProvinceValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, View):
+    """Download valuation summary aggregated by province as XLSX."""
+    required_tiers = [Subscription.FREE_TIER]
+
+    def get(self, request, province_pk=None):
+        province = get_object_or_404(Province, pk=province_pk)
+        user: Account = self.request.user  # type: ignore
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+        else:
+            projects = user.get_projects.filter(
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+                area__province=province
+            )
+
+        from app.BillOfQuantities.exporters.province_summary_report_exporter import (
+            export_province_summary_report_to_xlsx,
+        )
+
+        projects_data = []
+        for project in projects:
+            contract_val = project.original_contract_value or Decimal("0.00")
+            variations = project.addendum_contract_value or Decimal("0.00")
+            revised = contract_val + variations
+            
+            cert = project.payment_certificates.filter(
+                status="APPROVED"
+            ).order_by("-certificate_number").first()
+            
+            certified_amount = Decimal("0.00")
+            certified_previous = Decimal("0.00")
+            net_claimed = Decimal("0.00")
+            
+            if cert:
+                certified_amount = cert.work_progressive_to_date or Decimal("0.00")
+                certified_previous = cert.work_progressive_previous or Decimal("0.00")
+                net_claimed = certified_amount - certified_previous
+
+            latest_forecast = project.forecasts.order_by("-period").first()
+            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
+            
+            projects_data.append({
+                "project": project,
+                "contract_value": contract_val,
+                "variations": variations,
+                "revised_contract_value": revised,
+                "certified_previous": certified_previous,
+                "certified_amount": certified_amount,
+                "net_claimed": net_claimed,
+                "forecast_amount": forecast_val,
+                "variance": variance,
+            })
+
+        try:
+            wb = export_province_summary_report_to_xlsx(province, projects_data)
+            response = HttpResponse(
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            filename = f"province_{province.name.lower().replace(' ', '_')}_valuation_summary.xlsx"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            wb.save(response)
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect("project:portfolio-province-summary")
