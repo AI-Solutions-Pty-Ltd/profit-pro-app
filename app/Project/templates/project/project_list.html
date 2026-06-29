@@ -62,6 +62,28 @@
                 </a>
             </div>
         </div>
+        <!-- Quick View Project Reports Selector -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <label for="project-select" class="text-sm font-semibold text-gray-700">Quick View Project Reports:</label>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="project-select" class="block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                        <option value="">-- Select a Project --</option>
+                        {% for p in all_projects %}
+                            <option value="{{ p.pk }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="quick-cover-btn" disabled class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-semibold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                        {% heroicon_outline "document" size="14" class="mr-1 text-indigo-600" %}
+                        Cover Page
+                    </button>
+                    <button id="quick-valuation-btn" disabled class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-semibold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                        {% heroicon_outline "table-cells" size="14" class="mr-1 text-indigo-600" %}
+                        Valuation Summary
+                    </button>
+                </div>
+            </div>
+        </div>
         <!-- Filter Form -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
             <form id="filterForm" method="get" class="space-y-4">
@@ -391,6 +413,16 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
+                                    <a href="{% url 'project:project-cover-page-redirect' project.pk %}"
+                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                       title="Cover Page">
+                                        {% heroicon_outline "document" size="16" %}
+                                    </a>
+                                    <a href="{% url 'project:project-valuation-summary-redirect' project.pk %}"
+                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                       title="Valuation Summary">
+                                        {% heroicon_outline "table-cells" size="16" %}
+                                    </a>
                                     <a href="{% url 'project:project-management' project.id %}"
                                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
                                         {% heroicon_outline "cog-6-tooth" size="16" %}
@@ -534,6 +566,41 @@
                 if (provinceSelect.value) {
                     updateMunicipalities();
                 }
+            }
+
+            // Quick View Project Reports Selector
+            const projectSelect = document.getElementById('project-select');
+            const quickCoverBtn = document.getElementById('quick-cover-btn');
+            const quickValuationBtn = document.getElementById('quick-valuation-btn');
+
+            if (projectSelect && quickCoverBtn && quickValuationBtn) {
+                const coverBaseUrl = "{% url 'project:project-cover-page-redirect' 99999 %}";
+                const valuationBaseUrl = "{% url 'project:project-valuation-summary-redirect' 99999 %}";
+
+                projectSelect.addEventListener('change', function() {
+                    const pk = this.value;
+                    if (pk) {
+                        quickCoverBtn.disabled = false;
+                        quickValuationBtn.disabled = false;
+                    } else {
+                        quickCoverBtn.disabled = true;
+                        quickValuationBtn.disabled = true;
+                    }
+                });
+
+                quickCoverBtn.addEventListener('click', function() {
+                    const pk = projectSelect.value;
+                    if (pk) {
+                        window.location.href = coverBaseUrl.replace('99999', pk);
+                    }
+                });
+
+                quickValuationBtn.addEventListener('click', function() {
+                    const pk = projectSelect.value;
+                    if (pk) {
+                        window.location.href = valuationBaseUrl.replace('99999', pk);
+                    }
+                });
             }
         });
     </script>
