@@ -35,6 +35,26 @@ urlpatterns = [
         portfolio_views.ProvinceValuationSummaryDownloadXLSXView.as_view(),
         name="portfolio-province-valuation-summary-xlsx",
     ),
+    path(
+        "reports/multi/cover-page/",
+        portfolio_views.MultiProjectCoverPageView.as_view(),
+        name="portfolio-multi-cover-page",
+    ),
+    path(
+        "reports/multi/cover-page/xlsx/",
+        portfolio_views.MultiProjectCoverPageDownloadXLSXView.as_view(),
+        name="portfolio-multi-cover-page-xlsx",
+    ),
+    path(
+        "reports/multi/valuation-summary/",
+        portfolio_views.MultiProjectValuationSummaryView.as_view(),
+        name="portfolio-multi-valuation-summary",
+    ),
+    path(
+        "reports/multi/valuation-summary/xlsx/",
+        portfolio_views.MultiProjectValuationSummaryDownloadXLSXView.as_view(),
+        name="portfolio-multi-valuation-summary-xlsx",
+    ),
     # New Portfolio Reports
     path(
         "reports/compliance/",
