@@ -11,11 +11,25 @@ from app.Project.models import (
 class ProjectDocumentForm(forms.ModelForm):
     """Form for uploading project documents."""
 
+    wbs_level = forms.ChoiceField(
+        choices=[],
+        required=False,
+        label="WBS Level",
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+            }
+        ),
+        help_text="Select the WBS level this document belongs to",
+    )
+
     class Meta:
         model = ProjectDocument
         fields = [
             "category",
             "title",
+            "document_number",
+            "revision_number",
             "file",
             "notes",
             "project_category",
@@ -32,6 +46,18 @@ class ProjectDocumentForm(forms.ModelForm):
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                     "placeholder": "Enter document title",
+                }
+            ),
+            "document_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "e.g., DOC-101",
+                }
+            ),
+            "revision_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "e.g., A or 01",
                 }
             ),
             "file": forms.FileInput(
@@ -66,6 +92,8 @@ class ProjectDocumentForm(forms.ModelForm):
         labels = {
             "category": "Document Category",
             "title": "Document Title",
+            "document_number": "Document Number",
+            "revision_number": "Revision Number",
             "file": "File",
             "notes": "Notes (Optional)",
             "project_category": "Sector",
@@ -73,6 +101,8 @@ class ProjectDocumentForm(forms.ModelForm):
             "project_discipline": "Discipline",
         }
         help_texts = {
+            "document_number": "Unique identifier for the document",
+            "revision_number": "Current revision number (e.g., A, 01, Rev 1)",
             "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
             "project_category": "Select the project sector",
             "area": "Select the project area (Municipality)",
@@ -122,10 +152,70 @@ class ProjectDocumentForm(forms.ModelForm):
                     project_id=project.pk, deleted=False
                 ).order_by("name")
 
+            # Build hierarchical options for WBS Levels
+            wbs_choices = [("", "---------")]
+            categories = Category.objects.filter(
+                project=project, deleted=False
+            ).order_by("name")
+            for cat in categories:
+                wbs_choices.append((f"category_{cat.pk}", f"L1: {cat.name}"))
+                subcategories = cat.subcategories.filter(deleted=False).order_by("name")
+                for sub in subcategories:
+                    wbs_choices.append((f"subcategory_{sub.pk}", f"  L2: {sub.name}"))
+                    groups = sub.groups.filter(deleted=False).order_by("name")
+                    for grp in groups:
+                        wbs_choices.append((f"group_{grp.pk}", f"    L3: {grp.name}"))
+            self.fields["wbs_level"].choices = wbs_choices
+
+            # Set initial value for wbs_level when editing
+            if self.instance and self.instance.pk:
+                if self.instance.group_id:
+                    self.initial["wbs_level"] = f"group_{self.instance.group_id}"
+                elif self.instance.sub_category_id:
+                    self.initial["wbs_level"] = (
+                        f"subcategory_{self.instance.sub_category_id}"
+                    )
+                elif self.instance.project_category_id:
+                    self.initial["wbs_level"] = f"category_{self.instance.project_category_id}"
+
             # Make fields optional
             self.fields["project_category"].required = False
             self.fields["area"].required = False
             self.fields["project_discipline"].required = False
+            self.fields["document_number"].required = False
+            self.fields["revision_number"].required = False
+
+    def save(self, commit=True):
+        from app.Project.projects.projects_models import Group, SubCategory
+
+        instance = super().save(commit=False)
+        wbs_level = self.cleaned_data.get("wbs_level")
+
+        # Reset and resolve from WBS level selection
+        instance.project_category = None
+        instance.sub_category = None
+        instance.group = None
+
+        if wbs_level:
+            level_type, level_id = wbs_level.split("_")
+            if level_type == "category":
+                instance.project_category_id = int(level_id)
+            elif level_type == "subcategory":
+                sub_cat = SubCategory.objects.filter(pk=level_id, deleted=False).first()
+                if sub_cat:
+                    instance.project_category = sub_cat.category
+                    instance.sub_category = sub_cat
+            elif level_type == "group":
+                grp = Group.objects.filter(pk=level_id, deleted=False).first()
+                if grp:
+                    instance.group = grp
+                    if grp.sub_category:
+                        instance.sub_category = grp.sub_category
+                        instance.project_category = grp.sub_category.category
+
+        if commit:
+            instance.save()
+        return instance
 
 
 class DrawingForm(forms.ModelForm):

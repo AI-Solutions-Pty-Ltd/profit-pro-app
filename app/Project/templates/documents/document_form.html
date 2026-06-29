@@ -56,7 +56,9 @@
                         <!-- Left Column: Identification -->
                         <div class="space-y-4">
                             <h3 class="pb-2 text-sm font-semibold tracking-wider text-gray-900 uppercase border-b">Identification</h3>
+                            {{ form.document_number|as_crispy_field }}
                             {{ form.title|as_crispy_field }}
+                            {{ form.revision_number|as_crispy_field }}
                             {% if category == 'OTHER' %}
                                 {{ form.category|as_crispy_field }}
                             {% endif %}
@@ -65,6 +67,7 @@
                         <div class="space-y-4">
                             <h3 class="pb-2 text-sm font-semibold tracking-wider text-gray-900 uppercase border-b">Classification & Hierarchy</h3>
                             {{ form.project_discipline|as_crispy_field }}
+                            {{ form.wbs_level|as_crispy_field }}
                             {% if category != 'DRAWINGS' and category != 'SPECIFICATIONS' and category != 'TECHNICAL_SPECIFICATIONS' %}
                                 {{ form.project_category|as_crispy_field }}
                                 {{ form.area|as_crispy_field }}
