@@ -27,6 +27,7 @@ from app.Project.models import (
     ProjectCategory,
     ProjectCompanyUserRole,
     ProjectDocument,
+    ProjectGroup,
     ProjectRole,
     Risk,
     Role,
@@ -538,3 +539,22 @@ class PortfolioFactory(DjangoModelFactory):
 
     class Meta:
         model = Portfolio
+
+
+class ProjectGroupFactory(DjangoModelFactory):
+    """Factory for ProjectGroup model."""
+
+    class Meta:
+        model = ProjectGroup
+
+    user = SubFactory(AccountFactory)
+    name = factory.Sequence(lambda n: f"Group {n}")
+
+    @post_generation
+    def projects(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            for p in extracted:
+                self.projects.add(p)
+
