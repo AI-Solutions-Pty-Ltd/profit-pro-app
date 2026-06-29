@@ -1137,7 +1137,8 @@ class ProjectReportLayoutPreviewView(ProjectMixin, DetailView):
         layout_style = self.request.GET.get("layout_style", "STANDARD")
         context["layout_style"] = layout_style
         return context
-
+from django.views import View
+from django.shortcuts import get_object_or_404, redirect
 
 class ProjectCoverPageRedirectView(LoginRequiredMixin, View):
     """Finds the latest approved certificate for a project and redirects to its cover page."""
