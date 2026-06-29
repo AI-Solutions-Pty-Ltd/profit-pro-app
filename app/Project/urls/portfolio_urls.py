@@ -10,6 +10,31 @@ urlpatterns = [
         portfolio_views.PortfolioDashboardView.as_view(),
         name="portfolio-dashboard",
     ),
+    path(
+        "reports/province/",
+        portfolio_views.PortfolioProvinceSummaryView.as_view(),
+        name="portfolio-province-summary",
+    ),
+    path(
+        "province/<int:province_pk>/cover-page/",
+        portfolio_views.ProvinceCoverPageView.as_view(),
+        name="portfolio-province-cover-page",
+    ),
+    path(
+        "province/<int:province_pk>/cover-page/xlsx/",
+        portfolio_views.ProvinceCoverPageDownloadXLSXView.as_view(),
+        name="portfolio-province-cover-page-xlsx",
+    ),
+    path(
+        "province/<int:province_pk>/valuation-summary/",
+        portfolio_views.ProvinceValuationSummaryView.as_view(),
+        name="portfolio-province-valuation-summary",
+    ),
+    path(
+        "province/<int:province_pk>/valuation-summary/xlsx/",
+        portfolio_views.ProvinceValuationSummaryDownloadXLSXView.as_view(),
+        name="portfolio-province-valuation-summary-xlsx",
+    ),
     # New Portfolio Reports
     path(
         "reports/compliance/",
