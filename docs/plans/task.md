@@ -1,5 +1,6 @@
 | Task | Status | Description |
 |---|---|---|
-| Task 1: Create automated tests for Document views | [x] | Create test_document_views.py to verify document form views render and submit successfully |
-| Task 2: Refactor document_form.html | [x] | Apply 2-column grid layout with headers and field groups to match drawings form |
-| Task 3: Verification | [x] | Run pytest and verify all project document tests pass |
+| Task 1: Update ProjectDocument model and generate migrations | [/] | Add fields and run makemigrations/migrate |
+| Task 2: Refactor ProjectDocumentForm | [ ] | Add wbs_level choice field and map selections to instance |
+| Task 3: Update document_form.html layout | [ ] | Render document number, revision number, and WBS level |
+| Task 4: Add unit tests and run validations | [ ] | Add test cases and verify all tests pass |

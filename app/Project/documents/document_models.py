@@ -94,6 +94,34 @@ class ProjectDocument(BaseModel):
         default="",
         help_text="Additional notes about the document",
     )
+    document_number = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="Unique identifier for the document",
+    )
+    revision_number = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        help_text="Current revision number (e.g., A, 01, Rev 1)",
+    )
+    sub_category = models.ForeignKey(
+        SubCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project sub-category (Level 2)",
+    )
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project group (Level 3)",
+    )
 
     class Meta:
         verbose_name = "Project Document"
