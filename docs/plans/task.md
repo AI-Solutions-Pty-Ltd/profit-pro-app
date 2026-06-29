@@ -1,13 +1,6 @@
 | Task | Status | Description |
 |---|---|---|
-| Brainstorming Step 1: Explore project context | [x] | Check files, docs, recent commits |
-| Brainstorming Step 2: Ask clarifying questions | [x] | Understand purpose, constraints, success criteria (none needed) |
-| Brainstorming Step 3: Propose 2-3 approaches | [x] | Propose approaches with trade-offs |
-| Brainstorming Step 4: Present design | [x] | Present design and get user approval |
-| Brainstorming Step 5: Write design doc | [x] | Save to docs/plans/2026-06-26-restore-date-modals-design.md |
-| Task 1: Make inline budget fields read-only | [x] | Update budget_input.html to disable inline budget fields |
-| Task 2: Create category budget edit modal | [x] | Create category_scope_budget_edit.html |
-| Task 3: Create subcategory budget edit modal | [x] | Create subcategory_scope_budget_edit.html |
-| Task 4: Create group budget edit modal | [x] | Create group_scope_budget_edit.html |
-| Task 5: Integrate and wire modals on budget_forecast.html | [x] | Replace edit includes, wire pencil triggers, and reposition attach file icons |
-
+| Task 1: Refactor L1 category layout | [x] | Convert category node to card-based layout and remove tree connectors in design_development.html |
+| Task 2: Refactor L2 subcategory layout | [x] | Convert subcategory node to card-based layout, add empty state message in design_development.html |
+| Task 3: Refactor L3 group layout | [x] | Convert group node to card-based layout, add empty state message in design_development.html |
+| Task 4: Verification | [x] | Run pytest and verify all design development tests pass |
