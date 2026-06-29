@@ -1,6 +1,5 @@
 | Task | Status | Description |
 |---|---|---|
-| Task 1: Refactor L1 category layout | [x] | Convert category node to card-based layout and remove tree connectors in design_development.html |
-| Task 2: Refactor L2 subcategory layout | [x] | Convert subcategory node to card-based layout, add empty state message in design_development.html |
-| Task 3: Refactor L3 group layout | [x] | Convert group node to card-based layout, add empty state message in design_development.html |
-| Task 4: Verification | [x] | Run pytest and verify all design development tests pass |
+| Task 1: Create automated tests for Document views | [x] | Create test_document_views.py to verify document form views render and submit successfully |
+| Task 2: Refactor document_form.html | [x] | Apply 2-column grid layout with headers and field groups to match drawings form |
+| Task 3: Verification | [x] | Run pytest and verify all project document tests pass |
