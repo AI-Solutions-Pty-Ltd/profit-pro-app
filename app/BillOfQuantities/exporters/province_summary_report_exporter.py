@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 
 def export_province_summary_report_to_xlsx(province, projects_data):
@@ -178,7 +179,7 @@ def export_province_summary_report_to_xlsx(province, projects_data):
     # Auto fit column widths
     for col in ws.columns:
         max_len = 0
-        col_letter = openpyxl.utils.get_column_letter(col[0].column)
+        col_letter = get_column_letter(col[0].column)
         for cell in col:
             if cell.value:
                 max_len = max(max_len, len(str(cell.value)))
