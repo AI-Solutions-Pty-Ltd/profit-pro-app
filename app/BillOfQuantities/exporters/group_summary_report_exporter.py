@@ -25,7 +25,7 @@ def export_group_summary_report_to_xlsx(group_name, province_reports):
     border_bottom_light = Border(bottom=Side(style="thin", color="FFE5E5E5"))
 
     fill_header = PatternFill(
-        start_color="FF111111", end_color="FF111111", fill_type="solid"
+        start_color="FF1E3A5F", end_color="FF1E3A5F", fill_type="solid"
     )
     fill_province_header = PatternFill(
         start_color="FFEAEAEA", end_color="FFEAEAEA", fill_type="solid"
@@ -34,7 +34,7 @@ def export_group_summary_report_to_xlsx(group_name, province_reports):
         start_color="FFF5F5F5", end_color="FFF5F5F5", fill_type="solid"
     )
     fill_footer = PatternFill(
-        start_color="FFD19B3D", end_color="FFD19B3D", fill_type="solid"
+        start_color="FFC5922E", end_color="FFC5922E", fill_type="solid"
     )
 
     # Header Row

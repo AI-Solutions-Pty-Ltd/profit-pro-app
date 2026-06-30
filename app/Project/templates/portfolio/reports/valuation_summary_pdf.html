@@ -7,59 +7,91 @@
         @page {
             size: a4 landscape;
             margin: 1cm;
-            margin-bottom: 1.5cm;
+            margin-bottom: 20mm;
             @frame footer {
                 -pdf-frame-content: running-footer;
-                bottom: 0.5cm;
-                height: 1cm;
-                margin-left: 1cm;
-                margin-right: 1cm;
+                bottom: 5mm;
+                height: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
             }
         }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 9pt;
-            color: #1f2937;
+            font-family: 'Inter', Arial, Helvetica, sans-serif;
+            font-size: 8.5pt;
+            line-height: 1.4;
             margin: 0;
-            padding: 0;
-        }
-        .header {
-            margin-bottom: 20px;
-            width: 100%;
-        }
-        .header-title {
-            font-size: 16pt;
-            font-weight: bold;
+            padding: 10px;
             color: #111827;
-            margin: 0;
         }
-        .header-subtitle {
-            font-size: 10pt;
+        
+        /* Title table matching certificate summary report */
+        .title-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2px;
+        }
+        .title-table td {
+            vertical-align: middle;
+        }
+        .logo-box {
+            text-align: center;
+            height: 80px;
+            width: 20%;
+            background-color: #f3f4f6;
+            border: 1px solid #e5e7eb;
+        }
+        .cert-box {
+            background-color: #f3f4f6;
+            text-align: center;
+            height: 80px;
+            width: 20%;
             color: #4b5563;
-            margin-top: 5px;
-            margin-bottom: 0;
+            border: 1px solid #e5e7eb;
         }
+        .center-box {
+            width: 60%;
+            text-align: center;
+            padding: 0 15px;
+        }
+        .subtitle-row {
+            background-color: #f3f4f6;
+            text-align: center;
+            font-style: italic;
+            font-size: 8pt;
+            color: #6b7280;
+            padding: 4px;
+            margin-bottom: 10px;
+            border-left: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* Valuation table */
         .table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 10px;
             margin-bottom: 30px;
         }
         .table th {
-            background-color: #1f2937;
+            background-color: #1e3a5f;
             color: #ffffff;
             font-weight: bold;
             text-align: right;
             padding: 6px 8px;
-            border: 1px solid #374151;
+            border: 1px solid #ffffff;
             font-size: 8.5pt;
+            text-transform: uppercase;
         }
         .table th.text-left {
             text-align: left;
         }
         .table td {
             padding: 6px 8px;
-            border: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
             text-align: right;
+            color: #111827;
         }
         .table td.text-left {
             text-align: left;
@@ -67,13 +99,10 @@
         .table td.text-center {
             text-align: center;
         }
-        .table font-mono {
-            font-family: monospace;
-        }
         .province-row {
-            background-color: #f3f4f6;
+            background-color: #e5e7eb;
             font-weight: bold;
-            color: #312e81;
+            color: #111827;
         }
         .province-row td {
             text-align: left;
@@ -92,13 +121,14 @@
             border-bottom: 1px solid #9ca3af;
         }
         .totals-row {
-            background-color: #e5e7eb;
+            background-color: #c5922e;
+            color: #ffffff;
             font-weight: bold;
-            color: #111827;
         }
         .totals-row td {
-            border-top: 2px solid #4b5563;
-            border-bottom: 2px solid #4b5563;
+            color: #ffffff !important;
+            border-top: 2px solid #c5922e;
+            border-bottom: 2px solid #c5922e;
         }
         .status-badge {
             background-color: #d1fae5;
@@ -108,6 +138,8 @@
             font-size: 7.5pt;
             font-weight: bold;
         }
+        
+        /* Signatures */
         .sig-table {
             width: 100%;
             margin-top: 40px;
@@ -136,9 +168,12 @@
             margin: 0;
         }
         .footer-text {
-            text-align: right;
-            font-size: 8pt;
-            color: #6b7280;
+            font-style: italic;
+            text-align: center;
+            font-size: 7.5pt;
+            color: #9ca3af;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 5px;
         }
     </style>
 </head>
@@ -147,9 +182,23 @@
         Page <pdf:pagenumber /> of <pdf:pagecount />
     </div>
 
-    <div class="header">
-        <div class="header-title">{{ title }}</div>
-        <div class="header-subtitle">{{ subtitle }}</div>
+    <!-- Header layout matching individual valuation summary -->
+    <table class="title-table">
+        <tr>
+            <td class="logo-box">
+                <span style="color: #9ca3af; font-style: italic; font-size: 11pt; font-weight: bold; line-height: 80px;">[ LOGO ]</span>
+            </td>
+            <td class="center-box">
+                <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #1e3a5f;">VALUATION SUMMARY</div>
+            </td>
+            <td class="cert-box">
+                <div style="font-size: 8.5pt; margin-bottom: 4px; font-weight: bold;">PORTFOLIO REPORT</div>
+                <div style="font-size: 8.5pt; color: #6b7280;">{% now "d M Y" %}</div>
+            </td>
+        </tr>
+    </table>
+    <div class="subtitle-row">
+        {{ title }} — {{ subtitle }}
     </div>
 
     <table class="table">
@@ -219,7 +268,7 @@
                 <td>R {{ total_revised|floatformat:2 }}</td>
                 <td>R {{ total_previous|floatformat:2 }}</td>
                 <td>R {{ total_cumulative|floatformat:2 }}</td>
-                <td style="color: #1e40af;">R {{ total_current|floatformat:2 }}</td>
+                <td>R {{ total_current|floatformat:2 }}</td>
                 <td>R {{ total_forecast|floatformat:2 }}</td>
                 <td>R {{ total_variance|floatformat:2 }}</td>
             </tr>
