@@ -43,13 +43,17 @@
     const editGroupModal = document.getElementById("editGroupModal");
     const editGroupForm = editGroupModal.querySelector("#editForm")
 
-    function openEditGroupModal(id, name, description, subcategoryId) {
+    function openEditGroupModal(id, name, description, subcategoryId, startDate, endDate) {
         editGroupModal.classList.remove('hidden');
         editGroupForm.querySelector('#id_name').value = name;
         editGroupForm.querySelector('#id_description').value = description;
         editGroupForm.querySelector('#id_sub_category').value = subcategoryId;
+        const startDateInput = editGroupForm.querySelector('#id_start_date');
+        const endDateInput = editGroupForm.querySelector('#id_end_date');
+        if (startDateInput) startDateInput.value = startDate || '';
+        if (endDateInput) endDateInput.value = endDate || '';
         editGroupForm.querySelector('#id_name').focus();
-        
+
         // Store the IDs for form submission
         editGroupModal.dataset.id = id;
         editGroupModal.dataset.subcategoryId = subcategoryId;

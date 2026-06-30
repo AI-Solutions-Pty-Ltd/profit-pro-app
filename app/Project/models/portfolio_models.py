@@ -6,7 +6,6 @@ from django.db import models
 from django.db.models import QuerySet
 
 from app.Account.models import Account
-from app.BillOfQuantities.models.forecast_models import Forecast
 from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.models import Project
 
@@ -266,22 +265,16 @@ class Portfolio(BaseModel):
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
-        """Sum of latest cost forecasts for all active projects."""
+        """Sum of Estimate to Complete (ETC) for all active projects."""
         if not date:
             date = datetime.now()
         total = Decimal("0.00")
         valid_count = 0
         for project in self.get_active_projects(category, province, area, discipline):
             try:
-                # Use latest approved forecast instead of EAC
-                latest_forecast = (
-                    project.forecasts.filter(status=Forecast.Status.APPROVED)
-                    .order_by("-period")
-                    .first()
-                )
-                if latest_forecast:
-                    forecast_total = latest_forecast.total_forecast or Decimal("0.00")
-                    total += forecast_total
+                etc = project.get_estimate_to_complete(date)
+                if etc is not None:
+                    total += etc
                     valid_count += 1
             except (ZeroDivisionError, TypeError):
                 continue
@@ -300,10 +293,10 @@ class Portfolio(BaseModel):
         area: "Municipality | None" = None,
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
-        """Original Budget - Forecast Cost at Completion."""
+        """Original Budget - Estimate at Completion."""
         if not date:
             date = datetime.now()
-        eac = self.get_forecast_cost_at_completion(
+        eac = self.get_total_estimate_at_completion(
             date, category, province, area, discipline
         )
         if not eac:
@@ -414,9 +407,19 @@ class Portfolio(BaseModel):
         discipline: "ProjectDiscipline | None" = None,
     ) -> Decimal | None:
         """Sum of EAC for all active projects."""
-        return self.get_forecast_cost_at_completion(
-            date, category, province, area, discipline
-        )
+        if not date:
+            date = datetime.now()
+        total = Decimal("0.00")
+        valid_count = 0
+        for project in self.get_active_projects(category, province, area, discipline):
+            try:
+                eac = project.get_estimate_at_completion(date)
+                if eac is not None:
+                    total += eac
+                    valid_count += 1
+            except (ZeroDivisionError, TypeError):
+                continue
+        return total if valid_count > 0 else None
 
     @property
     def total_estimate_at_completion(self: "Portfolio") -> Decimal | None:

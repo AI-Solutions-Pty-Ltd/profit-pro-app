@@ -49,9 +49,17 @@ class CategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView
 
     def get_queryset(self):
         """Return categories ordered by name."""
-        return Category.objects.filter(
-            project=self.get_project(), deleted=False
-        ).order_by("name")
+        return (
+            Category.objects.filter(project=self.get_project(), deleted=False)
+            .prefetch_related(
+                "disciplines",
+                "subcategories",
+                "subcategories__disciplines",
+                "subcategories__groups",
+                "subcategories__groups__disciplines",
+            )
+            .order_by("name")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -760,6 +768,85 @@ class GroupDateUpdateView(UserHasProjectRoleGenericMixin, APIView):
                 "success": True,
                 "start_date": group.start_date,
                 "end_date": group.end_date,
+            },
+            status=200,
+        )
+
+
+class CategoryDisciplinesUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update category disciplines."""
+
+    model = Category
+    roles = [Role.ADMIN, Role.USER]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for category disciplines updates."""
+        category = get_object_or_404(Category, project=self.get_project(), pk=pk)
+        discipline_ids = request.data.get("disciplines") or []
+        category.disciplines.set(discipline_ids)
+        messages.success(
+            request, f"Category '{category.name}' disciplines updated successfully."
+        )
+        return Response(
+            {
+                "success": True,
+                "disciplines": list(category.disciplines.values_list("id", flat=True)),
+            },
+            status=200,
+        )
+
+
+class SubCategoryDisciplinesUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update subcategory disciplines."""
+
+    model = SubCategory
+    roles = [Role.ADMIN, Role.USER]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, category_pk, *args, **kwargs):
+        """Handle POST request for subcategory disciplines updates."""
+        subcategory = get_object_or_404(
+            SubCategory, category__project=self.get_project(), pk=pk
+        )
+        discipline_ids = request.data.get("disciplines") or []
+        subcategory.disciplines.set(discipline_ids)
+        messages.success(
+            request,
+            f"Subcategory '{subcategory.name}' disciplines updated successfully.",
+        )
+        return Response(
+            {
+                "success": True,
+                "disciplines": list(
+                    subcategory.disciplines.values_list("id", flat=True)
+                ),
+            },
+            status=200,
+        )
+
+
+class GroupDisciplinesUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update group disciplines."""
+
+    model = Group
+    roles = [Role.ADMIN, Role.USER]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, subcategory_pk, *args, **kwargs):
+        """Handle POST request for group disciplines updates."""
+        group = get_object_or_404(
+            Group, sub_category__project=self.get_project(), pk=pk
+        )
+        discipline_ids = request.data.get("disciplines") or []
+        group.disciplines.set(discipline_ids)
+        messages.success(
+            request, f"Group '{group.name}' disciplines updated successfully."
+        )
+        return Response(
+            {
+                "success": True,
+                "disciplines": list(group.disciplines.values_list("id", flat=True)),
             },
             status=200,
         )

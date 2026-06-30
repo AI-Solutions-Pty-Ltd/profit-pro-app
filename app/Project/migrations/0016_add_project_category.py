@@ -48,9 +48,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "description",
-                    models.TextField(
-                        blank=True, help_text="Optional description of the category"
-                    ),
+                    models.TextField(blank=True, help_text="Optional description"),
                 ),
             ],
             options={

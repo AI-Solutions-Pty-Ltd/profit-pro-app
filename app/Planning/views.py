@@ -34,9 +34,12 @@ from app.Project.models import (
 )
 from app.Project.projects.category_forms import (
     CategoryForm,
+    CategoryScopeDateForm,
     DisciplineForm,
     GroupForm,
+    GroupScopeDateForm,
     SubCategoryForm,
+    SubCategoryScopeDateForm,
 )
 
 # =============================================================================
@@ -100,11 +103,14 @@ class ScopePlanningView(PlanningMixin, TemplateView):
         # Build hierarchy using ORM
         # Get all categories for the project
         categories = project.categories.all().prefetch_related(
+            "disciplines",
             "milestones",
             "files",
+            "subcategories__disciplines",
             "subcategories__milestones",
             "subcategories__files",
             "subcategories__groups",
+            "subcategories__groups__disciplines",
             "subcategories__groups__milestones",
             "subcategories__groups__files",
         )
@@ -133,6 +139,9 @@ class ScopePlanningView(PlanningMixin, TemplateView):
                 "subcategory_form": SubCategoryForm(project=project),
                 "group_form": GroupForm(project=project),
                 "discipline_form": DisciplineForm(),
+                "scope_category_date_form": CategoryScopeDateForm(),
+                "scope_subcategory_date_form": SubCategoryScopeDateForm(),
+                "scope_group_date_form": GroupScopeDateForm(),
             }
         )
         return context

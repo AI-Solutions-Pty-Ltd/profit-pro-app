@@ -17,6 +17,7 @@ from app.Project.projects.projects_models import (
     DrawingType,
     Group,
     Project,
+    ProjectGroup,
     SubCategory,
 )
 
@@ -122,4 +123,5 @@ __all__ = [
     "PlantCostTracker",
     "ProfitabilityBaseline",
     "UnitOfMeasure",
+    "ProjectGroup",
 ]

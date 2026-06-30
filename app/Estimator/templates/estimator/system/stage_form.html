@@ -1,6 +1,6 @@
-{% extends "base_full.html" %}
+{% extends "estimator/system/base_system.html" %}
 {% load heroicons %}
-{% block content %}
+{% block sub_content %}
     <div class="max-w-2xl mx-auto">
         <!-- Header -->
         <div class="bg-white shadow-sm rounded-lg mb-6">
@@ -8,17 +8,17 @@
                 <div class="flex items-center justify-between">
                     <div>
                         {% if form.instance.pk %}
-                            <h1 class="text-2xl font-bold text-gray-900">Edit Project Stage</h1>
+                            <h1 class="text-2xl font-bold text-gray-900">Edit Stage</h1>
                             <p class="text-sm text-gray-600 mt-1">Update an existing project stage</p>
                         {% else %}
-                            <h1 class="text-2xl font-bold text-gray-900">Create Project Stage</h1>
+                            <h1 class="text-2xl font-bold text-gray-900">Create Stage</h1>
                             <p class="text-sm text-gray-600 mt-1">Add a new project stage to the system</p>
                         {% endif %}
                     </div>
-                    <a href="{% url 'project:project-stage-list' %}"
+                    <a href="{% url 'estimator:sys_project_stages' %}"
                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "arrow-left" size="16" %}
-                        <span class="text-gray-700">Project Stages</span>
+                        <span class="text-gray-700 ml-1">Stages</span>
                     </a>
                 </div>
             </div>
@@ -26,13 +26,13 @@
         <!-- Form -->
         <div class="bg-white shadow-sm rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Project Stage Details</h2>
+                <h2 class="text-lg font-semibold text-gray-900">Stage Details</h2>
             </div>
             <div class="px-6 py-6">
                 <form method="post" class="space-y-6">
                     {% csrf_token %}
                     <div>
-                        <label for="id_name" class="block text-sm font-medium text-gray-700">Project Stage Name *</label>
+                        <label for="id_name" class="block text-sm font-medium text-gray-700">Stage Name *</label>
                         {{ form.name }}
                         {% if form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
                         <p class="mt-1 text-sm text-gray-500">Examples: Planning, Design, Construction, Close-out</p>
@@ -41,10 +41,10 @@
                         <label for="id_description" class="block text-sm font-medium text-gray-700">Description (Optional)</label>
                         {{ form.description }}
                         {% if form.description.errors %}<p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>{% endif %}
-                        <p class="mt-1 text-sm text-gray-500">Provide additional details about this project stage</p>
+                        <p class="mt-1 text-sm text-gray-500">Provide additional details about this stage</p>
                     </div>
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                        <a href="{% url 'project:project-stage-list' %}"
+                        <a href="{% url 'estimator:sys_project_stages' %}"
                            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             Cancel
                         </a>
@@ -52,10 +52,10 @@
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             {% if form.instance.pk %}
                                 {% heroicon_outline "check" size="16" class="mr-1.5" %}
-                                Update Project Stage
+                                Update Stage
                             {% else %}
                                 {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                Create Project Stage
+                                Create Stage
                             {% endif %}
                         </button>
                     </div>
@@ -63,4 +63,4 @@
             </div>
         </div>
     </div>
-{% endblock content %}
+{% endblock sub_content %}

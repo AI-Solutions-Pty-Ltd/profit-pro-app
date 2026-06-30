@@ -1,22 +1,22 @@
-{% extends "base_full.html" %}
+{% extends "estimator/system/base_system.html" %}
 {% load heroicons %}
-{% block content %}
+{% block sub_content %}
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Project Stages</h1>
-                    <p class="text-sm text-gray-600 mt-1">Manage project stages for classification</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Project Disciplines</h1>
+                    <p class="text-sm text-gray-600 mt-1">Manage project disciplines for detailed classification</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <button type="button"
                             onclick="openCreateModal()"
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "plus" size="16" %}
-                        <span class="ml-2">Add Project Stage</span>
+                        <span class="ml-2">Add Discipline</span>
                     </button>
-                    <a href="{% url 'project:portfolio-dashboard' %}"
+                    <a href="{% url 'estimator:sys_trade_codes' %}"
                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "arrow-left" size="16" %}
                         <span class="ml-1">Back</span>
@@ -25,45 +25,13 @@
             </div>
         </div>
     </div>
-    <!-- Tabs -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="border-b border-gray-200">
-            <nav class="flex -mb-px" aria-label="Tabs">
-                <a href="{% url 'project:project-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "folder" size="16" class="inline mr-1.5" %}
-                    Projects
-                </a>
-                <a href="{% url 'project:category-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Sectors
-                </a>
-                <a href="{% url 'project:subcategory-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Areas
-                </a>
-                <a href="{% url 'project:discipline-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}
-                    Disciplines
-                </a>
-                <a href="{% url 'project:project-stage-list' %}"
-                   class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Project Stages
-                </a>
-            </nav>
-        </div>
-    </div>
-    <!-- Stages List -->
+    <!-- Disciplines List -->
     <div class="bg-white shadow-sm rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900">All Project Stages</h2>
-                    <p class="text-sm text-gray-500 mt-1">{{ stages.count }} project stage{{ stages.count|pluralize }} available</p>
+                    <h2 class="text-lg font-semibold text-gray-900">All Disciplines</h2>
+                    <p class="text-sm text-gray-500 mt-1">{{ disciplines.count }} discipline{{ disciplines.count|pluralize }} available</p>
                 </div>
             </div>
         </div>
@@ -78,32 +46,29 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for stage in stages %}
+                    {% for discipline in disciplines %}
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    {% heroicon_outline "tag" size="16" class="text-indigo-500 mr-2" %}
-                                    <div class="text-sm font-medium text-gray-900">{{ stage.name }}</div>
-                                </div>
+                                <div class="text-sm font-medium text-gray-900">{{ discipline.name }}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-500 max-w-md">{{ stage.description|default:"-" }}</div>
+                                <div class="text-sm text-gray-500 max-w-md">{{ discipline.description|default:"-" }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                    {{ stage.projects.count }} project{{ stage.projects.count|pluralize }}
+                                    {{ discipline.projects.count }} project{{ discipline.projects.count|pluralize }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
                                     <button type="button"
-                                            onclick="openEditModal({{ stage.pk }}, '{{ stage.name|escapejs }}', '{{ stage.description|escapejs }}')"
+                                            onclick="openEditModal({{ discipline.pk }}, '{{ discipline.name|escapejs }}', '{{ discipline.description|escapejs }}')"
                                             class="text-indigo-600 hover:text-indigo-900 transition-colors"
-                                            title="Edit stage">{% heroicon_outline "pencil" size="18" %}</button>
+                                            title="Edit discipline">{% heroicon_outline "pencil" size="18" %}</button>
                                     <button type="button"
-                                            onclick="openDeleteModal({{ stage.pk }}, '{{ stage.name|escapejs }}', {{ stage.projects.count }})"
+                                            onclick="openDeleteModal({{ discipline.pk }}, '{{ discipline.name|escapejs }}', {{ discipline.projects.count }})"
                                             class="text-red-600 hover:text-red-900 transition-colors"
-                                            title="Delete stage">{% heroicon_outline "trash" size="18" %}</button>
+                                            title="Delete discipline">{% heroicon_outline "trash" size="18" %}</button>
                                 </div>
                             </td>
                         </tr>
@@ -111,9 +76,9 @@
                         <tr>
                             <td colspan="4" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
-                                    {% heroicon_outline "tag" size="48" class="text-gray-300 mb-4" %}
-                                    <p class="text-sm text-gray-500 font-medium">No project stages yet</p>
-                                    <p class="text-xs text-gray-400 mt-1">Click "Add Project Stage" to create your first project stage</p>
+                                    {% heroicon_outline "academic-cap" size="48" class="text-gray-300 mb-4" %}
+                                    <p class="text-sm text-gray-500 font-medium">No disciplines yet</p>
+                                    <p class="text-xs text-gray-400 mt-1">Click "Add Discipline" to create your first discipline</p>
                                 </div>
                             </td>
                         </tr>
@@ -129,7 +94,7 @@
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Add New Project Stage</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Add New Discipline</h3>
                         <button type="button"
                                 onclick="closeCreateModal()"
                                 class="text-gray-400 hover:text-gray-500">
@@ -138,18 +103,18 @@
                     </div>
                 </div>
                 <form method="post"
-                      action="{% url 'project:project-stage-create' %}"
+                      action="{% url 'estimator:sys_discipline_create' %}"
                       id="createForm">
                     {% csrf_token %}
                     <div class="px-6 py-4 space-y-4">
                         <div>
-                            <label for="create_name" class="block text-sm font-medium text-gray-700">Project Stage Name *</label>
+                            <label for="create_name" class="block text-sm font-medium text-gray-700">Discipline Name *</label>
                             <input type="text"
                                    name="name"
                                    id="create_name"
                                    required
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                   placeholder="e.g., Planning, Design, Construction">
+                                   placeholder="e.g., Civil, Electrical, Mechanical">
                             <p id="create_name_error" class="mt-1 text-sm text-red-600 hidden"></p>
                         </div>
                         <div>
@@ -159,7 +124,7 @@
                                       id="create_description"
                                       rows="3"
                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                      placeholder="Brief description of this project stage"></textarea>
+                                      placeholder="Brief description of this discipline"></textarea>
                             <p id="create_description_error"
                                class="mt-1 text-sm text-red-600 hidden"></p>
                         </div>
@@ -173,7 +138,7 @@
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" size="16" class="inline mr-1" %}
-                            Create Project Stage
+                            Create Discipline
                         </button>
                     </div>
                 </form>
@@ -187,7 +152,7 @@
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Edit Project Stage</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Edit Discipline</h3>
                         <button type="button"
                                 onclick="closeEditModal()"
                                 class="text-gray-400 hover:text-gray-500">
@@ -199,7 +164,7 @@
                     {% csrf_token %}
                     <div class="px-6 py-4 space-y-4">
                         <div>
-                            <label for="edit_name" class="block text-sm font-medium text-gray-700">Project Stage Name *</label>
+                            <label for="edit_name" class="block text-sm font-medium text-gray-700">Discipline Name *</label>
                             <input type="text"
                                    name="name"
                                    id="edit_name"
@@ -226,7 +191,7 @@
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "check" size="16" class="inline mr-1" %}
-                            Update Project Stage
+                            Update Discipline
                         </button>
                     </div>
                 </form>
@@ -240,7 +205,7 @@
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Delete Project Stage</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Delete Discipline</h3>
                         <button type="button"
                                 onclick="closeDeleteModal()"
                                 class="text-gray-400 hover:text-gray-500">
@@ -255,7 +220,7 @@
                             <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
                             <div class="ml-3">
                                 <p class="text-sm text-gray-700">
-                                    Are you sure you want to delete the project stage <strong id="delete_stage_name"></strong>?
+                                    Are you sure you want to delete the discipline <strong id="delete_discipline_name"></strong>?
                                 </p>
                                 <p class="text-sm text-gray-500 mt-2" id="delete_warning"></p>
                             </div>
@@ -270,7 +235,7 @@
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             {% heroicon_outline "trash" size="16" class="inline mr-1" %}
-                            Delete Project Stage
+                            Delete Discipline
                         </button>
                     </div>
                 </form>
@@ -278,6 +243,7 @@
         </div>
     </div>
     <script>
+        // Create Modal Functions
         function openCreateModal() {
             document.getElementById('createModal').classList.remove('hidden');
             document.getElementById('create_name').focus();
@@ -290,13 +256,65 @@
             document.getElementById('create_description_error').classList.add('hidden');
         }
 
+        // Edit Modal Functions
         function openEditModal(id, name, description) {
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_description').value = description;
-            document.getElementById('editForm').action = `/project/project-stage/${id}/update/`;
+            document.getElementById('editForm').action = `/estimator/system/disciplines/${id}/update/`;
             document.getElementById('edit_name').focus();
         }
+
+        // JS Update for Ajax Submit
+        document.getElementById('createForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = this;
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                },
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      window.location.reload();
+                  } else {
+                      if (data.errors.name) {
+                          const err = document.getElementById('create_name_error');
+                          err.textContent = data.errors.name[0];
+                          err.classList.remove('hidden');
+                      }
+                  }
+              });
+        });
+
+        document.getElementById('editForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = this;
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                },
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      window.location.reload();
+                  } else {
+                      if (data.errors.name) {
+                          const err = document.getElementById('edit_name_error');
+                          err.textContent = data.errors.name[0];
+                          err.classList.remove('hidden');
+                      }
+                  }
+              });
+        });
 
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
@@ -305,16 +323,17 @@
             document.getElementById('edit_description_error').classList.add('hidden');
         }
 
+        // Delete Modal Functions
         function openDeleteModal(id, name, projectCount) {
             document.getElementById('deleteModal').classList.remove('hidden');
-            document.getElementById('delete_stage_name').textContent = name;
-            document.getElementById('deleteForm').action = `/project/project-stage/${id}/delete/`;
+            document.getElementById('delete_discipline_name').textContent = name;
+            document.getElementById('deleteForm').action = `/estimator/system/disciplines/${id}/delete/`;
             
             const warning = document.getElementById('delete_warning');
             if (projectCount > 0) {
-                warning.textContent = `This project stage is currently used by ${projectCount} project${projectCount > 1 ? 's' : ''}. Projects will not be deleted, but they will no longer have this stage assigned.`;
+                warning.textContent = `This discipline is currently used by ${projectCount} project${projectCount > 1 ? 's' : ''}. Projects will not be deleted, but they will no longer have this discipline assigned.`;
             } else {
-                warning.textContent = 'This project stage is not currently used by any projects.';
+                warning.textContent = 'This discipline is not currently used by any projects.';
             }
         }
 
@@ -322,6 +341,7 @@
             document.getElementById('deleteModal').classList.add('hidden');
         }
 
+        // Close modals on escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeCreateModal();
@@ -330,6 +350,7 @@
             }
         });
 
+        // Close modals when clicking outside
         document.getElementById('createModal').addEventListener('click', function(event) {
             if (event.target === this) closeCreateModal();
         });
@@ -340,4 +361,4 @@
             if (event.target === this) closeDeleteModal();
         });
     </script>
-{% endblock content %}
+{% endblock sub_content %}

@@ -1,0 +1,118 @@
+{% load heroicons %}
+<!-- Scope Planning: Edit Group Dates Modal -->
+<div id="scopeGroupDateModal"
+     class="hidden fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm transition-opacity">
+    <div class="flex justify-center items-center p-4 min-h-screen">
+        <div class="w-full max-w-sm bg-white rounded-xl shadow-2xl">
+            <!-- Header -->
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center gap-2">
+                    {% heroicon_outline "calendar-days" size="20" class="text-purple-500" %}
+                    <h3 class="text-base font-semibold text-gray-900">Edit Dates — WBS Level 3</h3>
+                </div>
+                <button type="button"
+                        onclick="closeScopeGroupDateModal()"
+                        class="p-1 text-gray-400 rounded hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                    {% heroicon_outline "x-mark" size="18" %}
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4">
+                <!-- Read-only name -->
+                <div>
+                    <label class="block mb-1 text-xs font-medium tracking-wide text-gray-500 uppercase">Group</label>
+                    <div id="scope_group_name_display"
+                         class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200 select-none">
+                    </div>
+                </div>
+                <!-- Date pickers -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="scope_group_start_date"
+                               class="block mb-1 text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date"
+                               id="scope_group_start_date"
+                               class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors">
+                    </div>
+                    <div>
+                        <label for="scope_group_end_date"
+                               class="block mb-1 text-sm font-medium text-gray-700">End Date</label>
+                        <input type="date"
+                               id="scope_group_end_date"
+                               class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors">
+                    </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
+                <button type="button"
+                        onclick="closeScopeGroupDateModal()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="button"
+                        id="scopeGroupDateSaveBtn"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-lg shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+                    {% heroicon_outline "check" size="16" %}
+                    Save Dates
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const scopeGroupDateModal = document.getElementById('scopeGroupDateModal');
+    let _scopeGroupId    = null;
+    let _scopeGroupSubId = null;
+
+    function openScopeGroupDateModal(id, name, subcategoryId, startDate, endDate) {
+        _scopeGroupId    = id;
+        _scopeGroupSubId = subcategoryId;
+        document.getElementById('scope_group_name_display').textContent = name;
+        document.getElementById('scope_group_start_date').value = startDate || '';
+        document.getElementById('scope_group_end_date').value   = endDate   || '';
+        scopeGroupDateModal.classList.remove('hidden');
+        document.getElementById('scope_group_start_date').focus();
+    }
+
+    function closeScopeGroupDateModal() {
+        scopeGroupDateModal.classList.add('hidden');
+        _scopeGroupId = _scopeGroupSubId = null;
+    }
+
+    document.getElementById('scopeGroupDateSaveBtn').addEventListener('click', async () => {
+        if (!_scopeGroupId) return;
+        const startDate = document.getElementById('scope_group_start_date').value;
+        const endDate   = document.getElementById('scope_group_end_date').value;
+        try {
+            const response = await fetch(
+                `/project/{{ project.pk }}/subcategories/${_scopeGroupSubId}/groups/${_scopeGroupId}/update-dates/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ start_date: startDate, end_date: endDate }),
+                }
+            );
+            const result = await response.json();
+            if (result.success) {
+                closeScopeGroupDateModal();
+                window.location.reload();
+            } else {
+                alert('Could not save dates. Please try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred while saving dates.');
+        }
+    });
+
+    scopeGroupDateModal.addEventListener('click', e => {
+        if (e.target === scopeGroupDateModal) closeScopeGroupDateModal();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeScopeGroupDateModal();
+    });
+</script>

@@ -202,6 +202,9 @@ class ProjectListView(
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
         context["filter_form"] = self.filter_form
+        user = self.request.user
+        if user.is_authenticated:
+            context["project_groups"] = user.project_groups.filter(deleted=False)
         return context
 
     def get(self: "ProjectListView", request, *args, **kwargs):

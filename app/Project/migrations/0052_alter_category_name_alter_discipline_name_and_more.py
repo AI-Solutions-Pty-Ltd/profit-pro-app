@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
             model_name="category",
             name="name",
             field=models.CharField(
-                help_text="Category name (e.g., Construction, Engineering)",
+                help_text="WBS Level name (e.g., Construction, Engineering)",
                 max_length=100,
             ),
         ),

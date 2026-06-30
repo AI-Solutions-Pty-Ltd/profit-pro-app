@@ -22,10 +22,12 @@ from app.Project.models import (
     FinalAccountCompliance,
     Milestone,
     PlannedValue,
+    Portfolio,
     Project,
     ProjectCategory,
     ProjectCompanyUserRole,
     ProjectDocument,
+    ProjectGroup,
     ProjectRole,
     Risk,
     Role,
@@ -530,3 +532,28 @@ class SignatoriesFactory(DjangoModelFactory):
         ["Project Manager", "Quantity Surveyor", "Senior Manager PMU"]
     )
     sequence_number = factory.Sequence(lambda n: n)
+
+
+class PortfolioFactory(DjangoModelFactory):
+    """Factory for Portfolio model."""
+
+    class Meta:
+        model = Portfolio
+
+
+class ProjectGroupFactory(DjangoModelFactory):
+    """Factory for ProjectGroup model."""
+
+    class Meta:
+        model = ProjectGroup
+
+    user = SubFactory(AccountFactory)
+    name = factory.Sequence(lambda n: f"Group {n}")
+
+    @post_generation
+    def projects(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            for p in extracted:
+                self.projects.add(p)

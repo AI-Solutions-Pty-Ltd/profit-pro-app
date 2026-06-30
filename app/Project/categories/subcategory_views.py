@@ -1,32 +1,36 @@
 """Views for Project SubCategory management."""
 
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import JsonResponse
-from django.urls import reverse, reverse_lazy
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic.base import ContextMixin
 
-from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import ProjectSubCategory
 
 from .category_forms import ProjectSubCategoryForm
 
 
-class ProjectSubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class SystemLibraryMixin(UserPassesTestMixin, ContextMixin):
+    """Mixin for system library views: requires staff."""
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_staff
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_system_view"] = True
+        return context
+
+
+class ProjectSubCategoryListView(SystemLibraryMixin, ListView):
     """List all project subcategories."""
 
     model = ProjectSubCategory
-    template_name = "categories/subcategory_manage.html"
+    template_name = "estimator/system/area_manage.html"
     context_object_name = "subcategories"
-    permissions = ["contractor", "consultant"]
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(title="Project Subcategories", url=None),
-        ]
 
     def get_queryset(self):
         """Return subcategories ordered by name."""
@@ -39,26 +43,13 @@ class ProjectSubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, List
         return context
 
 
-class ProjectSubCategoryCreateView(
-    UserHasGroupGenericMixin, BreadcrumbMixin, CreateView
-):
+class ProjectSubCategoryCreateView(SystemLibraryMixin, CreateView):
     """Create a new project subcategory."""
 
     model = ProjectSubCategory
     form_class = ProjectSubCategoryForm
-    template_name = "categories/subcategory_form.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:subcategory-list")
-
-    def get_breadcrumbs(self: "ProjectSubCategoryCreateView") -> list[BreadcrumbItem]:
-        return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Project Subcategories",
-                "url": reverse("project:subcategory-list"),
-            },
-            {"title": "Add Subcategory", "url": None},
-        ]
+    template_name = "estimator/system/area_form.html"
+    success_url = reverse_lazy("estimator:sys_areas")
 
     def form_valid(self: "ProjectSubCategoryCreateView", form):
         """Handle successful form submission."""
@@ -87,27 +78,13 @@ class ProjectSubCategoryCreateView(
         return super().form_invalid(form)
 
 
-class ProjectSubCategoryUpdateView(
-    UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView
-):
+class ProjectSubCategoryUpdateView(SystemLibraryMixin, UpdateView):
     """Update a project subcategory."""
 
     model = ProjectSubCategory
     form_class = ProjectSubCategoryForm
-    template_name = "categories/subcategory_form.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:subcategory-list")
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Project Subcategories", url=reverse("project:subcategory-list")
-            ),
-            BreadcrumbItem(title="Edit Subcategory", url=None),
-        ]
+    template_name = "estimator/system/area_form.html"
+    success_url = reverse_lazy("estimator:sys_areas")
 
     def form_valid(self, form):
         """Handle successful form submission."""
@@ -135,26 +112,12 @@ class ProjectSubCategoryUpdateView(
         return super().form_invalid(form)
 
 
-class ProjectSubCategoryDeleteView(
-    UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView
-):
+class ProjectSubCategoryDeleteView(SystemLibraryMixin, DeleteView):
     """Delete a project subcategory."""
 
     model = ProjectSubCategory
-    template_name = "categories/subcategory_confirm_delete.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:subcategory-list")
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Project Subcategories", url=reverse("project:subcategory-list")
-            ),
-            BreadcrumbItem(title="Delete Subcategory", url=None),
-        ]
+    template_name = "estimator/system/area_confirm_delete.html"
+    success_url = reverse_lazy("estimator:sys_areas")
 
     def form_valid(self, form):
         """Handle successful deletion."""
@@ -190,6 +153,4 @@ class ProjectSubCategoryDeleteView(
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
-        from django.shortcuts import redirect
-
-        return redirect("project:subcategory-list")
+        return redirect("estimator:sys_areas")
