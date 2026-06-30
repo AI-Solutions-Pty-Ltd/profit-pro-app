@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <style>
+        @page {
+            size: a4 landscape;
+            margin: 1cm;
+            margin-bottom: 1.5cm;
+            @frame footer {
+                -pdf-frame-content: running-footer;
+                bottom: 0.5cm;
+                height: 1cm;
+                margin-left: 1cm;
+                margin-right: 1cm;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .header-title {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #111827;
+            margin: 0;
+        }
+        .header-subtitle {
+            font-size: 10pt;
+            color: #4b5563;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .table th {
+            background-color: #1f2937;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: right;
+            padding: 6px 8px;
+            border: 1px solid #374151;
+            font-size: 8.5pt;
+        }
+        .table th.text-left {
+            text-align: left;
+        }
+        .table td {
+            padding: 6px 8px;
+            border: 1px solid #e5e7eb;
+            text-align: right;
+        }
+        .table td.text-left {
+            text-align: left;
+        }
+        .table td.text-center {
+            text-align: center;
+        }
+        .table font-mono {
+            font-family: monospace;
+        }
+        .province-row {
+            background-color: #f3f4f6;
+            font-weight: bold;
+            color: #312e81;
+        }
+        .province-row td {
+            text-align: left;
+            border-bottom: 1px solid #d1d5db;
+        }
+        .project-row {
+            background-color: #ffffff;
+        }
+        .subtotal-row {
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .subtotal-row td {
+            border-top: 1px solid #9ca3af;
+            border-bottom: 1px solid #9ca3af;
+        }
+        .totals-row {
+            background-color: #e5e7eb;
+            font-weight: bold;
+            color: #111827;
+        }
+        .totals-row td {
+            border-top: 2px solid #4b5563;
+            border-bottom: 2px solid #4b5563;
+        }
+        .status-badge {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 2px 6px;
+            border-radius: 9999px;
+            font-size: 7.5pt;
+            font-weight: bold;
+        }
+        .sig-table {
+            width: 100%;
+            margin-top: 40px;
+            border-collapse: collapse;
+            border: none;
+            page-break-inside: avoid;
+        }
+        .sig-table td {
+            border: none;
+            text-align: left;
+            vertical-align: top;
+        }
+        .sig-title {
+            font-weight: bold;
+            font-size: 9.5pt;
+            color: #374151;
+            margin-bottom: 35px;
+        }
+        .sig-line {
+            border-bottom: 1px solid #9ca3af;
+            margin-bottom: 4px;
+        }
+        .sig-sub {
+            font-size: 8pt;
+            color: #6b7280;
+            margin: 0;
+        }
+        .footer-text {
+            text-align: right;
+            font-size: 8pt;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div id="running-footer" class="footer-text">
+        Page <pdf:pagenumber /> of <pdf:pagecount />
+    </div>
+
+    <div class="header">
+        <div class="header-title">{{ title }}</div>
+        <div class="header-subtitle">{{ subtitle }}</div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="text-left" style="width: 25%;">PROJECT</th>
+                <th style="width: 9.3%;">TENDER AMOUNT</th>
+                <th style="width: 9.3%;">APPROVED VARIATIONS</th>
+                <th style="width: 9.3%;">REVISED CONTRACT VALUE</th>
+                <th style="width: 9.3%;">PREVIOUS CERTIFIED</th>
+                <th style="width: 9.3%;">PROGRESSIVE TO DATE</th>
+                <th style="width: 9.3%;">NET CLAIMED</th>
+                <th style="width: 9.3%;">FORECAST AT COMPLETION</th>
+                <th style="width: 9.3%;">VARIANCE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rep in province_reports %}
+                <!-- Province Header Row -->
+                <tr class="province-row">
+                    <td colspan="9" style="padding: 8px;">
+                        Province: {{ rep.province_name }}
+                    </td>
+                </tr>
+                <!-- Projects in Province -->
+                {% for row in rep.projects %}
+                    <tr class="project-row">
+                        <td class="text-left" style="padding-left: 20px;">
+                            <div style="font-weight: bold; color: #111827; margin-bottom: 2px;">
+                                {{ row.project.name }} &nbsp;
+                                <span class="status-badge">{{ row.project.get_status_display }}</span>
+                            </div>
+                        </td>
+                        <td style="color: #4b5563;">R {{ row.contract_value|floatformat:2 }}</td>
+                        <td style="color: #4b5563;">R {{ row.variations|floatformat:2 }}</td>
+                        <td style="font-weight: bold; color: #111827;">R {{ row.revised_contract_value|floatformat:2 }}</td>
+                        <td style="color: #4b5563;">R {{ row.certified_previous|floatformat:2 }}</td>
+                        <td style="color: #4b5563;">R {{ row.certified_amount|floatformat:2 }}</td>
+                        <td style="color: #2563eb; font-weight: bold;">R {{ row.net_claimed|floatformat:2 }}</td>
+                        <td style="color: #4b5563;">R {{ row.forecast_amount|floatformat:2 }}</td>
+                        <td style="color: #4b5563;">R {{ row.variance|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+                <!-- Province Sub-total Row -->
+                <tr class="subtotal-row">
+                    <td class="text-left" style="padding-left: 20px;">{{ rep.province_name }} Sub-total</td>
+                    <td>R {{ rep.budget|floatformat:2 }}</td>
+                    <td>R {{ rep.variations|floatformat:2 }}</td>
+                    <td>R {{ rep.revised|floatformat:2 }}</td>
+                    <td>R {{ rep.previous|floatformat:2 }}</td>
+                    <td>R {{ rep.cumulative|floatformat:2 }}</td>
+                    <td style="color: #1d4ed8;">R {{ rep.net|floatformat:2 }}</td>
+                    <td>R {{ rep.forecast|floatformat:2 }}</td>
+                    <td>R {{ rep.variance|floatformat:2 }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 20px; color: #6b7280;">No projects found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="totals-row">
+                <td class="text-left">{{ totals_label|default:"Grand Totals" }}</td>
+                <td>R {{ total_budget|floatformat:2 }}</td>
+                <td>R {{ total_variations|floatformat:2 }}</td>
+                <td>R {{ total_revised|floatformat:2 }}</td>
+                <td>R {{ total_previous|floatformat:2 }}</td>
+                <td>R {{ total_cumulative|floatformat:2 }}</td>
+                <td style="color: #1e40af;">R {{ total_current|floatformat:2 }}</td>
+                <td>R {{ total_forecast|floatformat:2 }}</td>
+                <td>R {{ total_variance|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- Signatory Spaces -->
+    <table class="sig-table">
+        <tr>
+            <td style="width: 30%; padding-right: 25px;">
+                <div class="sig-title">Prepared By (Quantity Surveyor):</div>
+                <div class="sig-line"></div>
+                <p class="sig-sub">Signature / Date</p>
+            </td>
+            <td style="width: 5%;"></td>
+            <td style="width: 30%; padding-right: 25px;">
+                <div class="sig-title">Reviewed By (Contractor):</div>
+                <div class="sig-line"></div>
+                <p class="sig-sub">Signature / Date</p>
+            </td>
+            <td style="width: 5%;"></td>
+            <td style="width: 30%;">
+                <div class="sig-title">Approved By (Client):</div>
+                <div class="sig-line"></div>
+                <p class="sig-sub">Signature / Date</p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

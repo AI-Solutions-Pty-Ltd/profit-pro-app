@@ -1,6 +1,8 @@
 from decimal import Decimal
+
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
 
 def export_multi_project_summary_report_to_xlsx(projects_data):
     """
@@ -9,7 +11,7 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
     """
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = f"Valuation Summary"
+    ws.title = "Valuation Summary"
 
     # Styles
     font_bold = Font(bold=True)
@@ -22,8 +24,12 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
     border_bottom_thick = Border(bottom=Side(style="medium"))
     border_bottom_light = Border(bottom=Side(style="thin", color="FFE5E5E5"))
 
-    fill_header = PatternFill(start_color="FF111111", end_color="FF111111", fill_type="solid")
-    fill_footer = PatternFill(start_color="FFD19B3D", end_color="FFD19B3D", fill_type="solid")
+    fill_header = PatternFill(
+        start_color="FF111111", end_color="FF111111", fill_type="solid"
+    )
+    fill_footer = PatternFill(
+        start_color="FFD19B3D", end_color="FFD19B3D", fill_type="solid"
+    )
 
     # Header Row
     ws.cell(row=1, column=1, value="[ LOGO ]").font = font_bold
@@ -51,7 +57,7 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
         "PROGRESSIVE TO DATE (R)",
         "NET CLAIMED (R)",
         "FORECAST AT COMPLETION (R)",
-        "VARIANCE (R)"
+        "VARIANCE (R)",
     ]
 
     for col_idx, header in enumerate(headers, 1):
@@ -59,11 +65,11 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
         cell.font = font_bold_white
         cell.fill = fill_header
         cell.alignment = align_center
-        
+
     ws.row_dimensions[4].height = 25
 
     current_row = 5
-    
+
     # Totals
     t_budget = Decimal("0.00")
     t_variations = Decimal("0.00")
@@ -76,10 +82,10 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
 
     for p in projects_data:
         project = p["project"]
-        
+
         ws.cell(row=current_row, column=1, value=project.name)
         ws.cell(row=current_row, column=2, value=project.get_status_display())
-        
+
         c3 = ws.cell(row=current_row, column=3, value=p["contract_value"])
         c4 = ws.cell(row=current_row, column=4, value=p["variations"])
         c5 = ws.cell(row=current_row, column=5, value=p["revised_contract_value"])
@@ -106,7 +112,7 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
         # Set thin border
         for col_idx in range(1, 11):
             ws.cell(row=current_row, column=col_idx).border = border_bottom_light
-            
+
         current_row += 1
 
     # Totals Row
@@ -114,9 +120,9 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
     tot_label = ws.cell(row=current_row, column=1, value="TOTALS")
     tot_label.font = font_bold_white
     tot_label.fill = fill_footer
-    
+
     ws.cell(row=current_row, column=2, value="").fill = fill_footer
-    
+
     tot_cells = [
         (3, t_budget),
         (4, t_variations),
@@ -125,7 +131,7 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
         (7, t_progressive),
         (8, t_net),
         (9, t_forecast),
-        (10, t_variance)
+        (10, t_variance),
     ]
 
     for col_idx, val in tot_cells:
@@ -137,6 +143,27 @@ def export_multi_project_summary_report_to_xlsx(projects_data):
 
     for col_idx in range(1, 11):
         ws.cell(row=current_row, column=col_idx).border = border_bottom_thick
+
+    # Signatory spaces
+    current_row += 3
+    ws.row_dimensions[current_row].height = 20
+    cell_p = ws.cell(row=current_row, column=1, value="Prepared By (Quantity Surveyor):")
+    cell_p.font = font_bold
+    cell_r = ws.cell(row=current_row, column=4, value="Reviewed By (Contractor):")
+    cell_r.font = font_bold
+    cell_a = ws.cell(row=current_row, column=7, value="Approved By (Client):")
+    cell_a.font = font_bold
+    
+    current_row += 2
+    ws.row_dimensions[current_row].height = 18
+    ws.cell(row=current_row, column=1, value="___________________________").font = font_bold
+    ws.cell(row=current_row, column=4, value="___________________________").font = font_bold
+    ws.cell(row=current_row, column=7, value="___________________________").font = font_bold
+    
+    current_row += 1
+    ws.cell(row=current_row, column=1, value="Signature / Date").font = font_subtitle
+    ws.cell(row=current_row, column=4, value="Signature / Date").font = font_subtitle
+    ws.cell(row=current_row, column=7, value="Signature / Date").font = font_subtitle
 
     # Auto fit column widths
     for col in ws.columns:

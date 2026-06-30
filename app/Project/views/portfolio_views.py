@@ -2282,8 +2282,9 @@ class MultiProjectValuationSummaryView(
             )
 
         from collections import defaultdict
+
         grouped_by_province = defaultdict(list)
-        
+
         t_budget = Decimal("0.00")
         t_variations = Decimal("0.00")
         t_revised = Decimal("0.00")
@@ -2297,24 +2298,28 @@ class MultiProjectValuationSummaryView(
             contract_val = project.original_contract_value or Decimal("0.00")
             variations = project.addendum_contract_value or Decimal("0.00")
             revised = contract_val + variations
-            
-            cert = project.payment_certificates.filter(
-                status="APPROVED"
-            ).order_by("-certificate_number").first()
-            
+
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
+
             certified_amount = Decimal("0.00")
             certified_previous = Decimal("0.00")
             net_claimed = Decimal("0.00")
-            
+
             if cert:
                 certified_amount = cert.work_progressive_to_date or Decimal("0.00")
                 certified_previous = cert.work_progressive_previous or Decimal("0.00")
                 net_claimed = certified_amount - certified_previous
 
             latest_forecast = project.forecasts.order_by("-period").first()
-            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            forecast_val = (
+                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            )
             variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
-            
+
             p_data = {
                 "project": project,
                 "contract_value": contract_val,
@@ -2326,11 +2331,15 @@ class MultiProjectValuationSummaryView(
                 "forecast_amount": forecast_val,
                 "variance": variance,
             }
-            
-            province = project.area.province if (project.area and project.area.province) else None
+
+            province = (
+                project.area.province
+                if (project.area and project.area.province)
+                else None
+            )
             province_name = province.name if province else "No Province"
             grouped_by_province[province_name].append(p_data)
-            
+
             t_budget += contract_val
             t_variations += variations
             t_revised += revised
@@ -2351,20 +2360,26 @@ class MultiProjectValuationSummaryView(
             prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
             prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
 
-            province_reports.append({
-                "province_name": prov_name,
-                "projects": p_list,
-                "budget": prov_budget,
-                "variations": prov_variations,
-                "revised": prov_revised,
-                "previous": prov_previous,
-                "cumulative": prov_cumulative,
-                "net": prov_net,
-                "forecast": prov_forecast,
-                "variance": prov_variance,
-            })
+            province_reports.append(
+                {
+                    "province_name": prov_name,
+                    "projects": p_list,
+                    "budget": prov_budget,
+                    "variations": prov_variations,
+                    "revised": prov_revised,
+                    "previous": prov_previous,
+                    "cumulative": prov_cumulative,
+                    "net": prov_net,
+                    "forecast": prov_forecast,
+                    "variance": prov_variance,
+                }
+            )
 
-        province_reports.sort(key=lambda x: x["province_name"] if x["province_name"] != "No Province" else "ZZZ")
+        province_reports.sort(
+            key=lambda x: (
+                x["province_name"] if x["province_name"] != "No Province" else "ZZZ"
+            )
+        )
 
         context["province_reports"] = province_reports
         context["total_budget"] = t_budget
@@ -2444,30 +2459,35 @@ class MultiProjectValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, Vi
             )
 
         from collections import defaultdict
+
         grouped_by_province = defaultdict(list)
-        
+
         for project in projects:
             contract_val = project.original_contract_value or Decimal("0.00")
             variations = project.addendum_contract_value or Decimal("0.00")
             revised = contract_val + variations
-            
-            cert = project.payment_certificates.filter(
-                status="APPROVED"
-            ).order_by("-certificate_number").first()
-            
+
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
+
             certified_amount = Decimal("0.00")
             certified_previous = Decimal("0.00")
             net_claimed = Decimal("0.00")
-            
+
             if cert:
                 certified_amount = cert.work_progressive_to_date or Decimal("0.00")
                 certified_previous = cert.work_progressive_previous or Decimal("0.00")
                 net_claimed = certified_amount - certified_previous
 
             latest_forecast = project.forecasts.order_by("-period").first()
-            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            forecast_val = (
+                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            )
             variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
-            
+
             p_data = {
                 "project": project,
                 "contract_value": contract_val,
@@ -2479,8 +2499,12 @@ class MultiProjectValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, Vi
                 "forecast_amount": forecast_val,
                 "variance": variance,
             }
-            
-            province = project.area.province if (project.area and project.area.province) else None
+
+            province = (
+                project.area.province
+                if (project.area and project.area.province)
+                else None
+            )
             province_name = province.name if province else "No Province"
             grouped_by_province[province_name].append(p_data)
 
@@ -2495,27 +2519,35 @@ class MultiProjectValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, Vi
             prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
             prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
 
-            province_reports.append({
-                "province_name": prov_name,
-                "projects": p_list,
-                "budget": prov_budget,
-                "variations": prov_variations,
-                "revised": prov_revised,
-                "previous": prov_previous,
-                "cumulative": prov_cumulative,
-                "net": prov_net,
-                "forecast": prov_forecast,
-                "variance": prov_variance,
-            })
+            province_reports.append(
+                {
+                    "province_name": prov_name,
+                    "projects": p_list,
+                    "budget": prov_budget,
+                    "variations": prov_variations,
+                    "revised": prov_revised,
+                    "previous": prov_previous,
+                    "cumulative": prov_cumulative,
+                    "net": prov_net,
+                    "forecast": prov_forecast,
+                    "variance": prov_variance,
+                }
+            )
 
-        province_reports.sort(key=lambda x: x["province_name"] if x["province_name"] != "No Province" else "ZZZ")
+        province_reports.sort(
+            key=lambda x: (
+                x["province_name"] if x["province_name"] != "No Province" else "ZZZ"
+            )
+        )
 
         from app.BillOfQuantities.exporters.group_summary_report_exporter import (
             export_group_summary_report_to_xlsx,
         )
 
         try:
-            wb = export_group_summary_report_to_xlsx("Selected Projects", province_reports)
+            wb = export_group_summary_report_to_xlsx(
+                "Selected Projects", province_reports
+            )
             response = HttpResponse(
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
@@ -2532,11 +2564,10 @@ class MultiProjectValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, Vi
             return redirect("project:project-list")
 
 
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import get_object_or_404
-from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.views import View
+
 
 class ProjectGroupCreateView(LoginRequiredMixin, View):
     """AJAX endpoint to create a new project group (with unique check per user)."""
@@ -2548,22 +2579,30 @@ class ProjectGroupCreateView(LoginRequiredMixin, View):
             project_ids_str = data.get("project_ids", "")
             if not name:
                 return JsonResponse({"error": "Group name is required."}, status=400)
-            
+
             user = request.user
-            if ProjectGroup.objects.filter(user=user, name=name, deleted=False).exists():
-                return JsonResponse({"error": "A group with this name already exists."}, status=400)
-            
-            project_ids = [int(x) for x in project_ids_str.split(",") if x.strip().isdigit()]
+            if ProjectGroup.objects.filter(
+                user=user, name=name, deleted=False
+            ).exists():
+                return JsonResponse(
+                    {"error": "A group with this name already exists."}, status=400
+                )
+
+            project_ids = [
+                int(x) for x in project_ids_str.split(",") if x.strip().isdigit()
+            ]
             if not project_ids:
-                return JsonResponse({"error": "At least one project must be selected."}, status=400)
-            
+                return JsonResponse(
+                    {"error": "At least one project must be selected."}, status=400
+                )
+
             group = ProjectGroup.objects.create(user=user, name=name)
-            
+
             if user.is_superuser or user.is_staff:
                 projects = Project.objects.filter(id__in=project_ids)
             else:
                 projects = user.get_projects.filter(id__in=project_ids)
-            
+
             group.projects.add(*projects)
             return JsonResponse({"success": True})
         except Exception as e:
@@ -2579,7 +2618,7 @@ class ProjectGroupDeleteView(LoginRequiredMixin, View):
             group = get_object_or_404(ProjectGroup, pk=group_pk)
         else:
             group = get_object_or_404(ProjectGroup, pk=group_pk, user=user)
-        
+
         group.soft_delete()
         messages.success(request, f"Group '{group.name}' has been deleted.")
         return redirect("project:project-list")
@@ -2587,6 +2626,7 @@ class ProjectGroupDeleteView(LoginRequiredMixin, View):
 
 class GroupCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateView):
     """Render cover page for a project group."""
+
     template_name = "portfolio/reports/group_cover_page.html"
     required_tiers = [Subscription.FREE_TIER]
 
@@ -2601,11 +2641,13 @@ class GroupCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateVie
         context = super().get_context_data(**kwargs)
         user: Account = self.request.user  # type: ignore
         group_pk = self.kwargs.get("group_pk")
-        
+
         if user.is_superuser or user.is_staff:
             group = get_object_or_404(ProjectGroup, pk=group_pk, deleted=False)
         else:
-            group = get_object_or_404(ProjectGroup, pk=group_pk, user=user, deleted=False)
+            group = get_object_or_404(
+                ProjectGroup, pk=group_pk, user=user, deleted=False
+            )
 
         projects = group.projects.filter(
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
@@ -2631,22 +2673,40 @@ class GroupCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateVie
             orig_val += project.original_contract_value or Decimal("0.00")
             amends_val += project.addendum_contract_value or Decimal("0.00")
             if project.vat:
-                sub = (project.original_contract_value or Decimal("0.00")) + (project.addendum_contract_value or Decimal("0.00"))
+                sub = (project.original_contract_value or Decimal("0.00")) + (
+                    project.addendum_contract_value or Decimal("0.00")
+                )
                 vat_val_contract += sub * Decimal("0.15")
 
-            cert = project.payment_certificates.filter(
-                status="APPROVED"
-            ).order_by("-certificate_number").first()
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
             if cert:
                 cert_count += 1
-                work_progressive_previous += cert.work_progressive_previous or Decimal("0.00")
-                contract_current_claim_total += cert.contract_current_claim_total or Decimal("0.00")
-                addendum_current_claim_total += cert.addendum_current_claim_total or Decimal("0.00")
-                work_progressive_to_date += cert.work_progressive_to_date or Decimal("0.00")
-                advance_payment += cert.get_advance_payment_total() + cert.previous_advance_payment_total
+                work_progressive_previous += cert.work_progressive_previous or Decimal(
+                    "0.00"
+                )
+                contract_current_claim_total += (
+                    cert.contract_current_claim_total or Decimal("0.00")
+                )
+                addendum_current_claim_total += (
+                    cert.addendum_current_claim_total or Decimal("0.00")
+                )
+                work_progressive_to_date += cert.work_progressive_to_date or Decimal(
+                    "0.00"
+                )
+                advance_payment += (
+                    cert.get_advance_payment_total()
+                    + cert.previous_advance_payment_total
+                )
                 retention += cert.get_retention_total() + cert.previous_retention_total
-                material_on_site += cert.get_materials_on_site_total() + cert.previous_materials_on_site_total
-                
+                material_on_site += (
+                    cert.get_materials_on_site_total()
+                    + cert.previous_materials_on_site_total
+                )
+
                 totals_by_type = cert.get_special_item_totals_by_type()
                 prev_totals_by_type = cert.previous_special_item_totals_by_type
                 other_current = totals_by_type.get("OTHER", Decimal("0.00"))
@@ -2665,7 +2725,11 @@ class GroupCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateVie
         )
         progressive_previous = Decimal("0.00")
         for project in projects:
-            cert = project.payment_certificates.filter(status="APPROVED").order_by("-certificate_number").first()
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
             if cert:
                 ap_prev = cert.previous_advance_payment_total
                 ret_prev = cert.previous_retention_total
@@ -2681,17 +2745,33 @@ class GroupCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateVie
                 )
 
         current_claim_total = progressive_to_date - progressive_previous
-        
+
         vat_val_payment = Decimal("0.00")
         for project in projects:
-            cert = project.payment_certificates.filter(status="APPROVED").order_by("-certificate_number").first()
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
             if cert and project.vat:
-                p_prog_to_date = (cert.work_progressive_to_date or Decimal("0.00")) + \
-                                 (cert.get_advance_payment_total() + cert.previous_advance_payment_total) + \
-                                 (cert.get_retention_total() + cert.previous_retention_total) + \
-                                 (cert.get_materials_on_site_total() + cert.previous_materials_on_site_total)
-                p_prev = (cert.work_progressive_previous or Decimal("0.00")) + \
-                         cert.previous_advance_payment_total + cert.previous_retention_total + cert.previous_materials_on_site_total
+                p_prog_to_date = (
+                    (cert.work_progressive_to_date or Decimal("0.00"))
+                    + (
+                        cert.get_advance_payment_total()
+                        + cert.previous_advance_payment_total
+                    )
+                    + (cert.get_retention_total() + cert.previous_retention_total)
+                    + (
+                        cert.get_materials_on_site_total()
+                        + cert.previous_materials_on_site_total
+                    )
+                )
+                p_prev = (
+                    (cert.work_progressive_previous or Decimal("0.00"))
+                    + cert.previous_advance_payment_total
+                    + cert.previous_retention_total
+                    + cert.previous_materials_on_site_total
+                )
                 p_current = p_prog_to_date - p_prev
                 vat_val_payment += p_current * Decimal("0.15")
 
@@ -2702,40 +2782,110 @@ class GroupCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateVie
                 "id": "section_a",
                 "title": "Selected Projects Details",
                 "fields": [
-                    {"label": "Total Selected Projects", "formatted_value": str(len(projects))},
-                    {"label": "Projects with Approved Certificates", "formatted_value": f"{cert_count} of {len(projects)}"},
-                ]
+                    {
+                        "label": "Total Selected Projects",
+                        "formatted_value": str(len(projects)),
+                    },
+                    {
+                        "label": "Projects with Approved Certificates",
+                        "formatted_value": f"{cert_count} of {len(projects)}",
+                    },
+                ],
             },
             {
                 "id": "section_b",
                 "title": "Contract Value",
                 "fields": [
-                    {"label": "Original Contract Value", "formatted_value": f"R {orig_val:,.2f}"},
-                    {"label": "Approved Variations", "formatted_value": f"R {amends_val:,.2f}"},
-                    {"label": "Sub-Total Contract Value", "formatted_value": f"R {sub_total_contract:,.2f}", "style": {"is_bold": True}},
-                    {"label": "VAT (15%)", "formatted_value": f"R {vat_val_contract:,.2f}"},
-                    {"label": "Total Contract Value", "formatted_value": f"R {total_contract:,.2f}", "style": {"is_bold": True, "is_highlighted_navy": True}},
-                ]
+                    {
+                        "label": "Original Contract Value",
+                        "formatted_value": f"R {orig_val:,.2f}",
+                    },
+                    {
+                        "label": "Approved Variations",
+                        "formatted_value": f"R {amends_val:,.2f}",
+                    },
+                    {
+                        "label": "Sub-Total Contract Value",
+                        "formatted_value": f"R {sub_total_contract:,.2f}",
+                        "style": {"is_bold": True},
+                    },
+                    {
+                        "label": "VAT (15%)",
+                        "formatted_value": f"R {vat_val_contract:,.2f}",
+                    },
+                    {
+                        "label": "Total Contract Value",
+                        "formatted_value": f"R {total_contract:,.2f}",
+                        "style": {"is_bold": True, "is_highlighted_navy": True},
+                    },
+                ],
             },
             {
                 "id": "section_c",
                 "title": "Progressive Valuations",
                 "fields": [
-                    {"label": "Work Progressive Previous", "formatted_value": f"R {work_progressive_previous:,.2f}"},
-                    {"label": "Contract Current Claim", "formatted_value": f"R {contract_current_claim_total:,.2f}"},
-                    {"label": "Addendum Current Claim", "formatted_value": f"R {addendum_current_claim_total:,.2f}"},
-                    {"label": "Work Progressive to Date", "formatted_value": f"R {work_progressive_to_date:,.2f}", "style": {"is_bold": True}},
-                    {"label": "Less: Advance Payment", "formatted_value": f"-R {advance_payment:,.2f}" if advance_payment > 0 else "R 0.00"},
-                    {"label": "Less: Retention", "formatted_value": f"-R {retention:,.2f}" if retention > 0 else "R 0.00"},
-                    {"label": "Materials on Site", "formatted_value": f"R {material_on_site:,.2f}"},
-                    {"label": "Other Specify", "formatted_value": f"R {other_specify:,.2f}"},
-                    {"label": "Progressive to Date", "formatted_value": f"R {progressive_to_date:,.2f}", "style": {"is_bold": True}},
-                    {"label": "Progressive Previous", "formatted_value": f"R {progressive_previous:,.2f}"},
-                    {"label": "Current Claim Total", "formatted_value": f"R {current_claim_total:,.2f}", "style": {"is_bold": True}},
-                    {"label": "VAT (15%)", "formatted_value": f"R {vat_val_payment:,.2f}"},
-                    {"label": "Total Certified (Gross Payment)", "formatted_value": f"R {total_certified:,.2f}", "style": {"is_bold": True, "is_highlighted_orange": True}},
-                ]
-            }
+                    {
+                        "label": "Work Progressive Previous",
+                        "formatted_value": f"R {work_progressive_previous:,.2f}",
+                    },
+                    {
+                        "label": "Contract Current Claim",
+                        "formatted_value": f"R {contract_current_claim_total:,.2f}",
+                    },
+                    {
+                        "label": "Addendum Current Claim",
+                        "formatted_value": f"R {addendum_current_claim_total:,.2f}",
+                    },
+                    {
+                        "label": "Work Progressive to Date",
+                        "formatted_value": f"R {work_progressive_to_date:,.2f}",
+                        "style": {"is_bold": True},
+                    },
+                    {
+                        "label": "Less: Advance Payment",
+                        "formatted_value": f"-R {advance_payment:,.2f}"
+                        if advance_payment > 0
+                        else "R 0.00",
+                    },
+                    {
+                        "label": "Less: Retention",
+                        "formatted_value": f"-R {retention:,.2f}"
+                        if retention > 0
+                        else "R 0.00",
+                    },
+                    {
+                        "label": "Materials on Site",
+                        "formatted_value": f"R {material_on_site:,.2f}",
+                    },
+                    {
+                        "label": "Other Specify",
+                        "formatted_value": f"R {other_specify:,.2f}",
+                    },
+                    {
+                        "label": "Progressive to Date",
+                        "formatted_value": f"R {progressive_to_date:,.2f}",
+                        "style": {"is_bold": True},
+                    },
+                    {
+                        "label": "Progressive Previous",
+                        "formatted_value": f"R {progressive_previous:,.2f}",
+                    },
+                    {
+                        "label": "Current Claim Total",
+                        "formatted_value": f"R {current_claim_total:,.2f}",
+                        "style": {"is_bold": True},
+                    },
+                    {
+                        "label": "VAT (15%)",
+                        "formatted_value": f"R {vat_val_payment:,.2f}",
+                    },
+                    {
+                        "label": "Total Certified (Gross Payment)",
+                        "formatted_value": f"R {total_certified:,.2f}",
+                        "style": {"is_bold": True, "is_highlighted_orange": True},
+                    },
+                ],
+            },
         ]
         context["ordered_sections"] = sections
         context["cover_page_config"] = {"title": "AGGREGATED COVER PAGE"}
@@ -2743,8 +2893,11 @@ class GroupCoverPageView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateVie
         return context
 
 
-class GroupValuationSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, TemplateView):
+class GroupValuationSummaryView(
+    SubscriptionRequiredMixin, BreadcrumbMixin, TemplateView
+):
     """Render valuation summary grouped by province for a project group."""
+
     template_name = "portfolio/reports/group_valuation_summary.html"
     required_tiers = [Subscription.FREE_TIER]
 
@@ -2763,15 +2916,18 @@ class GroupValuationSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, Temp
         if user.is_superuser or user.is_staff:
             group = get_object_or_404(ProjectGroup, pk=group_pk, deleted=False)
         else:
-            group = get_object_or_404(ProjectGroup, pk=group_pk, user=user, deleted=False)
+            group = get_object_or_404(
+                ProjectGroup, pk=group_pk, user=user, deleted=False
+            )
 
         projects = group.projects.filter(
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
         )
 
         from collections import defaultdict
+
         grouped_by_province = defaultdict(list)
-        
+
         t_budget = Decimal("0.00")
         t_variations = Decimal("0.00")
         t_revised = Decimal("0.00")
@@ -2785,24 +2941,28 @@ class GroupValuationSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, Temp
             contract_val = project.original_contract_value or Decimal("0.00")
             variations = project.addendum_contract_value or Decimal("0.00")
             revised = contract_val + variations
-            
-            cert = project.payment_certificates.filter(
-                status="APPROVED"
-            ).order_by("-certificate_number").first()
-            
+
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
+
             certified_amount = Decimal("0.00")
             certified_previous = Decimal("0.00")
             net_claimed = Decimal("0.00")
-            
+
             if cert:
                 certified_amount = cert.work_progressive_to_date or Decimal("0.00")
                 certified_previous = cert.work_progressive_previous or Decimal("0.00")
                 net_claimed = certified_amount - certified_previous
 
             latest_forecast = project.forecasts.order_by("-period").first()
-            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            forecast_val = (
+                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            )
             variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
-            
+
             p_data = {
                 "project": project,
                 "contract_value": contract_val,
@@ -2814,11 +2974,15 @@ class GroupValuationSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, Temp
                 "forecast_amount": forecast_val,
                 "variance": variance,
             }
-            
-            province = project.area.province if (project.area and project.area.province) else None
+
+            province = (
+                project.area.province
+                if (project.area and project.area.province)
+                else None
+            )
             province_name = province.name if province else "No Province"
             grouped_by_province[province_name].append(p_data)
-            
+
             t_budget += contract_val
             t_variations += variations
             t_revised += revised
@@ -2839,20 +3003,26 @@ class GroupValuationSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, Temp
             prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
             prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
 
-            province_reports.append({
-                "province_name": prov_name,
-                "projects": p_list,
-                "budget": prov_budget,
-                "variations": prov_variations,
-                "revised": prov_revised,
-                "previous": prov_previous,
-                "cumulative": prov_cumulative,
-                "net": prov_net,
-                "forecast": prov_forecast,
-                "variance": prov_variance,
-            })
+            province_reports.append(
+                {
+                    "province_name": prov_name,
+                    "projects": p_list,
+                    "budget": prov_budget,
+                    "variations": prov_variations,
+                    "revised": prov_revised,
+                    "previous": prov_previous,
+                    "cumulative": prov_cumulative,
+                    "net": prov_net,
+                    "forecast": prov_forecast,
+                    "variance": prov_variance,
+                }
+            )
 
-        province_reports.sort(key=lambda x: x["province_name"] if x["province_name"] != "No Province" else "ZZZ")
+        province_reports.sort(
+            key=lambda x: (
+                x["province_name"] if x["province_name"] != "No Province" else "ZZZ"
+            )
+        )
 
         context["province_reports"] = province_reports
         context["total_budget"] = t_budget
@@ -2869,6 +3039,7 @@ class GroupValuationSummaryView(SubscriptionRequiredMixin, BreadcrumbMixin, Temp
 
 class GroupCoverPageDownloadXLSXView(SubscriptionRequiredMixin, View):
     """Download cover page aggregated for project group as XLSX."""
+
     required_tiers = [Subscription.FREE_TIER]
 
     def get(self, request, group_pk):
@@ -2876,13 +3047,17 @@ class GroupCoverPageDownloadXLSXView(SubscriptionRequiredMixin, View):
         if user.is_superuser or user.is_staff:
             group = get_object_or_404(ProjectGroup, pk=group_pk, deleted=False)
         else:
-            group = get_object_or_404(ProjectGroup, pk=group_pk, user=user, deleted=False)
+            group = get_object_or_404(
+                ProjectGroup, pk=group_pk, user=user, deleted=False
+            )
 
         projects = group.projects.filter(
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
         )
 
-        from app.BillOfQuantities.exporters.multi_project_cover_page_exporter import export_multi_project_cover_page_to_xlsx
+        from app.BillOfQuantities.exporters.multi_project_cover_page_exporter import (
+            export_multi_project_cover_page_to_xlsx,
+        )
 
         try:
             wb = export_multi_project_cover_page_to_xlsx(projects)
@@ -2903,6 +3078,7 @@ class GroupCoverPageDownloadXLSXView(SubscriptionRequiredMixin, View):
 
 class GroupValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, View):
     """Download valuation summary aggregated for project group as XLSX."""
+
     required_tiers = [Subscription.FREE_TIER]
 
     def get(self, request, group_pk):
@@ -2910,37 +3086,44 @@ class GroupValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, View):
         if user.is_superuser or user.is_staff:
             group = get_object_or_404(ProjectGroup, pk=group_pk, deleted=False)
         else:
-            group = get_object_or_404(ProjectGroup, pk=group_pk, user=user, deleted=False)
+            group = get_object_or_404(
+                ProjectGroup, pk=group_pk, user=user, deleted=False
+            )
 
         projects = group.projects.filter(
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
         )
 
         from collections import defaultdict
+
         grouped_by_province = defaultdict(list)
-        
+
         for project in projects:
             contract_val = project.original_contract_value or Decimal("0.00")
             variations = project.addendum_contract_value or Decimal("0.00")
             revised = contract_val + variations
-            
-            cert = project.payment_certificates.filter(
-                status="APPROVED"
-            ).order_by("-certificate_number").first()
-            
+
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
+
             certified_amount = Decimal("0.00")
             certified_previous = Decimal("0.00")
             net_claimed = Decimal("0.00")
-            
+
             if cert:
                 certified_amount = cert.work_progressive_to_date or Decimal("0.00")
                 certified_previous = cert.work_progressive_previous or Decimal("0.00")
                 net_claimed = certified_amount - certified_previous
 
             latest_forecast = project.forecasts.order_by("-period").first()
-            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            forecast_val = (
+                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            )
             variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
-            
+
             p_data = {
                 "project": project,
                 "contract_value": contract_val,
@@ -2952,8 +3135,12 @@ class GroupValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, View):
                 "forecast_amount": forecast_val,
                 "variance": variance,
             }
-            
-            province = project.area.province if (project.area and project.area.province) else None
+
+            province = (
+                project.area.province
+                if (project.area and project.area.province)
+                else None
+            )
             province_name = province.name if province else "No Province"
             grouped_by_province[province_name].append(p_data)
 
@@ -2968,29 +3155,39 @@ class GroupValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, View):
             prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
             prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
 
-            province_reports.append({
-                "province_name": prov_name,
-                "projects": p_list,
-                "budget": prov_budget,
-                "variations": prov_variations,
-                "revised": prov_revised,
-                "previous": prov_previous,
-                "cumulative": prov_cumulative,
-                "net": prov_net,
-                "forecast": prov_forecast,
-                "variance": prov_variance,
-            })
+            province_reports.append(
+                {
+                    "province_name": prov_name,
+                    "projects": p_list,
+                    "budget": prov_budget,
+                    "variations": prov_variations,
+                    "revised": prov_revised,
+                    "previous": prov_previous,
+                    "cumulative": prov_cumulative,
+                    "net": prov_net,
+                    "forecast": prov_forecast,
+                    "variance": prov_variance,
+                }
+            )
 
-        province_reports.sort(key=lambda x: x["province_name"] if x["province_name"] != "No Province" else "ZZZ")
+        province_reports.sort(
+            key=lambda x: (
+                x["province_name"] if x["province_name"] != "No Province" else "ZZZ"
+            )
+        )
 
-        from app.BillOfQuantities.exporters.group_summary_report_exporter import export_group_summary_report_to_xlsx
+        from app.BillOfQuantities.exporters.group_summary_report_exporter import (
+            export_group_summary_report_to_xlsx,
+        )
 
         try:
             wb = export_group_summary_report_to_xlsx(group.name, province_reports)
             response = HttpResponse(
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-            filename = f"group_{group.name.lower().replace(' ', '_')}_valuation_summary.xlsx"
+            filename = (
+                f"group_{group.name.lower().replace(' ', '_')}_valuation_summary.xlsx"
+            )
             response["Content-Disposition"] = f'attachment; filename="{filename}"'
             response["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response["Pragma"] = "no-cache"
@@ -2999,4 +3196,308 @@ class GroupValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, View):
             return response
         except Exception as e:
             messages.error(request, f"Error generating XLSX: {str(e)}")
+            return redirect("project:project-list")
+
+
+class MultiProjectValuationSummaryDownloadPDFView(SubscriptionRequiredMixin, View):
+    """Download valuation summary aggregated for selected projects as PDF."""
+
+    required_tiers = [Subscription.FREE_TIER]
+
+    def get(self, request):
+        user: Account = self.request.user  # type: ignore
+        p_ids = self.request.GET.get("project_ids", "")
+        project_ids = [int(x) for x in p_ids.split(",") if x.strip().isdigit()]
+
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.filter(
+                id__in=project_ids,
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+            )
+        else:
+            projects = user.get_projects.filter(
+                id__in=project_ids,
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+            )
+
+        from collections import defaultdict
+
+        grouped_by_province = defaultdict(list)
+
+        t_budget = Decimal("0.00")
+        t_variations = Decimal("0.00")
+        t_revised = Decimal("0.00")
+        t_previous = Decimal("0.00")
+        t_progressive = Decimal("0.00")
+        t_net = Decimal("0.00")
+        t_forecast = Decimal("0.00")
+        t_variance = Decimal("0.00")
+
+        for project in projects:
+            contract_val = project.original_contract_value or Decimal("0.00")
+            variations = project.addendum_contract_value or Decimal("0.00")
+            revised = contract_val + variations
+
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
+
+            certified_amount = Decimal("0.00")
+            certified_previous = Decimal("0.00")
+            net_claimed = Decimal("0.00")
+
+            if cert:
+                certified_amount = cert.work_progressive_to_date or Decimal("0.00")
+                certified_previous = cert.work_progressive_previous or Decimal("0.00")
+                net_claimed = certified_amount - certified_previous
+
+            latest_forecast = project.forecasts.order_by("-period").first()
+            forecast_val = (
+                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            )
+            variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
+
+            p_data = {
+                "project": project,
+                "contract_value": contract_val,
+                "variations": variations,
+                "revised_contract_value": revised,
+                "certified_previous": certified_previous,
+                "certified_amount": certified_amount,
+                "net_claimed": net_claimed,
+                "forecast_amount": forecast_val,
+                "variance": variance,
+            }
+
+            province = (
+                project.area.province
+                if (project.area and project.area.province)
+                else None
+            )
+            province_name = province.name if province else "No Province"
+            grouped_by_province[province_name].append(p_data)
+
+            t_budget += contract_val
+            t_variations += variations
+            t_revised += revised
+            t_previous += certified_previous
+            t_progressive += certified_amount
+            t_net += net_claimed
+            t_forecast += forecast_val
+            t_variance += variance
+
+        province_reports = []
+        for prov_name, p_list in grouped_by_province.items():
+            prov_budget = sum(p["contract_value"] for p in p_list)
+            prov_variations = sum(p["variations"] for p in p_list)
+            prov_revised = sum(p["revised_contract_value"] for p in p_list)
+            prov_previous = sum(p["certified_previous"] for p in p_list)
+            prov_cumulative = sum(p["certified_amount"] for p in p_list)
+            prov_net = sum(p["net_claimed"] for p in p_list)
+            prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
+            prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
+
+            province_reports.append(
+                {
+                    "province_name": prov_name,
+                    "projects": p_list,
+                    "budget": prov_budget,
+                    "variations": prov_variations,
+                    "revised": prov_revised,
+                    "previous": prov_previous,
+                    "cumulative": prov_cumulative,
+                    "net": prov_net,
+                    "forecast": prov_forecast,
+                    "variance": prov_variance,
+                }
+            )
+
+        province_reports.sort(
+            key=lambda x: (
+                x["province_name"] if x["province_name"] != "No Province" else "ZZZ"
+            )
+        )
+
+        context = {
+            "title": "VALUATION SUMMARY — SELECTED PROJECTS",
+            "subtitle": "Summary Grouped by Province",
+            "province_reports": province_reports,
+            "total_budget": t_budget,
+            "total_variations": t_variations,
+            "total_revised": t_revised,
+            "total_previous": t_previous,
+            "total_cumulative": t_progressive,
+            "total_current": t_net,
+            "total_forecast": t_forecast,
+            "total_variance": t_variance,
+            "totals_label": "TOTAL SELECTED WORK DONE",
+        }
+
+        try:
+            from django.template.loader import render_to_string
+            from app.core.Utilities.generate_pdf import generate_pdf
+
+            html_content = render_to_string("portfolio/reports/valuation_summary_pdf.html", context)
+            pdf_file = generate_pdf(html_content)
+            response = HttpResponse(pdf_file, content_type="application/pdf")
+            response["Content-Disposition"] = 'attachment; filename="aggregated_valuation_summary.pdf"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating PDF: {str(e)}")
+            return redirect("project:project-list")
+
+
+class GroupValuationSummaryDownloadPDFView(SubscriptionRequiredMixin, View):
+    """Download valuation summary aggregated for project group as PDF."""
+
+    required_tiers = [Subscription.FREE_TIER]
+
+    def get(self, request, group_pk):
+        user: Account = self.request.user  # type: ignore
+        if user.is_superuser or user.is_staff:
+            group = get_object_or_404(ProjectGroup, pk=group_pk, deleted=False)
+        else:
+            group = get_object_or_404(
+                ProjectGroup, pk=group_pk, user=user, deleted=False
+            )
+
+        projects = group.projects.filter(
+            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
+        )
+
+        from collections import defaultdict
+
+        grouped_by_province = defaultdict(list)
+
+        t_budget = Decimal("0.00")
+        t_variations = Decimal("0.00")
+        t_revised = Decimal("0.00")
+        t_previous = Decimal("0.00")
+        t_progressive = Decimal("0.00")
+        t_net = Decimal("0.00")
+        t_forecast = Decimal("0.00")
+        t_variance = Decimal("0.00")
+
+        for project in projects:
+            contract_val = project.original_contract_value or Decimal("0.00")
+            variations = project.addendum_contract_value or Decimal("0.00")
+            revised = contract_val + variations
+
+            cert = (
+                project.payment_certificates.filter(status="APPROVED")
+                .order_by("-certificate_number")
+                .first()
+            )
+
+            certified_amount = Decimal("0.00")
+            certified_previous = Decimal("0.00")
+            net_claimed = Decimal("0.00")
+
+            if cert:
+                certified_amount = cert.work_progressive_to_date or Decimal("0.00")
+                certified_previous = cert.work_progressive_previous or Decimal("0.00")
+                net_claimed = certified_amount - certified_previous
+
+            latest_forecast = project.forecasts.order_by("-period").first()
+            forecast_val = (
+                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
+            )
+            variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
+
+            p_data = {
+                "project": project,
+                "contract_value": contract_val,
+                "variations": variations,
+                "revised_contract_value": revised,
+                "certified_previous": certified_previous,
+                "certified_amount": certified_amount,
+                "net_claimed": net_claimed,
+                "forecast_amount": forecast_val,
+                "variance": variance,
+            }
+
+            province = (
+                project.area.province
+                if (project.area and project.area.province)
+                else None
+            )
+            province_name = province.name if province else "No Province"
+            grouped_by_province[province_name].append(p_data)
+
+            t_budget += contract_val
+            t_variations += variations
+            t_revised += revised
+            t_previous += certified_previous
+            t_progressive += certified_amount
+            t_net += net_claimed
+            t_forecast += forecast_val
+            t_variance += variance
+
+        province_reports = []
+        for prov_name, p_list in grouped_by_province.items():
+            prov_budget = sum(p["contract_value"] for p in p_list)
+            prov_variations = sum(p["variations"] for p in p_list)
+            prov_revised = sum(p["revised_contract_value"] for p in p_list)
+            prov_previous = sum(p["certified_previous"] for p in p_list)
+            prov_cumulative = sum(p["certified_amount"] for p in p_list)
+            prov_net = sum(p["net_claimed"] for p in p_list)
+            prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
+            prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
+
+            province_reports.append(
+                {
+                    "province_name": prov_name,
+                    "projects": p_list,
+                    "budget": prov_budget,
+                    "variations": prov_variations,
+                    "revised": prov_revised,
+                    "previous": prov_previous,
+                    "cumulative": prov_cumulative,
+                    "net": prov_net,
+                    "forecast": prov_forecast,
+                    "variance": prov_variance,
+                }
+            )
+
+        province_reports.sort(
+            key=lambda x: (
+                x["province_name"] if x["province_name"] != "No Province" else "ZZZ"
+            )
+        )
+
+        context = {
+            "title": f"VALUATION SUMMARY — {group.name.upper()}",
+            "subtitle": "Summary Grouped by Province",
+            "province_reports": province_reports,
+            "total_budget": t_budget,
+            "total_variations": t_variations,
+            "total_revised": t_revised,
+            "total_previous": t_previous,
+            "total_cumulative": t_progressive,
+            "total_current": t_net,
+            "total_forecast": t_forecast,
+            "total_variance": t_variance,
+            "totals_label": "TOTALS",
+        }
+
+        try:
+            from django.template.loader import render_to_string
+            from app.core.Utilities.generate_pdf import generate_pdf
+
+            html_content = render_to_string("portfolio/reports/valuation_summary_pdf.html", context)
+            pdf_file = generate_pdf(html_content)
+            response = HttpResponse(pdf_file, content_type="application/pdf")
+            filename = f"group_{group.name.lower().replace(' ', '_')}_valuation_summary.pdf"
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+            return response
+        except Exception as e:
+            messages.error(request, f"Error generating PDF: {str(e)}")
             return redirect("project:project-list")

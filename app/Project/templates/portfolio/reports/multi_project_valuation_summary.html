@@ -26,6 +26,11 @@
                         {% heroicon_outline "table-cells" class="mr-1 w-4 h-4" %}
                         Download XLSX
                     </a>
+                    <a href="{% url 'project:portfolio-multi-valuation-summary-pdf' %}?project_ids={{ project_ids_str }}"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md border border-transparent shadow-sm hover:bg-red-700">
+                        {% heroicon_outline "document-arrow-down" class="mr-1 w-4 h-4" %}
+                        Download PDF
+                    </a>
                 </div>
             </div>
             <!-- Summary Table -->

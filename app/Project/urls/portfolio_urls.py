@@ -56,6 +56,11 @@ urlpatterns = [
         name="portfolio-multi-valuation-summary-xlsx",
     ),
     path(
+        "reports/multi/valuation-summary/pdf/",
+        portfolio_views.MultiProjectValuationSummaryDownloadPDFView.as_view(),
+        name="portfolio-multi-valuation-summary-pdf",
+    ),
+    path(
         "reports/group/create/",
         portfolio_views.ProjectGroupCreateView.as_view(),
         name="portfolio-group-create",
@@ -84,6 +89,11 @@ urlpatterns = [
         "reports/group/<int:group_pk>/valuation-summary/xlsx/",
         portfolio_views.GroupValuationSummaryDownloadXLSXView.as_view(),
         name="portfolio-group-valuation-summary-xlsx",
+    ),
+    path(
+        "reports/group/<int:group_pk>/valuation-summary/pdf/",
+        portfolio_views.GroupValuationSummaryDownloadPDFView.as_view(),
+        name="portfolio-group-valuation-summary-pdf",
     ),
     # New Portfolio Reports
     path(
