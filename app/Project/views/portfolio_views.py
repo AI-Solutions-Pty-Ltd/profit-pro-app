@@ -2281,7 +2281,9 @@ class MultiProjectValuationSummaryView(
                 status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
             )
 
-        projects_data = []
+        from collections import defaultdict
+        grouped_by_province = defaultdict(list)
+        
         t_budget = Decimal("0.00")
         t_variations = Decimal("0.00")
         t_revised = Decimal("0.00")
@@ -2295,42 +2297,40 @@ class MultiProjectValuationSummaryView(
             contract_val = project.original_contract_value or Decimal("0.00")
             variations = project.addendum_contract_value or Decimal("0.00")
             revised = contract_val + variations
-
-            cert = (
-                project.payment_certificates.filter(status="APPROVED")
-                .order_by("-certificate_number")
-                .first()
-            )
-
+            
+            cert = project.payment_certificates.filter(
+                status="APPROVED"
+            ).order_by("-certificate_number").first()
+            
             certified_amount = Decimal("0.00")
             certified_previous = Decimal("0.00")
             net_claimed = Decimal("0.00")
-
+            
             if cert:
                 certified_amount = cert.work_progressive_to_date or Decimal("0.00")
                 certified_previous = cert.work_progressive_previous or Decimal("0.00")
                 net_claimed = certified_amount - certified_previous
 
             latest_forecast = project.forecasts.order_by("-period").first()
-            forecast_val = (
-                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
-            )
+            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
             variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
-
-            projects_data.append(
-                {
-                    "project": project,
-                    "contract_value": contract_val,
-                    "variations": variations,
-                    "revised_contract_value": revised,
-                    "certified_previous": certified_previous,
-                    "certified_amount": certified_amount,
-                    "net_claimed": net_claimed,
-                    "forecast_amount": forecast_val,
-                    "variance": variance,
-                }
-            )
-
+            
+            p_data = {
+                "project": project,
+                "contract_value": contract_val,
+                "variations": variations,
+                "revised_contract_value": revised,
+                "certified_previous": certified_previous,
+                "certified_amount": certified_amount,
+                "net_claimed": net_claimed,
+                "forecast_amount": forecast_val,
+                "variance": variance,
+            }
+            
+            province = project.area.province if (project.area and project.area.province) else None
+            province_name = province.name if province else "No Province"
+            grouped_by_province[province_name].append(p_data)
+            
             t_budget += contract_val
             t_variations += variations
             t_revised += revised
@@ -2340,7 +2340,33 @@ class MultiProjectValuationSummaryView(
             t_forecast += forecast_val
             t_variance += variance
 
-        context["projects_data"] = projects_data
+        province_reports = []
+        for prov_name, p_list in grouped_by_province.items():
+            prov_budget = sum(p["contract_value"] for p in p_list)
+            prov_variations = sum(p["variations"] for p in p_list)
+            prov_revised = sum(p["revised_contract_value"] for p in p_list)
+            prov_previous = sum(p["certified_previous"] for p in p_list)
+            prov_cumulative = sum(p["certified_amount"] for p in p_list)
+            prov_net = sum(p["net_claimed"] for p in p_list)
+            prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
+            prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
+
+            province_reports.append({
+                "province_name": prov_name,
+                "projects": p_list,
+                "budget": prov_budget,
+                "variations": prov_variations,
+                "revised": prov_revised,
+                "previous": prov_previous,
+                "cumulative": prov_cumulative,
+                "net": prov_net,
+                "forecast": prov_forecast,
+                "variance": prov_variance,
+            })
+
+        province_reports.sort(key=lambda x: x["province_name"] if x["province_name"] != "No Province" else "ZZZ")
+
+        context["province_reports"] = province_reports
         context["total_budget"] = t_budget
         context["total_variations"] = t_variations
         context["total_revised"] = t_revised
@@ -2417,53 +2443,79 @@ class MultiProjectValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, Vi
                 status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
             )
 
-        from app.BillOfQuantities.exporters.multi_project_summary_report_exporter import (
-            export_multi_project_summary_report_to_xlsx,
-        )
-
-        projects_data = []
+        from collections import defaultdict
+        grouped_by_province = defaultdict(list)
+        
         for project in projects:
             contract_val = project.original_contract_value or Decimal("0.00")
             variations = project.addendum_contract_value or Decimal("0.00")
             revised = contract_val + variations
-
-            cert = (
-                project.payment_certificates.filter(status="APPROVED")
-                .order_by("-certificate_number")
-                .first()
-            )
-
+            
+            cert = project.payment_certificates.filter(
+                status="APPROVED"
+            ).order_by("-certificate_number").first()
+            
             certified_amount = Decimal("0.00")
             certified_previous = Decimal("0.00")
             net_claimed = Decimal("0.00")
-
+            
             if cert:
                 certified_amount = cert.work_progressive_to_date or Decimal("0.00")
                 certified_previous = cert.work_progressive_previous or Decimal("0.00")
                 net_claimed = certified_amount - certified_previous
 
             latest_forecast = project.forecasts.order_by("-period").first()
-            forecast_val = (
-                latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
-            )
+            forecast_val = latest_forecast.total_forecast if latest_forecast else Decimal("0.00")
             variance = revised - forecast_val if forecast_val > 0 else Decimal("0.00")
+            
+            p_data = {
+                "project": project,
+                "contract_value": contract_val,
+                "variations": variations,
+                "revised_contract_value": revised,
+                "certified_previous": certified_previous,
+                "certified_amount": certified_amount,
+                "net_claimed": net_claimed,
+                "forecast_amount": forecast_val,
+                "variance": variance,
+            }
+            
+            province = project.area.province if (project.area and project.area.province) else None
+            province_name = province.name if province else "No Province"
+            grouped_by_province[province_name].append(p_data)
 
-            projects_data.append(
-                {
-                    "project": project,
-                    "contract_value": contract_val,
-                    "variations": variations,
-                    "revised_contract_value": revised,
-                    "certified_previous": certified_previous,
-                    "certified_amount": certified_amount,
-                    "net_claimed": net_claimed,
-                    "forecast_amount": forecast_val,
-                    "variance": variance,
-                }
-            )
+        province_reports = []
+        for prov_name, p_list in grouped_by_province.items():
+            prov_budget = sum(p["contract_value"] for p in p_list)
+            prov_variations = sum(p["variations"] for p in p_list)
+            prov_revised = sum(p["revised_contract_value"] for p in p_list)
+            prov_previous = sum(p["certified_previous"] for p in p_list)
+            prov_cumulative = sum(p["certified_amount"] for p in p_list)
+            prov_net = sum(p["net_claimed"] for p in p_list)
+            prov_forecast = sum(p["forecast_amount"] or Decimal("0.00") for p in p_list)
+            prov_variance = sum(p["variance"] or Decimal("0.00") for p in p_list)
+
+            province_reports.append({
+                "province_name": prov_name,
+                "projects": p_list,
+                "budget": prov_budget,
+                "variations": prov_variations,
+                "revised": prov_revised,
+                "previous": prov_previous,
+                "cumulative": prov_cumulative,
+                "net": prov_net,
+                "forecast": prov_forecast,
+                "variance": prov_variance,
+            })
+
+        province_reports.sort(key=lambda x: x["province_name"] if x["province_name"] != "No Province" else "ZZZ")
+
+        from app.BillOfQuantities.exporters.group_summary_report_exporter import (
+            export_group_summary_report_to_xlsx,
+        )
 
         try:
-            wb = export_multi_project_summary_report_to_xlsx(projects_data)
+            wb = export_group_summary_report_to_xlsx("Selected Projects", province_reports)
             response = HttpResponse(
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
@@ -2480,9 +2532,11 @@ class MultiProjectValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, Vi
             return redirect("project:project-list")
 
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
 
 class ProjectGroupCreateView(LoginRequiredMixin, View):
     """AJAX endpoint to create a new project group (with unique check per user)."""
