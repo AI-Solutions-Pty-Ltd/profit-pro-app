@@ -45,6 +45,9 @@
 
     function openCreateGroupModal(subcategoryId) {
         createGroupModal.classList.remove('hidden');
+        createGroupForm.querySelector('#id_name').value = '';
+        createGroupForm.querySelector('#id_description').value = '';
+
         createGroupForm.querySelector('#id_name').focus();
         createGroupForm.querySelector('#id_sub_category').value = subcategoryId;
     }

@@ -29,6 +29,7 @@ from .models import (
     ProjectCompanyUserRole,
     ProjectDiscipline,
     ProjectDocument,
+    ProjectGroup,
     ProjectRole,
     ProjectStage,
     ProjectSubCategory,
@@ -438,4 +439,12 @@ class ProjectCompanyUserRoleAdmin(SoftDeleteAdmin):
     list_display = ["project", "company", "user", "role", "deleted", "created_at"]
     list_filter = ["deleted", "created_at", "project", "company", "role"]
     search_fields = ["project__name", "company__name", "user__email", "role"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(ProjectGroup)
+class ProjectGroupAdmin(SoftDeleteAdmin):
+    list_display = ["name", "user", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at", "user"]
+    search_fields = ["name", "user__email"]
     readonly_fields = ["created_at", "updated_at"]

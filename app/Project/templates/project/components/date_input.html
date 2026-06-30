@@ -5,8 +5,8 @@
                id="{{ field_id }}_start_date"
                name="start_date"
                value="{% if start_date %}{{ start_date|date:'Y-m-d' }}{% endif %}"
-               class="w-32 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-               onchange="updateDates('{{ entity_type }}', {{ entity_id }}, this.value, document.getElementById('{{ field_id }}_end_date').value, {{ parent_id|default:'null' }})">
+               class="w-32 px-2 py-1 text-sm border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+               disabled>
         <label for="{{ field_id }}_start_date"
                class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Start</label>
     </div>
@@ -16,8 +16,8 @@
                id="{{ field_id }}_end_date"
                name="end_date"
                value="{% if end_date %}{{ end_date|date:'Y-m-d' }}{% endif %}"
-               class="w-32 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-               onchange="updateDates('{{ entity_type }}', {{ entity_id }}, document.getElementById('{{ field_id }}_start_date').value, this.value, {{ parent_id|default:'null' }})">
+               class="w-32 px-2 py-1 text-sm border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+               disabled>
         <label for="{{ field_id }}_end_date"
                class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">End</label>
     </div>

@@ -41,6 +41,9 @@
 
     function openCreateCategoryModal(context, returnUrl = null) {
         categoryCreateModal.classList.remove('hidden');
+        categoryCreateForm.querySelector('#id_name').value = '';
+        categoryCreateForm.querySelector('#id_description').value = '';
+
         categoryCreateForm.querySelector('#id_name').focus();
     }
 

@@ -45,6 +45,9 @@
 
     function openCreateSubCategoryModal(categoryId) {
         createSubCategoryModal.classList.remove('hidden');
+        createSubCategoryForm.querySelector('#id_name').value = '';
+        createSubCategoryForm.querySelector('#id_description').value = '';
+
         createSubCategoryForm.querySelector('#id_name').focus();
         createSubCategoryForm.querySelector('#id_category').value = categoryId;
     }

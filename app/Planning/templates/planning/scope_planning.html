@@ -7,25 +7,28 @@
 {% endblock title %}
 {% block content %}
     {% include "project/categories/category_create.html" with project=project form=category_form %}
-    {% include "project/categories/category_edit.html" with project=project form=category_form %}
+    {% include "project/categories/category_scope_date_edit.html" with project=project %}
     {% include "project/categories/category_delete.html" with project=project %}
     {% include "project/sub_categories/subcategory_create.html" with project=project form=subcategory_form %}
-    {% include "project/sub_categories/subcategory_edit.html" with project=project form=subcategory_form %}
+    {% include "project/sub_categories/subcategory_scope_date_edit.html" with project=project %}
     {% include "project/sub_categories/subcategory_delete.html" with project=project %}
     {% include "project/groups/group_create.html" with project=project form=group_form %}
-    {% include "project/groups/group_edit.html" with project=project form=group_form %}
+    {% include "project/groups/group_scope_date_edit.html" with project=project %}
     {% include "project/groups/group_delete.html" with project=project %}
     {% include "project/disciplines/discipline_create.html" with project=project form=discipline_form %}
     {% include "project/disciplines/discipline_edit.html" with project=project form=discipline_form %}
     {% include "project/disciplines/discipline_delete.html" with project=project %}
     <!-- Header -->
     <div class="mb-6 bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl shadow-lg">
-        <div class="px-8 py-6">
-            <h1 class="text-3xl font-bold text-white">Scope Planning</h1>
-            <p class="flex items-center mt-2 text-sm text-indigo-100">
-                {% heroicon_outline "briefcase" size="16" class="mr-1.5" %}
-                {{ project.name }} - Scope Planning
-            </p>
+        <div class="flex justify-between items-center px-8 py-6">
+            <div>
+                <h1 class="text-3xl font-bold text-white">Scope Planning</h1>
+                <p class="flex items-center mt-2 text-sm text-indigo-100">
+                    {% heroicon_outline "briefcase" size="16" class="mr-1.5" %}
+                    {{ project.name }} - Scope Planning
+                </p>
+            </div>
+            {% include "components/back_button.html" with url=project_management_url text="Back to Project" style="white" %}
         </div>
     </div>
     <!-- WBS Hierarchy Section -->
@@ -39,58 +42,67 @@
                 <p class="mt-1 text-sm text-gray-600">Organize milestones</p>
             </div>
             <div>
-                <button type="button"
-                        onclick="openCreateCategoryModal()"
-                        class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {% comment %} <button type="button" onclick="openCreateCategoryModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     {% heroicon_outline "plus" size="18" class="mr-2" %}
                     <span>Add WBS Level 1</span>
-                </button>
+                </button> {% endcomment %}
             </div>
         </div>
         {% if categories %}
-            <div class="divide-y divide-gray-200">
+            <div class="p-4 space-y-2">
                 {% for category in categories %}
-                    <!-- Category Level -->
-                    <div class="border-l-4 border-blue-500 transition-colors hover:border-blue-600">
-                        <div class="px-8 py-5 bg-gradient-to-r from-blue-50 to-blue-50/50">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-4">
-                                    <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "rectangle-stack" size="20" class="text-blue-600" %}</div>
-                                    <div>
-                                        <h3 class="text-lg font-bold text-blue-900">L1: {{ category.name }}</h3>
-                                        <div class="mt-0.5">
-                                            {% include "project/components/date_input.html" with field_id="category_"|addstr:category.pk entity_type="category" entity_id=category.pk start_date=category.start_date end_date=category.end_date %}
-                                        </div>
+                    <!-- L1 Category Card -->
+                    <div class="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <div class="flex items-center justify-between px-4 py-3 bg-white border-l-4 border-indigo-400 hover:bg-gray-50 transition-colors duration-150">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="flex-shrink-0 p-1.5 text-indigo-500 bg-indigo-50 rounded-lg border border-indigo-100">
+                                    {% heroicon_outline "rectangle-stack" size="16" %}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="text-sm font-semibold text-gray-800">L1: {{ category.name }}</span>
+                                        {% if category.disciplines.exists %}
+                                            {% for discipline in category.disciplines.all %}
+                                                <span class="inline-flex gap-1 items-center px-2 py-0.5 text-[10px] font-semibold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
+                                                    {% heroicon_outline "squares-2x2" size="8" class="text-indigo-400" %}
+                                                    {{ discipline.name }}
+                                                </span>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="mt-0.5">
+                                        {% include "project/components/date_input.html" with field_id="category_"|addstr:category.pk entity_type="category" entity_id=category.pk start_date=category.start_date end_date=category.end_date %}
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full">
-                                        {{ category.milestones.count }} milestone{{ category.milestones.count|pluralize }}
-                                    </span>
-                                    <button type="button"
-                                            onclick="openEditCategoryModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.description|escapejs }}' )"
-                                            class="p-2 text-indigo-600 rounded-lg transition-colors hover:bg-indigo-50"
-                                            title="Edit category">{% heroicon_outline "pencil" size="18" %}</button>
-                                    <button type="button"
-                                            onclick="openDeleteCategoryModal({{ category.pk }}, '{{ category.name|escapejs }}', 0)"
-                                            class="p-2 text-red-600 rounded-lg transition-colors hover:bg-red-50"
-                                            title="Delete category">{% heroicon_outline "trash" size="18" %}</button>
-                                    <a href="{% url 'planning:scope-category-upload' project.pk category.pk %}"
-                                       class="p-2 text-emerald-600 rounded-lg transition-colors hover:bg-emerald-50"
-                                       title="Upload file">{% heroicon_outline "arrow-up-tray" size="18" %}</a>
-                                    <button type="button"
-                                            onclick="toggleElement(this, 'category-{{ category.pk }}')"
-                                            class="p-2 rounded-lg transition-colors hover:bg-blue-100"
-                                            title="Toggle category">
-                                        {% heroicon_outline "chevron-right" size="18" class="text-blue-600" %}
-                                    </button>
-                                </div>
+                            </div>
+                            <div class="flex flex-shrink-0 items-center gap-2 ml-4">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200 whitespace-nowrap">
+                                    {{ category.subcategories.count }} sub-item{{ category.subcategories.count|pluralize }}
+                                </span>
+                                <button type="button"
+                                        onclick="openScopeCategoryDateModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.start_date|date:"Y-m-d" }}', '{{ category.end_date|date:"Y-m-d" }}')"
+                                        class="p-1.5 text-indigo-500 rounded-lg transition-colors hover:bg-indigo-50"
+                                        title="Edit category">{% heroicon_outline "pencil" size="16" %}</button>
+                                <button type="button"
+                                        onclick="openDeleteCategoryModal({{ category.pk }}, '{{ category.name|escapejs }}', 0)"
+                                        class="p-1.5 text-red-500 rounded-lg transition-colors hover:bg-red-50"
+                                        title="Delete category">{% heroicon_outline "trash" size="16" %}</button>
+                                <a href="{% url 'planning:scope-category-upload' project.pk category.pk %}"
+                                   class="p-1.5 text-emerald-500 rounded-lg transition-colors hover:bg-emerald-50"
+                                   title="Upload file">{% heroicon_outline "arrow-up-tray" size="16" %}</a>
+                                <button type="button"
+                                        onclick="toggleElement(this, 'category-{{ category.pk }}')"
+                                        class="p-1.5 text-gray-400 rounded-lg transition-colors hover:bg-gray-100"
+                                        title="Toggle category">
+                                    {% heroicon_outline "chevron-right" size="16" class="transition-transform duration-200" %}
+                                </button>
                             </div>
                         </div>
+                        <!-- L1 Expanded Content -->
                         <div id="category-{{ category.pk }}" class="hidden">
                             <!-- Category Milestones -->
                             {% if category.milestones.all %}
-                                <div class="px-6 py-2 bg-gray-50">
+                                <div class="p-4 rounded-xl border bg-gray-50/50 border-gray-150 mx-4 my-3">
                                     {% for milestone in category.milestones.all %}
                                         {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=1 %}
                                     {% endfor %}
@@ -98,9 +110,12 @@
                             {% endif %}
                             <!-- Category Files -->
                             {% if category.files.exists %}
-                                <div class="px-6 py-3 border-t border-blue-100 bg-blue-50/40">
+                                <div class="px-4 py-3 border-t border-blue-100 bg-blue-50/20">
                                     <div class="flex justify-between items-center mb-2">
-                                        <span class="text-xs font-medium text-blue-700">{% heroicon_outline "paper-clip" size="12" class="inline mr-1" %}Files ({{ category.files.count }})</span>
+                                        <span class="flex items-center text-xs font-semibold text-blue-700">
+                                            {% heroicon_outline "paper-clip" size="14" class="mr-1.5 text-blue-500" %}
+                                            Files ({{ category.files.count }})
+                                        </span>
                                         <button onclick="toggleElement(this, 'scope-cat-files-{{ category.pk }}')"
                                                 class="p-1 rounded transition-colors hover:bg-blue-100"
                                                 type="button">
@@ -109,7 +124,7 @@
                                     </div>
                                     <div id="scope-cat-files-{{ category.pk }}" class="hidden space-y-1">
                                         {% for file in category.files.all %}
-                                            <div class="flex justify-between items-center px-3 py-2 bg-white rounded border border-blue-100">
+                                            <div class="flex justify-between items-center px-3 py-2 bg-white rounded-lg border border-blue-100">
                                                 <div class="flex flex-1 items-center space-x-2 min-w-0">
                                                     {% heroicon_outline "document" size="14" class="flex-shrink-0 text-blue-500" %}
                                                     <div class="flex-1 min-w-0">
@@ -133,225 +148,219 @@
                                     </div>
                                 </div>
                             {% endif %}
-                            <!-- Add Subcategory Button -->
-                            <div class="px-8 py-3 bg-gray-50/50">
-                                <button type="button"
-                                        onclick="openCreateSubCategoryModal({{ category.pk }})"
-                                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add WBS Level 2</span>
-                                </button>
-                                <button type="button"
-                                        onclick="openCreateSubCategoryModal({{ category.pk }})"
-                                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Drawings</span>
-                                </button>
-                                {% comment %} <button type="button" onclick="openCreateSubCategoryModal({{ category.pk }})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg border border-blue-200 shadow-sm transition-all duration-200 hover:bg-blue-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Costs</span>
-                                </button>
-                               
-                                   <button type="button" onclick="openCreateSubCategoryModal({{ category.pk }})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Documents</span>
-                                </button>
-                                 <button type="button" onclick="openCreateSubCategoryModal({{ category.pk }})" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 rounded-lg border border-green-200 shadow-sm transition-all duration-200 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                    <span>Add Design Critirias</span>
-                                </button> {% endcomment %}
-                            </div>
-                            <!-- Subcategories -->
-                            {% for subcategory in category.subcategories.all %}
-                                <div class="ml-6 border-l-4 border-green-500 transition-colors hover:border-green-600">
-                                    <div class="px-6 py-4 bg-gradient-to-r from-green-50 to-green-50/50">
-                                        <div class="flex justify-between items-center">
-                                            <div class="flex items-center space-x-3">
-                                                <div class="p-1.5 bg-green-100 rounded-lg">{% heroicon_outline "tag" size="18" class="text-green-600" %}</div>
-                                                <div>
-                                                    <h4 class="font-bold text-green-900 text-md">L2: {{ subcategory.name }}</h4>
-                                                    <div class="mt-0.5">
-                                                        {% include "project/components/date_input.html" with field_id="subcategory_"|addstr:subcategory.pk entity_type="subcategory" entity_id=subcategory.pk start_date=subcategory.start_date end_date=subcategory.end_date parent_id=category.pk %}
+                            <!-- L2 Subcategories -->
+                            {% if category.subcategories.all %}
+                                <div class="px-4 py-3 space-y-2 bg-gray-50/60 border-t border-gray-100">
+                                    {% for subcategory in category.subcategories.all %}
+                                        <!-- L2 Subcategory Card -->
+                                        <div class="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                                            <div class="flex items-center justify-between px-4 py-3 bg-white border-l-4 border-green-400 hover:bg-gray-50 transition-colors duration-150">
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                    <div class="flex-shrink-0 p-1.5 text-green-600 bg-green-50 rounded-lg border border-green-100">
+                                                        {% heroicon_outline "tag" size="16" %}
+                                                    </div>
+                                                    <div class="min-w-0">
+                                                        <div class="flex flex-wrap items-center gap-2">
+                                                            <span class="text-sm font-semibold text-gray-800">L2: {{ subcategory.name }}</span>
+                                                            {% if subcategory.disciplines.exists %}
+                                                                {% for discipline in subcategory.disciplines.all %}
+                                                                    <span class="inline-flex gap-1 items-center px-2 py-0.5 text-[10px] font-semibold text-green-700 bg-green-50 rounded-full border border-green-200">
+                                                                        {% heroicon_outline "squares-2x2" size="8" class="text-green-400" %}
+                                                                        {{ discipline.name }}
+                                                                    </span>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="mt-0.5">
+                                                            {% include "project/components/date_input.html" with field_id="subcategory_"|addstr:subcategory.pk entity_type="subcategory" entity_id=subcategory.pk start_date=subcategory.start_date end_date=subcategory.end_date parent_id=category.pk %}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="flex items-center space-x-2">
-                                                <span class="px-2.5 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
-                                                    {{ subcategory.milestones|length }} milestone{{ subcategory.milestones|length|pluralize }}
-                                                </span>
-                                                <button type="button"
-                                                        onclick="openEditSubCategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', '{{ subcategory.description|escapejs }}',{{ category.pk }})"
-                                                        class="p-1.5 text-indigo-600 rounded-lg transition-colors hover:bg-indigo-50"
-                                                        title="Edit subcategory">
-                                                    {% heroicon_outline "pencil" size="16" %}
-                                                </button>
-                                                <button type="button"
-                                                        onclick="openDeleteSubcategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', 0, {{ category.pk }})"
-                                                        class="p-1.5 text-red-600 rounded-lg transition-colors hover:bg-red-50"
-                                                        title="Delete subcategory">
-                                                    {% heroicon_outline "trash" size="16" %}
-                                                </button>
-                                                <a href="{% url 'planning:scope-subcategory-upload' project.pk subcategory.pk %}"
-                                                   class="p-1.5 text-emerald-600 rounded-lg transition-colors hover:bg-emerald-50"
-                                                   title="Upload file">{% heroicon_outline "arrow-up-tray" size="16" %}</a>
-                                                <button type="button"
-                                                        onclick="toggleElement(this, 'subcategory-{{ subcategory.pk }}')"
-                                                        class="p-1.5 rounded-lg transition-colors hover:bg-green-100"
-                                                        title="Toggle subcategory">
-                                                    {% heroicon_outline "chevron-right" size="16" class="text-green-600" %}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="subcategory-{{ subcategory.pk }}" class="hidden">
-                                        <!-- Subcategory Milestones -->
-                                        {% if subcategory.milestones %}
-                                            <div class="px-6 py-2 bg-gray-50">
-                                                {% for milestone in subcategory.milestones.all %}
-                                                    {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=2 %}
-                                                {% endfor %}
-                                            </div>
-                                        {% endif %}
-                                        <!-- SubCategory Files -->
-                                        {% if subcategory.files.exists %}
-                                            <div class="px-6 py-3 border-t border-green-100 bg-green-50/40">
-                                                <div class="flex justify-between items-center mb-2">
-                                                    <span class="text-xs font-medium text-green-700">{% heroicon_outline "paper-clip" size="12" class="inline mr-1" %}Files ({{ subcategory.files.count }})</span>
-                                                    <button onclick="toggleElement(this, 'scope-sub-files-{{ subcategory.pk }}')"
-                                                            class="p-1 rounded transition-colors hover:bg-green-100"
-                                                            type="button">
-                                                        {% heroicon_outline "chevron-right" size="12" class="text-green-600" %}
+                                                <div class="flex flex-shrink-0 items-center gap-2 ml-4">
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-green-700 bg-green-50 rounded-full border border-green-200 whitespace-nowrap">
+                                                        {{ subcategory.groups.count }} sub-item{{ subcategory.groups.count|pluralize }}
+                                                    </span>
+                                                    <button type="button"
+                                                            onclick="openScopeSubCategoryDateModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', {{ category.pk }}, '{{ subcategory.start_date|date:"Y-m-d" }}', '{{ subcategory.end_date|date:"Y-m-d" }}')"
+                                                            class="p-1.5 text-indigo-500 rounded-lg transition-colors hover:bg-indigo-50"
+                                                            title="Edit subcategory">
+                                                        {% heroicon_outline "pencil" size="16" %}
+                                                    </button>
+                                                    <button type="button"
+                                                            onclick="openDeleteSubcategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', 0, {{ category.pk }})"
+                                                            class="p-1.5 text-red-500 rounded-lg transition-colors hover:bg-red-50"
+                                                            title="Delete subcategory">
+                                                        {% heroicon_outline "trash" size="16" %}
+                                                    </button>
+                                                    <a href="{% url 'planning:scope-subcategory-upload' project.pk subcategory.pk %}"
+                                                       class="p-1.5 text-emerald-500 rounded-lg transition-colors hover:bg-emerald-50"
+                                                       title="Upload file">{% heroicon_outline "arrow-up-tray" size="16" %}</a>
+                                                    <button type="button"
+                                                            onclick="toggleElement(this, 'subcategory-{{ subcategory.pk }}')"
+                                                            class="p-1.5 text-gray-400 rounded-lg transition-colors hover:bg-gray-100"
+                                                            title="Toggle subcategory">
+                                                        {% heroicon_outline "chevron-right" size="16" class="transition-transform duration-200" %}
                                                     </button>
                                                 </div>
-                                                <div id="scope-sub-files-{{ subcategory.pk }}" class="hidden space-y-1">
-                                                    {% for file in subcategory.files.all %}
-                                                        <div class="flex justify-between items-center px-3 py-2 bg-white rounded border border-green-100">
-                                                            <div class="flex flex-1 items-center space-x-2 min-w-0">
-                                                                {% heroicon_outline "document" size="14" class="flex-shrink-0 text-green-500" %}
-                                                                <div class="flex-1 min-w-0">
-                                                                    <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
-                                                                    {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
-                                                                </div>
-                                                            </div>
-                                                            <div class="flex items-center ml-2 space-x-1">
-                                                                <a href="{{ file.file.url }}"
-                                                                   download
-                                                                   class="p-1 text-green-600 rounded hover:bg-green-50"
-                                                                   title="Download">{% heroicon_outline "arrow-down-tray" size="14" %}</a>
-                                                                <button onclick="deleteScopeFile('{% url 'planning:scope-subcategory-file-delete' project.pk file.pk %}')"
-                                                                        class="p-1 text-red-600 rounded hover:bg-red-50"
-                                                                        title="Delete">
-                                                                    {% heroicon_outline "trash" size="14" %}
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
                                             </div>
-                                        {% endif %}
-                                        <!-- Add Group Button -->
-                                        <div class="px-6 py-3 ml-6 bg-gray-50/50">
-                                            <button type="button"
-                                                    onclick="openCreateGroupModal({{ subcategory.pk }})"
-                                                    class="inline-flex items-center px-4 py-2 text-sm font-semibold text-purple-700 bg-purple-50 rounded-lg border border-purple-200 shadow-sm transition-all duration-200 hover:bg-purple-100 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                                                {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                                <span>Add WBS Level 3</span>
-                                            </button>
-                                        </div>
-                                        <!-- Groups -->
-                                        {% for group in subcategory.groups.all %}
-                                            <div class="ml-12 border-l-4 border-purple-500 transition-colors hover:border-purple-600">
-                                                <div class="px-6 py-3 bg-gradient-to-r from-purple-50 to-purple-50/50">
-                                                    <div class="flex justify-between items-center">
-                                                        <div class="flex items-center space-x-3">
-                                                            <div class="p-1.5 bg-purple-100 rounded-lg">{% heroicon_outline "folder" size="16" class="text-purple-600" %}</div>
-                                                            <div>
-                                                                <h5 class="text-sm font-bold text-purple-900">L3: {{ group.name }}</h5>
-                                                                <div class="mt-0.5">
-                                                                    {% include "project/components/date_input.html" with field_id="group_"|addstr:group.pk entity_type="group" entity_id=group.pk start_date=group.start_date end_date=group.end_date parent_id=subcategory.pk %}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="flex items-center space-x-2">
-                                                            <span class="px-2.5 py-0.5 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full">
-                                                                {{ group.milestones|length }} milestone{{ group.milestones|length|pluralize }}
-                                                            </span>
-                                                            <button type="button"
-                                                                    onclick="openEditGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', {{ subcategory.pk }})"
-                                                                    class="p-1.5 text-indigo-600 rounded-lg transition-colors hover:bg-indigo-50"
-                                                                    title="Edit group">
-                                                                {% heroicon_outline "pencil" size="16" %}
-                                                            </button>
-                                                            <button type="button"
-                                                                    onclick="openDeleteGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', {{ subcategory.pk }}, 0)"
-                                                                    class="p-1.5 text-red-600 rounded-lg transition-colors hover:bg-red-50"
-                                                                    title="Delete group">
-                                                                {% heroicon_outline "trash" size="16" %}
-                                                            </button>
-                                                            <a href="{% url 'planning:scope-group-upload' project.pk group.pk %}"
-                                                               class="p-1.5 text-emerald-600 rounded-lg transition-colors hover:bg-emerald-50"
-                                                               title="Upload file">{% heroicon_outline "arrow-up-tray" size="16" %}</a>
-                                                            <button type="button"
-                                                                    onclick="toggleElement(this, 'group-{{ group.pk }}')"
-                                                                    class="p-1.5 rounded-lg transition-colors hover:bg-purple-100"
-                                                                    title="Toggle group">
-                                                                {% heroicon_outline "chevron-right" size="16" class="text-purple-600" %}
-                                                            </button>
-                                                        </div>
+                                            <!-- L2 Expanded Content -->
+                                            <div id="subcategory-{{ subcategory.pk }}" class="hidden">
+                                                {% if subcategory.milestones %}
+                                                    <div class="p-4 rounded-xl border bg-gray-50/50 border-gray-150 mx-4 my-3">
+                                                        {% for milestone in subcategory.milestones.all %}
+                                                            {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=2 %}
+                                                        {% endfor %}
                                                     </div>
-                                                </div>
-                                                <div id="group-{{ group.pk }}" class="hidden">
-                                                    <!-- Group Milestones -->
-                                                    {% if group.milestones %}
-                                                        <div class="px-6 py-2 bg-gray-50">
-                                                            {% for milestone in group.milestones.all %}
-                                                                {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=3 %}
-                                                            {% endfor %}
+                                                {% endif %}
+                                                {% if subcategory.files.exists %}
+                                                    <div class="px-4 py-3 border-t border-green-100 bg-green-50/20">
+                                                        <div class="flex justify-between items-center mb-2">
+                                                            <span class="flex items-center text-xs font-semibold text-green-700">
+                                                                {% heroicon_outline "paper-clip" size="14" class="mr-1.5 text-green-500" %}
+                                                                Files ({{ subcategory.files.count }})
+                                                            </span>
+                                                            <button onclick="toggleElement(this, 'scope-sub-files-{{ subcategory.pk }}')"
+                                                                    class="p-1 rounded transition-colors hover:bg-green-100"
+                                                                    type="button">
+                                                                {% heroicon_outline "chevron-right" size="12" class="text-green-600" %}
+                                                            </button>
                                                         </div>
-                                                    {% endif %}
-                                                    <!-- Group Files -->
-                                                    {% if group.files.exists %}
-                                                        <div class="px-6 py-3 border-t border-purple-100 bg-purple-50/40">
-                                                            <div class="flex justify-between items-center mb-2">
-                                                                <span class="text-xs font-medium text-purple-700">{% heroicon_outline "paper-clip" size="12" class="inline mr-1" %}Files ({{ group.files.count }})</span>
-                                                                <button onclick="toggleElement(this, 'scope-grp-files-{{ group.pk }}')"
-                                                                        class="p-1 rounded transition-colors hover:bg-purple-100"
-                                                                        type="button">
-                                                                    {% heroicon_outline "chevron-right" size="12" class="text-purple-600" %}
-                                                                </button>
-                                                            </div>
-                                                            <div id="scope-grp-files-{{ group.pk }}" class="hidden space-y-1">
-                                                                {% for file in group.files.all %}
-                                                                    <div class="flex justify-between items-center px-3 py-2 bg-white rounded border border-purple-100">
-                                                                        <div class="flex flex-1 items-center space-x-2 min-w-0">
-                                                                            {% heroicon_outline "document" size="14" class="flex-shrink-0 text-purple-500" %}
-                                                                            <div class="flex-1 min-w-0">
-                                                                                <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
-                                                                                {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="flex items-center ml-2 space-x-1">
-                                                                            <a href="{{ file.file.url }}"
-                                                                               download
-                                                                               class="p-1 text-purple-600 rounded hover:bg-purple-50"
-                                                                               title="Download">{% heroicon_outline "arrow-down-tray" size="14" %}</a>
-                                                                            <button onclick="deleteScopeFile('{% url 'planning:scope-group-file-delete' project.pk file.pk %}')"
-                                                                                    class="p-1 text-red-600 rounded hover:bg-red-50"
-                                                                                    title="Delete">
-                                                                                {% heroicon_outline "trash" size="14" %}
-                                                                            </button>
+                                                        <div id="scope-sub-files-{{ subcategory.pk }}" class="hidden space-y-1">
+                                                            {% for file in subcategory.files.all %}
+                                                                <div class="flex justify-between items-center px-3 py-2 bg-white rounded-lg border border-green-100">
+                                                                    <div class="flex flex-1 items-center space-x-2 min-w-0">
+                                                                        {% heroicon_outline "document" size="14" class="flex-shrink-0 text-green-500" %}
+                                                                        <div class="flex-1 min-w-0">
+                                                                            <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
+                                                                            {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
                                                                         </div>
                                                                     </div>
-                                                                {% endfor %}
-                                                            </div>
+                                                                    <div class="flex items-center ml-2 space-x-1">
+                                                                        <a href="{{ file.file.url }}"
+                                                                           download
+                                                                           class="p-1 text-green-600 rounded hover:bg-green-50"
+                                                                           title="Download">{% heroicon_outline "arrow-down-tray" size="14" %}</a>
+                                                                        <button onclick="deleteScopeFile('{% url 'planning:scope-subcategory-file-delete' project.pk file.pk %}')"
+                                                                                class="p-1 text-red-600 rounded hover:bg-red-50"
+                                                                                title="Delete">
+                                                                            {% heroicon_outline "trash" size="14" %}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            {% endfor %}
                                                         </div>
-                                                    {% endif %}
-                                                </div>
+                                                    </div>
+                                                {% endif %}
+                                                <!-- L3 Groups -->
+                                                {% if subcategory.groups.all %}
+                                                    <div class="px-4 py-3 space-y-2 bg-gray-50/60 border-t border-gray-100">
+                                                        {% for group in subcategory.groups.all %}
+                                                            <!-- L3 Group Card -->
+                                                            <div class="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                                                                <div class="flex items-center justify-between px-4 py-3 bg-white border-l-4 border-purple-400 hover:bg-gray-50 transition-colors duration-150">
+                                                                    <div class="flex items-center gap-3 min-w-0">
+                                                                        <div class="flex-shrink-0 p-1.5 text-purple-600 bg-purple-50 rounded-lg border border-purple-100">
+                                                                            {% heroicon_outline "folder" size="16" %}
+                                                                        </div>
+                                                                        <div class="min-w-0">
+                                                                            <div class="flex flex-wrap items-center gap-2">
+                                                                                <span class="text-sm font-semibold text-gray-800">L3: {{ group.name }}</span>
+                                                                                {% if group.disciplines.exists %}
+                                                                                    {% for discipline in group.disciplines.all %}
+                                                                                        <span class="inline-flex gap-1 items-center px-2 py-0.5 text-[10px] font-semibold text-purple-700 bg-purple-50 rounded-full border border-purple-200">
+                                                                                            {% heroicon_outline "squares-2x2" size="8" class="text-purple-400" %}
+                                                                                            {{ discipline.name }}
+                                                                                        </span>
+                                                                                    {% endfor %}
+                                                                                {% endif %}
+                                                                            </div>
+                                                                            <div class="mt-0.5">
+                                                                                {% include "project/components/date_input.html" with field_id="group_"|addstr:group.pk entity_type="group" entity_id=group.pk start_date=group.start_date end_date=group.end_date parent_id=subcategory.pk %}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="flex flex-shrink-0 items-center gap-2 ml-4">
+                                                                        <button type="button"
+                                                                                onclick="openScopeGroupDateModal({{ group.pk }}, '{{ group.name|escapejs }}', {{ subcategory.pk }}, '{{ group.start_date|date:"Y-m-d" }}', '{{ group.end_date|date:"Y-m-d" }}')"
+                                                                                class="p-1.5 text-indigo-500 rounded-lg transition-colors hover:bg-indigo-50"
+                                                                                title="Edit group">
+                                                                            {% heroicon_outline "pencil" size="16" %}
+                                                                        </button>
+                                                                        <button type="button"
+                                                                                onclick="openDeleteGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', {{ subcategory.pk }}, 0)"
+                                                                                class="p-1.5 text-red-500 rounded-lg transition-colors hover:bg-red-50"
+                                                                                title="Delete group">
+                                                                            {% heroicon_outline "trash" size="16" %}
+                                                                        </button>
+                                                                        <a href="{% url 'planning:scope-group-upload' project.pk group.pk %}"
+                                                                           class="p-1.5 text-emerald-500 rounded-lg transition-colors hover:bg-emerald-50"
+                                                                           title="Upload file">{% heroicon_outline "arrow-up-tray" size="16" %}</a>
+                                                                        <button type="button"
+                                                                                onclick="toggleElement(this, 'group-{{ group.pk }}')"
+                                                                                class="p-1.5 text-gray-400 rounded-lg transition-colors hover:bg-gray-100"
+                                                                                title="Toggle group">
+                                                                            {% heroicon_outline "chevron-right" size="16" class="transition-transform duration-200" %}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <!-- L3 Expanded Content -->
+                                                                <div id="group-{{ group.pk }}" class="hidden">
+                                                                    {% if group.milestones %}
+                                                                        <div class="p-4 rounded-xl border bg-gray-50/50 border-gray-150 mx-4 my-3">
+                                                                            {% for milestone in group.milestones.all %}
+                                                                                {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=3 %}
+                                                                            {% endfor %}
+                                                                        </div>
+                                                                    {% endif %}
+                                                                    {% if group.files.exists %}
+                                                                        <div class="px-4 py-3 border-t border-purple-100 bg-purple-50/20">
+                                                                            <div class="flex justify-between items-center mb-2">
+                                                                                <span class="flex items-center text-xs font-semibold text-purple-700">
+                                                                                    {% heroicon_outline "paper-clip" size="14" class="mr-1.5 text-purple-500" %}
+                                                                                    Files ({{ group.files.count }})
+                                                                                </span>
+                                                                                <button onclick="toggleElement(this, 'scope-grp-files-{{ group.pk }}')"
+                                                                                        class="p-1 rounded transition-colors hover:bg-purple-100"
+                                                                                        type="button">
+                                                                                    {% heroicon_outline "chevron-right" size="12" class="text-purple-600" %}
+                                                                                </button>
+                                                                            </div>
+                                                                            <div id="scope-grp-files-{{ group.pk }}" class="hidden space-y-1">
+                                                                                {% for file in group.files.all %}
+                                                                                    <div class="flex justify-between items-center px-3 py-2 bg-white rounded-lg border border-purple-100">
+                                                                                        <div class="flex flex-1 items-center space-x-2 min-w-0">
+                                                                                            {% heroicon_outline "document" size="14" class="flex-shrink-0 text-purple-500" %}
+                                                                                            <div class="flex-1 min-w-0">
+                                                                                                <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
+                                                                                                {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div class="flex items-center ml-2 space-x-1">
+                                                                                            <a href="{{ file.file.url }}"
+                                                                                               download
+                                                                                               class="p-1 text-purple-600 rounded hover:bg-purple-50"
+                                                                                               title="Download">{% heroicon_outline "arrow-down-tray" size="14" %}</a>
+                                                                                            <button onclick="deleteScopeFile('{% url 'planning:scope-group-file-delete' project.pk file.pk %}')"
+                                                                                                    class="p-1 text-red-600 rounded hover:bg-red-50"
+                                                                                                    title="Delete">
+                                                                                                {% heroicon_outline "trash" size="14" %}
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                {% endfor %}
+                                                                            </div>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
                                             </div>
-                                        {% endfor %}
-                                    </div>
+                                        </div>
+                                    {% endfor %}
                                 </div>
-                            {% endfor %}
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
@@ -499,11 +508,8 @@
     <!-- Footer -->
     <div class="px-8 py-5 mt-8 bg-white rounded-xl border-t border-gray-200 shadow-sm">
         <div class="flex justify-between items-center">
-            <a href="{% url 'project:project-management' project.pk %}"
-               class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 rounded-lg transition-all duration-200 hover:text-indigo-600 hover:bg-gray-50">
-                {% heroicon_outline "chevron-left" class="mr-2 w-5 h-5" %}
-                Back to Project Management
-            </a>
+            {% url 'project:project-management' project.pk as project_management_url %}
+            {% include "components/back_button.html" with url=project_management_url text="Back to Project Management" style="gray" %}
             <a href="{% url 'project:earned-value' project.pk %}"
                class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 rounded-lg transition-all duration-200 hover:text-indigo-600 hover:bg-gray-50">
                 Earned Value Predictions

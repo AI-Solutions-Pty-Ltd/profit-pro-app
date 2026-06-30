@@ -82,3 +82,75 @@ class TestCategoryHierarchyView:
         # Verify collapsible containers exist
         assert f'id="category-{category.pk}"' in content
         assert f'id="subcategory-{subcategory.pk}"' in content
+
+    def test_category_hierarchy_rendering_with_disciplines(self, client):
+        """Test that Category, SubCategory, and Group render assigned disciplines in CategoryListView."""
+        client.force_login(self.user)
+
+        from app.Project.tests.factories import DisciplineFactory
+
+        discipline1 = DisciplineFactory(project=self.project, name="Civil Discipline")
+        discipline2 = DisciplineFactory(
+            project=self.project, name="Mechanical Discipline"
+        )
+
+        category = CategoryFactory(project=self.project, name="L1 Category Test")
+        category.disciplines.add(discipline1)
+
+        subcategory = SubCategoryFactory(
+            category=category, project=self.project, name="L2 SubCategory Test"
+        )
+        subcategory.disciplines.add(discipline2)
+
+        group = GroupFactory(
+            sub_category=subcategory, project=self.project, name="L3 Group Test"
+        )
+        group.disciplines.add(discipline1)
+
+        response = client.get(self.url)
+        assert response.status_code == 200
+
+        content = response.content.decode("utf-8")
+
+        # Verify disciplines are rendered
+        assert "Civil Discipline" in content
+        assert "Mechanical Discipline" in content
+
+
+@pytest.mark.django_db
+class TestCategoryFormsValidation:
+    """Test validation of Category, SubCategory, and Group forms when dates are omitted."""
+
+    def test_category_form_optional_dates(self):
+        from app.Project.projects.category_forms import CategoryForm
+
+        data = {"name": "New Category", "description": "Optional desc"}
+        form = CategoryForm(data=data)
+        assert form.is_valid(), form.errors
+
+    def test_subcategory_form_optional_dates(self):
+        from app.Project.projects.category_forms import SubCategoryForm
+
+        project = ProjectFactory()
+        category = CategoryFactory(project=project)
+        data = {
+            "category": category.pk,
+            "name": "New SubCategory",
+            "description": "Optional desc",
+        }
+        form = SubCategoryForm(data=data, project=project)
+        assert form.is_valid(), form.errors
+
+    def test_group_form_optional_dates(self):
+        from app.Project.projects.category_forms import GroupForm
+
+        project = ProjectFactory()
+        category = CategoryFactory(project=project)
+        subcategory = SubCategoryFactory(category=category, project=project)
+        data = {
+            "sub_category": subcategory.pk,
+            "name": "New Group",
+            "description": "Optional desc",
+        }
+        form = GroupForm(data=data, project=project)
+        assert form.is_valid(), form.errors

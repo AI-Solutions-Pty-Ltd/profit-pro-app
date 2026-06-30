@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load heroicons %}
 {% block title %}
     {% if is_edit %}
         Edit Document
@@ -9,61 +10,100 @@
     - {{ category_display }} - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <!-- Form Card -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="mx-auto max-w-4xl">
         <!-- Header -->
-        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-            <h1 class="text-2xl font-bold text-gray-900">
-                {% if is_edit %}
-                    Edit Document
-                {% else %}
-                    Upload Document
-                {% endif %}
-            </h1>
-            <p class="mt-1 text-sm text-gray-600">
-                {% if is_edit %}
-                    Update the document details for {{ category_display }} in {{ project.name }}.
-                {% else %}
-                    Add a new document to {{ category_display }} for {{ project.name }}.
-                {% endif %}
-            </p>
-        </div>
-        <!-- Form -->
-        <form method="post" enctype="multipart/form-data" class="px-6 py-6">
-            {% csrf_token %}
-            {% if is_edit %}
-                <!-- Show current file info -->
-                <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Current File</label>
-                    <p class="text-sm text-gray-600">{{ form.instance.filename }}</p>
-                    <p class="text-xs text-gray-500 mt-1">Leave the file field empty to keep the current file.</p>
-                </div>
-            {% endif %}
-            {{ form|crispy }}
-            <!-- Form Actions -->
-            <div class="mt-6 flex items-center justify-end space-x-3">
-                <a id="cancel-btn"
-                   href="{% url 'project:document-list' project.pk category %}"
-                   class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                   data-loading-text="Canceling..."
-                   data-disable-elements="#upload-btn">
-                    {% heroicon_outline "chevron-left" size="20" %}
-                    Cancel
-                </a>
-                <button id="upload-btn"
-                        type="submit"
-                        class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                        data-loading-text="{% if is_edit %}Saving...{% else %}Uploading...{% endif %}"
-                        data-disable-elements="#cancel-btn">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">
                     {% if is_edit %}
-                        {% heroicon_outline "check" size="20" %}
-                        <span class="ml-2">Save Changes</span>
+                        Edit Document
                     {% else %}
-                        {% heroicon_outline "arrow-up-tray" size="20" %}
-                        <span class="ml-2">Upload Document</span>
+                        Upload Document
                     {% endif %}
-                </button>
+                </h1>
+                <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
             </div>
-        </form>
+            <a href="{% url 'project:document-list' project.pk category %}"
+               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+                {% heroicon_outline "arrow-left" class="mr-1 w-4 h-4" %}
+                Back to Register
+            </a>
+        </div>
+        <!-- Form Card -->
+        <div class="overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6">
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    {% if is_edit %}
+                        <!-- Show current file info -->
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Current File</label>
+                            <p class="text-sm text-gray-600">{{ form.instance.filename }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Leave the file field empty to keep the current file.</p>
+                        </div>
+                    {% endif %}
+                    <!-- Render hidden fields if they exist in the form context so Django processes them -->
+                    {% if category != 'OTHER' %}
+                        {{ form.category.as_hidden }}
+                    {% endif %}
+                    {% if category == 'DRAWINGS' or category == 'SPECIFICATIONS' or category == 'TECHNICAL_SPECIFICATIONS' %}
+                        {{ form.project_category.as_hidden }}
+                        {{ form.area.as_hidden }}
+                    {% endif %}
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <!-- Left Column: Identification -->
+                        <div class="space-y-4">
+                            <h3 class="pb-2 text-sm font-semibold tracking-wider text-gray-900 uppercase border-b">Identification</h3>
+                            {{ form.document_number|as_crispy_field }}
+                            {{ form.title|as_crispy_field }}
+                            {{ form.revision_number|as_crispy_field }}
+                            {% if category == 'OTHER' %}
+                                {{ form.category|as_crispy_field }}
+                            {% endif %}
+                        </div>
+                        <!-- Right Column: Classification & Hierarchy -->
+                        <div class="space-y-4">
+                            <h3 class="pb-2 text-sm font-semibold tracking-wider text-gray-900 uppercase border-b">Classification & Hierarchy</h3>
+                            {{ form.project_discipline|as_crispy_field }}
+                            {{ form.wbs_level|as_crispy_field }}
+                            {% if category != 'DRAWINGS' and category != 'SPECIFICATIONS' and category != 'TECHNICAL_SPECIFICATIONS' %}
+                                {{ form.project_category|as_crispy_field }}
+                                {{ form.area|as_crispy_field }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Bottom Section: File & Notes -->
+                    <div class="pt-4 space-y-4 border-t">
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-900 uppercase">File & Notes</h3>
+                        {{ form.file|as_crispy_field }}
+                        {{ form.notes|as_crispy_field }}
+                    </div>
+                    <!-- Form Actions -->
+                    <div class="flex justify-end items-center pt-6 space-x-3 border-t">
+                        <a id="cancel-btn"
+                           href="{% url 'project:document-list' project.pk category %}"
+                           class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                           data-loading-text="Canceling..."
+                           data-disable-elements="#upload-btn">
+                            {% heroicon_outline "chevron-left" size="20" class="mr-1.5" %}
+                            Cancel
+                        </a>
+                        <button id="upload-btn"
+                                type="submit"
+                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                data-loading-text="{% if is_edit %}Saving...{% else %}Uploading...{% endif %}"
+                                data-disable-elements="#cancel-btn">
+                            {% if is_edit %}
+                                {% heroicon_outline "check" size="20" class="mr-1.5" %}
+                                <span>Save Changes</span>
+                            {% else %}
+                                {% heroicon_outline "arrow-up-tray" size="20" class="mr-1.5" %}
+                                <span>Upload Document</span>
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 {% endblock content %}

@@ -5,58 +5,73 @@
 {% load template_extras %}
 {% block content %}
     <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Project Management</h1>
-                    <p class="text-sm text-gray-600 mt-1">Manage projects and categories in your portfolio</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Project List</h1>
+                    <p class="mt-1 text-sm text-gray-600">Manage projects and categories in your portfolio</p>
                 </div>
-                <a href="{% url 'project:portfolio-dashboard' %}"
-                   class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    {% heroicon_outline "arrow-left" size="16" %}
-                    <span class="ml-1">Back to Dashboard</span>
-                </a>
+                <div class="flex gap-3 items-center">
+                    <!-- Project Groups Dropdown -->
+                    {% if project_groups %}
+                        <div class="inline-block relative text-left" id="groupsDropdownContainer">
+                            <button type="button"
+                                    id="groupsDropdownBtn"
+                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "folder" size="16" class="mr-1.5 text-gray-500" %}
+                                <span>Project Groups</span>
+                                {% heroicon_outline "chevron-down" size="14" class="ml-1 text-gray-400" %}
+                            </button>
+                            <div id="groupsDropdownMenu"
+                                 class="hidden absolute right-0 z-50 mt-2 w-72 bg-white rounded-md divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 shadow-lg origin-top-right focus:outline-none">
+                                <div class="overflow-y-auto py-1 max-h-64">
+                                    {% for group in project_groups %}
+                                        <div class="flex justify-between items-center px-4 py-2 hover:bg-gray-50 group">
+                                            <div class="flex-grow">
+                                                <div class="text-sm font-semibold text-gray-900 truncate"
+                                                     title="{{ group.name }}">{{ group.name }}</div>
+                                                <div class="flex gap-2 mt-1">
+                                                    <a href="{% url 'project:portfolio-group-cover-page' group.pk %}"
+                                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                        Cover Page
+                                                    </a>
+                                                    <span class="text-xs text-gray-300">|</span>
+                                                    <a href="{% url 'project:portfolio-group-valuation-summary' group.pk %}"
+                                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                        Valuation
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <button type="button"
+                                                    onclick="deleteGroup({{ group.pk }}, '{{ group.name|escapejs }}')"
+                                                    class="p-1 ml-2 text-gray-400 rounded hover:text-red-600 hover:bg-red-50"
+                                                    title="Delete Group">
+                                                {% heroicon_outline "trash" size="14" %}
+                                            </button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <a href="{% url 'project:portfolio-dashboard' %}"
+                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                        <span class="ml-1">Back to Dashboard</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
     <!-- Tabs -->
-    <div class="bg-white shadow-sm rounded-lg">
-        <div class="border-b border-gray-200">
-            <nav class="flex -mb-px" aria-label="Tabs">
-                <a href="{% url 'project:project-list' %}"
-                   class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "folder" size="16" class="inline mr-1.5" %}
-                    Projects
-                </a>
-                <a href="{% url 'project:category-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Sectors
-                </a>
-                <a href="{% url 'project:subcategory-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Areas
-                </a>
-                <a href="{% url 'project:discipline-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Disciplines
-                </a>
-                <a href="{% url 'project:project-stage-list' %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Project Stages
-                </a>
-            </nav>
-        </div>
+    <div class="bg-white rounded-lg shadow-sm">
         <!-- Header with Create Button -->
-        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-slate-50">
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-bold text-gray-900">Projects List</h2>
+        <div class="px-6 py-4 bg-gradient-to-r from-gray-50 border-b border-gray-200 to-slate-50">
+            <div class="flex justify-end items-center">
+                {% comment %} <h2 class="text-xl font-bold text-gray-900">Projects List</h2> {% endcomment %}
                 <a href="{% url 'project:project-create' %}"
-                   class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     {% heroicon_outline "plus" size="16" %}
                     <span class="ml-1">Create Project</span>
                 </a>
@@ -66,39 +81,39 @@
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
             <form id="filterForm" method="get" class="space-y-4">
                 <!-- Top Row: Search and Actions -->
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex flex-col gap-4 justify-between md:flex-row md:items-center">
                     <!-- Search Input -->
-                    <div class="flex-grow max-w-md relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            {% heroicon_outline "magnifying-glass" class="h-5 w-5 text-gray-400" %}
+                    <div class="relative flex-grow max-w-md">
+                        <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                            {% heroicon_outline "magnifying-glass" class="w-5 h-5 text-gray-400" %}
                         </div>
                         <input type="text"
                                name="search"
                                id="id_search"
                                value="{{ filter_form.search.value|default:'' }}"
-                               class="block w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white placeholder-gray-400"
+                               class="block py-2 pr-3 pl-10 w-full text-sm placeholder-gray-400 bg-white rounded-lg border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                                placeholder="Search projects by name...">
                     </div>
                     <!-- Actions -->
-                    <div class="flex items-center gap-3">
+                    <div class="flex gap-3 items-center">
                         <!-- Toggle Filters Button -->
                         <button type="button"
                                 id="toggleFiltersBtn"
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "funnel" class="w-4 h-4 mr-2 text-gray-500" %}
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            {% heroicon_outline "funnel" class="mr-2 w-4 h-4 text-gray-500" %}
                             <span>Advanced Filters</span>
-                            {% heroicon_outline "chevron-down" id="toggleFiltersChevron" class="w-4 h-4 ml-2 text-gray-400 transform transition-transform duration-200" %}
+                            {% heroicon_outline "chevron-down" id="toggleFiltersChevron" class="ml-2 w-4 h-4 text-gray-400 transition-transform duration-200 transform" %}
                         </button>
                         <!-- Filter Button -->
                         <button type="submit"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Apply
                         </button>
                         <!-- Clear Button -->
                         {% if filter_form.search.value or filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
                             <button type="button"
                                     onclick="window.location.href='{% url 'project:project-list' %}'"
-                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors"
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg border border-gray-300 transition-colors hover:bg-gray-200"
                                     title="Clear all filters"
                                     aria-label="Clear filters">
                                 {% heroicon_outline "x-mark" size="16" class="mr-1 text-gray-500" %}
@@ -109,18 +124,18 @@
                 </div>
                 <!-- Collapsible Advanced Filters Drawer -->
                 <div id="advancedFiltersDrawer"
-                     class="hidden border border-gray-200 rounded-xl bg-white p-5 shadow-sm transition-all duration-200">
-                    <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                     class="hidden p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200">
+                    <h3 class="flex gap-2 items-center mb-4 text-sm font-bold text-gray-900">
                         {% heroicon_outline "adjustments-horizontal" size="18" class="text-indigo-500" %}
                         Filter Parameters
                     </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         <!-- Category Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Sector</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Sector</label>
                             <div class="relative">
                                 <select name="project_category"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Sectors</option>
                                     {% for category in filter_form.project_category.field.queryset %}
                                         <option value="{{ category.pk }}"
@@ -134,10 +149,10 @@
                         </div>
                         <!-- Province Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Province</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Province</label>
                             <div class="relative">
                                 <select name="province"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Provinces</option>
                                     {% for province in filter_form.province.field.queryset %}
                                         <option value="{{ province.pk }}"
@@ -151,10 +166,10 @@
                         </div>
                         <!-- Municipality Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Municipality</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Municipality</label>
                             <div class="relative">
                                 <select name="area"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Municipalities</option>
                                     {% for area in filter_form.area.field.queryset %}
                                         <option value="{{ area.pk }}"
@@ -169,10 +184,10 @@
                         </div>
                         <!-- Discipline Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Discipline</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Discipline</label>
                             <div class="relative">
                                 <select name="project_discipline"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Disciplines</option>
                                     {% for discipline in filter_form.project_discipline.field.queryset %}
                                         <option value="{{ discipline.pk }}"
@@ -186,10 +201,10 @@
                         </div>
                         <!-- Project Stage Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Stage</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Stage</label>
                             <div class="relative">
                                 <select name="project_stage"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Stages</option>
                                     {% for stage in filter_form.project_stage.field.queryset %}
                                         <option value="{{ stage.pk }}"
@@ -203,10 +218,10 @@
                         </div>
                         <!-- Client Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Client</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Client</label>
                             <div class="relative">
                                 <select name="client"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Clients</option>
                                     {% for client in filter_form.client.field.queryset %}
                                         <option value="{{ client.pk }}"
@@ -220,10 +235,10 @@
                         </div>
                         <!-- Contractor Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Contractor</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Contractor</label>
                             <div class="relative">
                                 <select name="contractor"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Contractors</option>
                                     {% for contractor in filter_form.contractor.field.queryset %}
                                         <option value="{{ contractor.pk }}"
@@ -237,10 +252,10 @@
                         </div>
                         <!-- Consultant Filter -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Consultant</label>
+                            <label class="block mb-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase">Consultant</label>
                             <div class="relative">
                                 <select name="consultant"
-                                        class="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                        class="py-2 pr-8 pl-3 w-full text-sm bg-white rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">All Consultants</option>
                                     {% for consultant in filter_form.consultant.field.queryset %}
                                         <option value="{{ consultant.pk }}"
@@ -256,12 +271,12 @@
                 </div>
                 <!-- Active Filters Chips -->
                 {% if filter_form.project_category.value or filter_form.province.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
-                    <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-100">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Filters:</span>
+                    <div class="flex flex-wrap gap-2 items-center pt-2 border-t border-gray-100">
+                        <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Active Filters:</span>
                         {% if filter_form.project_category.value %}
                             {% for category in filter_form.project_category.field.queryset %}
                                 {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Sector: {{ category.name }}
                                     </span>
                                 {% endif %}
@@ -270,7 +285,7 @@
                         {% if filter_form.province.value %}
                             {% for province in filter_form.province.field.queryset %}
                                 {% if filter_form.province.value|stringformat:"s" == province.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Province: {{ province.name }}
                                     </span>
                                 {% endif %}
@@ -279,7 +294,7 @@
                         {% if filter_form.area.value %}
                             {% for area in filter_form.area.field.queryset %}
                                 {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Municipality: {{ area.municipality_name }}
                                     </span>
                                 {% endif %}
@@ -288,7 +303,7 @@
                         {% if filter_form.project_discipline.value %}
                             {% for discipline in filter_form.project_discipline.field.queryset %}
                                 {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Discipline: {{ discipline.name }}
                                     </span>
                                 {% endif %}
@@ -297,7 +312,7 @@
                         {% if filter_form.project_stage.value %}
                             {% for stage in filter_form.project_stage.field.queryset %}
                                 {% if filter_form.project_stage.value|stringformat:"s" == stage.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Stage: {{ stage.name }}
                                     </span>
                                 {% endif %}
@@ -306,7 +321,7 @@
                         {% if filter_form.client.value %}
                             {% for client in filter_form.client.field.queryset %}
                                 {% if filter_form.client.value|stringformat:"s" == client.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Client: {{ client.name }}
                                     </span>
                                 {% endif %}
@@ -315,7 +330,7 @@
                         {% if filter_form.contractor.value %}
                             {% for contractor in filter_form.contractor.field.queryset %}
                                 {% if filter_form.contractor.value|stringformat:"s" == contractor.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Contractor: {{ contractor.name }}
                                     </span>
                                 {% endif %}
@@ -324,7 +339,7 @@
                         {% if filter_form.consultant.value %}
                             {% for consultant in filter_form.consultant.field.queryset %}
                                 {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200">
                                         Consultant: {{ consultant.get_full_name|default:consultant.email }}
                                     </span>
                                 {% endif %}
@@ -339,27 +354,37 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discipline</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 w-8 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                            <input type="checkbox"
+                                   id="selectAllProjects"
+                                   class="text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                        </th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Project</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sector</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Discipline</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Area</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="projectsTable" class="bg-white divide-y divide-gray-200">
                     {% for project in projects %}
                         <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 w-8 whitespace-nowrap">
+                                <input type="checkbox"
+                                       class="text-indigo-600 rounded border-gray-300 project-checkbox focus:ring-indigo-500"
+                                       value="{{ project.pk }}">
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
                                     <a href="{% url 'project:project-dashboard' project.pk %}"
-                                       class="hover:text-indigo-600 transition-colors">{{ project.name|title }}</a>
+                                       class="transition-colors hover:text-indigo-600">{{ project.name|title }}</a>
                                 </div>
                                 <div class="text-xs text-gray-500">{{ project.client.name|default:"No Client" }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if project.project_category %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-purple-800 bg-purple-100 rounded-full">
                                         {{ project.project_category.name }}
                                     </span>
                                 {% else %}
@@ -368,7 +393,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if project.project_discipline %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-800">
                                         {{ project.project_discipline.name }}
                                     </span>
                                 {% else %}
@@ -377,7 +402,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if project.area %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
                                         {{ project.area.province }} - {{ project.area.municipality_name }}
                                     </span>
                                 {% else %}
@@ -389,21 +414,21 @@
                                     {{ project.get_status_display }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end space-x-2">
+                            <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                                <div class="flex justify-end items-center space-x-2">
                                     <a href="{% url 'project:project-management' project.id %}"
-                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
+                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 rounded transition-colors hover:text-indigo-600 hover:bg-indigo-50">
                                         {% heroicon_outline "cog-6-tooth" size="16" %}
                                         <span class="ml-1">Project management</span>
                                     </a>
                                     {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
                                         <a href="{% url 'project:project-setup' project.pk %}"
-                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
+                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 rounded transition-colors hover:text-indigo-600 hover:bg-indigo-50">
                                             {% heroicon_outline "cog-6-tooth" size="16" %}
                                             <span class="ml-1">Setup</span>
                                         </a>
                                         <a href="{% url 'project:company-management' project.pk %}"
-                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
+                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 rounded transition-colors hover:text-indigo-600 hover:bg-indigo-50">
                                             {% heroicon_outline "cog-6-tooth" size="16" %}
                                             <span class="ml-1">Business Management</span>
                                         </a>
@@ -413,12 +438,12 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
-                                    {% heroicon_outline "folder-plus" size="48" class="text-gray-300 mb-4" %}
-                                    <p class="text-sm text-gray-500 mb-4">No projects found</p>
+                                    {% heroicon_outline "folder-plus" size="48" class="mb-4 text-gray-300" %}
+                                    <p class="mb-4 text-sm text-gray-500">No projects found</p>
                                     <a href="{% url 'project:project-create' %}"
-                                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                         {% heroicon_outline "plus" size="16" class="mr-2" %}
                                         Create Your First Project
                                     </a>
@@ -429,25 +454,25 @@
                 </tbody>
             </table>
             <div id="loading" hidden class="py-4">
-                <div class="flex items-center justify-center space-x-2">
+                <div class="flex justify-center items-center space-x-2">
                     <div class="w-4 h-4 bg-indigo-500 rounded animate-pulse"></div>
-                    <span class="text-gray-600 font-medium">Loading...</span>
+                    <span class="font-medium text-gray-600">Loading...</span>
                 </div>
             </div>
         </div>
     </div>
     <!-- Footer -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+    <div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
         <div class="flex justify-between items-center">
             <a href="{% url 'project:portfolio-dashboard' %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+               class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
                 Back to Portfolio Dashboard
             </a>
             <a href="{% url 'project:project-create' %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+               class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
                 Create New Project
-                {% heroicon_outline "plus" class="w-4 h-4 ml-1" %}
+                {% heroicon_outline "plus" class="ml-1 w-4 h-4" %}
             </a>
         </div>
     </div>
@@ -535,6 +560,252 @@
                     updateMunicipalities();
                 }
             }
+
+            // Selection & Batch Action logic
+            const selectAll = document.getElementById('selectAllProjects');
+            const checkboxes = document.querySelectorAll('.project-checkbox');
+            const actionBar = document.getElementById('batchActionBar');
+            const selectedCount = document.getElementById('selectedCount');
+            const batchCoverBtn = document.getElementById('batchCoverBtn');
+            const batchValuationBtn = document.getElementById('batchValuationBtn');
+            
+            function updateActionBar() {
+                const checked = document.querySelectorAll('.project-checkbox:checked');
+                const count = checked.length;
+                if (selectedCount) selectedCount.textContent = count;
+                
+                if (count > 0) {
+                    actionBar.classList.remove('translate-y-4', 'opacity-0', 'pointer-events-none');
+                    actionBar.classList.add('translate-y-0', 'opacity-100');
+                } else {
+                    actionBar.classList.add('translate-y-4', 'opacity-0', 'pointer-events-none');
+                    actionBar.classList.remove('translate-y-0', 'opacity-100');
+                }
+            }
+            
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checkboxes.forEach(cb => {
+                        cb.checked = selectAll.checked;
+                    });
+                    updateActionBar();
+                });
+            }
+            
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    updateActionBar();
+                    if (!cb.checked && selectAll) {
+                        selectAll.checked = false;
+                    }
+                });
+            });
+            
+            if (batchCoverBtn) {
+                batchCoverBtn.addEventListener('click', function() {
+                    const ids = Array.from(document.querySelectorAll('.project-checkbox:checked')).map(cb => cb.value).join(',');
+                    if (ids) {
+                        window.location.href = `{% url 'project:portfolio-multi-cover-page' %}?project_ids=${ids}`;
+                    }
+                });
+            }
+            
+            if (batchValuationBtn) {
+                batchValuationBtn.addEventListener('click', function() {
+                    const ids = Array.from(document.querySelectorAll('.project-checkbox:checked')).map(cb => cb.value).join(',');
+                    if (ids) {
+                        window.location.href = `{% url 'project:portfolio-multi-valuation-summary' %}?project_ids=${ids}`;
+                    }
+                });
+            }
+
+            // Groups Dropdown Toggle logic
+            const dropdownBtn = document.getElementById('groupsDropdownBtn');
+            const dropdownMenu = document.getElementById('groupsDropdownMenu');
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', function() {
+                    dropdownMenu.classList.add('hidden');
+                });
+            }
+
+            // Delete Group logic
+            window.deleteGroup = function(groupId, groupName) {
+                if (confirm(`Are you sure you want to delete the group "${groupName}"?`)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/project/portfolio/reports/group/${groupId}/delete/`;
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrfmiddlewaretoken';
+                    csrfInput.value = '{{ csrf_token }}';
+                    form.appendChild(csrfInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            };
+
+            // Create Group modal logic
+            const createGroupModal = document.getElementById('createGroupModal');
+            const modalBox = document.getElementById('createGroupModalBox');
+            const batchCreateGroupBtn = document.getElementById('batchCreateGroupBtn');
+            const confirmCreateGroupBtn = document.getElementById('confirmCreateGroupBtn');
+            const groupNameInput = document.getElementById('groupNameInput');
+            const modalErrorMessage = document.getElementById('modalErrorMessage');
+
+            window.closeModal = function() {
+                if (modalBox) {
+                    modalBox.classList.add('scale-95', 'opacity-0');
+                    modalBox.classList.remove('scale-100', 'opacity-100');
+                }
+                setTimeout(() => {
+                    if (createGroupModal) createGroupModal.classList.add('hidden');
+                    if (groupNameInput) groupNameInput.value = '';
+                    if (modalErrorMessage) {
+                        modalErrorMessage.classList.add('hidden');
+                        modalErrorMessage.textContent = '';
+                    }
+                }, 150);
+            };
+
+            if (batchCreateGroupBtn) {
+                batchCreateGroupBtn.addEventListener('click', function() {
+                    if (createGroupModal) {
+                        createGroupModal.classList.remove('hidden');
+                        setTimeout(() => {
+                            if (modalBox) {
+                                modalBox.classList.remove('scale-95', 'opacity-0');
+                                modalBox.classList.add('scale-100', 'opacity-100');
+                            }
+                        }, 50);
+                    }
+                });
+            }
+
+            if (confirmCreateGroupBtn) {
+                confirmCreateGroupBtn.addEventListener('click', function() {
+                    const name = groupNameInput.value.trim();
+                    if (!name) {
+                        modalErrorMessage.textContent = 'Please enter a group name.';
+                        modalErrorMessage.classList.remove('hidden');
+                        return;
+                    }
+                    const ids = Array.from(document.querySelectorAll('.project-checkbox:checked')).map(cb => cb.value).join(',');
+                    if (!ids) {
+                        modalErrorMessage.textContent = 'No projects selected.';
+                        modalErrorMessage.classList.remove('hidden');
+                        return;
+                    }
+
+                    confirmCreateGroupBtn.disabled = true;
+                    confirmCreateGroupBtn.textContent = 'Creating...';
+
+                    fetch('/project/portfolio/reports/group/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            project_ids: ids
+                        })
+                    })
+                    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                    .then(res => {
+                        if (res.status === 200 || res.status === 201) {
+                            window.location.reload();
+                        } else {
+                            modalErrorMessage.textContent = res.body.error || 'Failed to create group.';
+                            modalErrorMessage.classList.remove('hidden');
+                            confirmCreateGroupBtn.disabled = false;
+                            confirmCreateGroupBtn.textContent = 'Create Group';
+                        }
+                    })
+                    .catch(err => {
+                        modalErrorMessage.textContent = 'An unexpected error occurred.';
+                        modalErrorMessage.classList.remove('hidden');
+                        confirmCreateGroupBtn.disabled = false;
+                        confirmCreateGroupBtn.textContent = 'Create Group';
+                    });
+                });
+            }
         });
     </script>
+    <!-- Floating Batch Action Bar -->
+    <div id="batchActionBar"
+         class="fixed left-0 right-0 mx-auto w-max max-w-[calc(100vw-2rem)] z-[100] pointer-events-none transition-all duration-300 transform translate-y-4 opacity-0 bottom-[5.5rem]">
+        <div class="flex gap-6 justify-between items-center px-6 py-4 text-white bg-gray-900 rounded-xl border border-gray-800 shadow-2xl pointer-events-auto">
+            <div class="flex gap-3 items-center">
+                <span class="text-xs font-semibold tracking-wider text-indigo-400 uppercase">Batch Actions:</span>
+                <span id="selectedCount"
+                      class="px-2.5 py-0.5 text-sm font-bold text-white bg-indigo-600 rounded-full">0</span>
+                <span class="text-sm text-gray-300 whitespace-nowrap">projects selected</span>
+            </div>
+            <div class="flex gap-2 items-center">
+                <button id="batchCreateGroupBtn"
+                        class="inline-flex flex-shrink-0 items-center px-3 py-2 text-xs font-bold whitespace-nowrap bg-indigo-600 rounded-lg transition-colors hover:bg-indigo-700">
+                    {% heroicon_outline "plus" size="14" class="mr-1.5 text-white" %}
+                    Create Group
+                </button>
+                <button id="batchCoverBtn"
+                        class="inline-flex flex-shrink-0 items-center px-3 py-2 text-xs font-bold whitespace-nowrap bg-indigo-600 rounded-lg transition-colors hover:bg-indigo-700">
+                    {% heroicon_outline "document" size="14" class="mr-1.5 text-white" %}
+                    View Cover Page
+                </button>
+                <button id="batchValuationBtn"
+                        class="inline-flex flex-shrink-0 items-center px-3 py-2 text-xs font-bold whitespace-nowrap bg-indigo-600 rounded-lg transition-colors hover:bg-indigo-700">
+                    {% heroicon_outline "table-cells" size="14" class="mr-1.5 text-white" %}
+                    View Valuation Summary
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Create Group Modal -->
+    <div id="createGroupModal"
+         class="fixed inset-0 z-[150] hidden"
+         aria-labelledby="modal-title"
+         role="dialog"
+         aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"
+             onclick="closeModal()"></div>
+        <!-- Modal Wrapper for centering -->
+        <div class="fixed inset-0 z-[160] overflow-y-auto flex items-center justify-center p-4">
+            <!-- Modal Box -->
+            <div class="p-6 w-full max-w-md bg-white rounded-xl border border-gray-100 shadow-2xl opacity-0 transition-all duration-300 transform scale-95"
+                 id="createGroupModalBox"
+                 onclick="event.stopPropagation()">
+                <div class="flex flex-col items-center text-center">
+                    <div class="flex justify-center items-center mx-auto mb-4 w-12 h-12 bg-indigo-100 rounded-full">
+                        {% heroicon_outline "folder-plus" size="24" class="text-indigo-600" %}
+                    </div>
+                    <h3 class="mb-2 text-lg font-bold text-gray-950" id="modal-title">Create Project Group</h3>
+                    <p class="mb-4 text-sm text-gray-500">Enter a name for this custom group of selected projects.</p>
+                    <input type="text"
+                           id="groupNameInput"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="e.g. My Favorites">
+                    <p id="modalErrorMessage" class="hidden mt-2 text-sm text-red-600"></p>
+                </div>
+                <div class="flex flex-col-reverse gap-3 mt-6 sm:flex-row sm:justify-end">
+                    <button type="button"
+                            onclick="closeModal()"
+                            class="inline-flex justify-center px-4 py-2 w-full text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm sm:w-auto hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="button"
+                            id="confirmCreateGroupBtn"
+                            class="inline-flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm sm:w-auto hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create Group
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock content %}

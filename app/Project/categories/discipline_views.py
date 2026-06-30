@@ -1,32 +1,36 @@
 """Views for Project Discipline management."""
 
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import JsonResponse
-from django.urls import reverse, reverse_lazy
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic.base import ContextMixin
 
-from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import ProjectDiscipline
 
 from .category_forms import ProjectDisciplineForm
 
 
-class ProjectDisciplineListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class SystemLibraryMixin(UserPassesTestMixin, ContextMixin):
+    """Mixin for system library views: requires staff."""
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_staff
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_system_view"] = True
+        return context
+
+
+class ProjectDisciplineListView(SystemLibraryMixin, ListView):
     """List all project disciplines."""
 
     model = ProjectDiscipline
-    template_name = "categories/discipline_manage.html"
+    template_name = "estimator/system/discipline_manage.html"
     context_object_name = "disciplines"
-    permissions = ["contractor", "consultant"]
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(title="Project Disciplines", url=None),
-        ]
 
     def get_queryset(self):
         """Return disciplines ordered by name."""
@@ -39,23 +43,13 @@ class ProjectDisciplineListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListV
         return context
 
 
-class ProjectDisciplineCreateView(
-    UserHasGroupGenericMixin, BreadcrumbMixin, CreateView
-):
+class ProjectDisciplineCreateView(SystemLibraryMixin, CreateView):
     """Create a new project discipline."""
 
     model = ProjectDiscipline
     form_class = ProjectDisciplineForm
-    template_name = "categories/discipline_form.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:discipline-list")
-
-    def get_breadcrumbs(self: "ProjectDisciplineCreateView") -> list[BreadcrumbItem]:
-        return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
-            {"title": "Project Disciplines", "url": reverse("project:discipline-list")},
-            {"title": "Add Discipline", "url": None},
-        ]
+    template_name = "estimator/system/discipline_form.html"
+    success_url = reverse_lazy("estimator:sys_disciplines")
 
     def form_valid(self: "ProjectDisciplineCreateView", form):
         """Handle successful form submission."""
@@ -84,27 +78,13 @@ class ProjectDisciplineCreateView(
         return super().form_invalid(form)
 
 
-class ProjectDisciplineUpdateView(
-    UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView
-):
+class ProjectDisciplineUpdateView(SystemLibraryMixin, UpdateView):
     """Update a project discipline."""
 
     model = ProjectDiscipline
     form_class = ProjectDisciplineForm
-    template_name = "categories/discipline_form.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:discipline-list")
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Project Disciplines", url=reverse("project:discipline-list")
-            ),
-            BreadcrumbItem(title="Edit Discipline", url=None),
-        ]
+    template_name = "estimator/system/discipline_form.html"
+    success_url = reverse_lazy("estimator:sys_disciplines")
 
     def form_valid(self, form):
         """Handle successful form submission."""
@@ -132,26 +112,12 @@ class ProjectDisciplineUpdateView(
         return super().form_invalid(form)
 
 
-class ProjectDisciplineDeleteView(
-    UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView
-):
+class ProjectDisciplineDeleteView(SystemLibraryMixin, DeleteView):
     """Delete a project discipline."""
 
     model = ProjectDiscipline
-    template_name = "categories/discipline_confirm_delete.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:discipline-list")
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Project Disciplines", url=reverse("project:discipline-list")
-            ),
-            BreadcrumbItem(title="Delete Discipline", url=None),
-        ]
+    template_name = "estimator/system/discipline_confirm_delete.html"
+    success_url = reverse_lazy("estimator:sys_disciplines")
 
     def form_valid(self, form):
         """Handle successful deletion."""
@@ -187,6 +153,4 @@ class ProjectDisciplineDeleteView(
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
-        from django.shortcuts import redirect
-
-        return redirect("project:discipline-list")
+        return redirect("estimator:sys_disciplines")

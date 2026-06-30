@@ -32,7 +32,7 @@ class ProjectCategoryForm(forms.ModelForm):
             ),
         }
         labels = {
-            "name": "Category Name",
+            "name": "Name",
             "description": "Description (Optional)",
         }
 

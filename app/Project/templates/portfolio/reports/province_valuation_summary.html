@@ -1,0 +1,90 @@
+{% extends "base_full.html" %}
+{% load humanize heroicons %}
+{% block title %}Valuation Summary — {{ province.name }}{% endblock title %}
+{% block content %}
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        Valuation Summary —
+                        <span class="text-indigo-600">Province</span>
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-500">Province: {{ province.name|upper }} — Active Projects Breakdown</p>
+                </div>
+                <div class="flex gap-3 items-center">
+                    <a href="{% url 'project:portfolio-province-summary' %}"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50">
+                        {% heroicon_outline "arrow-left" class="mr-1 w-4 h-4" %}
+                        Back to Summary
+                    </a>
+                    <a href="{% url 'project:portfolio-province-valuation-summary-xlsx' province.pk %}"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md border border-transparent shadow-sm hover:bg-emerald-700">
+                        {% heroicon_outline "table-cells" class="mr-1 w-4 h-4" %}
+                        Download XLSX
+                    </a>
+                </div>
+            </div>
+            <!-- Summary Table -->
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-700">PROJECT NAME</th>
+                            <th class="px-4 py-3 text-center font-semibold text-gray-700">STATUS</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">TENDER AMOUNT</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">APPROVED VARIATIONS</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">REVISED CONTRACT VALUE</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">PREVIOUS CERTIFIED</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">PROGRESSIVE TO DATE</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">NET CLAIMED</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">FORECAST AT COMPLETION</th>
+                            <th class="px-4 py-3 font-semibold text-right text-gray-700">VARIANCE</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        {% for row in projects_data %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 font-bold text-gray-900">
+                                    <a href="{% url 'project:project-dashboard' row.project.pk %}"
+                                       class="text-indigo-600 hover:text-indigo-900">{{ row.project.name }}</a>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        {{ row.project.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.contract_value|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.variations|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 font-mono text-right text-gray-900 font-medium">R {{ row.revised_contract_value|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.certified_previous|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.certified_amount|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 font-mono text-right text-indigo-600">R {{ row.net_claimed|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.forecast_amount|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.variance|floatformat:2|intcomma }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">No projects found for this province.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="font-bold bg-gray-100 border-t-2 border-gray-300">
+                        <tr>
+                            <td class="px-4 py-3 text-gray-900 uppercase" colspan="2">Total Work Done To Date</td>
+                            <td class="px-4 py-3 font-mono text-right text-gray-900">R {{ total_budget|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-3 font-mono text-right text-gray-900">R {{ total_variations|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-3 font-mono text-right text-gray-900">R {{ total_revised|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-3 font-mono text-right text-gray-900">R {{ total_previous|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-3 font-mono text-right text-gray-900">R {{ total_cumulative|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-3 font-mono text-right text-indigo-700">R {{ total_current|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-3 font-mono text-right text-gray-900">R {{ total_forecast|floatformat:2|intcomma }}</td>
+                            <td class="px-4 py-3 font-mono text-right text-gray-900">R {{ total_variance|floatformat:2|intcomma }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
