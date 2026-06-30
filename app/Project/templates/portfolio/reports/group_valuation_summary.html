@@ -33,8 +33,7 @@
                 <table class="w-full text-sm">
                     <thead class="bg-gray-800 text-white">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold">PROJECT NAME</th>
-                            <th class="px-4 py-3 text-center font-semibold">STATUS</th>
+                            <th class="px-4 py-3 text-left font-semibold">PROJECT</th>
                             <th class="px-4 py-3 font-semibold text-right">TENDER AMOUNT</th>
                             <th class="px-4 py-3 font-semibold text-right">APPROVED VARIATIONS</th>
                             <th class="px-4 py-3 font-semibold text-right">REVISED CONTRACT VALUE</th>
@@ -49,7 +48,7 @@
                         {% for rep in province_reports %}
                             <!-- Province Header Row -->
                             <tr class="bg-indigo-50/50">
-                                <td colspan="10" class="px-4 py-3 font-extrabold text-indigo-900 border-b border-indigo-100">
+                                <td colspan="9" class="px-4 py-3 font-extrabold text-indigo-900 border-b border-indigo-100">
                                     <div class="flex items-center gap-1.5">
                                         {% heroicon_outline "map-pin" class="w-4 h-4 text-indigo-600" %}
                                         Province: {{ rep.province_name }}
@@ -59,15 +58,21 @@
                             <!-- Projects in Province -->
                             {% for row in rep.projects %}
                                 <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-4 py-3 font-bold text-gray-900 pl-8">
-                                        <a href="{% url 'project:project-dashboard' row.project.pk %}" class="text-indigo-600 hover:text-indigo-900">
-                                            {{ row.project.name }}
-                                        </a>
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            {{ row.project.get_status_display }}
-                                        </span>
+                                    <td class="px-4 py-3 pl-8">
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex items-center gap-2">
+                                                <a href="{% url 'project:project-dashboard' row.project.pk %}" class="font-bold text-indigo-600 hover:text-indigo-900">
+                                                    {{ row.project.name }}
+                                                </a>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    {{ row.project.get_status_display }}
+                                                </span>
+                                            </div>
+                                            <a href="{% url 'bill_of_quantities:payment-certificate-list' row.project.pk %}" class="inline-flex items-center text-xs text-indigo-500 hover:text-indigo-700 font-medium">
+                                                {% heroicon_outline "document-text" class="w-3.5 h-3.5 mr-1" %}
+                                                View Certificates
+                                            </a>
+                                        </div>
                                     </td>
                                     <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.contract_value|floatformat:2|intcomma }}</td>
                                     <td class="px-4 py-3 font-mono text-right text-gray-700">R {{ row.variations|floatformat:2|intcomma }}</td>
@@ -81,7 +86,7 @@
                             {% endfor %}
                             <!-- Province Sub-total Row -->
                             <tr class="bg-slate-50 font-semibold text-slate-800">
-                                <td class="px-4 py-3 pl-8 uppercase" colspan="2">{{ rep.province_name }} Sub-total</td>
+                                <td class="px-4 py-3 pl-8 uppercase">{{ rep.province_name }} Sub-total</td>
                                 <td class="px-4 py-3 font-mono text-right">R {{ rep.budget|floatformat:2|intcomma }}</td>
                                 <td class="px-4 py-3 font-mono text-right">R {{ rep.variations|floatformat:2|intcomma }}</td>
                                 <td class="px-4 py-3 font-mono text-right text-slate-900 font-bold">R {{ rep.revised|floatformat:2|intcomma }}</td>
@@ -93,13 +98,13 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">No projects found.</td>
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">No projects found.</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                     <tfoot class="font-bold bg-slate-200 border-t-2 border-slate-400 text-slate-900">
                         <tr>
-                            <td class="px-4 py-3 uppercase" colspan="2">Grand Totals</td>
+                            <td class="px-4 py-3 uppercase">Grand Totals</td>
                             <td class="px-4 py-3 font-mono text-right">R {{ total_budget|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right">R {{ total_variations|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right">R {{ total_revised|floatformat:2|intcomma }}</td>
