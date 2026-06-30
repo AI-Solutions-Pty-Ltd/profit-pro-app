@@ -601,9 +601,11 @@
                 if (selectedCount) selectedCount.textContent = count;
                 
                 if (count > 0) {
-                    actionBar.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+                    actionBar.classList.remove('translate-y-4', 'opacity-0', 'pointer-events-none');
+                    actionBar.classList.add('translate-y-0', 'opacity-100');
                 } else {
-                    actionBar.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                    actionBar.classList.add('translate-y-4', 'opacity-0', 'pointer-events-none');
+                    actionBar.classList.remove('translate-y-0', 'opacity-100');
                 }
             }
             
@@ -763,7 +765,7 @@
     </script>
 
     <!-- Floating Batch Action Bar -->
-    <div id="batchActionBar" class="fixed bottom-24 left-0 right-0 mx-auto w-max max-w-[calc(100vw-2rem)] z-[100] pointer-events-none transition-all duration-300 transform translate-y-20 opacity-0">
+    <div id="batchActionBar" style="bottom: 5.5rem;" class="fixed left-0 right-0 mx-auto w-max max-w-[calc(100vw-2rem)] z-[100] pointer-events-none transition-all duration-300 transform translate-y-4 opacity-0">
         <div class="bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl border border-gray-800 flex items-center justify-between gap-6 pointer-events-auto">
             <div class="flex items-center gap-3">
                 <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Batch Actions:</span>
