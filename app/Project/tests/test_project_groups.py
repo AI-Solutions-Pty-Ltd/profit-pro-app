@@ -172,3 +172,31 @@ class TestProjectGroups:
         assert response.status_code == 200
         assert response["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         assert "valuation_summary.xlsx" in response["Content-Disposition"]
+
+    def test_multi_project_valuation_summary_view(self, client, monkeypatch):
+        """Test rendering the ad-hoc multi project valuation summary grouped by province."""
+        self._apply_mocks(monkeypatch)
+        client.force_login(self.user)
+        
+        url = reverse("project:portfolio-multi-valuation-summary") + f"?project_ids={self.project1.pk},{self.project2.pk}"
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "portfolio/reports/multi_project_valuation_summary.html" in [t.name for t in response.templates]
+        
+        reports = response.context["province_reports"]
+        assert len(reports) == 2
+        assert reports[0]["province_name"] == "Gauteng"
+        assert reports[1]["province_name"] == "KwaZulu-Natal"
+        assert response.context["total_budget"] == Decimal("200000.00")
+
+    def test_multi_project_valuation_xlsx(self, client, monkeypatch):
+        """Test downloading the ad-hoc multi project valuation summary XLSX grouped by province."""
+        self._apply_mocks(monkeypatch)
+        client.force_login(self.user)
+        
+        url = reverse("project:portfolio-multi-valuation-summary-xlsx") + f"?project_ids={self.project1.pk},{self.project2.pk}"
+        response = client.get(url)
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert "valuation_summary.xlsx" in response["Content-Disposition"]
+
