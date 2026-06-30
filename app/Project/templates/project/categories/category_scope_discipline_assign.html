@@ -10,7 +10,8 @@
                     {% heroicon_outline "squares-2x2" size="20" class="text-indigo-500" %}
                     <h3 class="text-base font-semibold text-gray-900">Assign Disciplines — WBS Level 1</h3>
                 </div>
-                <button type="button" onclick="closeScopeCategoryDisciplineModal()"
+                <button type="button"
+                        onclick="closeScopeCategoryDisciplineModal()"
                         class="p-1 text-gray-400 rounded hover:bg-gray-100 hover:text-gray-600 transition-colors">
                     {% heroicon_outline "x-mark" size="18" %}
                 </button>
@@ -27,10 +28,13 @@
                 <!-- Disciplines list -->
                 <div>
                     <label class="block mb-1.5 text-xs font-medium tracking-wide text-gray-500 uppercase">Select Disciplines</label>
-                    <div class="max-h-60 overflow-y-auto pr-1 space-y-2" id="scope_category_disc_list">
+                    <div class="max-h-60 overflow-y-auto pr-1 space-y-2"
+                         id="scope_category_disc_list">
                         {% for discipline in project.disciplines.all %}
                             <label class="flex items-center gap-3 px-3 py-2 bg-gray-50 hover:bg-gray-100/70 border border-gray-200 rounded-lg cursor-pointer transition-colors">
-                                <input type="checkbox" name="scope_category_disciplines" value="{{ discipline.pk }}"
+                                <input type="checkbox"
+                                       name="scope_category_disciplines"
+                                       value="{{ discipline.pk }}"
                                        class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                                 <div class="min-w-0 flex-1">
                                     <div class="text-sm font-medium text-gray-700 truncate">{{ discipline.name }}</div>
@@ -50,11 +54,13 @@
             </div>
             <!-- Footer -->
             <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
-                <button type="button" onclick="closeScopeCategoryDisciplineModal()"
+                <button type="button"
+                        onclick="closeScopeCategoryDisciplineModal()"
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
-                <button type="button" id="scopeCategoryDisciplineSaveBtn"
+                <button type="button"
+                        id="scopeCategoryDisciplineSaveBtn"
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                         {% if not project.disciplines.exists %}disabled{% endif %}>
                     {% heroicon_outline "check" size="16" %}

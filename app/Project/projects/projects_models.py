@@ -1367,4 +1367,3 @@ class ProjectGroup(BaseModel):
         verbose_name = "Project Group"
         verbose_name_plural = "Project Groups"
         ordering = ["name"]
-

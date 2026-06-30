@@ -202,19 +202,27 @@ def export_group_summary_report_to_xlsx(group_name, province_reports):
     # Signatory spaces
     current_row += 3
     ws.row_dimensions[current_row].height = 20
-    cell_p = ws.cell(row=current_row, column=1, value="Prepared By (Quantity Surveyor):")
+    cell_p = ws.cell(
+        row=current_row, column=1, value="Prepared By (Quantity Surveyor):"
+    )
     cell_p.font = font_bold
     cell_r = ws.cell(row=current_row, column=4, value="Reviewed By (Contractor):")
     cell_r.font = font_bold
     cell_a = ws.cell(row=current_row, column=7, value="Approved By (Client):")
     cell_a.font = font_bold
-    
+
     current_row += 2
     ws.row_dimensions[current_row].height = 18
-    ws.cell(row=current_row, column=1, value="___________________________").font = font_bold
-    ws.cell(row=current_row, column=4, value="___________________________").font = font_bold
-    ws.cell(row=current_row, column=7, value="___________________________").font = font_bold
-    
+    ws.cell(
+        row=current_row, column=1, value="___________________________"
+    ).font = font_bold
+    ws.cell(
+        row=current_row, column=4, value="___________________________"
+    ).font = font_bold
+    ws.cell(
+        row=current_row, column=7, value="___________________________"
+    ).font = font_bold
+
     current_row += 1
     ws.cell(row=current_row, column=1, value="Signature / Date").font = font_subtitle
     ws.cell(row=current_row, column=4, value="Signature / Date").font = font_subtitle

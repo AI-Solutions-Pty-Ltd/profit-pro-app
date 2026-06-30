@@ -5,15 +5,21 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, cast
 
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
-from django.shortcuts import redirect
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.views import View
 from django.views.generic import (
+    DetailView,
     ListView,
     TemplateView,
 )
 
-from app.Account.models import Account
+from app.Account.models import Account, Province
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
@@ -1384,16 +1390,6 @@ class RiskReportView(PortfolioReportMixin):
         return context
 
 
-from django.contrib import messages
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django.urls import reverse
-from django.views import View
-from django.views.generic import DetailView
-
-from app.Account.models import Province
-
-
 class PortfolioProvinceSummaryView(
     SubscriptionRequiredMixin, BreadcrumbMixin, TemplateView
 ):
@@ -2564,11 +2560,6 @@ class MultiProjectValuationSummaryDownloadXLSXView(SubscriptionRequiredMixin, Vi
             return redirect("project:project-list")
 
 
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
-from django.views import View
-
-
 class ProjectGroupCreateView(LoginRequiredMixin, View):
     """AJAX endpoint to create a new project group (with unique check per user)."""
 
@@ -3337,12 +3328,17 @@ class MultiProjectValuationSummaryDownloadPDFView(SubscriptionRequiredMixin, Vie
 
         try:
             from django.template.loader import render_to_string
+
             from app.core.Utilities.generate_pdf import generate_pdf
 
-            html_content = render_to_string("portfolio/reports/valuation_summary_pdf.html", context)
+            html_content = render_to_string(
+                "portfolio/reports/valuation_summary_pdf.html", context
+            )
             pdf_file = generate_pdf(html_content)
             response = HttpResponse(pdf_file, content_type="application/pdf")
-            response["Content-Disposition"] = 'attachment; filename="aggregated_valuation_summary.pdf"'
+            response["Content-Disposition"] = (
+                'attachment; filename="aggregated_valuation_summary.pdf"'
+            )
             response["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response["Pragma"] = "no-cache"
             response["Expires"] = "0"
@@ -3487,12 +3483,17 @@ class GroupValuationSummaryDownloadPDFView(SubscriptionRequiredMixin, View):
 
         try:
             from django.template.loader import render_to_string
+
             from app.core.Utilities.generate_pdf import generate_pdf
 
-            html_content = render_to_string("portfolio/reports/valuation_summary_pdf.html", context)
+            html_content = render_to_string(
+                "portfolio/reports/valuation_summary_pdf.html", context
+            )
             pdf_file = generate_pdf(html_content)
             response = HttpResponse(pdf_file, content_type="application/pdf")
-            filename = f"group_{group.name.lower().replace(' ', '_')}_valuation_summary.pdf"
+            filename = (
+                f"group_{group.name.lower().replace(' ', '_')}_valuation_summary.pdf"
+            )
             response["Content-Disposition"] = f'attachment; filename="{filename}"'
             response["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response["Pragma"] = "no-cache"

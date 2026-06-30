@@ -64,14 +64,4 @@ urlpatterns = [
         project_views.ProjectReportLayoutPreviewView.as_view(),
         name="project-layout-preview",
     ),
-    path(
-        "<int:pk>/cover-page/",
-        project_views.ProjectCoverPageRedirectView.as_view(),
-        name="project-cover-page-redirect",
-    ),
-    path(
-        "<int:pk>/valuation-summary/",
-        project_views.ProjectValuationSummaryRedirectView.as_view(),
-        name="project-valuation-summary-redirect",
-    ),
 ]

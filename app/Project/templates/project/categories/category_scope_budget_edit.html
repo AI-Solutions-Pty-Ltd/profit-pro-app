@@ -10,7 +10,8 @@
                     {% heroicon_outline "banknotes" size="20" class="text-indigo-500" %}
                     <h3 class="text-base font-semibold text-gray-900">Edit Budget — WBS Level 1</h3>
                 </div>
-                <button type="button" onclick="closeScopeCategoryBudgetModal()"
+                <button type="button"
+                        onclick="closeScopeCategoryBudgetModal()"
                         class="p-1 text-gray-400 rounded hover:bg-gray-100 hover:text-gray-600 transition-colors">
                     {% heroicon_outline "x-mark" size="18" %}
                 </button>
@@ -27,34 +28,52 @@
                 <!-- Budget Fields -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label for="scope_category_budget_val" class="block mb-1 text-sm font-medium text-gray-700">Budget (R)</label>
-                        <input type="number" step="0.01" min="0" id="scope_category_budget_val"
+                        <label for="scope_category_budget_val"
+                               class="block mb-1 text-sm font-medium text-gray-700">Budget (R)</label>
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               id="scope_category_budget_val"
                                class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
                     </div>
                     <div>
-                        <label for="scope_category_supply_only" class="block mb-1 text-sm font-medium text-gray-700">Supply Only (R)</label>
-                        <input type="number" step="0.01" min="0" id="scope_category_supply_only"
+                        <label for="scope_category_supply_only"
+                               class="block mb-1 text-sm font-medium text-gray-700">Supply Only (R)</label>
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               id="scope_category_supply_only"
                                class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
                     </div>
                     <div>
-                        <label for="scope_category_install_only" class="block mb-1 text-sm font-medium text-gray-700">Install Only (R)</label>
-                        <input type="number" step="0.01" min="0" id="scope_category_install_only"
+                        <label for="scope_category_install_only"
+                               class="block mb-1 text-sm font-medium text-gray-700">Install Only (R)</label>
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               id="scope_category_install_only"
                                class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
                     </div>
                     <div>
-                        <label for="scope_category_preliminaries" class="block mb-1 text-sm font-medium text-gray-700">Preliminaries (R)</label>
-                        <input type="number" step="0.01" min="0" id="scope_category_preliminaries"
+                        <label for="scope_category_preliminaries"
+                               class="block mb-1 text-sm font-medium text-gray-700">Preliminaries (R)</label>
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               id="scope_category_preliminaries"
                                class="block w-full px-3 py-2 text-sm rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors">
                     </div>
                 </div>
             </div>
             <!-- Footer -->
             <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
-                <button type="button" onclick="closeScopeCategoryBudgetModal()"
+                <button type="button"
+                        onclick="closeScopeCategoryBudgetModal()"
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
-                <button type="button" id="scopeCategoryBudgetSaveBtn"
+                <button type="button"
+                        id="scopeCategoryBudgetSaveBtn"
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                     {% heroicon_outline "check" size="16" %}
                     Save Budget

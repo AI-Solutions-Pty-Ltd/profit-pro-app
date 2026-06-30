@@ -59,9 +59,7 @@
                                     <tr class="{% if field.style.is_bold and section.id != 'section_a' %}bg-indigo-50 font-bold{% else %}bg-white hover:bg-gray-50{% endif %}">
                                         {% if section.id == 'section_a' %}
                                             <th class="px-4 py-3 text-left font-medium text-gray-600 w-1/3">{{ field.label }}</th>
-                                            <td class="px-4 py-3 text-gray-900">
-                                                {{ field.formatted_value|default:"—" }}
-                                            </td>
+                                            <td class="px-4 py-3 text-gray-900">{{ field.formatted_value|default:"—" }}</td>
                                         {% else %}
                                             <td class="px-4 py-3 {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %}">
                                                 {{ field.label }}

@@ -1,5 +1,12 @@
 from django.urls import path
 
+from app.Project.categories import (
+    category_views,
+    discipline_views,
+    stage_views,
+    subcategory_views,
+)
+
 from . import views
 
 app_name = "estimator"
@@ -611,6 +618,90 @@ urlpatterns = [
     ),
     # ── System Library ────────────────────────────────────────────
     path("system/", views.SystemTradeCodeListView.as_view(), name="sys_trade_codes"),
+    # System Sectors
+    path(
+        "system/sectors/",
+        category_views.ProjectCategoryListView.as_view(),
+        name="sys_sectors",
+    ),
+    path(
+        "system/sectors/create/",
+        category_views.ProjectCategoryCreateView.as_view(),
+        name="sys_sector_create",
+    ),
+    path(
+        "system/sectors/<int:pk>/update/",
+        category_views.ProjectCategoryUpdateView.as_view(),
+        name="sys_sector_update",
+    ),
+    path(
+        "system/sectors/<int:pk>/delete/",
+        category_views.ProjectCategoryDeleteView.as_view(),
+        name="sys_sector_delete",
+    ),
+    # System Areas
+    path(
+        "system/areas/",
+        subcategory_views.ProjectSubCategoryListView.as_view(),
+        name="sys_areas",
+    ),
+    path(
+        "system/areas/create/",
+        subcategory_views.ProjectSubCategoryCreateView.as_view(),
+        name="sys_area_create",
+    ),
+    path(
+        "system/areas/<int:pk>/update/",
+        subcategory_views.ProjectSubCategoryUpdateView.as_view(),
+        name="sys_area_update",
+    ),
+    path(
+        "system/areas/<int:pk>/delete/",
+        subcategory_views.ProjectSubCategoryDeleteView.as_view(),
+        name="sys_area_delete",
+    ),
+    # System Disciplines
+    path(
+        "system/disciplines/",
+        discipline_views.ProjectDisciplineListView.as_view(),
+        name="sys_disciplines",
+    ),
+    path(
+        "system/disciplines/create/",
+        discipline_views.ProjectDisciplineCreateView.as_view(),
+        name="sys_discipline_create",
+    ),
+    path(
+        "system/disciplines/<int:pk>/update/",
+        discipline_views.ProjectDisciplineUpdateView.as_view(),
+        name="sys_discipline_update",
+    ),
+    path(
+        "system/disciplines/<int:pk>/delete/",
+        discipline_views.ProjectDisciplineDeleteView.as_view(),
+        name="sys_discipline_delete",
+    ),
+    # System Project Stages
+    path(
+        "system/project-stages/",
+        stage_views.ProjectStageListView.as_view(),
+        name="sys_project_stages",
+    ),
+    path(
+        "system/project-stages/create/",
+        stage_views.ProjectStageCreateView.as_view(),
+        name="sys_project_stage_create",
+    ),
+    path(
+        "system/project-stages/<int:pk>/update/",
+        stage_views.ProjectStageUpdateView.as_view(),
+        name="sys_project_stage_update",
+    ),
+    path(
+        "system/project-stages/<int:pk>/delete/",
+        stage_views.ProjectStageDeleteView.as_view(),
+        name="sys_project_stage_delete",
+    ),
     # System Trade Codes
     path(
         "system/trade-codes/",

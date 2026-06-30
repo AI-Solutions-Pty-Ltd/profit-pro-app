@@ -124,9 +124,7 @@
                                                 <div class="p-1.5 text-green-700 bg-green-100 rounded-lg">{% heroicon_outline "tag" size="16" %}</div>
                                                 <div>
                                                     <h4 class="text-sm font-bold text-green-900">L2: {{ subcategory.name }}</h4>
-                                                    {% if subcategory.description %}
-                                                        <p class="mt-0.5 text-xs text-green-700">{{ subcategory.description }}</p>
-                                                    {% endif %}
+                                                    {% if subcategory.description %}<p class="mt-0.5 text-xs text-green-700">{{ subcategory.description }}</p>{% endif %}
                                                     {% if subcategory.disciplines.exists %}
                                                         <div class="flex flex-wrap gap-1.5 mt-1.5">
                                                             {% for discipline in subcategory.disciplines.all %}
@@ -189,20 +187,18 @@
                                                         <div class="flex items-center space-x-3">
                                                             <div class="p-1 text-purple-700 bg-purple-100 rounded">{% heroicon_outline "folder" size="14" %}</div>
                                                             <div>
-                                                                 <h5 class="text-xs font-bold text-purple-900">L3: {{ group.name }}</h5>
-                                                                 {% if group.description %}
-                                                                     <p class="mt-0.5 text-xs text-purple-700">{{ group.description }}</p>
-                                                                 {% endif %}
-                                                                 {% if group.disciplines.exists %}
-                                                                     <div class="flex flex-wrap gap-1.5 mt-1.5">
-                                                                         {% for discipline in group.disciplines.all %}
-                                                                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
-                                                                                 {% heroicon_outline "squares-2x2" size="10" class="text-purple-400" %}
-                                                                                 {{ discipline.name }}
-                                                                             </span>
-                                                                         {% endfor %}
-                                                                     </div>
-                                                                 {% endif %}
+                                                                <h5 class="text-xs font-bold text-purple-900">L3: {{ group.name }}</h5>
+                                                                {% if group.description %}<p class="mt-0.5 text-xs text-purple-700">{{ group.description }}</p>{% endif %}
+                                                                {% if group.disciplines.exists %}
+                                                                    <div class="flex flex-wrap gap-1.5 mt-1.5">
+                                                                        {% for discipline in group.disciplines.all %}
+                                                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
+                                                                                {% heroicon_outline "squares-2x2" size="10" class="text-purple-400" %}
+                                                                                {{ discipline.name }}
+                                                                            </span>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                {% endif %}
                                                             </div>
                                                         </div>
                                                         <div class="flex items-center space-x-2">

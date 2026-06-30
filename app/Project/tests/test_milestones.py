@@ -105,17 +105,23 @@ class TestMilestoneSetup:
     def test_milestone_form_fields_and_filtering(self):
         """Test that MilestoneForm contains only correct select fields and filters them by project."""
         from app.Project.milestone_schedules.milestone_forms import MilestoneForm
-        from app.Project.tests.factories import ProjectFactory, CategoryFactory, SubCategoryFactory
-        
+        from app.Project.tests.factories import (
+            CategoryFactory,
+            ProjectFactory,
+            SubCategoryFactory,
+        )
+
         project = ProjectFactory()
         category1 = CategoryFactory(project=project, name="Cat A")
-        category2 = CategoryFactory(name="Other Cat")  # Not for this project
-        
-        subcat1 = SubCategoryFactory(project=project, category=category1, name="SubCat A")
-        subcat2 = SubCategoryFactory(name="Other SubCat")
-        
+        _category2 = CategoryFactory(name="Other Cat")  # Not for this project
+
+        subcat1 = SubCategoryFactory(
+            project=project, category=category1, name="SubCat A"
+        )
+        _subcat2 = SubCategoryFactory(name="Other SubCat")
+
         form = MilestoneForm(project=project)
-        
+
         # Assert old date fields are removed
         assert "project_category_start_date" not in form.fields
         assert "project_category_end_date" not in form.fields
@@ -125,15 +131,14 @@ class TestMilestoneSetup:
         assert "project_group_end_date" not in form.fields
         assert "project_discipline_start_date" not in form.fields
         assert "project_discipline_end_date" not in form.fields
-        
+
         # Assert classification select fields are present
         assert "project_category" in form.fields
         assert "project_sub_category" in form.fields
         assert "project_group" in form.fields
         assert "area" in form.fields
         assert "project_discipline" in form.fields
-        
+
         # Assert querysets are filtered by project
         assert list(form.fields["project_category"].queryset) == [category1]
         assert list(form.fields["project_sub_category"].queryset) == [subcat1]
-

@@ -85,6 +85,26 @@
                             {% heroicon_outline "globe-alt" class="inline-block mr-1 w-4 h-4" %}
                             Provinces
                         </a>
+                        <a href="{% url 'estimator:sys_sectors' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'sys_sectors' or url_name == 'sys_sector_create' or url_name == 'sys_sector_update' or url_name == 'sys_sector_delete' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "tag" class="inline-block mr-1 w-4 h-4" %}
+                            Sectors
+                        </a>
+                        <a href="{% url 'estimator:sys_areas' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'sys_areas' or url_name == 'sys_area_create' or url_name == 'sys_area_update' or url_name == 'sys_area_delete' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "tag" class="inline-block mr-1 w-4 h-4" %}
+                            Areas
+                        </a>
+                        <a href="{% url 'estimator:sys_disciplines' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'sys_disciplines' or url_name == 'sys_discipline_create' or url_name == 'sys_discipline_update' or url_name == 'sys_discipline_delete' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "academic-cap" class="inline-block mr-1 w-4 h-4" %}
+                            Disciplines
+                        </a>
+                        <a href="{% url 'estimator:sys_project_stages' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'sys_project_stages' or url_name == 'sys_project_stage_create' or url_name == 'sys_project_stage_update' or url_name == 'sys_project_stage_delete' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "tag" class="inline-block mr-1 w-4 h-4" %}
+                            Project Stages
+                        </a>
                     {% endwith %}
                 </nav>
             </div>

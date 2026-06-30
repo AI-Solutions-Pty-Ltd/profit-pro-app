@@ -448,4 +448,3 @@ class ProjectGroupAdmin(SoftDeleteAdmin):
     list_filter = ["deleted", "created_at", "user"]
     search_fields = ["name", "user__email"]
     readonly_fields = ["created_at", "updated_at"]
-

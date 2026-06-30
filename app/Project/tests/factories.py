@@ -557,4 +557,3 @@ class ProjectGroupFactory(DjangoModelFactory):
         if extracted:
             for p in extracted:
                 self.projects.add(p)
-

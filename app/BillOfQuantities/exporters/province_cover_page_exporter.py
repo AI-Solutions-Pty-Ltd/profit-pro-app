@@ -1,7 +1,9 @@
 import datetime
 from decimal import Decimal
+
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
 
 def export_province_cover_page_to_xlsx(province, projects):
     """
@@ -34,23 +36,36 @@ def export_province_cover_page_to_xlsx(province, projects):
     for project in projects:
         orig_val += project.original_contract_value or Decimal("0.00")
         amends_val += project.addendum_contract_value or Decimal("0.00")
-        
+
         # Get latest approved payment certificate
-        cert = project.payment_certificates.filter(
-            status="APPROVED"
-        ).order_by("-certificate_number").first()
-        
+        cert = (
+            project.payment_certificates.filter(status="APPROVED")
+            .order_by("-certificate_number")
+            .first()
+        )
+
         if cert:
             cert_count += 1
-            work_progressive_previous += cert.work_progressive_previous or Decimal("0.00")
-            contract_current_claim_total += cert.contract_current_claim_total or Decimal("0.00")
-            addendum_current_claim_total += cert.addendum_current_claim_total or Decimal("0.00")
+            work_progressive_previous += cert.work_progressive_previous or Decimal(
+                "0.00"
+            )
+            contract_current_claim_total += (
+                cert.contract_current_claim_total or Decimal("0.00")
+            )
+            addendum_current_claim_total += (
+                cert.addendum_current_claim_total or Decimal("0.00")
+            )
             work_progressive_to_date += cert.work_progressive_to_date or Decimal("0.00")
-            
-            advance_payment += cert.get_advance_payment_total() + cert.previous_advance_payment_total
+
+            advance_payment += (
+                cert.get_advance_payment_total() + cert.previous_advance_payment_total
+            )
             retention += cert.get_retention_total() + cert.previous_retention_total
-            material_on_site += cert.get_materials_on_site_total() + cert.previous_materials_on_site_total
-            
+            material_on_site += (
+                cert.get_materials_on_site_total()
+                + cert.previous_materials_on_site_total
+            )
+
             # Special items (other)
             totals_by_type = cert.get_special_item_totals_by_type()
             prev_totals_by_type = cert.previous_special_item_totals_by_type
@@ -62,7 +77,9 @@ def export_province_cover_page_to_xlsx(province, projects):
     # If any project has VAT enabled, let's include it in contract/progressive calculations
     # To be precise, let's calculate VAT per project and sum it up
     for project in projects:
-        sub = (project.original_contract_value or Decimal("0.00")) + (project.addendum_contract_value or Decimal("0.00"))
+        sub = (project.original_contract_value or Decimal("0.00")) + (
+            project.addendum_contract_value or Decimal("0.00")
+        )
         if project.vat:
             vat_val_contract += sub * Decimal("0.15")
     total_contract = sub_total_contract + vat_val_contract
@@ -78,14 +95,18 @@ def export_province_cover_page_to_xlsx(province, projects):
     progressive_previous = Decimal("0.00")
     # Sum progressive_previous directly from the latest certificates
     for project in projects:
-        cert = project.payment_certificates.filter(status="APPROVED").order_by("-certificate_number").first()
+        cert = (
+            project.payment_certificates.filter(status="APPROVED")
+            .order_by("-certificate_number")
+            .first()
+        )
         if cert:
             ap_prev = cert.previous_advance_payment_total
             ret_prev = cert.previous_retention_total
             mat_prev = cert.previous_materials_on_site_total
             prev_totals_by_type = cert.previous_special_item_totals_by_type
             other_prev = prev_totals_by_type.get("OTHER", Decimal("0.00"))
-            
+
             progressive_previous += (
                 (cert.progressive_previous or Decimal("0.00"))
                 + ap_prev
@@ -93,23 +114,39 @@ def export_province_cover_page_to_xlsx(province, projects):
                 + mat_prev
                 + other_prev
             )
-            
+
     current_claim_total = progressive_to_date - progressive_previous
-    
+
     # Calculate VAT on payment per project and sum
     vat_val_payment = Decimal("0.00")
     for project in projects:
-        cert = project.payment_certificates.filter(status="APPROVED").order_by("-certificate_number").first()
+        cert = (
+            project.payment_certificates.filter(status="APPROVED")
+            .order_by("-certificate_number")
+            .first()
+        )
         if cert and project.vat:
-            p_prog_to_date = (cert.work_progressive_to_date or Decimal("0.00")) + \
-                             (cert.get_advance_payment_total() + cert.previous_advance_payment_total) + \
-                             (cert.get_retention_total() + cert.previous_retention_total) + \
-                             (cert.get_materials_on_site_total() + cert.previous_materials_on_site_total)
-            p_prev = (cert.work_progressive_previous or Decimal("0.00")) + \
-                     cert.previous_advance_payment_total + cert.previous_retention_total + cert.previous_materials_on_site_total
+            p_prog_to_date = (
+                (cert.work_progressive_to_date or Decimal("0.00"))
+                + (
+                    cert.get_advance_payment_total()
+                    + cert.previous_advance_payment_total
+                )
+                + (cert.get_retention_total() + cert.previous_retention_total)
+                + (
+                    cert.get_materials_on_site_total()
+                    + cert.previous_materials_on_site_total
+                )
+            )
+            p_prev = (
+                (cert.work_progressive_previous or Decimal("0.00"))
+                + cert.previous_advance_payment_total
+                + cert.previous_retention_total
+                + cert.previous_materials_on_site_total
+            )
             p_current = p_prog_to_date - p_prev
             vat_val_payment += p_current * Decimal("0.15")
-            
+
     total_certified = current_claim_total + vat_val_payment
 
     # Precise Colors and Styles
@@ -121,16 +158,26 @@ def export_province_cover_page_to_xlsx(province, projects):
     font_normal = Font(bold=False, color=c_black)
     font_title = Font(bold=True, size=14, color=c_black)
     font_white_bold = Font(bold=True, color=c_white)
-    font_italic_small = Font(italic=True, size=9, color=c_grey_text)
+    _font_italic_small = Font(italic=True, size=9, color=c_grey_text)
 
     align_center = Alignment(horizontal="center", vertical="center")
     align_right = Alignment(horizontal="right", vertical="center")
 
-    fill_light_grey = PatternFill(start_color="FFF2F2F2", end_color="FFF2F2F2", fill_type="solid")
-    fill_white = PatternFill(start_color="FFFFFFFF", end_color="FFFFFFFF", fill_type="solid")
-    fill_dark_blue = PatternFill(start_color="FF1B3A6B", end_color="FF1B3A6B", fill_type="solid")
-    fill_gold = PatternFill(start_color="FFC8963E", end_color="FFC8963E", fill_type="solid")
-    fill_separator = PatternFill(start_color="FF003300", end_color="FF003300", fill_type="solid")
+    fill_light_grey = PatternFill(
+        start_color="FFF2F2F2", end_color="FFF2F2F2", fill_type="solid"
+    )
+    fill_white = PatternFill(
+        start_color="FFFFFFFF", end_color="FFFFFFFF", fill_type="solid"
+    )
+    fill_dark_blue = PatternFill(
+        start_color="FF1B3A6B", end_color="FF1B3A6B", fill_type="solid"
+    )
+    fill_gold = PatternFill(
+        start_color="FFC8963E", end_color="FFC8963E", fill_type="solid"
+    )
+    fill_separator = PatternFill(
+        start_color="FF003300", end_color="FF003300", fill_type="solid"
+    )
 
     border_thin_top_bottom = Border(top=Side(style="thin"), bottom=Side(style="thin"))
     border_thin_bottom = Border(bottom=Side(style="thin"))
@@ -166,7 +213,9 @@ def export_province_cover_page_to_xlsx(province, projects):
 
     today_str = datetime.date.today().strftime("%d %b %Y")
     cert_cell = ws.cell(row=1, column=7, value=f"As of Date:\n{today_str}")
-    cert_cell.alignment = Alignment(wrap_text=True, horizontal="right", vertical="center")
+    cert_cell.alignment = Alignment(
+        wrap_text=True, horizontal="right", vertical="center"
+    )
     cert_cell.font = Font(color=c_grey_text)
 
     # Row 1 Borders
@@ -176,7 +225,9 @@ def export_province_cover_page_to_xlsx(province, projects):
 
     # Row 2: Province Info
     province_info = f"Province: {province.name} | Total Projects: {project_count}"
-    ws.cell(row=2, column=1, value=province_info).font = Font(italic=True, color=c_grey_text)
+    ws.cell(row=2, column=1, value=province_info).font = Font(
+        italic=True, color=c_grey_text
+    )
     ws.cell(row=2, column=1).alignment = align_center
     ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=7)
 
@@ -213,12 +264,16 @@ def export_province_cover_page_to_xlsx(province, projects):
     for col in range(1, 8):
         ws.cell(row=current_row, column=col).fill = fill_light_grey
         ws.cell(row=current_row, column=col).border = border_thin_top_bottom
-    ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=7)
+    ws.merge_cells(
+        start_row=current_row, start_column=1, end_row=current_row, end_column=7
+    )
     current_row += 1
 
     # Section B Columns
     ws.row_dimensions[current_row].height = 15.75
-    ws.cell(row=current_row, column=1, value="Description").font = Font(color=c_grey_text)
+    ws.cell(row=current_row, column=1, value="Description").font = Font(
+        color=c_grey_text
+    )
     ws.cell(row=current_row, column=7, value="Value (R)").font = Font(color=c_grey_text)
     ws.cell(row=current_row, column=7).alignment = align_right
     current_row += 1
@@ -238,7 +293,7 @@ def export_province_cover_page_to_xlsx(province, projects):
         c2 = ws.cell(row=current_row, column=7, value=val)
         c2.number_format = "R #,##0.00;[Red]-R #,##0.00;R 0.00"
         c2.alignment = align_right
-        
+
         if is_bold:
             c1.font = font_bold
             c2.font = font_bold
@@ -257,12 +312,16 @@ def export_province_cover_page_to_xlsx(province, projects):
     for col in range(1, 8):
         ws.cell(row=current_row, column=col).fill = fill_light_grey
         ws.cell(row=current_row, column=col).border = border_thin_top_bottom
-    ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=7)
+    ws.merge_cells(
+        start_row=current_row, start_column=1, end_row=current_row, end_column=7
+    )
     current_row += 1
 
     # Section C Columns
     ws.row_dimensions[current_row].height = 15.75
-    ws.cell(row=current_row, column=1, value="Description").font = Font(color=c_grey_text)
+    ws.cell(row=current_row, column=1, value="Description").font = Font(
+        color=c_grey_text
+    )
     ws.cell(row=current_row, column=7, value="Value (R)").font = Font(color=c_grey_text)
     ws.cell(row=current_row, column=7).alignment = align_right
     current_row += 1
@@ -272,7 +331,11 @@ def export_province_cover_page_to_xlsx(province, projects):
         ("Contract Current Claim", contract_current_claim_total, False),
         ("Addendum Current Claim", addendum_current_claim_total, False),
         ("Work Progressive to Date", work_progressive_to_date, True),
-        ("Less: Advance Payment", -advance_payment if advance_payment > 0 else advance_payment, False),
+        (
+            "Less: Advance Payment",
+            -advance_payment if advance_payment > 0 else advance_payment,
+            False,
+        ),
         ("Less: Retention", -retention if retention > 0 else retention, False),
         ("Materials on Site", material_on_site, False),
         ("Other Specify", other_specify, False),
@@ -289,7 +352,7 @@ def export_province_cover_page_to_xlsx(province, projects):
         c2 = ws.cell(row=current_row, column=7, value=val)
         c2.number_format = "R #,##0.00;[Red]-R #,##0.00;R 0.00"
         c2.alignment = align_right
-        
+
         if is_bold:
             c1.font = font_bold
             c2.font = font_bold

@@ -42,7 +42,6 @@
                             <p class="text-xs text-gray-500 mt-1">Leave the file field empty to keep the current file.</p>
                         </div>
                     {% endif %}
-
                     <!-- Render hidden fields if they exist in the form context so Django processes them -->
                     {% if category != 'OTHER' %}
                         {{ form.category.as_hidden }}
@@ -51,7 +50,6 @@
                         {{ form.project_category.as_hidden }}
                         {{ form.area.as_hidden }}
                     {% endif %}
-
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <!-- Left Column: Identification -->
                         <div class="space-y-4">

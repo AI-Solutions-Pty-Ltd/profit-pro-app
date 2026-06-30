@@ -11,9 +11,7 @@
                         Valuation Summary —
                         <span class="text-indigo-600">Province</span>
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Province: {{ province.name|upper }} — Active Projects Breakdown
-                    </p>
+                    <p class="mt-1 text-sm text-gray-500">Province: {{ province.name|upper }} — Active Projects Breakdown</p>
                 </div>
                 <div class="flex gap-3 items-center">
                     <a href="{% url 'project:portfolio-province-summary' %}"
@@ -49,9 +47,8 @@
                         {% for row in projects_data %}
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-4 py-3 font-bold text-gray-900">
-                                    <a href="{% url 'project:project-dashboard' row.project.pk %}" class="text-indigo-600 hover:text-indigo-900">
-                                        {{ row.project.name }}
-                                    </a>
+                                    <a href="{% url 'project:project-dashboard' row.project.pk %}"
+                                       class="text-indigo-600 hover:text-indigo-900">{{ row.project.name }}</a>
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

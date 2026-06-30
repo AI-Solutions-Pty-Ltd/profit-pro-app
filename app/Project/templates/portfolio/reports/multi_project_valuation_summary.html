@@ -11,9 +11,7 @@
                         Valuation Summary —
                         <span class="text-indigo-600">Selected Projects</span>
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Aggregated Valuation Summary for Selected Projects
-                    </p>
+                    <p class="mt-1 text-sm text-gray-500">Aggregated Valuation Summary for Selected Projects</p>
                 </div>
                 <div class="flex gap-3 items-center">
                     <a href="{% url 'project:project-list' %}"
@@ -38,55 +36,73 @@
                 <table class="table table-sm table-pin-rows bg-white w-full">
                     <thead class="bg-gray-800 text-white sticky top-0 z-20">
                         <tr>
-                            <th class="sortable sticky left-0 bg-gray-800 text-white z-30 cursor-pointer hover:bg-gray-700 select-none border-r border-gray-700 px-4 py-3 text-left font-semibold" data-sort="name" data-type="text">
+                            <th class="sortable sticky left-0 bg-gray-800 text-white z-30 cursor-pointer hover:bg-gray-700 select-none border-r border-gray-700 px-4 py-3 text-left font-semibold"
+                                data-sort="name"
+                                data-type="text">
                                 <div class="flex items-center justify-between gap-1">
                                     <span>PROJECT</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="tender" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="tender"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>TENDER AMOUNT</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="variations" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="variations"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>APPROVED VARIATIONS</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="revised" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="revised"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>REVISED CONTRACT VALUE</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="prev" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="prev"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>PREVIOUS CERTIFIED</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="prog" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="prog"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>PROGRESSIVE TO DATE</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="net" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="net"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>NET CLAIMED</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="forecast" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="forecast"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>FORECAST AT COMPLETION</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="variance" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right"
+                                data-sort="variance"
+                                data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>VARIANCE</span>
                                     <span class="sort-indicator opacity-40">↕</span>
@@ -95,10 +111,12 @@
                         </tr>
                     </thead>
                     {% for rep in province_reports %}
-                        <tbody class="province-group divide-y divide-gray-200 bg-white" data-province="{{ rep.province_name }}">
+                        <tbody class="province-group divide-y divide-gray-200 bg-white"
+                               data-province="{{ rep.province_name }}">
                             <!-- Province Header Row -->
                             <tr class="province-header-row bg-indigo-50/50">
-                                <td colspan="9" class="px-4 py-3 font-extrabold text-indigo-900 border-b border-indigo-100">
+                                <td colspan="9"
+                                    class="px-4 py-3 font-extrabold text-indigo-900 border-b border-indigo-100">
                                     <div class="flex items-center gap-1.5 sticky left-8">
                                         {% heroicon_outline "map-pin" class="w-4 h-4 text-indigo-600" %}
                                         Province: {{ rep.province_name }}
@@ -120,14 +138,16 @@
                                     <td class="sticky left-0 bg-white z-10 border-r border-gray-200 pl-8">
                                         <div class="flex flex-col gap-1">
                                             <div class="flex items-center gap-2">
-                                                <a href="{% url 'project:project-dashboard' row.project.pk %}" class="font-bold text-indigo-600 hover:text-indigo-900">
+                                                <a href="{% url 'project:project-dashboard' row.project.pk %}"
+                                                   class="font-bold text-indigo-600 hover:text-indigo-900">
                                                     {{ row.project.name }}
                                                 </a>
                                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                     {{ row.project.get_status_display }}
                                                 </span>
                                             </div>
-                                            <a href="{% url 'bill_of_quantities:payment-certificate-list' row.project.pk %}" class="inline-flex items-center text-xs text-indigo-500 hover:text-indigo-700 font-medium">
+                                            <a href="{% url 'bill_of_quantities:payment-certificate-list' row.project.pk %}"
+                                               class="inline-flex items-center text-xs text-indigo-500 hover:text-indigo-700 font-medium">
                                                 {% heroicon_outline "document-text" class="w-3.5 h-3.5 mr-1" %}
                                                 View Certificates
                                             </a>
@@ -181,9 +201,8 @@
         </div>
     </div>
 {% endblock content %}
-
 {% block extra_css %}
-<style>
+    <style>
     /* Prevent text wrap on sticky cells */
     .table th, .table td {
         white-space: nowrap !important;
@@ -192,11 +211,10 @@
     .project-row:hover td.sticky {
         background-color: #f9fafb !important;
     }
-</style>
+    </style>
 {% endblock extra_css %}
-
 {% block extra_js %}
-<script>
+    <script>
 document.addEventListener("DOMContentLoaded", () => {
     const headers = document.querySelectorAll("th.sortable");
     let currentSort = { column: null, direction: 'asc' };
@@ -262,5 +280,5 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
-</script>
+    </script>
 {% endblock extra_js %}
