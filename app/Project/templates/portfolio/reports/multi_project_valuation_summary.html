@@ -33,55 +33,55 @@
                 <table class="table table-sm table-pin-rows bg-white w-full">
                     <thead class="bg-gray-800 text-white sticky top-0 z-20">
                         <tr>
-                            <th class="sortable sticky left-0 bg-gray-800 z-30 cursor-pointer hover:bg-gray-700 select-none border-r border-gray-700 px-4 py-3 text-left font-semibold" data-sort="name" data-type="text">
+                            <th class="sortable sticky left-0 bg-gray-800 text-white z-30 cursor-pointer hover:bg-gray-700 select-none border-r border-gray-700 px-4 py-3 text-left font-semibold" data-sort="name" data-type="text">
                                 <div class="flex items-center justify-between gap-1">
                                     <span>PROJECT</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="tender" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="tender" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>TENDER AMOUNT</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="variations" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="variations" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>APPROVED VARIATIONS</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="revised" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="revised" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>REVISED CONTRACT VALUE</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="prev" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="prev" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>PREVIOUS CERTIFIED</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="prog" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="prog" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>PROGRESSIVE TO DATE</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="net" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="net" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>NET CLAIMED</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="forecast" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="forecast" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>FORECAST AT COMPLETION</span>
                                     <span class="sort-indicator opacity-40">↕</span>
                                 </div>
                             </th>
-                            <th class="sortable cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="variance" data-type="numeric">
+                            <th class="sortable bg-gray-800 text-white cursor-pointer hover:bg-gray-700 select-none px-4 py-3 font-semibold text-right" data-sort="variance" data-type="numeric">
                                 <div class="flex items-center justify-end gap-1">
                                     <span>VARIANCE</span>
                                     <span class="sort-indicator opacity-40">↕</span>
@@ -94,7 +94,7 @@
                             <!-- Province Header Row -->
                             <tr class="province-header-row bg-indigo-50/50">
                                 <td colspan="9" class="px-4 py-3 font-extrabold text-indigo-900 border-b border-indigo-100">
-                                    <div class="flex items-center gap-1.5">
+                                    <div class="flex items-center gap-1.5 sticky left-8">
                                         {% heroicon_outline "map-pin" class="w-4 h-4 text-indigo-600" %}
                                         Province: {{ rep.province_name }}
                                     </div>
@@ -140,7 +140,7 @@
                             {% endfor %}
                             <!-- Province Sub-total Row -->
                             <tr class="province-subtotal-row bg-slate-50 font-semibold text-slate-800">
-                                <td class="px-4 py-3 pl-8 uppercase">{{ rep.province_name }} Sub-total</td>
+                                <td class="sticky left-0 bg-slate-50 z-10 border-r border-gray-200 px-4 py-3 pl-8 uppercase">{{ rep.province_name }} Sub-total</td>
                                 <td class="px-4 py-3 font-mono text-right">R {{ rep.budget|floatformat:2|intcomma }}</td>
                                 <td class="px-4 py-3 font-mono text-right">R {{ rep.variations|floatformat:2|intcomma }}</td>
                                 <td class="px-4 py-3 font-mono text-right text-slate-900 font-bold">R {{ rep.revised|floatformat:2|intcomma }}</td>
@@ -160,7 +160,7 @@
                     {% endfor %}
                     <tfoot class="font-bold bg-slate-200 border-t-2 border-slate-400 text-slate-900 sticky bottom-0 z-20">
                         <tr>
-                            <td class="px-4 py-3 uppercase">Total Selected Work Done</td>
+                            <td class="sticky left-0 bg-slate-200 z-10 border-r border-slate-300 px-4 py-3 uppercase">Total Selected Work Done</td>
                             <td class="px-4 py-3 font-mono text-right">R {{ total_budget|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right">R {{ total_variations|floatformat:2|intcomma }}</td>
                             <td class="px-4 py-3 font-mono text-right">R {{ total_revised|floatformat:2|intcomma }}</td>
