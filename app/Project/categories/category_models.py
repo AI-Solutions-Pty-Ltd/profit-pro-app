@@ -19,7 +19,7 @@ class ProjectCategory(BaseModel):
     )
     description = models.TextField(
         blank=True,
-        help_text="Optional description of the category",
+        help_text="Optional description ",
     )
 
     def __str__(self) -> str:
@@ -44,7 +44,7 @@ class ProjectSubCategory(BaseModel):
     )
     description = models.TextField(
         blank=True,
-        help_text="Optional description of the category",
+        help_text="Optional description ",
     )
 
     def __str__(self) -> str:

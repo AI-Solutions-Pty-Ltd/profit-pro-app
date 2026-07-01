@@ -1,11 +1,11 @@
 <!-- Edit Modal -->
 <div id="editCategoryModal"
-     class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+     class="hidden fixed inset-0 z-50 bg-gray-500 bg-opacity-75 transition-opacity">
+    <div class="flex justify-center items-center p-4 min-h-screen">
+        <div class="w-full max-w-md bg-white rounded-lg shadow-xl">
             <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Edit Category</h3>
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit WBS Level</h3>
                     <button type="button"
                             onclick="closeEditCategoryModal()"
                             class="text-gray-400 hover:text-gray-500">
@@ -21,16 +21,16 @@
                         <div>{{ form.description|as_crispy_field }}</div>
                     </div>
                 </div>
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                <div class="flex gap-3 justify-end px-6 py-4 bg-gray-50 border-t border-gray-200">
                     <button type="button"
                             onclick="closeEditCategoryModal()"
-                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "check" size="16" class="inline mr-1" %}
-                        Update Category
+                        Update WBS Level
                     </button>
                 </div>
             </form>
@@ -44,17 +44,20 @@
     const editCategoryForm = editCategoryModal.querySelector("#editForm");
     
     
-    function openEditCategoryModal(id, name, description) {
+    function openEditCategoryModal(id, name, description, startDate, endDate) {
         const project_pk = {{ project.pk }};
         const nameInput = editCategoryForm.querySelector('#id_name');
         const descriptionInput = editCategoryForm.querySelector('#id_description');
-        
-        
+        const startDateInput = editCategoryForm.querySelector('#id_start_date');
+        const endDateInput = editCategoryForm.querySelector('#id_end_date');
+
         // Set values
         nameInput.value = name;
         descriptionInput.value = description;
+        if (startDateInput) startDateInput.value = startDate || '';
+        if (endDateInput) endDateInput.value = endDate || '';
         editCategoryForm.action = `/project/${project_pk}/categories/${id}/update/`;
-        
+
         // Show modal
         editCategoryModal.classList.remove('hidden');
         nameInput.focus();

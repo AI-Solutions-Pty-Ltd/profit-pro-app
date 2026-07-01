@@ -20,7 +20,7 @@ class TestStakeholderRoleViews:
         self.client = client
         self.user = UserFactory.create(email="admin@test.com")
         self.project = ProjectFactory.create()
-        self.company = ClientFactory.create()
+        self.company = ClientFactory.create(created_by=self.user)
 
         # Grant project admin role to the authenticated user
         ProjectRoleFactory.create(

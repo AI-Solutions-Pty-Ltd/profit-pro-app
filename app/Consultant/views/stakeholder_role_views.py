@@ -268,6 +268,7 @@ class CompanyInviteUserView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, For
                 last_name=form.cleaned_data.get("last_name", ""),
                 primary_contact=form.cleaned_data["primary_contact"],
                 type=account_type,
+                created_by=self.request.user,
             )
             user.set_unusable_password()
             user.save()

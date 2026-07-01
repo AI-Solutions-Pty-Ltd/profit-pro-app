@@ -1,0 +1,355 @@
+{% load template_extras %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{ title }}</title>
+        <style>
+        @page {
+            size: a4 landscape;
+            margin: 1cm;
+            margin-bottom: 20mm;
+            @frame footer {
+                -pdf-frame-content: running-footer;
+                bottom: 5mm;
+                height: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+            }
+        }
+        body {
+            font-family: 'Inter', Arial, Helvetica, sans-serif;
+            font-size: 8.5pt;
+            line-height: 1.4;
+            margin: 0;
+            padding: 10px;
+            color: #111827;
+        }
+
+        /* Title table matching certificate summary report */
+        .title-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2px;
+        }
+        .title-table td {
+            vertical-align: middle;
+        }
+        .logo-box {
+            text-align: center;
+            height: 80px;
+            width: 20%;
+            background-color: #f3f4f6;
+            border: 1px solid #e5e7eb;
+        }
+        .cert-box {
+            background-color: #f3f4f6;
+            text-align: center;
+            height: 80px;
+            width: 20%;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+        .center-box {
+            width: 60%;
+            text-align: center;
+            padding: 0 15px;
+        }
+        .subtitle-row {
+            background-color: #f3f4f6;
+            text-align: center;
+            font-style: italic;
+            font-size: 8pt;
+            color: #6b7280;
+            padding: 4px;
+            margin-bottom: 10px;
+            border-left: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* Valuation table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 30px;
+        }
+        .table th {
+            background-color: #1e3a5f;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: right;
+            padding: 6px 8px;
+            border: 1px solid #ffffff;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+        }
+        .table th.text-left {
+            text-align: left;
+        }
+        .table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: right;
+            color: #111827;
+        }
+        .table td.text-left {
+            text-align: left;
+        }
+        .table td.text-center {
+            text-align: center;
+        }
+        .province-row {
+            background-color: #e5e7eb;
+            font-weight: bold;
+            color: #111827;
+        }
+        .province-row td {
+            text-align: left;
+            border-bottom: 1px solid #d1d5db;
+        }
+        .project-row {
+            background-color: #ffffff;
+        }
+        .subtotal-row {
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .subtotal-row td {
+            border-top: 1px solid #9ca3af;
+            border-bottom: 1px solid #9ca3af;
+        }
+        .totals-row {
+            background-color: #c5922e;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        .totals-row td {
+            color: #ffffff !important;
+            border-top: 2px solid #c5922e;
+            border-bottom: 2px solid #c5922e;
+        }
+        .status-badge {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 2px 6px;
+            border-radius: 9999px;
+            font-size: 7.5pt;
+            font-weight: bold;
+        }
+
+        /* Header logo placeholder */
+        .logo-placeholder {
+            color: #9ca3af;
+            font-style: italic;
+            font-size: 11pt;
+            font-weight: bold;
+            line-height: 80px;
+        }
+
+        /* Header title */
+        .report-title {
+            font-size: 16pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #1e3a5f;
+        }
+
+        /* Cert box label */
+        .cert-label {
+            font-size: 8.5pt;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        .cert-date {
+            font-size: 8.5pt;
+            color: #6b7280;
+        }
+
+        /* Column widths */
+        .col-project { width: 25%; }
+        .col-amount  { width: 9.3%; }
+
+        /* Province header padding */
+        .province-cell { padding: 8px; }
+
+        /* Project name cell */
+        .project-name-cell { padding-left: 20px; }
+        .project-name-inner {
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        /* Data cell colours */
+        .td-muted    { color: #4b5563; }
+        .td-bold     { font-weight: bold; color: #111827; }
+        .td-blue     { color: #2563eb; font-weight: bold; }
+        .td-blue-sub { color: #1d4ed8; }
+
+        /* Empty state */
+        .empty-cell {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        /* Signatures */
+        .sig-table {
+            width: 100%;
+            margin-top: 40px;
+            border-collapse: collapse;
+            border: none;
+            page-break-inside: avoid;
+        }
+        .sig-table td {
+            border: none;
+            text-align: left;
+            vertical-align: top;
+        }
+        .sig-title {
+            font-weight: bold;
+            font-size: 9.5pt;
+            color: #374151;
+            margin-bottom: 35px;
+        }
+        .sig-line {
+            border-bottom: 1px solid #9ca3af;
+            margin-bottom: 4px;
+        }
+        .sig-sub {
+            font-size: 8pt;
+            color: #6b7280;
+            margin: 0;
+        }
+        .footer-text {
+            font-style: italic;
+            text-align: center;
+            font-size: 7.5pt;
+            color: #9ca3af;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 5px;
+        }
+        .sig-spacer     { width: 5%; }
+        .sig-col        { width: 30%; padding-right: 25px; }
+        .sig-col-last   { width: 30%; }
+        </style>
+    </head>
+    <body>
+        <div id="running-footer" class="footer-text">
+            Page <pdf:pagenumber /> of <pdf:pagecount />
+        </div>
+        <!-- Header layout matching individual valuation summary -->
+        <table class="title-table">
+            <tr>
+                <td class="logo-box">
+                    <span class="logo-placeholder">[ LOGO ]</span>
+                </td>
+                <td class="center-box">
+                    <div class="report-title">VALUATION SUMMARY</div>
+                </td>
+                <td class="cert-box">
+                    <div class="cert-label">PORTFOLIO REPORT</div>
+                    <div class="cert-date">{% now "d M Y" %}</div>
+                </td>
+            </tr>
+        </table>
+        <div class="subtitle-row">{{ title }} — {{ subtitle }}</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="text-left col-project">PROJECT</th>
+                    <th class="col-amount">TENDER AMOUNT</th>
+                    <th class="col-amount">APPROVED VARIATIONS</th>
+                    <th class="col-amount">REVISED CONTRACT VALUE</th>
+                    <th class="col-amount">PREVIOUS CERTIFIED</th>
+                    <th class="col-amount">PROGRESSIVE TO DATE</th>
+                    <th class="col-amount">NET CLAIMED</th>
+                    <th class="col-amount">FORECAST AT COMPLETION</th>
+                    <th class="col-amount">VARIANCE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rep in province_reports %}
+                    <!-- Province Header Row -->
+                    <tr class="province-row">
+                        <td class="province-cell" colspan="9">Province: {{ rep.province_name }}</td>
+                    </tr>
+                    <!-- Projects in Province -->
+                    {% for row in rep.projects %}
+                        <tr class="project-row">
+                            <td class="text-left project-name-cell">
+                                <div class="project-name-inner">
+                                    {{ row.project.name }} &nbsp;
+                                    <span class="status-badge">{{ row.project.get_status_display }}</span>
+                                </div>
+                            </td>
+                            <td class="td-muted">R {{ row.contract_value|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.variations|floatformat:2|space_intcomma }}</td>
+                            <td class="td-bold">R {{ row.revised_contract_value|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.certified_previous|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.certified_amount|floatformat:2|space_intcomma }}</td>
+                            <td class="td-blue">R {{ row.net_claimed|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.forecast_amount|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.variance|floatformat:2|space_intcomma }}</td>
+                        </tr>
+                    {% endfor %}
+                    <!-- Province Sub-total Row -->
+                    <tr class="subtotal-row">
+                        <td class="text-left project-name-cell">{{ rep.province_name }} Sub-total</td>
+                        <td>R {{ rep.budget|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.variations|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.revised|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.previous|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.cumulative|floatformat:2|space_intcomma }}</td>
+                        <td class="td-blue-sub">R {{ rep.net|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.forecast|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.variance|floatformat:2|space_intcomma }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td class="empty-cell" colspan="9">No projects found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="totals-row">
+                    <td class="text-left">{{ totals_label|default:"Grand Totals" }}</td>
+                    <td>R {{ total_budget|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_variations|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_revised|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_previous|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_cumulative|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_current|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_forecast|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_variance|floatformat:2|space_intcomma }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        <!-- Signatory Spaces -->
+        <table class="sig-table">
+            <tr>
+                <td class="sig-col">
+                    <div class="sig-title">Prepared By (Quantity Surveyor):</div>
+                    <div class="sig-line"></div>
+                    <p class="sig-sub">Signature / Date</p>
+                </td>
+                <td class="sig-spacer"></td>
+                <td class="sig-col">
+                    <div class="sig-title">Reviewed By (Contractor):</div>
+                    <div class="sig-line"></div>
+                    <p class="sig-sub">Signature / Date</p>
+                </td>
+                <td class="sig-spacer"></td>
+                <td class="sig-col-last">
+                    <div class="sig-title">Approved By (Client):</div>
+                    <div class="sig-line"></div>
+                    <p class="sig-sub">Signature / Date</p>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>

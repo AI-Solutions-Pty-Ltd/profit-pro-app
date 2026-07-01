@@ -91,6 +91,7 @@ class ClientCreateView(ClientMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.type = Company.Type.CLIENT
+        form.instance.created_by = self.request.user
 
         messages.success(self.request, "Client created successfully.")
         response = super().form_valid(form)
@@ -98,6 +99,11 @@ class ClientCreateView(ClientMixin, CreateView):
         project.client = self.object
         project.save()
         return response
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def get_success_url(self):
         return reverse_lazy(
@@ -136,9 +142,10 @@ class ClientUpdateView(ClientMixin, UpdateView):
         ]
 
     def get_form_kwargs(self):
-        """Pass client=True to form."""
+        """Pass client=True and user to form."""
         kwargs = super().get_form_kwargs()
         kwargs["client"] = True
+        kwargs["user"] = self.request.user
         return kwargs
 
     def get_context_data(self, **kwargs):

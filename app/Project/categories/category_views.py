@@ -1,32 +1,36 @@
 """Views for Project Category management."""
 
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import JsonResponse
-from django.urls import reverse, reverse_lazy
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic.base import ContextMixin
 
-from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import ProjectCategory
 
 from .category_forms import ProjectCategoryForm
 
 
-class ProjectCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class SystemLibraryMixin(UserPassesTestMixin, ContextMixin):
+    """Mixin for system library views: requires staff."""
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_staff
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_system_view"] = True
+        return context
+
+
+class ProjectCategoryListView(SystemLibraryMixin, ListView):
     """List all project categories."""
 
     model = ProjectCategory
-    template_name = "categories/category_manage.html"
+    template_name = "estimator/system/sector_manage.html"
     context_object_name = "categories"
-    permissions = ["contractor", "consultant"]
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(title="Project Categories", url=None),
-        ]
 
     def get_queryset(self):
         """Return categories ordered by name."""
@@ -39,30 +43,18 @@ class ProjectCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListVie
         return context
 
 
-class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
+class ProjectCategoryCreateView(SystemLibraryMixin, CreateView):
     """Create a new project category."""
 
     model = ProjectCategory
     form_class = ProjectCategoryForm
-    template_name = "categories/category_form.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:category-list")
+    template_name = "estimator/system/sector_form.html"
+    success_url = reverse_lazy("estimator:sys_sectors")
 
-    def get_breadcrumbs(self: "ProjectCategoryCreateView") -> list[BreadcrumbItem]:
-        return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
-            {"title": "Project Categories", "url": reverse("project:category-list")},
-            {"title": "Add Category", "url": None},
-        ]
-
-    def form_valid(self: "ProjectCategoryCreateView", form):
+    def form_valid(self, form):
         """Handle successful form submission."""
-        # Save the form manually to get the object
-        self.object: ProjectCategory = (
-            form.save()
-        )  # This creates and returns the object
+        self.object = form.save()
 
-        # Now you can use self.object immediately
         messages.success(
             self.request, f"Category '{self.object.name}' created successfully."
         )
@@ -78,7 +70,6 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
                 }
             )
 
-        # For non-AJAX, call super() to handle the redirect
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -88,25 +79,13 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
         return super().form_invalid(form)
 
 
-class ProjectCategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
+class ProjectCategoryUpdateView(SystemLibraryMixin, UpdateView):
     """Update a project category."""
 
     model = ProjectCategory
     form_class = ProjectCategoryForm
-    template_name = "categories/category_form.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:category-list")
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Project Categories", url=reverse("project:category-list")
-            ),
-            BreadcrumbItem(title="Edit Category", url=None),
-        ]
+    template_name = "estimator/system/sector_form.html"
+    success_url = reverse_lazy("estimator:sys_sectors")
 
     def form_valid(self, form):
         """Handle successful form submission."""
@@ -135,24 +114,12 @@ class ProjectCategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, Updat
         return super().form_invalid(form)
 
 
-class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
+class ProjectCategoryDeleteView(SystemLibraryMixin, DeleteView):
     """Delete a project category."""
 
     model = ProjectCategory
-    template_name = "categories/category_confirm_delete.html"
-    permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:category-list")
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Project Categories", url=reverse("project:category-list")
-            ),
-            BreadcrumbItem(title="Delete Category", url=None),
-        ]
+    template_name = "estimator/system/sector_confirm_delete.html"
+    success_url = reverse_lazy("estimator:sys_sectors")
 
     def form_valid(self, form):
         """Handle successful deletion."""
@@ -191,6 +158,4 @@ class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, Delet
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
-        from django.shortcuts import redirect
-
-        return redirect("project:category-list")
+        return redirect("estimator:sys_sectors")

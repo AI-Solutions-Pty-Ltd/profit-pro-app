@@ -35,25 +35,12 @@
                 <!-- WBS Classification -->
                 <div>
                     <h3 class="text-base font-medium text-gray-900 mb-4">WBS Classification</h3>
-                    <div class="space-y-4">
-                        <!-- Level 1 -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>{{ form.project_category|as_crispy_field }}</div>
-                            <div>{{ form.project_category_start_date|as_crispy_field }}</div>
-                            <div>{{ form.project_category_end_date|as_crispy_field }}</div>
-                        </div>
-                        <!-- Area (Level 2) -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>{{ form.area|as_crispy_field }}</div>
-                            <div>{{ form.project_sub_category_start_date|as_crispy_field }}</div>
-                            <div>{{ form.project_sub_category_end_date|as_crispy_field }}</div>
-                        </div>
-                        <!-- Level 3 -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>{{ form.project_discipline|as_crispy_field }}</div>
-                            <div>{{ form.project_discipline_start_date|as_crispy_field }}</div>
-                            <div>{{ form.project_discipline_end_date|as_crispy_field }}</div>
-                        </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>{{ form.project_category|as_crispy_field }}</div>
+                        <div>{{ form.project_sub_category|as_crispy_field }}</div>
+                        <div>{{ form.project_group|as_crispy_field }}</div>
+                        <div>{{ form.area|as_crispy_field }}</div>
+                        <div class="md:col-span-2">{{ form.project_discipline|as_crispy_field }}</div>
                     </div>
                 </div>
                 <!-- Planned/Forecast Dates Row -->

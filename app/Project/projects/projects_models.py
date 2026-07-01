@@ -1028,11 +1028,11 @@ class Category(BaseModel):
 
     name = models.CharField(
         max_length=100,
-        help_text="Category name (e.g., Construction, Engineering)",
+        help_text="WBS Level name (e.g., Construction, Engineering)",
     )
     description = models.TextField(
         blank=True,
-        help_text="Optional description of the category",
+        help_text="Optional description ",
     )
     project = models.ForeignKey(
         Project,
@@ -1040,8 +1040,8 @@ class Category(BaseModel):
         blank=True,
         related_name="categories",
     )
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     supply_only = models.DecimalField(
         max_digits=15,
@@ -1063,6 +1063,12 @@ class Category(BaseModel):
         blank=True,
         null=True,
         help_text="Preliminaries cost",
+    )
+    disciplines = models.ManyToManyField(
+        "Discipline",
+        blank=True,
+        related_name="categories",
+        help_text="Disciplines assigned to this WBS Level 1",
     )
 
     if TYPE_CHECKING:
@@ -1098,8 +1104,8 @@ class SubCategory(BaseModel):
         blank=True,
         related_name="subcategories",
     )
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     supply_only = models.DecimalField(
         max_digits=15,
@@ -1121,6 +1127,12 @@ class SubCategory(BaseModel):
         blank=True,
         null=True,
         help_text="Preliminaries cost",
+    )
+    disciplines = models.ManyToManyField(
+        "Discipline",
+        blank=True,
+        related_name="subcategories",
+        help_text="Disciplines assigned to this WBS Level 2",
     )
 
     if TYPE_CHECKING:
@@ -1156,8 +1168,8 @@ class Group(BaseModel):
         blank=True,
         related_name="groups",
     )
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     supply_only = models.DecimalField(
         max_digits=15,
@@ -1179,6 +1191,12 @@ class Group(BaseModel):
         blank=True,
         null=True,
         help_text="Preliminaries cost",
+    )
+    disciplines = models.ManyToManyField(
+        "Discipline",
+        blank=True,
+        related_name="groups",
+        help_text="Disciplines assigned to this WBS Level 3",
     )
 
     if TYPE_CHECKING:
@@ -1324,3 +1342,28 @@ def create_default_disciplines(sender, instance, created, **kwargs):
                 name=name,
                 defaults={"description": f"{name} discipline"},
             )
+
+
+class ProjectGroup(BaseModel):
+    """Model to group multiple projects (e.g., favorites/custom groups)."""
+
+    user = models.ForeignKey(
+        "Account.Account",
+        on_delete=models.CASCADE,
+        related_name="project_groups",
+        help_text="User who owns this project group",
+    )
+    name = models.CharField(max_length=255)
+    projects = models.ManyToManyField(
+        "Project.Project",
+        related_name="project_groups",
+        help_text="Projects in this group",
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.user.email})"
+
+    class Meta:
+        verbose_name = "Project Group"
+        verbose_name_plural = "Project Groups"
+        ordering = ["name"]

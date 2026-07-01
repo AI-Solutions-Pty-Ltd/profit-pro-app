@@ -1,0 +1,146 @@
+{% extends "base_full.html" %}
+{% load humanize heroicons %}
+{% block title %}
+    Province Summary - Portfolio
+{% endblock title %}
+{% block content %}
+    <!-- Dashboard Navigation Tabs -->
+    <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
+        <div class="border-b border-gray-200">{% include "portfolio/reports_nav.html" with tab="province_summary" %}</div>
+    </div>
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Province Summary</h1>
+                    <p class="text-sm text-gray-600 mt-1">Aggregated financial reports and valuation summary grouped by province</p>
+                </div>
+                <a href="{% url 'project:portfolio-dashboard' %}"
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+        <!-- Province Selector -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <label for="province-select" class="text-sm font-semibold text-gray-700">Select Province to View Reports:</label>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="province-select"
+                            class="block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                        <option value="">-- Select a Province --</option>
+                        {% for p in all_provinces %}
+                            <option value="{{ p.pk }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="view-cover-page-btn"
+                            disabled
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-semibold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                        {% heroicon_outline "document" size="14" class="mr-1 text-indigo-600" %}
+                        Cover Page
+                    </button>
+                    <button id="view-valuation-summary-btn"
+                            disabled
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs font-semibold rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                        {% heroicon_outline "table-cells" size="14" class="mr-1 text-indigo-600" %}
+                        Valuation Summary
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Report Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">PROVINCE</th>
+                        <th class="px-6 py-3 text-center font-semibold text-gray-700">ACTIVE PROJECTS</th>
+                        <th class="px-6 py-3 text-center font-semibold text-gray-700">ACTIVE CERTIFICATES</th>
+                        <th class="px-6 py-3 text-right font-semibold text-gray-700">ORIGINAL CONTRACT VALUE</th>
+                        <th class="px-6 py-3 text-right font-semibold text-gray-700">TOTAL CERTIFIED VALUE</th>
+                        <th class="px-6 py-3 text-center font-semibold text-gray-700">REPORTS & EXPORTS</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for row in province_data %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 font-bold text-gray-900">{{ row.province.name }}</td>
+                            <td class="px-6 py-4 text-center font-semibold text-gray-800">{{ row.project_count }}</td>
+                            <td class="px-6 py-4 text-center text-gray-600">{{ row.certs_count }} of {{ row.project_count }}</td>
+                            <td class="px-6 py-4 text-right font-mono text-gray-900 font-medium">R {{ row.total_contract_value|floatformat:2|intcomma }}</td>
+                            <td class="px-6 py-4 text-right font-mono text-gray-900 font-medium">R {{ row.total_certified_value|floatformat:2|intcomma }}</td>
+                            <td class="px-6 py-4 text-center space-x-2">
+                                <div class="inline-flex rounded-md shadow-sm">
+                                    <a href="{% url 'project:portfolio-province-cover-page' row.province.pk %}"
+                                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded-l-md text-gray-700 bg-white hover:bg-gray-50">
+                                        {% heroicon_outline "document" size="14" class="mr-1 text-indigo-600" %}
+                                        Cover Page
+                                    </a>
+                                    <a href="{% url 'project:portfolio-province-cover-page-xlsx' row.province.pk %}"
+                                       class="inline-flex items-center px-2 py-1.5 border-t border-b border-r border-gray-300 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50"
+                                       title="Download Cover Page XLSX">
+                                        {% heroicon_outline "arrow-down-tray" size="14" class="text-emerald-600" %}
+                                    </a>
+                                </div>
+                                <div class="inline-flex rounded-md shadow-sm">
+                                    <a href="{% url 'project:portfolio-province-valuation-summary' row.province.pk %}"
+                                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded-l-md text-gray-700 bg-white hover:bg-gray-50">
+                                        {% heroicon_outline "table-cells" size="14" class="mr-1 text-indigo-600" %}
+                                        Valuation Summary
+                                    </a>
+                                    <a href="{% url 'project:portfolio-province-valuation-summary-xlsx' row.province.pk %}"
+                                       class="inline-flex items-center px-2 py-1.5 border-t border-b border-r border-gray-300 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50"
+                                       title="Download Valuation Summary XLSX">
+                                        {% heroicon_outline "arrow-down-tray" size="14" class="text-emerald-600" %}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">No active projects found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('province-select');
+            const coverBtn = document.getElementById('view-cover-page-btn');
+            const valuationBtn = document.getElementById('view-valuation-summary-btn');
+            
+            // Base URLs with placeholder (99999)
+            const coverBaseUrl = "{% url 'project:portfolio-province-cover-page' 99999 %}";
+            const valuationBaseUrl = "{% url 'project:portfolio-province-valuation-summary' 99999 %}";
+            
+            select.addEventListener('change', function() {
+                const pk = this.value;
+                if (pk) {
+                    coverBtn.disabled = false;
+                    valuationBtn.disabled = false;
+                } else {
+                    coverBtn.disabled = true;
+                    valuationBtn.disabled = true;
+                }
+            });
+            
+            coverBtn.addEventListener('click', function() {
+                const pk = select.value;
+                if (pk) {
+                    window.location.href = coverBaseUrl.replace('99999', pk);
+                }
+            });
+            
+            valuationBtn.addEventListener('click', function() {
+                const pk = select.value;
+                if (pk) {
+                    window.location.href = valuationBaseUrl.replace('99999', pk);
+                }
+            });
+        });
+    </script>
+{% endblock content %}

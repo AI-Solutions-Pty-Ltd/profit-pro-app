@@ -1,0 +1,78 @@
+{% extends "base_full.html" %}
+{% load humanize heroicons %}
+{% block title %}{{ cover_page_config.title }} — Aggregated{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ cover_page_config.title }}</h1>
+                    <p class="text-sm text-gray-500 mt-1">Aggregated Cover Page for Selected Projects</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'project:project-list' %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                        Back to Projects
+                    </a>
+                    <a href="{% url 'project:portfolio-multi-cover-page-xlsx' %}?project_ids={{ project_ids_str }}"
+                       class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                        {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1" %}
+                        Download XLSX
+                    </a>
+                </div>
+            </div>
+            <!-- Dynamic Aggregated Sections -->
+            {% for section in ordered_sections %}
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200 flex items-center gap-2">
+                        {% if section.id == 'section_a' %}
+                            {% heroicon_outline "building-office" class="w-5 h-5 text-indigo-600" %}
+                        {% elif section.id == 'section_b' %}
+                            {% heroicon_outline "document-text" class="w-5 h-5 text-indigo-600" %}
+                        {% else %}
+                            {% heroicon_outline "calculator" class="w-5 h-5 text-indigo-600" %}
+                        {% endif %}
+                        {{ section.title }}
+                    </h2>
+                    <div class="overflow-hidden rounded-lg border border-gray-200">
+                        <table class="w-full text-sm">
+                            {% if section.id != 'section_a' %}
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">
+                                            {% if section.id == 'section_b' %}
+                                                Contract
+                                            {% else %}
+                                                Payment Due
+                                            {% endif %}
+                                        </th>
+                                        <th class="px-4 py-3 text-right font-medium text-gray-600">Value</th>
+                                    </tr>
+                                </thead>
+                            {% endif %}
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for field in section.fields %}
+                                    <tr class="{% if field.style.is_bold and section.id != 'section_a' %}bg-indigo-50 font-bold{% else %}bg-white hover:bg-gray-50{% endif %}">
+                                        {% if section.id == 'section_a' %}
+                                            <th class="px-4 py-3 text-left font-medium text-gray-600 w-1/3">{{ field.label }}</th>
+                                            <td class="px-4 py-3 text-gray-900">{{ field.formatted_value|default:"—" }}</td>
+                                        {% else %}
+                                            <td class="px-4 py-3 {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %}">
+                                                {{ field.label }}
+                                            </td>
+                                            <td class="px-4 py-3 text-right font-mono {% if field.style.is_bold %}text-indigo-900{% else %}text-gray-900{% endif %}">
+                                                {{ field.formatted_value }}
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}

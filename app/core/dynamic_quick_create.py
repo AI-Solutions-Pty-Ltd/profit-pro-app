@@ -103,6 +103,8 @@ class QuickCreateSubmitView(LoginRequiredMixin, View):
             try:
                 with transaction.atomic():
                     instance = form.save(commit=False)
+                    if hasattr(instance, "created_by") and not instance.created_by:
+                        instance.created_by = request.user
                     if config["needs_project"]:
                         project = get_object_or_404(Project, pk=project_pk)
                         instance.project = project

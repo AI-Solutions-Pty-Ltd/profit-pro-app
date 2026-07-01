@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-# DATA_UPLOAD_MAX_NUMBER_FIELDS = 20000
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 20000
 DATA_UPLOAD_MAX_MEMORY_SIZE = 26214400  # 25mb
 AUTH_USER_MODEL = "Account.Account"
 
