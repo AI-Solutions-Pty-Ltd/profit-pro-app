@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 import pytest
+from django.template import Template, Context
 from django.urls import reverse
 
 from app.Account.tests.factories import MunicipalityFactory, ProvinceFactory
@@ -327,3 +328,11 @@ class TestProjectGroups:
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
         assert "valuation_summary.pdf" in response["Content-Disposition"]
+
+    def test_pdf_template_formatting(self):
+        """Test that the space_intcomma template filter formats currency values correctly."""
+        t = Template("{% load template_extras %}{{ val|floatformat:2|space_intcomma }}")
+        c = Context({"val": Decimal("10185098.35")})
+        rendered = t.render(c)
+        assert rendered == "10 185 098.35"
+
