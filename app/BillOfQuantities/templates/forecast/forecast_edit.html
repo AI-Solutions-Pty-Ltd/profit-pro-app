@@ -154,62 +154,64 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                             {% for structure, structure_data in grouped_transactions.items %}
-                                 {% if structure %}
-                                     <tr class="w-full bg-blue-50 transition-colors cursor-pointer select-none structure-header hover:bg-blue-100"
-                                         onclick="toggleStructure({{ structure.pk }})"
-                                         data-structure-id="{{ structure.pk }}">
-                                         <td  class="flex items-center px-6 py-3 text-sm font-semibold text-blue-900">
-                                             <span class="inline-block mr-2 transition-transform duration-200 transform" id="structure-chevron-{{ structure.pk }}">
-                                                 {% heroicon_mini "chevron-down" class="w-4 h-4" %}
-                                             </span>
-                                             Section: {{ structure.name }}
-                                         </td>
-                                         <td></td>
-                                         <td></td>
-                                         <td></td>
-                                         <td></td>
-                                         <td></td>
-                                         <td></td>
-                                     </tr>
-                                 {% endif %}
-                                 {% for bill, bill_data in structure_data.items %}
-                                     {% if bill %}
-                                         <tr class="bg-green-50 transition-colors cursor-pointer select-none bill-header hover:bg-green-100"
-                                             onclick="toggleBill({{ structure.pk|default:'null' }}, {{ bill.pk }})"
-                                             data-structure-parent="{{ structure.pk|default:'' }}"
-                                             data-bill-id="{{ bill.pk }}">
-                                             <td
-                                                 class="flex items-center px-6 py-2 pl-12 text-sm font-medium text-green-900">
-                                                 <span class="inline-block mr-2 transition-transform duration-200 transform" id="bill-chevron-{{ bill.pk }}">
-                                                     {% heroicon_mini "chevron-down" class="w-4 h-4" %}
-                                                 </span>
-                                                 Bill: {{ bill.name }}
-                                             </td>
-                                             <td></td>
-                                             <td></td>
-                                             <td></td>
-                                             <td></td>
-                                             <td></td>
-                                             <td></td>
-                                         </tr>
-                                     {% endif %}
-                                     {% for package, transactions in bill_data.items %}
-                                         {% if package %}
-                                             <tr class="bg-purple-50 transition-colors cursor-pointer select-none package-header hover:bg-purple-100"
-                                                 onclick="togglePackage({{ structure.pk|default:'null' }}, {{ bill.pk|default:'null' }}, {{ package.pk }})"
-                                                 data-structure-parent="{{ structure.pk|default:'' }}"
-                                                 data-bill-parent="{{ bill.pk|default:'' }}"
-                                                 data-package-id="{{ package.pk }}">
-                                                 <td colspan="7"
-                                                     class="flex items-center px-6 py-2 pl-20 text-sm font-medium text-purple-900">
-                                                     <span class="inline-block mr-2 transition-transform duration-200 transform" id="package-chevron-{{ package.pk }}">
-                                                         {% heroicon_mini "chevron-down" class="w-4 h-4" %}
-                                                     </span>
-                                                     Package: {{ package.name }}
-                                                 </td>
-                                             </tr>
-                                         {% endif %}
+                            {% for structure, structure_data in grouped_transactions.items %}
+                                {% if structure %}
+                                    <tr class="w-full bg-blue-50 transition-colors cursor-pointer select-none structure-header hover:bg-blue-100"
+                                        onclick="toggleStructure({{ structure.pk }})"
+                                        data-structure-id="{{ structure.pk }}">
+                                        <td class="flex items-center px-6 py-3 text-sm font-semibold text-blue-900">
+                                            <span class="inline-block mr-2 transition-transform duration-200 transform"
+                                                  id="structure-chevron-{{ structure.pk }}">
+                                                {% heroicon_mini "chevron-down" class="w-4 h-4" %}
+                                            </span>
+                                            Section: {{ structure.name }}
+                                        </td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                {% endif %}
+                                {% for bill, bill_data in structure_data.items %}
+                                    {% if bill %}
+                                        <tr class="bg-green-50 transition-colors cursor-pointer select-none bill-header hover:bg-green-100"
+                                            onclick="toggleBill({{ structure.pk|default:'null' }}, {{ bill.pk }})"
+                                            data-structure-parent="{{ structure.pk|default:'' }}"
+                                            data-bill-id="{{ bill.pk }}">
+                                            <td class="flex items-center px-6 py-2 pl-12 text-sm font-medium text-green-900">
+                                                <span class="inline-block mr-2 transition-transform duration-200 transform"
+                                                      id="bill-chevron-{{ bill.pk }}">
+                                                    {% heroicon_mini "chevron-down" class="w-4 h-4" %}
+                                                </span>
+                                                Bill: {{ bill.name }}
+                                            </td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    {% endif %}
+                                    {% for package, transactions in bill_data.items %}
+                                        {% if package %}
+                                            <tr class="bg-purple-50 transition-colors cursor-pointer select-none package-header hover:bg-purple-100"
+                                                onclick="togglePackage({{ structure.pk|default:'null' }}, {{ bill.pk|default:'null' }}, {{ package.pk }})"
+                                                data-structure-parent="{{ structure.pk|default:'' }}"
+                                                data-bill-parent="{{ bill.pk|default:'' }}"
+                                                data-package-id="{{ package.pk }}">
+                                                <td colspan="7"
+                                                    class="flex items-center px-6 py-2 pl-20 text-sm font-medium text-purple-900">
+                                                    <span class="inline-block mr-2 transition-transform duration-200 transform"
+                                                          id="package-chevron-{{ package.pk }}">
+                                                        {% heroicon_mini "chevron-down" class="w-4 h-4" %}
+                                                    </span>
+                                                    Package: {{ package.name }}
+                                                </td>
+                                            </tr>
+                                        {% endif %}
                                         {% for transaction in transactions %}
                                             <tr class="transaction-row"
                                                 data-structure="{{ transaction.line_item.structure.pk|default:'' }}"
@@ -250,7 +252,10 @@
                                                 <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{{ transaction.line_item.unit_measurement }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{{ transaction.line_item.budgeted_quantity|qty }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                                                    <input type="hidden" name="unit_price_{{ transaction.id }}" id="unit_price_{{ transaction.id }}" value="{{ transaction.line_item.unit_price }}">
+                                                    <input type="hidden"
+                                                           name="unit_price_{{ transaction.id }}"
+                                                           id="unit_price_{{ transaction.id }}"
+                                                           value="{{ transaction.line_item.unit_price }}">
                                                     R {{ transaction.line_item.unit_price|floatformat:2|intcomma }}
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">

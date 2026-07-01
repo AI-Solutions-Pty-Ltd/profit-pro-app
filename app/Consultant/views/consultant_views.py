@@ -79,6 +79,7 @@ class ClientUserListView(UserHasGroupGenericMixin, View):
     def get(self, request, pk, *args, **kwargs):
         """Display the list of users for the client."""
         from django.http import Http404
+
         client = get_object_or_404(Company, pk=pk)
         if not request.user.is_superuser and client.created_by != request.user:
             raise Http404("Client not found")
@@ -116,6 +117,7 @@ class ClientInviteUserView(UserHasGroupGenericMixin, View):
     def get(self, request, pk, user_pk, *args, **kwargs):
         """Display the invite user form."""
         from django.http import Http404
+
         client = get_object_or_404(Company, pk=pk)
         if not request.user.is_superuser and client.created_by != request.user:
             raise Http404("Client not found")
@@ -130,6 +132,7 @@ class ClientInviteUserView(UserHasGroupGenericMixin, View):
     def post(self, request, *args, **kwargs):
         """Process the invite user form."""
         from django.http import Http404
+
         form = ClientUserInviteForm(request.POST)
         client = get_object_or_404(Company, pk=kwargs["pk"])
         if not request.user.is_superuser and client.created_by != request.user:
@@ -271,6 +274,7 @@ class ClientRemoveUserView(UserHasGroupGenericMixin, View):
     def post(self, request, pk, user_pk, *args, **kwargs):
         """Remove the user from the client."""
         from django.http import Http404
+
         client = get_object_or_404(Company, pk=pk)
         if not request.user.is_superuser and client.created_by != request.user:
             raise Http404("Client not found")
@@ -302,6 +306,7 @@ class ClientResendInviteView(UserHasGroupGenericMixin, View):
     def post(self, request, pk, user_pk, *args, **kwargs):
         """Send the invitation email."""
         from django.http import Http404
+
         client = get_object_or_404(Company, pk=pk)
         if not request.user.is_superuser and client.created_by != request.user:
             raise Http404("Client not found")

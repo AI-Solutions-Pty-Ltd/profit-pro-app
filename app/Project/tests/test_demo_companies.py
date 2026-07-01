@@ -159,7 +159,9 @@ class TestDemoCompaniesFormFiltering:
         )
 
         # Mock/simulate the view-level queryset containing the user's projects' companies
-        client_qs = Company.objects.filter(pk__in=[regular_client.pk, regular_user_client.pk])
+        client_qs = Company.objects.filter(
+            pk__in=[regular_client.pk, regular_user_client.pk]
+        )
         contractor_qs = Company.objects.filter(pk=regular_contractor.pk)
 
         # Case A: Active demo user should see both standard (if created by them) and demo companies in ProjectFilterForm
@@ -175,7 +177,9 @@ class TestDemoCompaniesFormFiltering:
             form_demo.fields["client"].queryset.filter(name="Regular Client").exists()
         )
         assert (
-            not form_demo.fields["client"].queryset.filter(name="Regular User's Client").exists()
+            not form_demo.fields["client"]
+            .queryset.filter(name="Regular User's Client")
+            .exists()
         )
         assert (
             form_demo.fields["contractor"]
@@ -188,9 +192,7 @@ class TestDemoCompaniesFormFiltering:
             .exists()
         )
         assert (
-            not form_demo.fields["client"]
-            .queryset.filter(name="Demo Client")
-            .exists()
+            not form_demo.fields["client"].queryset.filter(name="Demo Client").exists()
         )
 
         # Case B: Regular user should see standard companies they created, but NOT demo companies
@@ -204,8 +206,16 @@ class TestDemoCompaniesFormFiltering:
             .queryset.filter(name__contains="Demo Client")
             .exists()
         )
-        assert form_reg.fields["client"].queryset.filter(name="Regular User's Client").exists()
-        assert not form_reg.fields["client"].queryset.filter(name="Regular Client").exists()
+        assert (
+            form_reg.fields["client"]
+            .queryset.filter(name="Regular User's Client")
+            .exists()
+        )
+        assert (
+            not form_reg.fields["client"]
+            .queryset.filter(name="Regular Client")
+            .exists()
+        )
         assert (
             not form_reg.fields["contractor"]
             .queryset.filter(name__contains="Demo Contractor 1")
@@ -228,7 +238,11 @@ class TestDemoCompaniesFormFiltering:
             .queryset.filter(name__contains="Demo Client")
             .exists()
         )
-        assert not form_exp.fields["client"].queryset.filter(name="Regular Client").exists()
+        assert (
+            not form_exp.fields["client"]
+            .queryset.filter(name="Regular Client")
+            .exists()
+        )
         assert (
             not form_exp.fields["contractor"]
             .queryset.filter(name__contains="Demo Contractor 1")

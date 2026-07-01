@@ -1,6 +1,6 @@
 """Mixins for Consultant views."""
 
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
@@ -21,6 +21,7 @@ class ConsultantMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         companies = Company.objects.filter(type=Company.Type.CLIENT)
         if not self.request.user.is_superuser:  # type: ignore
             from app.Account.subscription_config import Subscription
+
             if (
                 self.request.user.subscription == Subscription.DEMO_TIER
                 and self.request.user.is_subscription_expired
@@ -46,14 +47,10 @@ class ClientMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         return qs.order_by("name")
 
     def get_object(self) -> Company:
-        return get_object_or_404(
-            self.get_queryset(), id=self.kwargs["pk"]
-        )
+        return get_object_or_404(self.get_queryset(), id=self.kwargs["pk"])
 
     def get_client(self, slug="pk") -> Company:
-        return get_object_or_404(
-            self.get_queryset(), id=self.kwargs[slug]
-        )
+        return get_object_or_404(self.get_queryset(), id=self.kwargs[slug])
 
 
 class ContractorMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

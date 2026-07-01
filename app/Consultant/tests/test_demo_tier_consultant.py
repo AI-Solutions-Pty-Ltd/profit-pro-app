@@ -32,7 +32,9 @@ class TestDemoTierConsultantAccess(TestCase):
             Account, AccountFactory(subscription=Subscription.FREE_TIER)
         )
 
-        self.client1 = ClientFactory(name="Client 1", type=Company.Type.CLIENT, created_by=self.demo_user)
+        self.client1 = ClientFactory(
+            name="Client 1", type=Company.Type.CLIENT, created_by=self.demo_user
+        )
         self.client2 = ClientFactory(name="Client 2", type=Company.Type.CLIENT)
 
         self.project: Project = cast(
@@ -188,7 +190,10 @@ class TestCreatorOwnershipRestrictions(TestCase):
         self.factory = RequestFactory()
         self.creator: Account = cast(Account, AccountFactory(email="creator@test.com"))
         self.other_user: Account = cast(Account, AccountFactory(email="other@test.com"))
-        self.superuser: Account = cast(Account, AccountFactory(email="admin@test.com", is_superuser=True, is_staff=True))
+        self.superuser: Account = cast(
+            Account,
+            AccountFactory(email="admin@test.com", is_superuser=True, is_staff=True),
+        )
 
         self.client_created_by_creator = ClientFactory(
             name="Creator's Client", type=Company.Type.CLIENT, created_by=self.creator
@@ -200,8 +205,9 @@ class TestCreatorOwnershipRestrictions(TestCase):
     def test_client_list_filters_by_creator(self):
         """Test that non-superuser only sees clients they created."""
         from app.Consultant.views.mixins import ClientMixin
+
         mixin = ClientMixin()
-        
+
         # Creator sees only their client
         request = self.factory.get("/")
         request.user = self.creator
@@ -229,13 +235,14 @@ class TestCreatorOwnershipRestrictions(TestCase):
     def test_client_detail_raises_404_for_non_creator(self):
         """Test that ClientMixin.get_object raises 404 for clients not created by user."""
         from django.http import Http404
+
         from app.Consultant.views.mixins import ClientMixin
-        
+
         mixin = ClientMixin()
         request = self.factory.get("/")
         request.user = self.creator
         mixin.request = request
-        
+
         # Creator can access their client
         mixin.kwargs = {"pk": self.client_created_by_creator.pk}
         obj = mixin.get_object()
@@ -250,4 +257,3 @@ class TestCreatorOwnershipRestrictions(TestCase):
         mixin.request.user = self.superuser
         obj = mixin.get_object()
         self.assertEqual(obj, self.client_created_by_other)
-

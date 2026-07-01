@@ -897,12 +897,16 @@ class ClientForm(forms.ModelForm):
                 first_name="", last_name=""
             ).order_by("first_name", "email")
             if user and not user.is_superuser:
-                self.fields["users"].queryset = self.fields["users"].queryset.filter(created_by=user)
+                self.fields["users"].queryset = self.fields["users"].queryset.filter(
+                    created_by=user
+                )
         self.fields["consultants"].queryset = Account.objects.exclude(
             first_name="", last_name=""
         ).order_by("first_name", "email")
         if user and not user.is_superuser:
-            self.fields["consultants"].queryset = self.fields["consultants"].queryset.filter(created_by=user)
+            self.fields["consultants"].queryset = self.fields[
+                "consultants"
+            ].queryset.filter(created_by=user)
 
         # Apply masking to initial values when editing an existing instance
         if self.instance and self.instance.pk:

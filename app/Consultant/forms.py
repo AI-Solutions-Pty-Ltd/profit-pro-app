@@ -64,6 +64,7 @@ class ProjectClientForm(forms.Form):
             queryset = Company.objects.filter(type=Company.Type.CLIENT)
             if not user.is_superuser:
                 from django.db.models import Q
+
                 q = Q(created_by=user)
                 if project and project.client:
                     q |= Q(pk=project.client.pk)

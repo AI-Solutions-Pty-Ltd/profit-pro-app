@@ -2,7 +2,7 @@ import json
 from decimal import Decimal
 
 import pytest
-from django.template import Template, Context
+from django.template import Context, Template
 from django.urls import reverse
 
 from app.Account.tests.factories import MunicipalityFactory, ProvinceFactory
@@ -335,4 +335,3 @@ class TestProjectGroups:
         c = Context({"val": Decimal("10185098.35")})
         rendered = t.render(c)
         assert rendered == "10 185 098.35"
-

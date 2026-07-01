@@ -381,7 +381,8 @@
                                        class="transition-colors hover:text-indigo-600 truncate inline-block max-w-[220px]"
                                        title="{{ project.name|title }}">{{ project.name|title }}</a>
                                 </div>
-                                <div class="text-xs text-gray-500 truncate" title="{{ project.client.name|default:'No Client' }}">
+                                <div class="text-xs text-gray-500 truncate"
+                                     title="{{ project.client.name|default:'No Client' }}">
                                     {{ project.client.name|default:"No Client" }}
                                 </div>
                             </td>
