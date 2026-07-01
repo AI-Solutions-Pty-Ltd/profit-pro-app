@@ -3778,6 +3778,29 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
+def _validate_plant_spec_name(value, labour_qs, plant_qs=None, exclude_pk=None):
+    """Return an error string if ``value`` is not a valid plant-spec name for
+    the given scope; otherwise return None.
+
+    Plant specs are linked to labour specs by shared name, so the name can only
+    be set to one that already exists as an active labour spec in the same scope.
+    When ``plant_qs`` is given, the name must also be unique among plant specs in
+    that scope (excluding ``exclude_pk``) to avoid hitting the unique constraint.
+    """
+    name = str(value).strip()
+    if not name:
+        return "Specification name is required."
+    if not labour_qs.filter(is_active=True, name=name).exists():
+        return "Name must match an existing labour spec."
+    if plant_qs is not None:
+        clash = plant_qs.filter(name=name)
+        if exclude_pk is not None:
+            clash = clash.exclude(pk=exclude_pk)
+        if clash.exists():
+            return "Another plant spec is already linked to that labour spec."
+    return None
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdatePlantSpecView(View):
     """AJAX endpoint to update fields on a ProjectPlantSpecification."""
@@ -3807,6 +3830,19 @@ class UpdatePlantSpecView(View):
 
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        # A plant spec must stay linked to an existing labour spec by name.
+        if field == "name":
+            error = _validate_plant_spec_name(
+                value,
+                ProjectLabourSpecification.objects.filter(project_id=project_pk),
+                plant_qs=ProjectPlantSpecification.objects.filter(
+                    project_id=project_pk
+                ),
+                exclude_pk=item.pk,
+            )
+            if error:
+                return JsonResponse({"error": error}, status=400)
 
         field_type = self.ALLOWED_FIELDS[field]
         try:
@@ -7556,6 +7592,9 @@ class SystemPlantSpecListView(SystemLibraryMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPlantSpecificationForm())
         context["plants"] = SystemPlantCost.objects.all()
+        context["labour_specs"] = SystemLabourSpecification.objects.filter(
+            is_active=True
+        ).order_by("name")
         context["f_q"] = self.request.GET.get("q", "")
         context["query_params"] = _pagination_query_params(self.request)
         context.update(_spec_datalist_context(SystemPlantSpecification.objects.all()))
@@ -7607,6 +7646,17 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
 
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        # A plant spec must stay linked to an existing labour spec by name.
+        if field == "name":
+            error = _validate_plant_spec_name(
+                value,
+                SystemLabourSpecification.objects.all(),
+                plant_qs=SystemPlantSpecification.objects.all(),
+                exclude_pk=item.pk,
+            )
+            if error:
+                return JsonResponse({"error": error}, status=400)
 
         field_type = self.ALLOWED_FIELDS[field]
         try:
@@ -9094,6 +9144,9 @@ class ContractorPlantSpecListView(ContractorLibraryMixin, ListView):
             "form", ContractorPlantSpecificationForm(company=company)
         )
         context["plants"] = ContractorPlantCost.objects.filter(company=company)
+        context["labour_specs"] = ContractorLabourSpecification.objects.filter(
+            company=company, is_active=True
+        ).order_by("name")
         context["f_q"] = self.request.GET.get("q", "")
         context["query_params"] = _pagination_query_params(self.request)
         context.update(
@@ -9160,6 +9213,17 @@ class UpdateContractorPlantSpecView(View):
 
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        # A plant spec must stay linked to an existing labour spec by name.
+        if field == "name":
+            error = _validate_plant_spec_name(
+                value,
+                ContractorLabourSpecification.objects.filter(company=company),
+                plant_qs=ContractorPlantSpecification.objects.filter(company=company),
+                exclude_pk=item.pk,
+            )
+            if error:
+                return JsonResponse({"error": error}, status=400)
 
         field_type = self.ALLOWED_FIELDS[field]
         try:

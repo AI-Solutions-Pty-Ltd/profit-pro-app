@@ -32,6 +32,36 @@
         <div class="overflow-hidden bg-white shadow-sm rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <h3 class="text-base font-semibold text-gray-900 mb-4">New Plant Specification</h3>
+                {% if not form.has_labour_specs %}
+                    <div class="rounded-md bg-red-50 p-4 mb-4 ring-1 ring-inset ring-red-200">
+                        <div class="flex items-start">
+                            {% heroicon_outline "exclamation-triangle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0" %}
+                            <div class="text-sm text-red-700">
+                                <p class="font-medium">No labour specifications exist yet.</p>
+                                <p class="mt-1">
+                                    A plant specification must be linked to a labour specification of the same name.
+                                    <a href="{% url 'estimator:sys_labour_specs' %}"
+                                       class="font-semibold underline hover:text-red-900">Add a labour spec first →</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% elif not form.available_labour_names %}
+                    <div class="rounded-md bg-red-50 p-4 mb-4 ring-1 ring-inset ring-red-200">
+                        <div class="flex items-start">
+                            {% heroicon_outline "exclamation-triangle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0" %}
+                            <div class="text-sm text-red-700">
+                                <p class="font-medium">Every labour spec already has a plant spec.</p>
+                                <p class="mt-1">
+                                    To add a new plant spec, first
+                                    <a href="{% url 'estimator:sys_labour_specs' %}"
+                                       class="font-semibold underline hover:text-red-900">add a labour spec</a>
+                                    to link it to.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
                 <form method="post">
                     {% csrf_token %}
                     {% if form.errors %}
@@ -55,6 +85,11 @@
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700">Specification Name</label>
                             <div class="mt-1">{{ form.name }}</div>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Linked to a labour spec by name.
+                                <a href="{% url 'estimator:sys_labour_specs' %}"
+                                   class="text-indigo-600 hover:text-indigo-800">Can't find it? Add a labour spec first.</a>
+                            </p>
                         </div>
                         <div class="sm:col-span-1">
                             <label class="block text-sm font-medium text-gray-700">Unit</label>
@@ -83,7 +118,8 @@
                             Cancel
                         </button>
                         <button type="submit"
-                                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                {% if not form.available_labour_names %}disabled{% endif %}
+                                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-300">
                             Save Spec
                         </button>
                     </div>
@@ -159,11 +195,12 @@
                                            value="{{ ps.trade_name }}">
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
-                                    <input type="text"
-                                           class="inline-edit w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                           data-item-id="{{ ps.id }}"
-                                           data-field="name"
-                                           value="{{ ps.name }}">
+                                    <select class="inline-edit plant-ls-select w-72 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 pr-6 focus:ring-2 focus:ring-indigo-500 rounded"
+                                            data-item-id="{{ ps.id }}"
+                                            data-field="name"
+                                            data-selected-name="{{ ps.name }}">
+                                        <option value="{{ ps.name }}" selected>{{ ps.name|default:"— link labour spec —" }}</option>
+                                    </select>
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
                                     <input type="text"
@@ -275,6 +312,29 @@
     <script>
 (function() {
     const plantOptions = `<option value="">—</option>{% for p in plants %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}`;
+    const labourSpecOptions = `{% for ls in labour_specs %}<option value="{{ ls.name }}">{{ ls.name }}</option>{% endfor %}`;
+
+    // The "Specification" column links each plant spec to a labour spec by
+    // shared name. Options are filled lazily on first focus to avoid emitting
+    // the full labour-spec list once per row.
+    function populateLabourSpecOptions(select) {
+        if (select.dataset.populated === '1') return;
+        const selectedName = select.dataset.selectedName || '';
+        select.innerHTML = labourSpecOptions;
+        if (selectedName && !select.querySelector(`option[value="${CSS.escape(selectedName)}"]`)) {
+            const opt = document.createElement('option');
+            opt.value = selectedName;
+            opt.textContent = selectedName + ' (current)';
+            select.insertBefore(opt, select.firstChild);
+        }
+        if (selectedName) select.value = selectedName;
+        select.dataset.populated = '1';
+    }
+
+    document.querySelectorAll('.plant-ls-select').forEach(select => {
+        select.addEventListener('mousedown', () => populateLabourSpecOptions(select));
+        select.addEventListener('focus', () => populateLabourSpecOptions(select));
+    });
 
     function flash(el, ok) {
         const cls = ok ? 'ring-green-500' : 'ring-red-500';
