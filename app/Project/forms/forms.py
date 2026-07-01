@@ -887,7 +887,7 @@ class ClientForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, contractor=False, client=False, **kwargs):
+    def __init__(self, *args, contractor=False, client=False, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
@@ -896,9 +896,17 @@ class ClientForm(forms.ModelForm):
             self.fields["users"].queryset = Account.objects.exclude(
                 first_name="", last_name=""
             ).order_by("first_name", "email")
+            if user and not user.is_superuser:
+                self.fields["users"].queryset = self.fields["users"].queryset.filter(
+                    created_by=user
+                )
         self.fields["consultants"].queryset = Account.objects.exclude(
             first_name="", last_name=""
         ).order_by("first_name", "email")
+        if user and not user.is_superuser:
+            self.fields["consultants"].queryset = self.fields[
+                "consultants"
+            ].queryset.filter(created_by=user)
 
         # Apply masking to initial values when editing an existing instance
         if self.instance and self.instance.pk:

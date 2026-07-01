@@ -59,7 +59,7 @@ def export_group_summary_report_to_xlsx(group_name, province_reports):
     headers = [
         "PROJECT NAME",
         "STATUS",
-        "TENDER AMOUNT (R)",
+        "CONTRACT AMOUNT (R)",
         "APPROVED VARIATIONS (R)",
         "REVISED CONTRACT VALUE (R)",
         "PREVIOUS CERTIFIED (R)",

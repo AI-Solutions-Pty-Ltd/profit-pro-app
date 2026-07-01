@@ -1,3 +1,4 @@
+{% load template_extras %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -286,27 +287,27 @@
                                     <span class="status-badge">{{ row.project.get_status_display }}</span>
                                 </div>
                             </td>
-                            <td class="td-muted">R {{ row.contract_value|floatformat:2 }}</td>
-                            <td class="td-muted">R {{ row.variations|floatformat:2 }}</td>
-                            <td class="td-bold">R {{ row.revised_contract_value|floatformat:2 }}</td>
-                            <td class="td-muted">R {{ row.certified_previous|floatformat:2 }}</td>
-                            <td class="td-muted">R {{ row.certified_amount|floatformat:2 }}</td>
-                            <td class="td-blue">R {{ row.net_claimed|floatformat:2 }}</td>
-                            <td class="td-muted">R {{ row.forecast_amount|floatformat:2 }}</td>
-                            <td class="td-muted">R {{ row.variance|floatformat:2 }}</td>
+                            <td class="td-muted">R {{ row.contract_value|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.variations|floatformat:2|space_intcomma }}</td>
+                            <td class="td-bold">R {{ row.revised_contract_value|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.certified_previous|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.certified_amount|floatformat:2|space_intcomma }}</td>
+                            <td class="td-blue">R {{ row.net_claimed|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.forecast_amount|floatformat:2|space_intcomma }}</td>
+                            <td class="td-muted">R {{ row.variance|floatformat:2|space_intcomma }}</td>
                         </tr>
                     {% endfor %}
                     <!-- Province Sub-total Row -->
                     <tr class="subtotal-row">
                         <td class="text-left project-name-cell">{{ rep.province_name }} Sub-total</td>
-                        <td>R {{ rep.budget|floatformat:2 }}</td>
-                        <td>R {{ rep.variations|floatformat:2 }}</td>
-                        <td>R {{ rep.revised|floatformat:2 }}</td>
-                        <td>R {{ rep.previous|floatformat:2 }}</td>
-                        <td>R {{ rep.cumulative|floatformat:2 }}</td>
-                        <td class="td-blue-sub">R {{ rep.net|floatformat:2 }}</td>
-                        <td>R {{ rep.forecast|floatformat:2 }}</td>
-                        <td>R {{ rep.variance|floatformat:2 }}</td>
+                        <td>R {{ rep.budget|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.variations|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.revised|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.previous|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.cumulative|floatformat:2|space_intcomma }}</td>
+                        <td class="td-blue-sub">R {{ rep.net|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.forecast|floatformat:2|space_intcomma }}</td>
+                        <td>R {{ rep.variance|floatformat:2|space_intcomma }}</td>
                     </tr>
                 {% empty %}
                     <tr>
@@ -317,14 +318,14 @@
             <tfoot>
                 <tr class="totals-row">
                     <td class="text-left">{{ totals_label|default:"Grand Totals" }}</td>
-                    <td>R {{ total_budget|floatformat:2 }}</td>
-                    <td>R {{ total_variations|floatformat:2 }}</td>
-                    <td>R {{ total_revised|floatformat:2 }}</td>
-                    <td>R {{ total_previous|floatformat:2 }}</td>
-                    <td>R {{ total_cumulative|floatformat:2 }}</td>
-                    <td>R {{ total_current|floatformat:2 }}</td>
-                    <td>R {{ total_forecast|floatformat:2 }}</td>
-                    <td>R {{ total_variance|floatformat:2 }}</td>
+                    <td>R {{ total_budget|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_variations|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_revised|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_previous|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_cumulative|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_current|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_forecast|floatformat:2|space_intcomma }}</td>
+                    <td>R {{ total_variance|floatformat:2|space_intcomma }}</td>
                 </tr>
             </tfoot>
         </table>

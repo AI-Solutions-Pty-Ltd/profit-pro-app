@@ -1,6 +1,6 @@
 """Mixins for Consultant views."""
 
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
@@ -20,18 +20,14 @@ class ConsultantMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     def get_clients(self):
         companies = Company.objects.filter(type=Company.Type.CLIENT)
         if not self.request.user.is_superuser:  # type: ignore
-            # Allow active DEMO_TIER users to see only their associated or demo client companies
-            if getattr(self.request.user, "has_demo_permission", False):
-                companies = companies.filter(
-                    Q(consultants=self.request.user)
-                    | Q(users=self.request.user)
-                    | Q(name="Demo Client")
-                    | Q(client_projects__in=self.request.user.get_projects)
-                ).distinct()
-            else:
-                companies = companies.filter(
-                    consultants=self.request.user,
-                )
+            from app.Account.subscription_config import Subscription
+
+            if (
+                self.request.user.subscription == Subscription.DEMO_TIER
+                and self.request.user.is_subscription_expired
+            ):
+                return Company.objects.none()
+            companies = companies.filter(created_by=self.request.user)
         return companies
 
     def get_queryset(self):
@@ -45,17 +41,16 @@ class ClientMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     project_slug = "project_pk"
 
     def get_queryset(self) -> QuerySet[Company]:
-        return Company.objects.filter(type=Company.Type.CLIENT).order_by("name")
+        qs = Company.objects.filter(type=Company.Type.CLIENT)
+        if not self.request.user.is_superuser:
+            qs = qs.filter(created_by=self.request.user)
+        return qs.order_by("name")
 
     def get_object(self) -> Company:
-        return get_object_or_404(
-            Company, id=self.kwargs["pk"], type=Company.Type.CLIENT
-        )
+        return get_object_or_404(self.get_queryset(), id=self.kwargs["pk"])
 
     def get_client(self, slug="pk") -> Company:
-        return get_object_or_404(
-            Company, id=self.kwargs[slug], type=Company.Type.CLIENT
-        )
+        return get_object_or_404(self.get_queryset(), id=self.kwargs[slug])
 
 
 class ContractorMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

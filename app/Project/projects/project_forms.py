@@ -313,10 +313,12 @@ class ProjectFilterForm(forms.Form):
         if consultant_queryset is not None:
             self.fields["consultant"].queryset = consultant_queryset  # type: ignore
         if client_queryset is not None:
+            if user and not user.is_superuser:
+                client_queryset = client_queryset.filter(created_by=user)
             if user and getattr(user, "has_demo_permission", False):
                 demo_clients = Company.objects.filter(
                     type=Company.Type.CLIENT,
-                    registration_number__in=["DEMO-CLIENT", f"DEMO-CLIENT-{user.pk}"],
+                    registration_number__in=[f"DEMO-CLIENT-{user.pk}"],
                 )
                 if client_queryset.query.distinct:
                     demo_clients = demo_clients.distinct()

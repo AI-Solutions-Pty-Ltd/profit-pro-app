@@ -6,14 +6,14 @@
     Edit Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="overflow-hidden bg-white rounded-lg shadow-md">
         <div id="forecast-list-header"
-             class="px-6 py-5 border-b border-gray-200 bg-gray-50 mb-4 sticky top-0 z-10">
-            <div class="flex items-center justify-between gap-6">
+             class="sticky top-0 z-30 px-6 py-5 mb-4 bg-gray-50 border-b border-gray-200">
+            <div class="flex gap-6 justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" class="mr-1 w-4 h-4" %}
                         Dashboard
                     </a>
                     <div>
@@ -28,13 +28,13 @@
                     {% if forecast.status == 'DRAFT' %}
                         <button type="button"
                                 onclick="document.getElementById('bottom-actions').scrollIntoView({behavior: 'smooth'})"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                            {% heroicon_outline "arrow-down" class="w-4 h-4 mr-1" %}
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "arrow-down" class="mr-1 w-4 h-4" %}
                             Jump to Bottom
                         </button>
                         <a href="{% url 'bill_of_quantities:forecast-approve' project.pk forecast.pk %}"
-                           class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white bg-green-600 rounded-md border border-transparent hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            {% heroicon_outline "check" class="mr-1 w-4 h-4" %}
                             Review & Approve
                         </a>
                     {% endif %}
@@ -57,18 +57,18 @@
             </div>
             <!-- Filters Section -->
             <div id="filter-line-items"
-                 class="bg-white shadow-md rounded-lg overflow-hidden mb-4 px-6 py-5">
-                <h2 class="font-medium text-gray-900 mb-2">Forecast Transactions</h2>
+                 class="overflow-hidden px-6 py-5 mb-4 bg-white rounded-lg shadow-md">
+                <h2 class="mb-2 font-medium text-gray-900">Forecast Transactions</h2>
                 <div class="border-b border-gray-200">
                     <form method="get" id="filterForm">
-                        <h3 class="text-sm font-medium text-gray-900 mb-2">Filters</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <h3 class="mb-2 text-sm font-medium text-gray-900">Filters</h3>
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                             <div>
-                                <label for="structure" class="block text-sm font-medium text-gray-700 mb-1">Section</label>
+                                <label for="structure" class="block mb-1 text-sm font-medium text-gray-700">Section</label>
                                 <select name="structure"
                                         id="structure"
                                         onchange="document.getElementById('filterForm').submit()"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <option value="">All Sections</option>
                                     {% for structure in structures %}
                                         <option value="{{ structure.id }}"
@@ -79,11 +79,11 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="bill" class="block text-sm font-medium text-gray-700 mb-1">Bill</label>
+                                <label for="bill" class="block mb-1 text-sm font-medium text-gray-700">Bill</label>
                                 <select name="bill"
                                         id="bill"
                                         onchange="document.getElementById('filterForm').submit()"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <option value="">All Bills</option>
                                     {% for bill in bills %}
                                         <option value="{{ bill.id }}"
@@ -94,11 +94,11 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="package" class="block text-sm font-medium text-gray-700 mb-1">Package</label>
+                                <label for="package" class="block mb-1 text-sm font-medium text-gray-700">Package</label>
                                 <select name="package"
                                         id="package"
                                         onchange="document.getElementById('filterForm').submit()"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <option value="">All Packages</option>
                                     {% for package in packages %}
                                         <option value="{{ package.id }}"
@@ -110,16 +110,16 @@
                             </div>
                             <div>
                                 <label for="description"
-                                       class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                       class="block mb-1 text-sm font-medium text-gray-700">Description</label>
                                 <div class="flex gap-2">
                                     <input type="text"
                                            name="description"
                                            id="description"
                                            value="{{ request.GET.description }}"
                                            placeholder="Search description..."
-                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     <button type="submit"
-                                            class="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700">
                                         Search
                                     </button>
                                 </div>
@@ -128,7 +128,7 @@
                         {% if request.GET.structure or request.GET.bill or request.GET.package or request.GET.description %}
                             <div class="my-3">
                                 <a href="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}"
-                                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50">
                                     Clear Filters
                                 </a>
                             </div>
@@ -141,39 +141,73 @@
             <form method="post" id="forecast-form">
                 {% csrf_token %}
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200" id="forecast-table">
+                    <table class="table min-w-full divide-y divide-gray-200" id="forecast-table">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Details</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budgeted Quantity</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budgeted Amount</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Quantity</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sticky top-[88px] bg-gray-50 z-20">Item Details</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sticky top-[88px] bg-gray-50 z-20">Unit</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sticky top-[88px] bg-gray-50 z-20">Budgeted Quantity</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sticky top-[88px] bg-gray-50 z-20">Unit Price</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sticky top-[88px] bg-gray-50 z-20">Budgeted Amount</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sticky top-[88px] bg-gray-50 z-20">Forecast Quantity</th>
+                                <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sticky top-[88px] bg-gray-50 z-20">Total Price</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for structure, structure_data in grouped_transactions.items %}
                                 {% if structure %}
-                                    <tr class="structure-header bg-blue-50">
-                                        <td colspan="7" class="px-6 py-3 text-sm font-semibold text-blue-900">Section: {{ structure.name }}</td>
+                                    <tr class="w-full bg-blue-50 transition-colors cursor-pointer select-none structure-header hover:bg-blue-100"
+                                        onclick="toggleStructure({{ structure.pk }})"
+                                        data-structure-id="{{ structure.pk }}">
+                                        <td class="flex items-center px-6 py-3 text-sm font-semibold text-blue-900">
+                                            <span class="inline-block mr-2 transition-transform duration-200 transform"
+                                                  id="structure-chevron-{{ structure.pk }}">
+                                                {% heroicon_mini "chevron-down" class="w-4 h-4" %}
+                                            </span>
+                                            Section: {{ structure.name }}
+                                        </td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
                                     </tr>
                                 {% endif %}
                                 {% for bill, bill_data in structure_data.items %}
                                     {% if bill %}
-                                        <tr class="bill-header bg-green-50">
-                                            <td colspan="7"
-                                                class="px-6 py-2 text-sm font-medium text-green-900 pl-12">
+                                        <tr class="bg-green-50 transition-colors cursor-pointer select-none bill-header hover:bg-green-100"
+                                            onclick="toggleBill({{ structure.pk|default:'null' }}, {{ bill.pk }})"
+                                            data-structure-parent="{{ structure.pk|default:'' }}"
+                                            data-bill-id="{{ bill.pk }}">
+                                            <td class="flex items-center px-6 py-2 pl-12 text-sm font-medium text-green-900">
+                                                <span class="inline-block mr-2 transition-transform duration-200 transform"
+                                                      id="bill-chevron-{{ bill.pk }}">
+                                                    {% heroicon_mini "chevron-down" class="w-4 h-4" %}
+                                                </span>
                                                 Bill: {{ bill.name }}
                                             </td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
                                         </tr>
                                     {% endif %}
                                     {% for package, transactions in bill_data.items %}
                                         {% if package %}
-                                            <tr class="package-header bg-purple-50">
+                                            <tr class="bg-purple-50 transition-colors cursor-pointer select-none package-header hover:bg-purple-100"
+                                                onclick="togglePackage({{ structure.pk|default:'null' }}, {{ bill.pk|default:'null' }}, {{ package.pk }})"
+                                                data-structure-parent="{{ structure.pk|default:'' }}"
+                                                data-bill-parent="{{ bill.pk|default:'' }}"
+                                                data-package-id="{{ package.pk }}">
                                                 <td colspan="7"
-                                                    class="px-6 py-2 text-sm font-medium text-purple-900 pl-20">
+                                                    class="flex items-center px-6 py-2 pl-20 text-sm font-medium text-purple-900">
+                                                    <span class="inline-block mr-2 transition-transform duration-200 transform"
+                                                          id="package-chevron-{{ package.pk }}">
+                                                        {% heroicon_mini "chevron-down" class="w-4 h-4" %}
+                                                    </span>
                                                     Package: {{ package.name }}
                                                 </td>
                                             </tr>
@@ -195,7 +229,7 @@
                                                             <button type="button"
                                                                     onclick="toggleNotes({{ transaction.id }})"
                                                                     class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800">
-                                                                {% heroicon_mini "chat-bubble-left-ellipsis" class="w-3 h-3 mr-1" %}
+                                                                {% heroicon_mini "chat-bubble-left-ellipsis" class="mr-1 w-3 h-3" %}
                                                                 <span id="notes-toggle-{{ transaction.id }}">
                                                                     {% if transaction.notes %}
                                                                         Edit Note
@@ -210,36 +244,40 @@
                                                                           id="notes_{{ transaction.id }}"
                                                                           rows="2"
                                                                           placeholder="Add notes for this line item..."
-                                                                          class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ transaction.notes }}</textarea>
+                                                                          class="px-2 py-1 w-full text-xs rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ transaction.notes }}</textarea>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.unit_measurement }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.budgeted_quantity|qty }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    R {{ transaction.line_item.total_price|default:0|floatformat:2|intcomma }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{{ transaction.line_item.unit_measurement }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{{ transaction.line_item.budgeted_quantity|qty }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                                    <input type="hidden"
+                                                           name="unit_price_{{ transaction.id }}"
+                                                           id="unit_price_{{ transaction.id }}"
+                                                           value="{{ transaction.line_item.unit_price }}">
                                                     R {{ transaction.line_item.unit_price|floatformat:2|intcomma }}
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                                    R {{ transaction.line_item.total_price|default:0|floatformat:2|intcomma }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <input type="number"
                                                            name="quantity_{{ transaction.id }}"
                                                            id="quantity_{{ transaction.id }}"
-                                                           value="{{ transaction.quantity }}"
+                                                           value="{{ transaction.quantity|floatformat:2 }}"
                                                            step="0.01"
-                                                           class="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                           class="px-2 py-1 w-24 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                            onchange="updateTotal({{ transaction.id }})">
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                                                     <input type="number"
                                                            name="total_price_{{ transaction.id }}"
                                                            id="total_price_{{ transaction.id }}"
-                                                           value="{{ transaction.total_price }}"
+                                                           value="{{ transaction.total_price|floatformat:2 }}"
                                                            step="0.01"
                                                            readonly
-                                                           class="w-28 px-2 py-1 bg-gray-50 border border-gray-300 rounded">
+                                                           class="px-2 py-1 w-28 bg-gray-50 rounded border border-gray-300">
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -248,14 +286,14 @@
                             {% endfor %}
                             {% if not grouped_transactions %}
                                 <tr>
-                                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No forecast transactions found.</td>
+                                    <td colspan="7" class="px-6 py-4 text-sm text-center text-gray-500">No forecast transactions found.</td>
                                 </tr>
                             {% endif %}
                         </tbody>
                         <tfoot class="bg-gray-50">
                             <tr>
                                 <td colspan="6"
-                                    class="px-6 py-3 text-right text-sm font-medium text-gray-900">Total Forecast:</td>
+                                    class="px-6 py-3 text-sm font-medium text-right text-gray-900">Total Forecast:</td>
                                 <td colspan="2" class="px-6 py-3 text-sm font-bold text-gray-900">
                                     R <span id="grand-total">{{ forecast.total_forecast|floatformat:2|intcomma }}</span>
                                 </td>
@@ -264,22 +302,22 @@
                     </table>
                 </div>
                 <div id="bottom-actions"
-                     class="flex items-center justify-between mt-6 p-6 bg-gray-50 border-t border-gray-200">
+                     class="flex justify-between items-center p-6 mt-6 bg-gray-50 border-t border-gray-200">
                     <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "x-mark" class="mr-1 w-4 h-4" %}
                         Cancel
                     </a>
                     <div class="flex items-center space-x-3">
                         <button type="submit"
-                                class="inline-flex items-center px-4 py-2 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1" %}
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-md border border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "arrow-path" class="mr-1 w-4 h-4" %}
                             Save Draft
                         </button>
                         <button type="submit"
                                 formaction="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}?next=approve"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md border border-transparent hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            {% heroicon_outline "check" class="mr-1 w-4 h-4" %}
                             Save & Review
                         </button>
                     </div>
@@ -287,7 +325,7 @@
             </form>
         {% else %}
             <div class="p-6">
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="p-4 bg-green-50 rounded-lg border border-green-200">
                     <div class="flex">
                         <div class="flex-shrink-0">{% heroicon_outline 'check-circle' class="w-6 h-6 text-green-600" %}</div>
                         <div class="ml-3">
@@ -298,32 +336,32 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 flex items-center space-x-3">
+                <div class="flex items-center mt-6 space-x-3">
                     <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "arrow-left" class="mr-1 w-4 h-4" %}
                         Back to Dashboard
                     </a>
                     <a href="{% url 'bill_of_quantities:forecast-approve' project.pk forecast.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        {% heroicon_outline "eye" class="w-4 h-4 mr-1" %}
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "eye" class="mr-1 w-4 h-4" %}
                         View Details
                     </a>
                 </div>
             </div>
         {% endif %}
         <!-- Footer -->
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
+        <div class="px-6 py-4 mt-6 bg-gray-50 border-t border-gray-200">
             <div class="flex justify-between items-center">
                 <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                   class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
+                    {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
                     Back to Forecasts
                 </a>
                 <a href="{% url 'project:project-management' project.pk %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                   class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
                     Project Management
-                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                    {% heroicon_outline "chevron-right" class="ml-1 w-4 h-4" %}
                 </a>
             </div>
         </div>
@@ -351,6 +389,170 @@
             const textarea = document.getElementById(`notes_${transactionId}`);
             toggle.textContent = textarea.value.trim() ? 'Edit Note' : 'Add Note';
         }
+    }
+
+    function toggleStructure(structureId) {
+        const structIdStr = structureId ? structureId.toString() : '';
+        const chevron = document.getElementById(`structure-chevron-${structIdStr}`);
+        if (!chevron) return;
+        const isCollapsed = chevron.classList.contains('-rotate-90');
+        
+        if (isCollapsed) {
+            chevron.classList.remove('-rotate-90');
+        } else {
+            chevron.classList.add('-rotate-90');
+        }
+        
+        const table = document.getElementById('forecast-table');
+        
+        // Toggle bills directly under this structure
+        const bills = table.querySelectorAll(`tr.bill-header[data-structure-parent="${structIdStr}"]`);
+        bills.forEach(bill => {
+            const billId = bill.getAttribute('data-bill-id');
+            if (isCollapsed) {
+                bill.classList.remove('hidden');
+                const billChevron = document.getElementById(`bill-chevron-${billId}`);
+                if (billChevron && !billChevron.classList.contains('-rotate-90')) {
+                    showBillChildren(structIdStr, billId);
+                }
+            } else {
+                bill.classList.add('hidden');
+                hideBillChildren(structIdStr, billId);
+            }
+        });
+
+        // Toggle rows directly under this structure (no bill)
+        const rows = table.querySelectorAll(`tr.transaction-row[data-structure="${structIdStr}"]`);
+        rows.forEach(row => {
+            const rowBill = row.getAttribute('data-bill');
+            if (!rowBill) {
+                if (isCollapsed) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    function toggleBill(structureId, billId) {
+        const structIdStr = structureId ? structureId.toString() : '';
+        const billIdStr = billId ? billId.toString() : '';
+        const chevron = document.getElementById(`bill-chevron-${billIdStr}`);
+        if (!chevron) return;
+        const isCollapsed = chevron.classList.contains('-rotate-90');
+        
+        if (isCollapsed) {
+            chevron.classList.remove('-rotate-90');
+            showBillChildren(structIdStr, billIdStr);
+        } else {
+            chevron.classList.add('-rotate-90');
+            hideBillChildren(structIdStr, billIdStr);
+        }
+    }
+
+    function hideBillChildren(structureId, billId) {
+        const table = document.getElementById('forecast-table');
+        const structIdStr = structureId ? structureId.toString() : '';
+        const billIdStr = billId ? billId.toString() : '';
+        
+        // Hide packages under this bill
+        const packages = table.querySelectorAll(`tr.package-header[data-structure-parent="${structIdStr}"][data-bill-parent="${billIdStr}"]`);
+        packages.forEach(pkg => {
+            pkg.classList.add('hidden');
+        });
+        // Hide rows under this bill
+        const rows = table.querySelectorAll(`tr.transaction-row[data-structure="${structIdStr}"][data-bill="${billIdStr}"]`);
+        rows.forEach(row => {
+            row.classList.add('hidden');
+        });
+    }
+
+    function showBillChildren(structureId, billId) {
+        const table = document.getElementById('forecast-table');
+        const structIdStr = structureId ? structureId.toString() : '';
+        const billIdStr = billId ? billId.toString() : '';
+        
+        // Show packages
+        const packages = table.querySelectorAll(`tr.package-header[data-structure-parent="${structIdStr}"][data-bill-parent="${billIdStr}"]`);
+        packages.forEach(pkg => {
+            pkg.classList.remove('hidden');
+            const pkgId = pkg.getAttribute('data-package-id');
+            const pkgChevron = document.getElementById(`package-chevron-${pkgId}`);
+            if (pkgChevron && !pkgChevron.classList.contains('-rotate-90')) {
+                showPackageChildren(structIdStr, billIdStr, pkgId);
+            }
+        });
+        // Show rows directly under this bill (no package)
+        const rows = table.querySelectorAll(`tr.transaction-row[data-structure="${structIdStr}"][data-bill="${billIdStr}"]`);
+        rows.forEach(row => {
+            const rowPkg = row.getAttribute('data-package');
+            if (!rowPkg) {
+                row.classList.remove('hidden');
+            }
+        });
+    }
+
+    function togglePackage(structureId, billId, packageId) {
+        const structIdStr = structureId ? structureId.toString() : '';
+        const billIdStr = billId ? billId.toString() : '';
+        const pkgIdStr = packageId ? packageId.toString() : '';
+        const chevron = document.getElementById(`package-chevron-${pkgIdStr}`);
+        if (!chevron) return;
+        const isCollapsed = chevron.classList.contains('-rotate-90');
+        
+        if (isCollapsed) {
+            chevron.classList.remove('-rotate-90');
+            showPackageChildren(structIdStr, billIdStr, pkgIdStr);
+        } else {
+            chevron.classList.add('-rotate-90');
+            hidePackageChildren(structIdStr, billIdStr, pkgIdStr);
+        }
+    }
+
+    function hidePackageChildren(structureId, billId, packageId) {
+        const table = document.getElementById('forecast-table');
+        const structIdStr = structureId ? structureId.toString() : '';
+        const billIdStr = billId ? billId.toString() : '';
+        const pkgIdStr = packageId ? packageId.toString() : '';
+        const rows = table.querySelectorAll(`tr.transaction-row[data-structure="${structIdStr}"][data-bill="${billIdStr}"][data-package="${pkgIdStr}"]`);
+        rows.forEach(row => {
+            row.classList.add('hidden');
+        });
+    }
+
+    // Helper to check if a parent is collapsed
+    function isParentCollapsed(structureId, billId = null, packageId = null) {
+        if (structureId) {
+            const structChevron = document.getElementById(`structure-chevron-${structureId}`);
+            if (structChevron && structChevron.classList.contains('-rotate-90')) {
+                return true;
+            }
+        }
+        if (billId) {
+            const billChevron = document.getElementById(`bill-chevron-${billId}`);
+            if (billChevron && billChevron.classList.contains('-rotate-90')) {
+                return true;
+            }
+        }
+        if (packageId) {
+            const pkgChevron = document.getElementById(`package-chevron-${packageId}`);
+            if (pkgChevron && pkgChevron.classList.contains('-rotate-90')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function showPackageChildren(structureId, billId, packageId) {
+        const table = document.getElementById('forecast-table');
+        const structIdStr = structureId ? structureId.toString() : '';
+        const billIdStr = billId ? billId.toString() : '';
+        const pkgIdStr = packageId ? packageId.toString() : '';
+        const rows = table.querySelectorAll(`tr.transaction-row[data-structure="${structIdStr}"][data-bill="${billIdStr}"][data-package="${pkgIdStr}"]`);
+        rows.forEach(row => {
+            row.classList.remove('hidden');
+        });
     }
     </script>
 {% endblock content %}

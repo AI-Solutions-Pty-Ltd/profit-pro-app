@@ -87,6 +87,7 @@ class TestDemoCompaniesFormFiltering:
         queryset_demo = form_demo.fields["client"].queryset
         expected_name = f"{self.demo_user.first_name}'s Demo Client"
         assert queryset_demo.filter(name=expected_name).exists()
+        assert not queryset_demo.filter(name="Demo Client").exists()
 
         # Case B: Regular user should NOT see Demo Client
         form_reg = ProjectClientForm(user=self.regular_user)
@@ -137,22 +138,33 @@ class TestDemoCompaniesFormFiltering:
     def test_project_filter_form_filters_correctly(self):
         """Test that ProjectFilterForm includes demo companies based on user demo permissions."""
         # Create standard/regular client and contractor companies (not demo companies)
+        # Set created_by=self.demo_user for regular_client so Case A sees it
         regular_client = Company.objects.create(
             type=Company.Type.CLIENT,
             name="Regular Client",
             registration_number="REG-CLIENT",
+            created_by=self.demo_user,
         )
         regular_contractor = Company.objects.create(
             type=Company.Type.CONTRACTOR,
             name="Regular Contractor",
             registration_number="REG-CONTRACTOR",
         )
+        # Create a client company created by self.regular_user so Case B can see it
+        regular_user_client = Company.objects.create(
+            type=Company.Type.CLIENT,
+            name="Regular User's Client",
+            registration_number="REG-USER-CLIENT",
+            created_by=self.regular_user,
+        )
 
         # Mock/simulate the view-level queryset containing the user's projects' companies
-        client_qs = Company.objects.filter(pk=regular_client.pk)
+        client_qs = Company.objects.filter(
+            pk__in=[regular_client.pk, regular_user_client.pk]
+        )
         contractor_qs = Company.objects.filter(pk=regular_contractor.pk)
 
-        # Case A: Active demo user should see both standard and demo companies in ProjectFilterForm
+        # Case A: Active demo user should see both standard (if created by them) and demo companies in ProjectFilterForm
         form_demo = ProjectFilterForm(
             user=self.demo_user,
             client_queryset=client_qs,
@@ -165,6 +177,11 @@ class TestDemoCompaniesFormFiltering:
             form_demo.fields["client"].queryset.filter(name="Regular Client").exists()
         )
         assert (
+            not form_demo.fields["client"]
+            .queryset.filter(name="Regular User's Client")
+            .exists()
+        )
+        assert (
             form_demo.fields["contractor"]
             .queryset.filter(name=expected_contractor)
             .exists()
@@ -174,8 +191,11 @@ class TestDemoCompaniesFormFiltering:
             .queryset.filter(name="Regular Contractor")
             .exists()
         )
+        assert (
+            not form_demo.fields["client"].queryset.filter(name="Demo Client").exists()
+        )
 
-        # Case B: Regular user should see standard companies, but NOT demo companies
+        # Case B: Regular user should see standard companies they created, but NOT demo companies
         form_reg = ProjectFilterForm(
             user=self.regular_user,
             client_queryset=client_qs,
@@ -186,7 +206,16 @@ class TestDemoCompaniesFormFiltering:
             .queryset.filter(name__contains="Demo Client")
             .exists()
         )
-        assert form_reg.fields["client"].queryset.filter(name="Regular Client").exists()
+        assert (
+            form_reg.fields["client"]
+            .queryset.filter(name="Regular User's Client")
+            .exists()
+        )
+        assert (
+            not form_reg.fields["client"]
+            .queryset.filter(name="Regular Client")
+            .exists()
+        )
         assert (
             not form_reg.fields["contractor"]
             .queryset.filter(name__contains="Demo Contractor 1")
@@ -198,7 +227,7 @@ class TestDemoCompaniesFormFiltering:
             .exists()
         )
 
-        # Case C: Expired demo user should see standard companies, but NOT demo companies
+        # Case C: Expired demo user should see standard companies they created, but NOT demo companies
         form_exp = ProjectFilterForm(
             user=self.expired_demo_user,
             client_queryset=client_qs,
@@ -209,7 +238,11 @@ class TestDemoCompaniesFormFiltering:
             .queryset.filter(name__contains="Demo Client")
             .exists()
         )
-        assert form_exp.fields["client"].queryset.filter(name="Regular Client").exists()
+        assert (
+            not form_exp.fields["client"]
+            .queryset.filter(name="Regular Client")
+            .exists()
+        )
         assert (
             not form_exp.fields["contractor"]
             .queryset.filter(name__contains="Demo Contractor 1")
@@ -221,15 +254,15 @@ class TestDemoCompaniesFormFiltering:
             .exists()
         )
 
-    def test_explicit_association_takes_precedence_for_regular_user(self):
-        """Test that explicit association makes a company visible even to regular users."""
+    def test_explicit_association_does_not_make_company_visible_to_non_creator(self):
+        """Test that explicit association does not make a company visible to non-superusers who are not the creator."""
         # Get target demo client
         demo_client = Company.objects.get(name="Demo Client")
 
         # Explicitly associate the regular user with the Demo Client
         demo_client.users.add(self.regular_user)
 
-        # Regular user should now see the Demo Client due to direct association
+        # Regular user should still NOT see the Demo Client because they are not the creator
         form_reg = ProjectClientForm(user=self.regular_user)
         queryset_reg = form_reg.fields["client"].queryset
-        assert queryset_reg.filter(name="Demo Client").exists()
+        assert not queryset_reg.filter(name="Demo Client").exists()
