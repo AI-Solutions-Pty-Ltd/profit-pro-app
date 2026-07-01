@@ -9,60 +9,58 @@
         <div class="mb-6 bg-white rounded-lg shadow-sm">
             <div class="px-6 py-4">
                 <div class="flex justify-between items-center">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-900">Project List</h1>
-                            <p class="mt-1 text-sm text-gray-600">Manage projects and categories in your portfolio</p>
-                        </div>
-                        <div class="flex gap-3 items-center">
-                            <!-- Project Groups Dropdown -->
-                            {% if project_groups %}
-                                <div class="inline-block relative text-left" id="groupsDropdownContainer">
-                                    <button type="button"
-                                            id="groupsDropdownBtn"
-                                            class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        {% heroicon_outline "folder" size="16" class="mr-1.5 text-gray-500" %}
-                                        <span>Project Groups</span>
-                                        {% heroicon_outline "chevron-down" size="14" class="ml-1 text-gray-400" %}
-                                    </button>
-                                    <div id="groupsDropdownMenu"
-                                         class="hidden absolute right-0 z-50 mt-2 w-72 bg-white rounded-md divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 shadow-lg origin-top-right focus:outline-none">
-                                        <div class="overflow-y-auto py-1 max-h-64">
-                                            {% for group in project_groups %}
-                                                <div class="flex justify-between items-center px-4 py-2 hover:bg-gray-50 group">
-                                                    <div class="flex-grow">
-                                                        <div class="text-sm font-semibold text-gray-900 truncate"
-                                                             title="{{ group.name }}">{{ group.name }}</div>
-                                                        <div class="flex gap-2 mt-1">
-                                                            <a href="{% url 'project:portfolio-group-cover-page' group.pk %}"
-                                                               class="text-xs font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
-                                                                Cover Page
-                                                            </a>
-                                                            <span class="text-xs text-gray-300">|</span>
-                                                            <a href="{% url 'project:portfolio-group-valuation-summary' group.pk %}"
-                                                               class="text-xs font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
-                                                                Valuation
-                                                            </a>
-                                                        </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Project List</h1>
+                        <p class="mt-1 text-sm text-gray-600">Manage projects and categories in your portfolio</p>
+                    </div>
+                    <div class="flex gap-3 items-center">
+                        <!-- Project Groups Dropdown -->
+                        {% if project_groups %}
+                            <div class="inline-block relative text-left" id="groupsDropdownContainer">
+                                <button type="button"
+                                        id="groupsDropdownBtn"
+                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {% heroicon_outline "folder" size="16" class="mr-1.5 text-gray-500" %}
+                                    <span>Project Groups</span>
+                                    {% heroicon_outline "chevron-down" size="14" class="ml-1 text-gray-400" %}
+                                </button>
+                                <div id="groupsDropdownMenu"
+                                     class="hidden absolute right-0 z-50 mt-2 w-72 bg-white rounded-md divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 shadow-lg origin-top-right focus:outline-none">
+                                    <div class="overflow-y-auto py-1 max-h-64">
+                                        {% for group in project_groups %}
+                                            <div class="flex justify-between items-center px-4 py-2 hover:bg-gray-50 group">
+                                                <div class="flex-grow">
+                                                    <div class="text-sm font-semibold text-gray-900 truncate"
+                                                         title="{{ group.name }}">{{ group.name }}</div>
+                                                    <div class="flex gap-2 mt-1">
+                                                        <a href="{% url 'project:portfolio-group-cover-page' group.pk %}"
+                                                           class="text-xs font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                            Cover Page
+                                                        </a>
+                                                        <span class="text-xs text-gray-300">|</span>
+                                                        <a href="{% url 'project:portfolio-group-valuation-summary' group.pk %}"
+                                                           class="text-xs font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                            Valuation
+                                                        </a>
                                                     </div>
-                                                    <button type="button"
-                                                            onclick="deleteGroup({{ group.pk }}, '{{ group.name|escapejs }}')"
-                                                            class="p-1 ml-2 text-gray-400 rounded hover:text-red-600 hover:bg-red-50"
-                                                            title="Delete Group">
-                                                        {% heroicon_outline "trash" size="14" %}
-                                                    </button>
                                                 </div>
-                                            {% endfor %}
-                                        </div>
+                                                <button type="button"
+                                                        onclick="deleteGroup({{ group.pk }}, '{{ group.name|escapejs }}')"
+                                                        class="p-1 ml-2 text-gray-400 rounded hover:text-red-600 hover:bg-red-50"
+                                                        title="Delete Group">
+                                                    {% heroicon_outline "trash" size="14" %}
+                                                </button>
+                                            </div>
+                                        {% endfor %}
                                     </div>
                                 </div>
-                            {% endif %}
-                            <a href="{% url 'project:portfolio-dashboard' %}"
-                               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                {% heroicon_outline "arrow-left" size="16" %}
-                                <span class="ml-1">Back to Dashboard</span>
-                            </a>
-                        </div>
+                            </div>
+                        {% endif %}
+                        <a href="{% url 'project:portfolio-dashboard' %}"
+                           class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "arrow-left" size="16" %}
+                            <span class="ml-1">Back to Dashboard</span>
+                        </a>
                     </div>
                 </div>
             </div>
