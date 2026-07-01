@@ -23,6 +23,7 @@ else:
     DB_USER_PWD = os.getenv("DB_USER_PWD")
     DB_USER = os.getenv("DB_USER")
     DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.mysql")
+    DB_PORT = os.getenv("DB_PORT")
     DATABASES = {
         "default": {
             "ENGINE": DB_ENGINE,
@@ -30,6 +31,7 @@ else:
             "USER": DB_USER,
             "PASSWORD": DB_USER_PWD,
             "HOST": DB_HOST,
+            "PORT": DB_PORT,
         }
     }
 
