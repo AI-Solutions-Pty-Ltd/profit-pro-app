@@ -32,7 +32,7 @@ class TestDemoTierConsultantAccess(TestCase):
             Account, AccountFactory(subscription=Subscription.FREE_TIER)
         )
 
-        self.client1 = ClientFactory(name="Client 1", type=Company.Type.CLIENT)
+        self.client1 = ClientFactory(name="Client 1", type=Company.Type.CLIENT, created_by=self.demo_user)
         self.client2 = ClientFactory(name="Client 2", type=Company.Type.CLIENT)
 
         self.project: Project = cast(
@@ -82,6 +82,17 @@ class TestDemoTierConsultantAccess(TestCase):
         client_list = list(clients)
         self.assertIn(self.client1, client_list)
         self.assertNotIn(self.client2, client_list)
+
+    def test_consultant_mixin_does_not_return_global_demo_client_by_default(self):
+        """Test that ConsultantMixin.get_clients does not include global Demo Client if not associated."""
+        global_demo_client = ClientFactory(name="Demo Client", type=Company.Type.CLIENT)
+        mixin = ConsultantMixin()
+        request = self.factory.get("/")
+        request.user = self.demo_user
+        mixin.request = request
+
+        clients = mixin.get_clients()
+        self.assertNotIn(global_demo_client, list(clients))
 
     def test_consultant_mixin_filters_clients_for_non_demo_user(self):
         """Test that ConsultantMixin.get_clients filters clients for non-demo users."""
@@ -168,3 +179,75 @@ class TestDemoTierConsultantAccess(TestCase):
 
         with self.assertRaises(Http404):
             mixin.get_project()
+
+
+class TestCreatorOwnershipRestrictions(TestCase):
+    """Test creator ownership restrictions for clients and users."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.creator: Account = cast(Account, AccountFactory(email="creator@test.com"))
+        self.other_user: Account = cast(Account, AccountFactory(email="other@test.com"))
+        self.superuser: Account = cast(Account, AccountFactory(email="admin@test.com", is_superuser=True, is_staff=True))
+
+        self.client_created_by_creator = ClientFactory(
+            name="Creator's Client", type=Company.Type.CLIENT, created_by=self.creator
+        )
+        self.client_created_by_other = ClientFactory(
+            name="Other's Client", type=Company.Type.CLIENT, created_by=self.other_user
+        )
+
+    def test_client_list_filters_by_creator(self):
+        """Test that non-superuser only sees clients they created."""
+        from app.Consultant.views.mixins import ClientMixin
+        mixin = ClientMixin()
+        
+        # Creator sees only their client
+        request = self.factory.get("/")
+        request.user = self.creator
+        mixin.request = request
+        qs = mixin.get_queryset()
+        self.assertIn(self.client_created_by_creator, qs)
+        self.assertNotIn(self.client_created_by_other, qs)
+
+        # Other user sees only their client
+        request = self.factory.get("/")
+        request.user = self.other_user
+        mixin.request = request
+        qs = mixin.get_queryset()
+        self.assertNotIn(self.client_created_by_creator, qs)
+        self.assertIn(self.client_created_by_other, qs)
+
+        # Superuser sees all clients
+        request = self.factory.get("/")
+        request.user = self.superuser
+        mixin.request = request
+        qs = mixin.get_queryset()
+        self.assertIn(self.client_created_by_creator, qs)
+        self.assertIn(self.client_created_by_other, qs)
+
+    def test_client_detail_raises_404_for_non_creator(self):
+        """Test that ClientMixin.get_object raises 404 for clients not created by user."""
+        from django.http import Http404
+        from app.Consultant.views.mixins import ClientMixin
+        
+        mixin = ClientMixin()
+        request = self.factory.get("/")
+        request.user = self.creator
+        mixin.request = request
+        
+        # Creator can access their client
+        mixin.kwargs = {"pk": self.client_created_by_creator.pk}
+        obj = mixin.get_object()
+        self.assertEqual(obj, self.client_created_by_creator)
+
+        # Creator cannot access other's client
+        mixin.kwargs = {"pk": self.client_created_by_other.pk}
+        with self.assertRaises(Http404):
+            mixin.get_object()
+
+        # Superuser can access any client
+        mixin.request.user = self.superuser
+        obj = mixin.get_object()
+        self.assertEqual(obj, self.client_created_by_other)
+

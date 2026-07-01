@@ -64,6 +64,14 @@ class Company(BaseModel):
         blank=True,
         related_name="companies",
     )
+    created_by = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_companies",
+        help_text="User who created this company",
+    )
     consultants = models.ManyToManyField(
         Account,
         blank=True,
@@ -142,11 +150,14 @@ class Company(BaseModel):
             company, created = cls.objects.get_or_create(
                 type=comp_type,
                 registration_number=reg_num,
-                defaults={"name": name},
+                defaults={"name": name, "created_by": user},
             )
-            if not created and company.name != name:
-                company.name = name
-                company.save()
+            if not created:
+                if company.name != name or (user and company.created_by != user):
+                    company.name = name
+                    if user:
+                        company.created_by = user
+                    company.save()
 
             if user:
                 company.users.add(user)

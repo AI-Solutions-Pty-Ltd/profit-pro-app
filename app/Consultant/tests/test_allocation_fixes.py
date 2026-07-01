@@ -27,6 +27,7 @@ class TestAllocationFixes(TestCase):
         self.client_company: Company = ClientFactory(  # type: ignore
             name="Test Client Company",
             type=Company.Type.CLIENT,
+            created_by=self.user,
         )
         self.lead_consultant_company: Company = ClientFactory(  # type: ignore
             name="Test Lead Consultant Company",

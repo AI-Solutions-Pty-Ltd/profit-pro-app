@@ -176,6 +176,14 @@ class Account(AbstractUser, BaseModel):
     subscription_expires_at = models.DateTimeField(
         null=True, blank=True, help_text="Expiry date for demo/trial subscriptions"
     )
+    created_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_accounts",
+        help_text="User who created/invited this account",
+    )
 
     objects = UserManager()
 
