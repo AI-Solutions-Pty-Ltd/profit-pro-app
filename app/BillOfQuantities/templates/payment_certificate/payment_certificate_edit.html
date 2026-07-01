@@ -392,9 +392,7 @@
                                         {{ line_item.unit_price|default:""|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
-                                        {% if line_item.is_work %}
-                                            {{ line_item.budgeted_quantity|qty }}
-                                        {% endif %}
+                                        {% if line_item.is_work %}{{ line_item.budgeted_quantity|qty }}{% endif %}
                                     </td>
                                     <td class="px-3 py-2 text-sm text-right text-gray-900 whitespace-nowrap">
                                         {% if line_item.is_work %}
