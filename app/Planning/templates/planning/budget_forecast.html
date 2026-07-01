@@ -265,51 +265,41 @@
                                             </div>
                                         </div>
                                     {% endfor %}
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            {% endif %}
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="px-6 py-16 text-center">
-                <div class="mx-auto max-w-sm">
-                    <div class="inline-block p-4 mb-4 bg-gray-100 rounded-full">
-                <div class="mx-auto max-w-sm">
-                    <div class="inline-block p-4 mb-4 bg-gray-100 rounded-full">
-                        {% heroicon_outline "flag" size="48" class="text-gray-400" %}
-                    </div>
-                    <p class="mb-2 text-base font-semibold text-gray-900">No categories found</p>
-                    <p class="mb-4 text-sm text-gray-500">Create your first category to start organizing milestones</p>
-                    {% comment %} <button type="button" onclick="openCreateCategoryModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <p class="mb-2 text-base font-semibold text-gray-900">No categories found</p>
-                    <p class="mb-4 text-sm text-gray-500">Create your first category to start organizing milestones</p>
-                    {% comment %} <button type="button" onclick="openCreateCategoryModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "plus" size="18" class="mr-2" %}
-                        <span>Add WBS Level 1</span>
-                    </button> {% endcomment %}
-                    </button> {% endcomment %}
+                    {% endfor %}
                 </div>
-            </div>
-        {% endif %}
-    </div>
-    <!-- Footer -->
-    <div class="px-8 py-5 mt-8 bg-white rounded-xl border-t border-gray-200 shadow-sm">
-        <div class="flex justify-between items-center">
-            {% url 'project:project-management' project.pk as project_management_url %}
-            {% include "components/back_button.html" with url=project_management_url text="Back to Project Management" style="gray" %}
-            <a href="{% url 'project:earned-value' project.pk %}"
-               class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 rounded-lg transition-all duration-200 hover:text-indigo-600 hover:bg-gray-50">
-                Earned Value Predictions
-                {% heroicon_outline "chevron-right" class="ml-2 w-5 h-5" %}
-            </a>
+            {% endif %}
         </div>
     </div>
+{% else %}
+    <div class="px-6 py-16 text-center">
+        <div class="mx-auto max-w-sm">
+            <div class="inline-block p-4 mb-4 bg-gray-100 rounded-full">
+                {% heroicon_outline "flag" size="48" class="text-gray-400" %}
+            </div>
+            <p class="mb-2 text-base font-semibold text-gray-900">No categories found</p>
+            <p class="mb-4 text-sm text-gray-500">Create your first category to start organizing milestones</p>
+            {% comment %} <button type="button" onclick="openCreateCategoryModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            {% heroicon_outline "plus" size="18" class="mr-2" %}
+            <span>Add WBS Level 1</span>
+            </button> {% endcomment %}
+        </div>
+    {% endif %}
+</div>
+<!-- Footer -->
+<div class="px-8 py-5 mt-8 bg-white rounded-xl border-t border-gray-200 shadow-sm">
+    <div class="flex justify-between items-center">
+        {% url 'project:project-management' project.pk as project_management_url %}
+        {% include "components/back_button.html" with url=project_management_url text="Back to Project Management" style="gray" %}
+        <a href="{% url 'project:earned-value' project.pk %}"
+           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 rounded-lg transition-all duration-200 hover:text-indigo-600 hover:bg-gray-50">
+            Earned Value Predictions
+            {% heroicon_outline "chevron-right" class="ml-2 w-5 h-5" %}
+        </a>
+    </div>
+</div>
 {% endblock content %}
 {% block extra_js %}
     <script src="{% static 'js/toggle-utils.js' %}"></script>
