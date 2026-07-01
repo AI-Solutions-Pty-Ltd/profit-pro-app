@@ -8,6 +8,7 @@
 {% block content %}
     {% include "project/categories/category_create.html" with project=project form=category_form %}
     {% include "project/categories/category_scope_budget_edit.html" with project=project %}
+    {% include "project/categories/category_scope_budget_edit.html" with project=project %}
     {% include "project/categories/category_delete.html" with project=project %}
     {% include "project/sub_categories/subcategory_create.html" with project=project form=subcategory_form %}
     {% include "project/sub_categories/subcategory_scope_budget_edit.html" with project=project %}
@@ -264,7 +265,12 @@
                                             </div>
                                         </div>
                                     {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
                                 </div>
+                            {% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -274,13 +280,19 @@
             <div class="px-6 py-16 text-center">
                 <div class="mx-auto max-w-sm">
                     <div class="inline-block p-4 mb-4 bg-gray-100 rounded-full">
+                <div class="mx-auto max-w-sm">
+                    <div class="inline-block p-4 mb-4 bg-gray-100 rounded-full">
                         {% heroicon_outline "flag" size="48" class="text-gray-400" %}
                     </div>
                     <p class="mb-2 text-base font-semibold text-gray-900">No categories found</p>
                     <p class="mb-4 text-sm text-gray-500">Create your first category to start organizing milestones</p>
                     {% comment %} <button type="button" onclick="openCreateCategoryModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <p class="mb-2 text-base font-semibold text-gray-900">No categories found</p>
+                    <p class="mb-4 text-sm text-gray-500">Create your first category to start organizing milestones</p>
+                    {% comment %} <button type="button" onclick="openCreateCategoryModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "plus" size="18" class="mr-2" %}
                         <span>Add WBS Level 1</span>
+                    </button> {% endcomment %}
                     </button> {% endcomment %}
                 </div>
             </div>
