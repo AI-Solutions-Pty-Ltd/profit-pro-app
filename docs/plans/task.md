@@ -2,5 +2,6 @@
 
 | Task | Description | Status |
 |---|---|---|
-| Task 1 | Add space_intcomma to all currency values in Valuation Summary PDF template | done |
-| Task 2 | Run pytest to verify all tests pass | done |
+| Task 1 | Hide quantity for non-work line items in `payment_certificate_edit.html` | done |
+| Task 2 | Hide values/use colspan for non-work line items in `final_account_detail.html` | done |
+| Task 3 | Run tests to verify no regressions | done |
